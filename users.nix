@@ -8,8 +8,8 @@
 
     home-manager.users.nico = { lib, pkgs, ... }: {
         nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-                     "idea-ultimate"
-                   ];
+            "idea-ultimate"
+        ];
 
         home = {
             packages = with pkgs; [

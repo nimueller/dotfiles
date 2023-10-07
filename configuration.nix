@@ -18,9 +18,5 @@
         ./users.nix
     ];
 
-    nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-        "idea-ultimate"
-    ];
-
     system.stateVersion = "23.05";
 }
