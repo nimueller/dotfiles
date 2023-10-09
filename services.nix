@@ -1,19 +1,34 @@
 { ... }:
 {
     # GNOME Desktop Environment
-    services.xserver.enable = true;
-    services.xserver.displayManager.gdm.enable = true;
-    services.xserver.desktopManager.gnome.enable = true;
-    services.xserver.displayManager.autoLogin.enable = true;
-    services.xserver.displayManager.autoLogin.user = "nico";
-    systemd.services."getty@tty1".enable = false;
-    systemd.services."autovt@tty1".enable = false;
+    programs.hyprland.enable = true;
+    environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
+    services.greetd = {
+      enable = true;
+      settings = rec {
+        initial_session = {
+          command = "Hyprland";
+	  user = "nico";
+	};
+	default_session = initial_session;
+      };
+    };
+
+    # services.xserver.enable = true;
+    # services.xserver.displayManager.gdm.enable = true;
+    # services.xserver.displayManager.gdm.wayland = true;
+    # services.xserver.displayManager.autoLogin.enable = true;
+    # services.xserver.displayManager.autoLogin.user = "nico";
+    # services.xserver.desktopManager.gnome.enable = true;
+    # systemd.services."getty@tty1".enable = false;
+    # systemd.services."autovt@tty1".enable = false;
 
     # Configure keymap in X11
-    services.xserver = {
-        layout = "us";
-        xkbVariant = "";
-    };
+    # services.xserver = {
+    #     layout = "us";
+    #     xkbVariant = "";
+    # };
 
     # Enable CUPS to print documents.
     services.printing.enable = true;

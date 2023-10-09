@@ -8,5 +8,8 @@ in
         neovim
         git
         wget
+	kitty
+	btop
+	tree
     ];
 }
