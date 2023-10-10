@@ -9,11 +9,13 @@
     home-manager.users.nico = { lib, pkgs, ... }: {
         nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
             "idea-ultimate"
+	    "spotify"
         ];
 
         home = {
             packages = with pkgs; [
-                firefox
+	    	spotify
+                gnome.nautilus
                 jetbrains.idea-ultimate
             ];
             stateVersion = "23.05";

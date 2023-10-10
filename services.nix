@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
     # GNOME Desktop Environment
     programs.hyprland.enable = true;
@@ -55,4 +55,16 @@
 
     # Flatpak
     services.flatpak.enable = true;
+
+    xdg.portal = {
+	enable = true;
+	wlr.enable = true;
+	extraPortals = with pkgs; [ xdg-desktop-portal-gtk ];
+    };
+
+
+    # Fixes error https://github.com/NixOS/nixpkgs/issues/189851 
+    systemd.user.extraConfig = ''
+    	DefaultEnvironment="PATH=/run/current-system/sw/bin"
+    '';
 }

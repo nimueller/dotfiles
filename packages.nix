@@ -4,12 +4,12 @@ let
 in
 {
     environment.systemPackages = with pkgs; [
-        customScripts.upgrade
+        customScripts.rebuild
         neovim
         git
         wget
-	kitty
-	btop
-	tree
+	    kitty
+	    btop
+	    tree
     ];
 }

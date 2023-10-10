@@ -24,9 +24,7 @@
     networking.networkmanager.enable = true;
 
     # Firewall
-    networking.firewall.enable = true;
-    networking.firewall.allowedTCPPorts = [ 22 ];
-    networking.firewall.allowedUDPPorts = [ ];
+    networking.firewall.enable = false;
 
     # Default shell
     programs.zsh.enable = true;
