@@ -5,9 +5,10 @@
             url = "github:nix-community/home-manager";
             inputs.nixpkgs.follows = "nixpkgs";
         };
+        hyprland.url = "github:hyprwm/Hyprland";
     };
 
-    outputs = { nixpkgs, home-manager,  ... }:
+    outputs = { nixpkgs, home-manager, hyprland, ... }:
     let
         system = "x86_64-linux";
         modules = [
@@ -22,10 +23,20 @@
         };
 
         homeConfigurations = {
-            nico = home-manager.lib.homeManagerConfiguration {
+            server = home-manager.lib.homeManagerConfiguration {
                 pkgs = nixpkgs.legacyPackages.${system};
                 modules = [
-                    ./home-manager/home.nix
+                    ./home-manager/default.nix
+                ];
+            };
+
+            desktop = home-manager.lib.homeManagerConfiguration {
+                pkgs = nixpkgs.legacyPackages.${system};
+                modules = [
+                    hyprland.homeManagerModules.default
+                    ./home-manager/default.nix
+                    ./home-manager/desktop.nix
+                    ./home-manager/hyprland
                 ];
             };
         };
