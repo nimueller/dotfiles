@@ -3,7 +3,6 @@
     imports = [
         # Results of hardware scan and home manager installation
         /etc/nixos/hardware-configuration.nix
-        <home-manager/nixos>
 
         # Basic configuration shared among systems
         ./system.nix
@@ -18,5 +17,9 @@
         ./users.nix
     ];
 
+    nix.settings.experimental-features = [
+        "nix-command"
+        "flakes"
+    ];
     system.stateVersion = "23.05";
 }

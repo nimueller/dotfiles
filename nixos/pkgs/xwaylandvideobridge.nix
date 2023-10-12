@@ -1,13 +1,13 @@
 { stdenv, wrapQtAppsHook, ... }:
 with import <nixpkgs> {};
 stdenv.mkDerivation {
-    name = "xwaylandvideobridge";
+    name = "xwaylandvideobridge2";
     src = fetchFromGitLab {
         domain = "invent.kde.org";
         owner = "system";
         repo = "xwaylandvideobridge";
-        rev = "0698f6a95588222bb1ab6a9c5d760b1f6aaee5e0";
-        hash = "sha256-gKkkwBPUpy6eN5MWk/5ivynxHuaFRClPdQkWBJytijI=";
+        rev = "b327a9b1759ff75beaf133dbb91d867e0dc37305";
+        hash = "sha256-lEPtq6gEgfMpN5tsk7OEug8kMz5dXou/bsd+n1+J0TI=";
     };
 
     nativeBuildInputs = [
@@ -34,4 +34,6 @@ stdenv.mkDerivation {
             };
         }))
     ];
+
+    patches = [ ./xwaylandvideobridge_on_hyprland.patch ];
 }
