@@ -1,0 +1,8 @@
+colorscheme tokyonight
+
+set number
+set relativenumber
+set expandtab
+set autochdir
+set tabstop=4
+set shiftwidth=4

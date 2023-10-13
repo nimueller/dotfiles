@@ -37,6 +37,7 @@
                     ./home-manager/default.nix
                     ./home-manager/desktop.nix
                     ./home-manager/hyprland
+                    ./home-manager/neovim
                 ];
             };
         };
