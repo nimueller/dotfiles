@@ -11,6 +11,7 @@
     # Link custom XKB file
     xdg.configFile."xkb/symbols/us-german".source = ./hypr/us-german.xkb;
 
+    # Use kitty as terminal emulator
     programs.kitty = {
         enable = true;
         settings = {
@@ -20,6 +21,10 @@
             focus_follows_mouse = true;
         };
     };
+
+    # Sway On-Screen-Display for volume feedback and playerctl to control media playback using media keys
+    services.swayosd.enable = true;
+    services.playerctld.enable = true;
 
     # Packages needed on Hyprland specifically, in addition to a standard desktop
     home.packages = with pkgs; [
