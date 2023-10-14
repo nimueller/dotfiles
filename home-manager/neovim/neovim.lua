@@ -2,28 +2,12 @@ vim.opt.termguicolors = true
 
 require 'notify'.setup()
 require 'dressing'.setup()
-require 'noice'.setup {
-    lsp = {
-        -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
-        override = {
-            ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-            ["vim.lsp.util.stylize_markdown"] = true,
-            ["cmp.entry.get_documentation"] = true,
-        },
-    },
-    -- you can enable a preset for easier configuration
-    presets = {
-        bottom_search = true, -- use a classic bottom cmdline for search
-        command_palette = true, -- position the cmdline and popupmenu together
-        long_message_to_split = true, -- long messages will be sent to a split
-        inc_rename = false, -- enables an input dialog for inc-rename.nvim
-        lsp_doc_border = false, -- add a border to hover docs and signature help
-    },
-}
-
 local bufferline = require 'bufferline'
 bufferline.setup {
     options = {
+        style_preset = bufferline.style_preset.slant,
+        middle_mouse_command = "bdelete! %d",
+        right_mouse_command = "vertical sbuffer %d",
         diagnostics = "nvim_lsp",
         diagnostics_indicator = function(count, level, diagnostics_dict, context)
           local icon = level:match("error") and " " or " "
@@ -39,6 +23,8 @@ bufferline.setup {
         },
     },
 }
+vim.keymap.set('n', '<A-Left>', ':BufferLineMovePrev<CR>')
+vim.keymap.set('n', '<A-Right>', ':BufferLineMoveNext<CR>')
 
 require 'lualine'.setup {
     options = {
@@ -88,3 +74,24 @@ require 'which-key'
 local lspconfig = require 'lspconfig'
 lspconfig.nixd.setup {}
 lspconfig.jsonls.setup {}
+
+require 'noice'.setup {
+    lsp = {
+        -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
+        override = {
+            ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+            ["vim.lsp.util.stylize_markdown"] = true,
+            ["cmp.entry.get_documentation"] = true,
+        },
+    },
+    -- you can enable a preset for easier configuration
+    presets = {
+        bottom_search = true, -- use a classic bottom cmdline for search
+        command_palette = true, -- position the cmdline and popupmenu together
+        long_message_to_split = true, -- long messages will be sent to a split
+        inc_rename = false, -- enables an input dialog for inc-rename.nvim
+        lsp_doc_border = false, -- add a border to hover docs and signature help
+    },
+}
+
+

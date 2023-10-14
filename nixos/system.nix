@@ -27,5 +27,25 @@
     networking.firewall.enable = false;
 
     # Default shell
-    programs.zsh.enable = true;
+    programs.zsh = {
+        enable = true;
+        enableCompletion = true;
+        autocd = true;
+
+        autosuggestions = {
+            enable = true;
+            strategy = [
+                "completion"
+                "history"
+            ];
+        };
+
+        syntaxHighlighting = {
+            enable = true;
+        };
+    };
+
+
+    # Used to enable completion for system packages in ZSH
+    environment.pathsToLink = [ "/share/zsh" ];
 }

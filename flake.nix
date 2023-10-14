@@ -36,8 +36,8 @@
                     hyprland.homeManagerModules.default
                     ./home-manager/default.nix
                     ./home-manager/desktop.nix
-                    ./home-manager/hyprland
-                    ./home-manager/neovim
+                    ./home-manager/hyprland/default.nix
+                    ./home-manager/neovim/default.nix
                 ];
             };
         };

@@ -15,6 +15,9 @@
     programs.kitty = {
         enable = true;
         settings = {
+            font_family = "Jet Brains Mono";
+            foreground = "#BCC6F1";
+            background = "#24283B";
             show_hyperlink_targets = true;
             copy_on_select = "clipboard";
             strip_trailing_spaces = "smart";
@@ -22,12 +25,17 @@
         };
     };
 
-    # Sway On-Screen-Display for volume feedback and playerctl to control media playback using media keys
+    # Sway On-Screen-Display for volume feedback
     services.swayosd.enable = true;
-    services.playerctld.enable = true;
 
     # Packages needed on Hyprland specifically, in addition to a standard desktop
     home.packages = with pkgs; [
+        # Utility
+        playerctl
+        hyprpaper
+        hyprpicker
+
+        # GUI apps
         gnome.nautilus
         ulauncher
     ];
