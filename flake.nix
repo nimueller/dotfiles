@@ -29,7 +29,7 @@
                     ./home-manager/default.nix
                 ];
             };
-
+            
             desktop = home-manager.lib.homeManagerConfiguration {
                 pkgs = nixpkgs.legacyPackages.${system};
                 modules = [

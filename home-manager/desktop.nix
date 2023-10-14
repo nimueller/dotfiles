@@ -5,8 +5,12 @@
 	    "spotify"
     ];
 
+    fonts.fontconfig.enable = true;
+
     home.packages = with pkgs; [
+        (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
         jetbrains.idea-ultimate
         spotify
+        wl-clipboard
     ];
 }
