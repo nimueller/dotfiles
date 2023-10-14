@@ -10,7 +10,6 @@ set timeout
 set timeoutlen=500
 
 let mapleader=' '
-noremap <leader>e :Neotree toggle<CR>
 
 noremap <C-V> <ESC>"+p
 vnoremap <C-C> "+y

@@ -1,5 +1,7 @@
 vim.opt.termguicolors = true
 
+vim.keymap.set('n', '<Leader>e', ':Neotree focus<CR>')
+
 require 'notify'.setup()
 require 'dressing'.setup()
 local bufferline = require 'bufferline'
@@ -23,8 +25,10 @@ bufferline.setup {
         },
     },
 }
-vim.keymap.set('n', '<A-Left>', ':BufferLineMovePrev<CR>')
-vim.keymap.set('n', '<A-Right>', ':BufferLineMoveNext<CR>')
+vim.keymap.set('n', '<A-Left>', ':BufferLineCyclePrev<CR>')
+vim.keymap.set('n', '<A-Right>', ':BufferLineCycleNext<CR>')
+vim.keymap.set('n', '<A-S-Left>', ':BufferLineMovePrev<CR>')
+vim.keymap.set('n', '<A-S-Right>', ':BufferLineMoveNext<CR>')
 
 require 'lualine'.setup {
     options = {
