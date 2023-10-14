@@ -39,7 +39,10 @@
             cmp-path
             cmp_luasnip
 
+            comment-nvim
+            vim-illuminate
             which-key-nvim
+            vim-startuptime
         ];
     };
 

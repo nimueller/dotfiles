@@ -40,8 +40,14 @@ bufferline.setup {
     },
 }
 
-require'lualine'.setup()
+require 'lualine'.setup {
+    options = {
+        ignore_focus = { "neo-tree" },
+        globalstatus = true,
+    },
+}
 
+require 'Comment'.setup()
 
 local cmp = require 'cmp'
 cmp.setup {
@@ -75,6 +81,8 @@ cmp.setup {
       { name = "buffer" },
     }),
 }
+
+require 'which-key'
 
 
 local lspconfig = require 'lspconfig'
