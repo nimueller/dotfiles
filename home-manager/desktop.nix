@@ -3,6 +3,7 @@
     nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
         "idea-ultimate"
 	    "spotify"
+        "vscode"
     ];
 
     fonts.fontconfig.enable = true;

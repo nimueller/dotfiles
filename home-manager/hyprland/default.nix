@@ -6,10 +6,16 @@
         builtins.readFile ./hypr/general.conf +
         builtins.readFile ./hypr/windowrules.conf +
         builtins.readFile ./hypr/workspacerules.conf +
-        builtins.readFile ./hypr/keybinds.conf;
+        builtins.readFile ./hypr/keybinds.conf + 
+        builtins.readFile ./hypr/autostart.conf;
 
     # Link custom XKB file
     xdg.configFile."xkb/symbols/us-german".source = ./hypr/us-german.xkb;
+    xdg.configFile."hypr/hyprpaper.conf".source = ./hypr/hyprpaper.conf;
+    xdg.configFile."hypr/wallpaper.jpg".source = builtins.fetchurl {
+        url = "https://raw.githubusercontent.com/saint-13/Linux_Dynamic_Wallpapers/main/Dynamic_Wallpapers/ZorinMountainFog/ZorinMountainFog1.jpg";
+        sha256 = "1l2rvpyn2ab7cd1y93v3im3ki8dhrlcwar30lb4kyl078pxh52kd";
+    };
 
     # Use kitty as terminal emulator
     programs.kitty = {
