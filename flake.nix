@@ -10,6 +10,7 @@
 
     outputs = { nixpkgs, home-manager, hyprland, ... }:
     let
+        username = "nico";
         system = "x86_64-linux";
         modules = [
             ./nixos/configuration.nix
@@ -18,6 +19,8 @@
     {
         nixosConfigurations = {
             nixos = nixpkgs.lib.nixosSystem {
+                specialArgs = { inherit username; };
+
                 inherit modules system;
             };
         };
@@ -25,6 +28,9 @@
         homeConfigurations = {
             server = home-manager.lib.homeManagerConfiguration {
                 pkgs = nixpkgs.legacyPackages.${system};
+
+                extraSpecialArgs = { inherit username; };
+
                 modules = [
                     ./home-manager/default.nix
                 ];
@@ -32,6 +38,9 @@
             
             desktop = home-manager.lib.homeManagerConfiguration {
                 pkgs = nixpkgs.legacyPackages.${system};
+
+                extraSpecialArgs = { inherit username; };
+
                 modules = [
                     hyprland.homeManagerModules.default
                     ./home-manager/default.nix

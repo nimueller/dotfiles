@@ -41,7 +41,17 @@
         hyprpaper
         hyprpicker
 
+        (eww-wayland.overrideAttrs (old: {
+            src = pkgs.fetchFromGitHub {
+                owner = "ralismark";
+                repo = "eww";
+                rev = "tray-3";
+                hash = "sha256-GEysmNDm+olt1WXHzRwb4ZLifkXmeP5+APAN3b81/Og=";
+            };
+        }))
+
         # GUI apps
+        gnome.adwaita-icon-theme
         gnome.nautilus
         ulauncher
     ];
