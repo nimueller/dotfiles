@@ -1,4 +1,18 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, stdenv, ... }:
+let
+    hyprshot = pkgs.stdenv.mkDerivation rec {
+        name = "hyprshot";
+        version = "1.2.3";
+
+        src = builtins.fetchurl {
+            url = "https://github.com/Gustash/Hyprshot/archive/refs/tags/${version}.tar.gz";
+            sha256 = "03ppmj44vg28vq3m7f0igg3i6x97gmr6mj1nqd05kxwksznlxqq1";
+        };
+
+        installPhase = "mkdir -p $out/bin; cp hyprshot $out/bin";
+    };
+    recorder = pkgs.stdenv.writeShellScriptBin "recorder" builtins.readFile ./recorder.sh;
+in
 {
     # Basic Hyprland configuration
     wayland.windowManager.hyprland.enable = true;
@@ -11,6 +25,7 @@
 
     # Link custom XKB file
     xdg.configFile."xkb/symbols/us-german".source = ./hypr/us-german.xkb;
+    xdg.configFile."hypr/recorder.sh".source = ./recorder.sh;
     xdg.configFile."hypr/hyprpaper.conf".source = ./hypr/hyprpaper.conf;
     xdg.configFile."hypr/wallpaper.jpg".source = builtins.fetchurl {
         url = "https://raw.githubusercontent.com/saint-13/Linux_Dynamic_Wallpapers/main/Dynamic_Wallpapers/ZorinMountainFog/ZorinMountainFog1.jpg";
@@ -54,6 +69,10 @@
         hyprpicker
         grim
         slurp
+        jq
+        libnotify
+        hyprshot
+        recorder
 
         # Custom EWW fork for working system tray
         (eww-wayland.overrideAttrs (drv: rec {
