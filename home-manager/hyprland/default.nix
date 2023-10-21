@@ -52,6 +52,8 @@
         playerctl
         hyprpaper
         hyprpicker
+        grim
+        slurp
 
         # Custom EWW fork for working system tray
         (eww-wayland.overrideAttrs (drv: rec {
