@@ -50,5 +50,6 @@
         # Nix LSP
         nixd
         vscode-langservers-extracted
+        nodePackages.bash-language-server
     ];
 }

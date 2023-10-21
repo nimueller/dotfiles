@@ -78,6 +78,7 @@ require 'which-key'
 local lspconfig = require 'lspconfig'
 lspconfig.nixd.setup {}
 lspconfig.jsonls.setup {}
+lspconfig.bashls.setup {}
 
 require 'noice'.setup {
     lsp = {

@@ -13,5 +13,6 @@
         jetbrains.idea-ultimate
         spotify
         wl-clipboard
+        wf-recorder
     ];
 }

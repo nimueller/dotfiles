@@ -34,6 +34,18 @@
     # Sway On-Screen-Display for volume feedback
     services.swayosd.enable = true;
 
+    # Dunst as notification daemon
+    services.dunst = {
+        enable = true;
+
+        settings = {
+            global = {
+                monitor = 1;
+                font = "JetBrainsMono 12";
+            };
+        };
+    };
+
     # Packages needed on Hyprland specifically, in addition to a standard desktop
     home.packages = with pkgs; [
         # Utility
@@ -41,13 +53,20 @@
         hyprpaper
         hyprpicker
 
-        (eww-wayland.overrideAttrs (old: {
-            src = pkgs.fetchFromGitHub {
-                owner = "ralismark";
-                repo = "eww";
-                rev = "tray-3";
-                hash = "sha256-GEysmNDm+olt1WXHzRwb4ZLifkXmeP5+APAN3b81/Og=";
-            };
+        # Custom EWW fork for working system tray
+        (eww-wayland.overrideAttrs (drv: rec {
+          version = "tray-3";
+          src = fetchFromGitHub {
+            owner = "ralismark";
+            repo = "eww";
+            rev = "a82ed62c25ba50f28dc8c3d57efe440d51d6136b";
+            sha256 = "sha256-vxMGAa/RTsMADPK4dM/28SV2ktCT0DenYvGsHZ4IJ8c=";
+          };
+          cargoDeps = drv.cargoDeps.overrideAttrs (lib.const {
+            inherit src;
+            outputHash = "sha256-3B81cTIVt/cne6I/gKBgX4zR5w0UU60ccrFGV1nNCoA=";
+          });
+          buildInputs = drv.buildInputs ++ (with pkgs; [ glib librsvg libdbusmenu-gtk3 ]);
         }))
 
         # GUI apps
