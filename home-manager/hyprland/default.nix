@@ -11,7 +11,7 @@ let
 
         installPhase = "mkdir -p $out/bin; cp hyprshot $out/bin";
     };
-    recorder = pkgs.stdenv.writeShellScriptBin "recorder" builtins.readFile ./recorder.sh;
+    recorder = pkgs.writeShellScriptBin "recorder" (builtins.readFile ./recorder.sh);
 in
 {
     # Basic Hyprland configuration
