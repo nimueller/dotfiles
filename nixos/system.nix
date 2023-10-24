@@ -3,6 +3,7 @@
     # Boot Loader
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
+    boot.supportedFilesystems = [ "ntfs" ];
 
     # Time zone and locale settings
     time.timeZone = "Europe/Berlin";
@@ -26,24 +27,8 @@
     # Firewall
     networking.firewall.enable = false;
 
-    # Default shell
-    programs.zsh = {
-        enable = true;
-        enableCompletion = true;
-
-        autosuggestions = {
-            enable = true;
-            strategy = [
-                "completion"
-                "history"
-            ];
-        };
-
-        syntaxHighlighting = {
-            enable = true;
-        };
-    };
-
+    # Enable ZSH
+    programs.zsh.enable = true;
 
     # Used to enable completion for system packages in ZSH
     environment.pathsToLink = [ "/share/zsh" ];

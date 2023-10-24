@@ -16,6 +16,20 @@
 
     programs.zsh = {
         enable = true;
+        defaultKeymap = null;
+        autocd = true;
+
+        # Plugins
+        enableAutosuggestions = true;
+        enableCompletion = true;
+        syntaxHighlighting.enable = true;
+
+        oh-my-zsh = {
+            enable = true;
+            theme = "skaro";
+        };
+
+        # Aliases
         shellAliases = {
             "cat" = "bat";
             "ls" = "lsd";
