@@ -4,7 +4,7 @@
 
 To (re-)build NixOS system (NixOS required):
 <pre>
-sudo nixos-rebuild switch --flake .#nixos --impure
+sudo nixos-rebuild switch --flake .#desktop
 </pre>
 
 To just update home directory with configured user-specific dotfiles and packages (NixOS not required, only a working
