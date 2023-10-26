@@ -44,6 +44,12 @@ in
             strip_trailing_spaces = "smart";
             focus_follows_mouse = true;
         };
+        keybindings = {
+            "ctrl+v" = "paste_from_clipboard";
+        };
+        extraConfig = ''
+        mouse_map right click grabbed paste_from_clipboard
+        '';
     };
 
     # Sway On-Screen-Display for volume feedback
@@ -55,7 +61,7 @@ in
 
         settings = {
             global = {
-                monitor = 1;
+                monitor = 0;
                 font = "JetBrainsMono 12";
             };
         };

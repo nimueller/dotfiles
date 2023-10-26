@@ -37,6 +37,7 @@
             "cat" = "bat";
             "ls" = "lsd";
             "la" = "lsd -lah";
+            "virsh" = "virsh -c qemu:///system";
         };
     };
 }

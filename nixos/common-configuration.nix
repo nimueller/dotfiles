@@ -7,6 +7,7 @@
     system.stateVersion = "23.05";
 
     # Boot Loader
+    boot.loader.timeout = 0;
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
     boot.supportedFilesystems = [ "ntfs" ];
