@@ -12,16 +12,13 @@
     let
         username = "nico";
         system = "x86_64-linux";
-        modules = [
-            ./nixos/configuration.nix
-        ];
+        system_x64 = "x86_64-linux";
     in
     {
         nixosConfigurations = {
-            nixos = nixpkgs.lib.nixosSystem {
-                specialArgs = { inherit username; };
-
-                inherit modules system;
+            desktop = import ./nixos/hosts/desktop { 
+                inherit nixpkgs username;
+                system = system_x64;
             };
         };
 
