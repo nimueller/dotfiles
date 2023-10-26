@@ -1,4 +1,4 @@
-# Personal dotfiles using Home Manager on Nix
+# Personal dotfiles using Nix package manager
 
 *Still heavily WIP*
 
