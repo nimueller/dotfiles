@@ -14,6 +14,10 @@
         extraGroups = [ "libvirtd" ];
     };
 
+    systemd.tmpfiles.rules = [
+        "f /dev/shm/looking-glass 0660 ${username} kvm -"
+    ];
+
     environment.systemPackages = with pkgs; [
         (writeScriptBin "iommu-groups" ''
 #!/usr/bin/env bash
@@ -26,5 +30,6 @@ for g in $(find /sys/kernel/iommu_groups/* -maxdepth 0 -type d | sort -V); do
 done;
         '')
         virt-manager
+        looking-glass-client
     ];
 }
