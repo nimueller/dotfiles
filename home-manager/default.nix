@@ -27,6 +27,9 @@
         oh-my-zsh = {
             enable = true;
             theme = "skaro";
+            plugins = [
+                "colorize"
+            ];
         };
 
         # Aliases

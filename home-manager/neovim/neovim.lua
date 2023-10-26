@@ -1,6 +1,10 @@
 vim.opt.termguicolors = true
 
-vim.keymap.set('n', '<Leader>e', ':Neotree focus<CR>')
+local neotree = require 'neo-tree'
+neotree.setup {
+    close_if_last_window = true
+}
+vim.keymap.set('n', '<Leader>e', ":Neotree<CR>")
 
 require 'notify'.setup()
 require 'dressing'.setup()
@@ -25,10 +29,10 @@ bufferline.setup {
         },
     },
 }
-vim.keymap.set('n', '<A-Left>', ':BufferLineCyclePrev<CR>')
-vim.keymap.set('n', '<A-Right>', ':BufferLineCycleNext<CR>')
-vim.keymap.set('n', '<A-S-Left>', ':BufferLineMovePrev<CR>')
-vim.keymap.set('n', '<A-S-Right>', ':BufferLineMoveNext<CR>')
+vim.keymap.set('n', '<A-Left>', function() bufferline.cycle(-1) end)
+vim.keymap.set('n', '<A-Right>', function() bufferline.cycle(1) end)
+vim.keymap.set('n', '<A-S-Left>', function() bufferline.move(-1) end)
+vim.keymap.set('n', '<A-S-Right>', function() bufferline.move(1) end)
 
 require 'lualine'.setup {
     options = {
@@ -38,6 +42,7 @@ require 'lualine'.setup {
 }
 
 require 'Comment'.setup()
+require 'nvim-treesitter.configs'.setup{highlight={enable=true}} 
 
 local cmp = require 'cmp'
 cmp.setup {
