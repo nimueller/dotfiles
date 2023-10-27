@@ -7,8 +7,8 @@
         # Common configuration shared by all hosts
         ../../common-configuration.nix
 
-        # Extra virtualization settings
-        ./virtualization.nix
+        # Extra virtualisation settings
+        ./virtualisation.nix
     ];
 
     # Hyprland Desktop Environment

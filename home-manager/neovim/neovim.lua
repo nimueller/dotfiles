@@ -82,7 +82,9 @@ require 'which-key'
 
 local lspconfig = require 'lspconfig'
 lspconfig.nixd.setup {}
+lspconfig.lemminx.setup {}
 lspconfig.jsonls.setup {}
+lspconfig.cssls.setup {}
 lspconfig.bashls.setup {}
 
 require 'noice'.setup {

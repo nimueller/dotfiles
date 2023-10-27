@@ -8,6 +8,9 @@
         onBoot = "ignore";
         onShutdown = "shutdown";
         qemu.ovmf.enable = true;
+        hooks.qemu = {
+            events = ./virtualisation_events.sh;
+        };
     };
 
     users.users.${username} = {

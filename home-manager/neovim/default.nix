@@ -47,9 +47,13 @@
     };
 
     home.packages = with pkgs; [
+        vscode-langservers-extracted
+
         # Nix LSP
         nixd
-        vscode-langservers-extracted
+        # XML LSP
+        lemminx
+        # Bash LSP
         nodePackages.bash-language-server
     ];
 }
