@@ -12,6 +12,7 @@ let
         installPhase = "mkdir -p $out/bin; cp hyprshot $out/bin";
     };
     recorder = pkgs.writeShellScriptBin "recorder" (builtins.readFile ./recorder.sh);
+    applauncher = pkgs.writeShellScriptBin "applauncher" (builtins.readFile ./applauncher.sh);
 in
 {
     # Basic Hyprland configuration
@@ -25,7 +26,8 @@ in
 
     # Link custom XKB file
     xdg.configFile."xkb/symbols/us-german".source = ./hypr/us-german.xkb;
-    xdg.configFile."hypr/recorder.sh".source = ./recorder.sh;
+    # xdg.configFile."hypr/recorder.sh".source = ./recorder.sh;
+    # xdg.configFile."hypr/applauncher.sh".source = ./applauncher.sh;
     xdg.configFile."hypr/hyprpaper.conf".source = ./hypr/hyprpaper.conf;
     xdg.configFile."hypr/wallpaper.jpg".source = builtins.fetchurl {
         url = "https://raw.githubusercontent.com/saint-13/Linux_Dynamic_Wallpapers/main/Dynamic_Wallpapers/ZorinMountainFog/ZorinMountainFog1.jpg";
@@ -79,6 +81,7 @@ in
         libnotify
         hyprshot
         recorder
+        applauncher
 
         # Custom EWW fork for working system tray
         (eww-wayland.overrideAttrs (drv: rec {
