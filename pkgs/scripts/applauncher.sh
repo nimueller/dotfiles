@@ -3,5 +3,5 @@
 
 ACTIVE_WINDOW_CLASS=$(hyprctl activewindow -j | jq -r .class)
 
-[ $ACTIVE_WINDOW_CLASS != "looking-glass-client" ] && ulauncher-toggle
+[ $ACTIVE_WINDOW_CLASS != "looking-glass-client" ] && ulauncher
 

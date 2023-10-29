@@ -10,6 +10,7 @@
     home.packages = with pkgs; [
         # Terminal programs
         btop
+        autojump
         bat
         lsd
     ];
@@ -28,6 +29,7 @@
             enable = true;
             theme = "skaro";
             plugins = [
+                "autojump"
                 "colorize"
             ];
         };
