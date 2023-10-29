@@ -81,6 +81,7 @@ in
 
         my-pkgs.hyprshot
         my-pkgs.eww-wayland-tray
+        my-pkgs.xwaylandvideobridge
         my-pkgs.recorder
         my-pkgs.applauncher
 

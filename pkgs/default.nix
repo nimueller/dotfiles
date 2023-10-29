@@ -1,17 +1,5 @@
 { pkgs, lib, ... }:
 {
-    hyprshot = pkgs.stdenv.mkDerivation rec {
-        name = "hyprshot";
-        version = "1.2.3";
-
-        src = builtins.fetchurl {
-            url = "https://github.com/Gustash/Hyprshot/archive/refs/tags/${version}.tar.gz";
-            sha256 = "03ppmj44vg28vq3m7f0igg3i6x97gmr6mj1nqd05kxwksznlxqq1";
-        };
-
-        installPhase = "mkdir -p $out/bin; cp hyprshot $out/bin";
-    };
-
     eww-wayland-tray = (pkgs.eww-wayland.overrideAttrs (drv: rec {
         version = "tray-3";
         src = pkgs.fetchFromGitHub {
@@ -26,6 +14,20 @@
         });
         buildInputs = drv.buildInputs ++ (with pkgs; [ glib librsvg libdbusmenu-gtk3 ]);
     }));
+
+    hyprshot = pkgs.stdenv.mkDerivation rec {
+        name = "hyprshot";
+        version = "1.2.3";
+
+        src = builtins.fetchurl {
+            url = "https://github.com/Gustash/Hyprshot/archive/refs/tags/${version}.tar.gz";
+            sha256 = "03ppmj44vg28vq3m7f0igg3i6x97gmr6mj1nqd05kxwksznlxqq1";
+        };
+
+        installPhase = "mkdir -p $out/bin; cp hyprshot $out/bin";
+    };
+
+    xwaylandvideobridge = pkgs.libsForQt5.callPackage ./xwaylandvideobridge.nix {};
 
     recorder = pkgs.writeShellScriptBin "recorder" (builtins.readFile ./scripts/recorder.sh);
     applauncher = pkgs.writeShellScriptBin "applauncher" (builtins.readFile ./scripts/applauncher.sh);

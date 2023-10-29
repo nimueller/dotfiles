@@ -1,5 +1,5 @@
-{ stdenv, wrapQtAppsHook, ... }:
-with import <nixpkgs> {};
+{ pkgs, wrapQtAppsHook, ... }:
+with pkgs;
 stdenv.mkDerivation {
     name = "xwaylandvideobridge2";
     src = fetchFromGitLab {
