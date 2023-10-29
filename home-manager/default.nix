@@ -9,37 +9,51 @@
 
     home.packages = with pkgs; [
         # Terminal programs
-        btop
         autojump
         bat
         lsd
     ];
 
-    programs.zsh = {
-        enable = true;
-        defaultKeymap = null;
-        autocd = true;
+    imports = [ 
+        ./neovim/default.nix
+        ./theme/default.nix
+    ];
 
-        # Plugins
-        enableAutosuggestions = true;
-        enableCompletion = true;
-        syntaxHighlighting.enable = true;
-
-        oh-my-zsh = {
+    programs = {
+        zsh = {
             enable = true;
-            theme = "skaro";
-            plugins = [
-                "autojump"
-                "colorize"
-            ];
+            defaultKeymap = null;
+            autocd = true;
+
+            # Plugins
+            enableAutosuggestions = true;
+            enableCompletion = true;
+            syntaxHighlighting.enable = true;
+
+            oh-my-zsh = {
+                enable = true;
+                theme = "skaro";
+                plugins = [
+                    "autojump"
+                    "colorize"
+                ];
+            };
+
+            # Aliases
+            shellAliases = {
+                "cat" = "bat";
+                "ls" = "lsd";
+                "la" = "lsd -lah";
+                "virsh" = "virsh -c qemu:///system";
+            };
         };
 
-        # Aliases
-        shellAliases = {
-            "cat" = "bat";
-            "ls" = "lsd";
-            "la" = "lsd -lah";
-            "virsh" = "virsh -c qemu:///system";
+        btop = {
+            enable = true;
+            settings = {
+                vim_keys = true;
+            };
         };
     };
+    
 }

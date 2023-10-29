@@ -41,9 +41,7 @@
 
                 modules = [
                     hyprland.homeManagerModules.default
-                    ./home-manager/default.nix
                     ./home-manager/desktop.nix
-                    ./home-manager/neovim/default.nix
                 ];
             };
         };

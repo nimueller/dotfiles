@@ -10,6 +10,11 @@ in
         "discord"
     ];
 
+    imports = [ 
+        ./default.nix
+        ./theme/desktop.nix
+    ];
+
     # Basic Hyprland configuration
     wayland.windowManager.hyprland.enable = true;
     wayland.windowManager.hyprland.extraConfig =
@@ -21,21 +26,13 @@ in
 
     # Link custom XKB file
     xdg.configFile."xkb/symbols/us-german".source = ./hypr/us-german.xkb;
-    # xdg.configFile."hypr/recorder.sh".source = ./recorder.sh;
-    # xdg.configFile."hypr/applauncher.sh".source = ./applauncher.sh;
     xdg.configFile."hypr/hyprpaper.conf".source = ./hypr/hyprpaper.conf;
-    xdg.configFile."hypr/wallpaper.jpg".source = builtins.fetchurl {
-        url = "https://raw.githubusercontent.com/saint-13/Linux_Dynamic_Wallpapers/main/Dynamic_Wallpapers/ZorinMountainFog/ZorinMountainFog1.jpg";
-        sha256 = "1l2rvpyn2ab7cd1y93v3im3ki8dhrlcwar30lb4kyl078pxh52kd";
-    };
 
     # Use kitty as terminal emulator
     programs.kitty = {
         enable = true;
         settings = {
             font_family = "Jet Brains Mono";
-            foreground = "#BCC6F1";
-            background = "#24283B";
             show_hyperlink_targets = true;
             copy_on_select = "clipboard";
             strip_trailing_spaces = "smart";
@@ -102,22 +99,4 @@ in
         wl-clipboard
         wf-recorder
     ];
-
-    # Theming
-    dconf.settings = {
-        "org/gnome/desktop/interface" = {
-            color-scheme = "prefer-dark";
-            cursor-theme = "Bibata-Modern-Ice";
-        };
-    };
-
-    home.pointerCursor = {
-        name = "Bibata-Modern-Ice";
-        package = pkgs.bibata-cursors;
-        size = 64;
-        gtk.enable = true;
-        x11.enable = true;
-    };
-
-    gtk.cursorTheme.name = "Bibata-Modern-Ice";
 }

@@ -11,7 +11,7 @@
 
         plugins = with pkgs.vimPlugins; [
             # Theme
-            tokyonight-nvim
+            catppuccin-nvim
             
             # Explorer (VIM Tree)
             nui-nvim
