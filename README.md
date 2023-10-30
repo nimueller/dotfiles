@@ -1,6 +1,6 @@
 # Personal dotfiles
 *Still heavily WIP*
-## Home-Manager configuration
+## Home-Manager configuration (any OS)
 ### Installing Nix package manager (skip if Nix is already installed)
 <pre>
   curl -L https://nixos.org/nix/install | sh
