@@ -1,14 +1,26 @@
-# Personal dotfiles using Nix package manager
-
+# Personal dotfiles
 *Still heavily WIP*
-
-To (re-)build NixOS system (NixOS required):
+## Home-Manager configuration
+### Installing Nix package manager (skip if Nix is already installed)
 <pre>
-sudo nixos-rebuild switch --flake .#desktop
+  curl -L https://nixos.org/nix/install | sh
+  mkdir -p $HOME/.config/nix/
+  echo "experimental-features = nix-command flakes" >> $HOME/.config/nix/nix.conf
+  source $HOME/.nix-profile/etc/profile.d/nix.sh
 </pre>
 
-To just update home directory with configured user-specific dotfiles and packages (NixOS not required, only a working
-Nix package manager installation):
+### Installing Home-Manager (skip if Home-Manager is already installed)
 <pre>
-home-manager switch --flake .#desktop
+  nix run home-manager/master -- init --switch
+</pre>
+
+### Updating dotfiles
+<pre>
+  home-manager switch --flake github:LegendSalocin/dotfiles#server
+</pre>
+
+## NixOS configuration (NixOS required)
+To (re-)build entire NixOS system:
+<pre>
+sudo nixos-rebuild switch --flake .#desktop
 </pre>
