@@ -30,6 +30,7 @@
 
                 modules = [
                     ./home-manager/default.nix
+                    ./home-manager/neovim/default.nix
                 ];
             };
             
