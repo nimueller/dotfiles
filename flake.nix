@@ -6,9 +6,10 @@
             inputs.nixpkgs.follows = "nixpkgs";
         };
         hyprland.url = "github:hyprwm/Hyprland";
+        spicetify-nix.url = "github:the-argus/spicetify-nix";
     };
 
-    outputs = { nixpkgs, home-manager, hyprland, ... }:
+    outputs = { nixpkgs, home-manager, hyprland, spicetify-nix, ... } @ inputs:
     let
         username = "nico";
         system = "x86_64-linux";
@@ -26,7 +27,7 @@
             server = home-manager.lib.homeManagerConfiguration {
                 pkgs = nixpkgs.legacyPackages.${system};
 
-                extraSpecialArgs = { inherit username; };
+                extraSpecialArgs = { inherit inputs username; };
 
                 modules = [
                     ./home-manager/default.nix
@@ -37,10 +38,11 @@
             desktop = home-manager.lib.homeManagerConfiguration {
                 pkgs = nixpkgs.legacyPackages.${system};
 
-                extraSpecialArgs = { inherit username; };
+                extraSpecialArgs = { inherit inputs username; };
 
                 modules = [
                     hyprland.homeManagerModules.default
+                    spicetify-nix.homeManagerModule
                     ./home-manager/desktop.nix
                 ];
             };

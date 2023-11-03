@@ -61,6 +61,8 @@ in
         };
     };
 
+    programs.spicetify.enable = true;
+
     fonts.fontconfig.enable = true;
 
     # Packages needed on Hyprland specifically, in addition to a standard desktop
@@ -95,7 +97,6 @@ in
         brave
         discord
         jetbrains.idea-ultimate
-        spotify
         wl-clipboard
         wf-recorder
     ];

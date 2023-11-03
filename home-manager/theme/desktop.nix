@@ -15,7 +15,9 @@ let
     };
 in
 {
-    wayland.windowManager.hyprland.extraConfig = builtins.readFile "${theme.hyprland}/themes/macchiato.conf";
+    wayland.windowManager.hyprland.extraConfig = builtins.readFile "${theme.hyprland}/themes/macchiato.conf" + ''
+    env = GTK_THEME, ${theme.gtk-theme-name}
+    '';
 
     programs.kitty.theme = "Catppuccin-Macchiato";
 
@@ -32,10 +34,6 @@ in
         size = 64;
         gtk.enable = true;
         x11.enable = true;
-    };
-
-    home.sessionVariables = {
-        GTK_THEME = theme.gtk-theme-name;
     };
 
     gtk = {
