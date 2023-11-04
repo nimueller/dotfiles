@@ -1,6 +1,6 @@
 { pkgs, username, ... }:
 {
-    boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "vfio-pci.ids=10de:2704,10de:22bb" ];
+    boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "vfio-pci.ids=10de:2704,10de:22bb" "hugepages=8192" ];
     boot.extraModprobeConfig = "softdep drm pre: vfio-pci";
 
     virtualisation.libvirtd = {
