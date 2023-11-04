@@ -1,7 +1,15 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p jq
+#!nix-shell -i bash -p jq rofi-wayland
 
 ACTIVE_WINDOW_CLASS=$(hyprctl activewindow -j | jq -r .class)
 
-[ $ACTIVE_WINDOW_CLASS != "looking-glass-client" ] && ulauncher
+if [ $ACTIVE_WINDOW_CLASS != "looking-glass-client" ]; then
+    rofi=$(pgrep rofi)
+
+    if [ -z "$rofi" ]; then
+        rofi -show combi
+    else
+        kill "$rofi"
+    fi
+fi
 

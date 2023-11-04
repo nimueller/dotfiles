@@ -20,6 +20,10 @@ in
     '';
 
     programs.kitty.theme = "Catppuccin-Macchiato";
+    programs.rofi.theme = builtins.fetchurl {
+        url = "https://raw.githubusercontent.com/catppuccin/rofi/5350da41a11814f950c3354f090b90d4674a95ce/basic/.local/share/rofi/themes/catppuccin-macchiato.rasi";
+        sha256 = "0n9cixyv4ladvcfbybq5dsfyzklfh732cd8nmvjckd09pjkb62f1";
+    };
 
     dconf.settings = {
         "org/gnome/desktop/interface" = {

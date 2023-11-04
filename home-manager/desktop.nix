@@ -63,6 +63,24 @@ in
 
     programs.spicetify.enable = true;
 
+    programs.rofi = {
+        enable = true;
+        package = pkgs.rofi-wayland;
+        extraConfig = {
+            modi = "combi,calc";
+            combi-modes = "drun,ssh";
+            show-icons = true;
+            drun-display-format = "{icon} {name}";
+            display-combi = " 󱓞 Launch ";
+            display-calc = " 󰃬 Calc ";
+            display-drun = " App";
+            display-ssh = " 󱘖 SSH";
+        };
+        plugins = [
+            pkgs.rofi-calc
+        ];
+    };
+
     fonts.fontconfig.enable = true;
 
     # Packages needed on Hyprland specifically, in addition to a standard desktop
@@ -92,7 +110,6 @@ in
         gnome.totem # Video player
         gnome.gnome-font-viewer
         nautilus-open-any-terminal
-        ulauncher
         keepassxc
         brave
         discord
