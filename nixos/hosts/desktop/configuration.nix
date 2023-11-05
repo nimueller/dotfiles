@@ -29,6 +29,7 @@
 
     # Flatpak
     services.flatpak.enable = true;
+    programs.geary.enable = true;
 
     # XDG Desktop Portal
     xdg.portal = {

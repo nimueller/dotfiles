@@ -56,7 +56,8 @@ in
         settings = {
             global = {
                 monitor = 0;
-                font = "JetBrainsMono 12";
+                format = "<b>%s</b>\\n%b\\n%p";
+                vertical_alignment = "top";
             };
         };
     };

@@ -25,6 +25,39 @@ in
         sha256 = "0n9cixyv4ladvcfbybq5dsfyzklfh732cd8nmvjckd09pjkb62f1";
     };
 
+    services.dunst = {
+        iconTheme = {
+            package = pkgs.papirus-icon-theme;
+            name = "Papirus";
+        };
+
+        settings = {
+            global = {
+                font = "JetBrainsMono Nerd Font 12";
+                frame_width = 2;
+                corner_radius = 10;
+                frame_color = "#8AADF4";
+                separator_color = "frame";
+            };
+
+            urgency_low = {
+                background = "#24273A";
+                foreground = "#CAD3F5";
+            };
+
+            urgency_normal = {
+                background = "#24273A";
+                foreground = "#CAD3F5";
+            };
+
+            urgency_critical = {
+                background = "#24273A";
+                foreground = "#CAD3F5";
+                frame_color = "#F5A97F";
+            };
+        };
+    };
+
     dconf.settings = {
         "org/gnome/desktop/interface" = {
             color-scheme = theme.gtk-theme-name;
