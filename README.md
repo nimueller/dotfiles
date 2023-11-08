@@ -3,20 +3,20 @@
 ## Home-Manager configuration (any OS)
 ### Installing Nix package manager (skip if Nix is already installed)
 <pre>
-  curl -L https://nixos.org/nix/install | sh
-  mkdir -p $HOME/.config/nix/
-  echo "experimental-features = nix-command flakes" >> $HOME/.config/nix/nix.conf
-  source $HOME/.nix-profile/etc/profile.d/nix.sh
+curl -L https://nixos.org/nix/install | sh
+mkdir -p $HOME/.config/nix/
+echo "experimental-features = nix-command flakes" >> $HOME/.config/nix/nix.conf
+source $HOME/.nix-profile/etc/profile.d/nix.sh
 </pre>
 
 ### Installing Home-Manager (skip if Home-Manager is already installed)
 <pre>
-  nix run home-manager/master -- init --switch
+nix run home-manager/master -- init --switch
 </pre>
 
 ### Updating dotfiles
 <pre>
-  home-manager switch --flake github:LegendSalocin/dotfiles#server
+home-manager switch --flake github:LegendSalocin/dotfiles#server
 </pre>
 
 ## NixOS configuration (NixOS required)
