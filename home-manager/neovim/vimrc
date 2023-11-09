@@ -1,3 +1,4 @@
+" Basic settings
 set number
 set relativenumber
 set expandtab
@@ -7,8 +8,18 @@ set shiftwidth=4
 set timeout
 set timeoutlen=500
 
+nnoremap <SPACE> <Nop>
 let mapleader=' '
 
+" Allow multi-use paste
+xnoremap <leader>p "_dP
+
+" Copy/Paste shortcuts for system clipboard
 noremap <C-V> <ESC>"+p
 vnoremap <C-C> "+y
 noremap <C-A> <ESC>ggvG$
+
+" Leaving insert mode in a more comfortable way (built into Neovim, left for
+" compatibility with older VIM versions)
+inoremap <C-c> <ESC>
+

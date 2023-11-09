@@ -77,7 +77,7 @@ cmp.setup {
     }),
 }
 
-require 'which-key'
+require 'which-key'.register()
 
 
 local lspconfig = require 'lspconfig'

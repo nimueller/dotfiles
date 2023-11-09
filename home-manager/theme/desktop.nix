@@ -68,7 +68,6 @@ in
     home.pointerCursor = {
         name = theme.cursor-theme-name;
         package = theme.cursor;
-        size = 64;
         gtk.enable = true;
         x11.enable = true;
     };
