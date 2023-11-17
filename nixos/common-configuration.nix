@@ -64,11 +64,23 @@
     programs.command-not-found.enable = true;
 
     environment.systemPackages = with pkgs; [
-        neovim
+        # Some core packages
+        gcc
+        gdb
+        jdk
+        python3Full
+        nodejs_latest
+        cargo
+
+        # Some core programs
+        unzip
         git
         wget
-	    btop
-	    tree
+
+        # Custom user programs
+        neovim
+        btop
+        tree
     ];
 
     users.users.${username} = {
