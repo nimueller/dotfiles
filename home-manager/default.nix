@@ -9,7 +9,8 @@
 
     home.packages = with pkgs; [
         # Terminal programs
-        autojump
+        fzf # Lifesaver!
+        autojump # Lifesaver #2!
         bat
         lsd
     ];
@@ -30,6 +31,8 @@
             enableCompletion = true;
             syntaxHighlighting.enable = true;
 
+            initExtra = builtins.readFile ../config/zshrc;
+
             oh-my-zsh = {
                 enable = true;
                 theme = "skaro";
@@ -45,6 +48,7 @@
                 "ls" = "lsd";
                 "la" = "lsd -lah";
                 "virsh" = "virsh -c qemu:///system";
+                "fzf" = "fzf --reverse";
             };
         };
 
