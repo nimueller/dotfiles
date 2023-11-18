@@ -8,10 +8,16 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: 🔍 Checkout repository
         uses: actions/checkout@v3
-      - name: Install Nix
+      - name: 🔡 Install Nix
         uses: DeterminateSystems/nix-installer-action@main
-      - name: Update flake.lock
-        uses: DeterminateSystems/update-flake-lock@main
-      - run: nix flake update
+      - name: 🩹 Update flake.lock
+        run: nix flake update
+      - name: 🚀 Push update
+        run: |
+          git config --local user.name '🤖 Aktualisiernix'
+          git config --local user.email 'noreply@noreply.github.com'
+          git add flake.lock
+          git commit -m "🩹 Update flake.lock"
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
