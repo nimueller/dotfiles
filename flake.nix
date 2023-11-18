@@ -10,7 +10,7 @@
         ags.url = "github:Aylur/ags";
     };
 
-    outputs = { nixpkgs, home-manager, hyprland, spicetify-nix, ... } @ inputs:
+    outputs = { nixpkgs, home-manager, ... } @ inputs:
     let
         username = "nico";
         system = "x86_64-linux";
@@ -42,8 +42,6 @@
                 extraSpecialArgs = { inherit inputs username; };
 
                 modules = [
-                    hyprland.homeManagerModules.default
-                    spicetify-nix.homeManagerModule
                     ./home-manager/desktop.nix
                 ];
             };

@@ -1,16 +1,18 @@
-{ config, pkgs, lib, stdenv, ... }:
+{ config, pkgs, lib, stdenv, inputs, ... }:
 let
     my-pkgs = import ../pkgs { inherit pkgs lib; };
 in
 {
     nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
         "idea-ultimate"
-	    "spotify"
-        "vscode"
+        "spotify"
         "discord"
     ];
 
     imports = [ 
+        inputs.hyprland.homeManagerModules.default
+        inputs.ags.homeManagerModules.default
+        inputs.spicetify-nix.homeManagerModule
         ./default.nix
         ./theme/desktop.nix
     ];
@@ -41,9 +43,6 @@ in
         keybindings = {
             "ctrl+v" = "paste_from_clipboard";
         };
-        extraConfig = ''
-        mouse_map right click grabbed paste_from_clipboard
-        '';
     };
 
     # Sway On-Screen-Display for volume feedback
