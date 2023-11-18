@@ -36,7 +36,7 @@ return {
       -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
     },
     keys = {
-      { '<leader>ft', ':Neotree toggle<CR>', desc = "Toggle Neotree", silent = true }
+      { '<leader>ft', ':Neotree toggle<CR>', desc = "[F]ile [T]ree", silent = true }
     },
   },
 
