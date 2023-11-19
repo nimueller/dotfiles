@@ -8,6 +8,7 @@ local servers = {
   },
   nixd = {},
   tsserver = {},
+  cssls = {},
   eslint = {},
 }
 
@@ -46,8 +47,10 @@ end
 -- Setup neovim lua configuration
 require('neodev').setup()
 
+local lsp = require 'lspconfig'
+
 for server_name, config in pairs(servers) do
-  require('lspconfig')[server_name].setup {
+  lsp[server_name].setup {
     on_attach = on_attach,
     settings = config,
   }

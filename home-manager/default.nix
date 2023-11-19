@@ -11,8 +11,12 @@
         # Terminal programs
         fzf # Lifesaver!
         autojump # Lifesaver #2!
+        tldr
         bat
         lsd
+
+        typescript
+        sassc
     ];
 
     imports = [ 
