@@ -36,7 +36,29 @@ return {
       -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
     },
     keys = {
-      { '<leader>ft', ':Neotree toggle<CR>', desc = "[F]ile [T]ree", silent = true }
+      { '<leader>ft', ':Neotree focus<CR>', desc = "[F]ile [T]ree", silent = true }
+    },
+    opts = {
+      sources = { "filesystem", "buffers", "git_status", "document_symbols" },
+      open_files_do_not_replace_types = { "terminal", "Trouble", "trouble", "qf", "Outline" },
+      filesystem = {
+        bind_to_cwd = false,
+        follow_current_file = { enabled = true },
+        use_libuv_file_watcher = true,
+      },
+      window = {
+        mappings = {
+          ["<space>"] = "none",
+        },
+      },
+      default_component_configs = {
+        indent = {
+          with_expanders = true, -- if nil and file nesting is enabled, will enable expanders
+          expander_collapsed = "",
+          expander_expanded = "",
+          expander_highlight = "NeoTreeExpander",
+        },
+      },
     },
   },
 
@@ -54,8 +76,8 @@ return {
     opts = {
       options = {
         -- style_preset = require('bufferline').style_preset.slant,
-        middle_mouse_command = "bdelete! %d",
-        right_mouse_command = "vertical sbuffer %d",
+        close_command = function(n) require("mini.bufremove").delete(n, false) end,
+        right_mouse_command = function(n) require("mini.bufremove").delete(n, false) end,
         diagnostics = "nvim_lsp",
         diagnostics_indicator = function(count, level, diagnostics_dict, context)
           local icon = level:match("error") and " " or " "

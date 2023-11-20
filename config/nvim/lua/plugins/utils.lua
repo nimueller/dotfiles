@@ -4,6 +4,9 @@ return {
 
   -- Highlight unique jumps for the f and F motions
   'unblevable/quick-scope',
+
+  -- Some Neovim imporvements and enhancements
+  { 'echasnovski/mini.nvim', version = '*' },
 }
 
 -- vim: ts=2 sts=2 sw=2 et
