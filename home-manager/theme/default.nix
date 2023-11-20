@@ -18,7 +18,7 @@ let
 in
 {
     # Neovim
-    programs.neovim.extraLuaConfig = "vim.cmd.colorscheme \"catppuccin-macchiato\"";
+    # programs.neovim.extraLuaConfig = "vim.cmd.colorscheme \"catppuccin-macchiato\"";
 
     # btop++
     xdg.configFile."btop/themes/".source = "${theme.btop}/themes/";

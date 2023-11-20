@@ -8,6 +8,9 @@
     home.stateVersion = "23.05";
 
     home.packages = with pkgs; [
+	# Ensure esential programs are installed
+	gcc
+    	
         # Terminal programs
         fzf # Lifesaver!
         autojump # Lifesaver #2!
@@ -20,8 +23,8 @@
     ];
 
     imports = [ 
-        ./neovim/default.nix
-        ./theme/default.nix
+        ./neovim.nix
+        ../theme/default.nix
     ];
 
     programs = {
@@ -35,7 +38,7 @@
             enableCompletion = true;
             syntaxHighlighting.enable = true;
 
-            initExtra = builtins.readFile ../config/zshrc;
+            initExtra = builtins.readFile ../../config/zshrc;
 
             oh-my-zsh = {
                 enable = true;
