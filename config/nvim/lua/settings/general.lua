@@ -26,6 +26,9 @@ vim.o.incsearch = true
 vim.o.ignorecase = true
 vim.o.smartcase = true
 
+-- Spell checking
+vim.o.spell = true
+
 -- Keep signcolumn on by default
 vim.wo.signcolumn = 'yes'
 
