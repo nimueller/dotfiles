@@ -1,26 +1,31 @@
 # Personal dotfiles
-*Still heavily WIP*
+
+> [!WARNING]  
+> *Still heavily WIP*
+
 ## Home-Manager configuration (any OS)
-### Installing Nix package manager (skip if Nix is already installed)
-<pre>
-curl -L https://nixos.org/nix/install | sh
-mkdir -p $HOME/.config/nix/
-echo "experimental-features = nix-command flakes" >> $HOME/.config/nix/nix.conf
-source $HOME/.nix-profile/etc/profile.d/nix.sh
-</pre>
+### Installation
+<details open>
+  <summary><b>Headless mode</b></summary>
+  For command line only (useful on servers or TTY)
+  
+  ```sh 
+  curl -L https://raw.githubusercontent.com/LegendSalocin/dotfiles/main/install.sh | sh -s headless
+  ```
+</details>
 
-### Installing Home-Manager (skip if Home-Manager is already installed)
-<pre>
-nix run home-manager/master -- init --switch
-</pre>
+<details open>
+  <summary><b>Desktop mode</b></summary>
+  Activating my desktop environment, applications, and stuff, in addition to headless mode
+  
+  ```sh
+  curl -L https://raw.githubusercontent.com/LegendSalocin/dotfiles/main/install.sh | sh -s desktop
+  ```
+</details>
 
-### Updating dotfiles
-<pre>
-home-manager switch --flake github:LegendSalocin/dotfiles#server
-</pre>
 
 ## NixOS configuration (NixOS required)
 To (re-)build entire NixOS system:
-<pre>
+```sh
 sudo nixos-rebuild switch --flake .#desktop
-</pre>
+```
