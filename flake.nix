@@ -25,7 +25,7 @@
         };
 
         homeConfigurations = {
-            server = home-manager.lib.homeManagerConfiguration {
+            headless = home-manager.lib.homeManagerConfiguration {
                 pkgs = nixpkgs.legacyPackages.${system};
 
                 extraSpecialArgs = { inherit inputs username; };

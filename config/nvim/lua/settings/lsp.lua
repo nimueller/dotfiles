@@ -10,6 +10,7 @@ local servers = {
   tsserver = {},
   cssls = {},
   eslint = {},
+  bashls = {},
 }
 
 local on_attach = function(_, bufnr)

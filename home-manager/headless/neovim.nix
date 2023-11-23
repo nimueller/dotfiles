@@ -17,5 +17,7 @@
         nodePackages.vscode-langservers-extracted
         nodePackages.eslint
         nodePackages.typescript-language-server
+        # Bash
+        nodePackages.bash-language-server
     ];
 }
