@@ -41,7 +41,7 @@
                 extraSpecialArgs = { inherit inputs username; };
 
                 modules = [
-                    ./home-manager/desktop.nix
+                    ./home-manager/desktop
                 ];
             };
         };

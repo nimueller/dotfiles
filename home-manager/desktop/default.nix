@@ -1,6 +1,6 @@
 { config, pkgs, lib, stdenv, inputs, ... }:
 let
-    my-pkgs = import ../pkgs { inherit pkgs lib; };
+    my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
 {
     nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
@@ -13,22 +13,22 @@ in
         inputs.hyprland.homeManagerModules.default
         inputs.ags.homeManagerModules.default
         inputs.spicetify-nix.homeManagerModule
-        ./headless
-        ./theme/desktop.nix
+        ../headless
+        ../theme/desktop.nix
     ];
 
     # Basic Hyprland configuration
     wayland.windowManager.hyprland.enable = true;
     wayland.windowManager.hyprland.extraConfig =
-        builtins.readFile ./hypr/general.conf +
-        builtins.readFile ./hypr/windowrules.conf +
-        builtins.readFile ./hypr/workspacerules.conf +
-        builtins.readFile ./hypr/keybinds.conf + 
-        builtins.readFile ./hypr/autostart.conf;
+        builtins.readFile ../../config/hypr/general.conf +
+        builtins.readFile ../../config/hypr/windowrules.conf +
+        builtins.readFile ../../config/hypr/workspacerules.conf +
+        builtins.readFile ../../config/hypr/keybinds.conf + 
+        builtins.readFile ../../config/hypr/autostart.conf;
 
     # Link custom XKB file
-    xdg.configFile."xkb/symbols/us-german".source = ./hypr/us-german.xkb;
-    xdg.configFile."hypr/hyprpaper.conf".source = ./hypr/hyprpaper.conf;
+    xdg.configFile."xkb/symbols/us-german".source = ../../config/hypr/us-german.xkb;
+    xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
 
     # Use kitty as terminal emulator
     programs.kitty = {
