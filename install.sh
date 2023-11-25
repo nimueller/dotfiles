@@ -36,6 +36,8 @@ install_repo() {
   fi
 
   home-manager switch --flake ".#$INSTALL_OPTION"
+
+  bat cache --build
 }
 
 if [ ! $(which nix) ]; then

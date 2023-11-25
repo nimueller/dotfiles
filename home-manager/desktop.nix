@@ -13,7 +13,7 @@ in
         inputs.hyprland.homeManagerModules.default
         inputs.ags.homeManagerModules.default
         inputs.spicetify-nix.homeManagerModule
-        ./default.nix
+        ./headless
         ./theme/desktop.nix
     ];
 
