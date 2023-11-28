@@ -10,9 +10,12 @@ case "$INSTALL_OPTION" in
 esac
 
 if [ ! $(which git) ]; then
-  echo 'Please install git before executing this script using your favourite package manager'
+  echo 'Before running this script, you must install git using your favourite package manager'
 fi
 
+if [ ! $(which curl) ]; then
+  echo 'Before running this script, you must install curl using your favourite package manager'
+fi
 
 install_nix () {
   curl -L 'https://nixos.org/nix/install' | sh
@@ -95,7 +98,7 @@ else
   echo 'Home-Manager is already installed, skipping'
 fi
 
-# install_repo
+install_repo
 set_default_shell
 
 # vim: ts=2 sts=2 sw=2 et

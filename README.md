@@ -5,6 +5,10 @@
 
 ## Home-Manager configuration (any OS)
 ### Installation
+Prerequisites before running the install.sh script
+* `curl`
+* `git`
+
 <details open>
   <summary><b>Headless mode</b></summary>
   For command line only (useful on servers or TTY)
