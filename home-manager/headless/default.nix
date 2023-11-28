@@ -8,9 +8,11 @@
     home.stateVersion = "23.05";
 
     home.packages = with pkgs; [
-	# Ensure esential programs are installed
+	# Ensure essential programs are installed
 	gcc
     	
+        tmux
+
         # Terminal programs
         fzf # Lifesaver!
         autojump # Lifesaver #2!
@@ -21,6 +23,12 @@
         typescript
         sassc
     ];
+
+    home.file = {
+        ".tmux.conf" = {
+            source = ../../config/tmux.conf;
+        };
+    };
 
     imports = [ 
         ./neovim.nix
