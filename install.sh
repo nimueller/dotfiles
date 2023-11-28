@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 INSTALL_OPTION=$1
 DOTFILES_CLONE_DIRECTORY=$HOME/.dotfiles
@@ -40,6 +40,49 @@ install_repo() {
   bat cache --build
 }
 
+set_default_shell() {
+  echo -n '
+-----------------------------------------------------------------------------------------------------------------------
+
+Trying to set your default shell to ZSH (assuming your default login shell is Bash and was not changed using the chsh command).
+
+This process will use a little hack to automatically start ZSH every time you want to start Bash.
+Changing the default shell using chsh is not possible with Home-Manager, as NixOS is required to automatically set the default login shell.
+Thus, the generated .bashrc file should not be deleted, although using ZSH.
+
+This step will copy your existing '\$HOME/.bashrc' file to '\$HOME/.bashrc.backup' and bootstrap ZSH from bashrc in the future.
+If '\$HOME/.bashrc.backup' already exists, this step will be automatically skipped.
+You may run this script again if you want to set ZSH as your default shell or in case the .bashrc.backup already exists. 
+
+'
+  while true; do
+    echo -n 'Skip? [y/n] '
+    read -n 1 option
+    echo ''
+
+    case "$option" in
+      y|Y) return ;;
+      n|N) break ;;
+      *) ;;
+    esac
+  done
+
+  if [ -f "$HOME/.bashrc.backup" ]; then
+    echo "$HOME/.bashrc.backup already exists. Please move this file to a safe place and restart this installation script."
+    return
+  fi
+
+  if [ -f "$HOME/.bashrc" ]; then
+    mv "$HOME/.bashrc" "$HOME/.bashrc.backup"
+  fi
+
+  echo -n '
+PATH=$PATH:$HOME/.nix-profile/bin
+exec zsh
+' > "$HOME/.bashrc"
+  echo 'Made ZSH the default shell. Please restart your terminal session.'
+}
+
 if [ ! $(which nix) ]; then
   install_nix
 else 
@@ -52,6 +95,7 @@ else
   echo 'Home-Manager is already installed, skipping'
 fi
 
-install_repo
+# install_repo
+set_default_shell
 
 # vim: ts=2 sts=2 sw=2 et
