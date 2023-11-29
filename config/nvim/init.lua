@@ -147,6 +147,7 @@ require('lazy').setup({
     build = ':TSUpdate',
   },
 
+  require 'plugins.editor',
   require 'plugins.ui',
   require 'plugins.utils',
 }, {})

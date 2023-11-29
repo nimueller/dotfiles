@@ -2,7 +2,8 @@
 {
     programs.neovim.enable = true;
 
-    xdg.configFile.nvim.source = ../../config/nvim;
+    xdg.configFile."nvim/init.lua".source = ../../config/nvim/init.lua;
+    xdg.configFile."nvim/lua".source = ../../config/nvim/lua;
 
     home.packages = with pkgs; [
         # neovim plugin package dependencies
