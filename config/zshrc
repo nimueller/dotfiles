@@ -19,3 +19,15 @@ function packages() {
     echo "$selected_package" | tr -d '\n' | wl-copy
   fi
 }
+
+function fzd() {
+  local selection=$(find . -type d -print | fzf +m --preview "ls -lah {}")
+
+  if [ -n "$selection" ]; then
+    cd "$selection"
+    zle reset-prompt
+  fi
+}
+
+zle -N fzd
+bindkey '^F' fzd 

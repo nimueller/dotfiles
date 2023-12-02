@@ -118,6 +118,7 @@ in
         nautilus-open-any-terminal
         keepassxc
         brave
+        firefox
         discord
         jetbrains.idea-ultimate
         wl-clipboard
