@@ -14,6 +14,11 @@
         lua-language-server
         # Nix
         nixd
+
+        # LaTeX
+        texlab
+        ltex-ls
+
         # JavaScript/TypeScript
         nodePackages.vscode-langservers-extracted
         nodePackages.eslint

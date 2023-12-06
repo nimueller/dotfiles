@@ -11,6 +11,8 @@ local servers = {
   cssls = {},
   eslint = {},
   bashls = {},
+  texlab = {},
+  ltex = {},
 }
 
 local on_attach = function(_, bufnr)
