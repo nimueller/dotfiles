@@ -1,4 +1,4 @@
-{ pkgs, username, ... }:
+{ pkgs, username, lib, config, ... }:
 {
     imports = [ 
         # Results of hardware scan
@@ -11,9 +11,30 @@
         ./virtualisation.nix
     ];
 
+    config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+        "nvidia-x11"
+    ];
+
+    hardware.opengl = {
+        enable = true;
+        driSupport = true;
+        driSupport32Bit = true;
+    };
+
+    services.xserver.videoDrivers = [ "nvidia" ];
+
+    hardware.nvidia = {
+        modesetting.enable = true;
+        powerManagement.enable = false;
+        powerManagement.finegrained = false;
+        open = false;
+        nvidiaSettings = true;
+        package = config.boot.kernelPackages.nvidiaPackages.stable;
+    };
+
     # Hyprland Desktop Environment
     programs.hyprland.enable = true;
-    environment.sessionVariables.NIXOS_OZONE_WL = "1";
+    config.environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
     # Greetd as Display Manager
     services.greetd = {
