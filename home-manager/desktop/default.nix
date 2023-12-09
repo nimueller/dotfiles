@@ -18,13 +18,15 @@ in
     ];
 
     # Basic Hyprland configuration
-    wayland.windowManager.hyprland.enable = true;
-    wayland.windowManager.hyprland.extraConfig =
-        builtins.readFile ../../config/hypr/general.conf +
-        builtins.readFile ../../config/hypr/windowrules.conf +
-        builtins.readFile ../../config/hypr/workspacerules.conf +
-        builtins.readFile ../../config/hypr/keybinds.conf + 
-        builtins.readFile ../../config/hypr/autostart.conf;
+    wayland.windowManager.hyprland = {
+        enable = true;
+        extraConfig =
+            builtins.readFile ../../config/hypr/general.conf +
+            builtins.readFile ../../config/hypr/windowrules.conf +
+            builtins.readFile ../../config/hypr/workspacerules.conf +
+            builtins.readFile ../../config/hypr/keybinds.conf + 
+            builtins.readFile ../../config/hypr/autostart.conf;
+    };
 
     # Link custom XKB file
     xdg.configFile."xkb/symbols/us-german".source = ../../config/hypr/us-german.xkb;
