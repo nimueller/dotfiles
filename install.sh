@@ -39,6 +39,12 @@ install_repo() {
   fi
 
   home-manager switch --flake ".#$INSTALL_OPTION"
+}
+
+post_install_steps() {
+  if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+  fi
 
   bat cache --build
 }
@@ -99,6 +105,7 @@ else
 fi
 
 install_repo
+post_install_steps
 set_default_shell
 
 # vim: ts=2 sts=2 sw=2 et
