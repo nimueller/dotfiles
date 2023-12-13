@@ -17,7 +17,7 @@
 
 <b>Application Launcher</b>: rofi
 
-<b>Browser</b>: Brave
+<b>Browser</b>: Firefox
 
 
 | ![Images](resources/2023-11-29-213212_hyprshot.png) | ![Images](resources/2023-11-29-203138_hyprshot.png) |
@@ -60,3 +60,11 @@ To (re-)build entire NixOS system:
 ```sh
 sudo nixos-rebuild switch --flake .#desktop
 ```
+
+Post-install scripts you should run after switching to NixOS config (only needed once after initial nixos-rebuild)
+```sh
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+bat cache --build
+```
+To apply tmux plugins, press CTRL + Space followed by I and restart tmux.
+
