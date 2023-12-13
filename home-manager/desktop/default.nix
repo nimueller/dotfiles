@@ -3,11 +3,7 @@ let
     my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
 {
-    nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-        "idea-ultimate"
-        "spotify"
-        "discord"
-    ];
+    nixpkgs.config.allowUnfree = true;
 
     imports = [ 
         inputs.hyprland.homeManagerModules.default
@@ -121,7 +117,7 @@ in
         keepassxc
         brave
         firefox
-        discord
+        discord-canary
         jetbrains.idea-ultimate
         wl-clipboard
         wf-recorder
