@@ -9,31 +9,16 @@
 
         # Extra virtualisation settings
         ./virtualisation.nix
+
+        # Configuration to fix Nvidia...
+        ./nvidia.nix
     ];
-
-    nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-        "nvidia-x11"
-        "nvidia-settings"
-    ];
-
-    hardware.opengl = {
-        enable = true;
-        driSupport = true;
-        driSupport32Bit = true;
-    };
-
-    services.xserver.videoDrivers = [ "nvidia" ];
-
-    hardware.nvidia = {
-        modesetting.enable = true;
-        powerManagement.enable = false;
-        powerManagement.finegrained = false;
-        open = false;
-        nvidiaSettings = true;
-    };
 
     # Hyprland Desktop Environment
     programs.hyprland.enable = true;
+    nixpkgs.config.environment.sessionVariables = {
+        NIXOS_OZONE_WL = "1";
+    };
 
     # Greetd as Display Manager
     services.greetd = {
