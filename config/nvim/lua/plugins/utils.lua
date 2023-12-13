@@ -1,4 +1,7 @@
 return {
+  -- Most important plugin when using tmux
+  'christoomey/vim-tmux-navigator',
+
   -- Measure VIM startup time
   'dstein64/vim-startuptime',
 
