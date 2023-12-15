@@ -12,6 +12,7 @@
 
         # Configuration to fix Nvidia...
         ./nvidia.nix
+        ./gaming.nix
     ];
 
     # Hyprland Desktop Environment

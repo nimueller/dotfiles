@@ -28,6 +28,10 @@ in
     xdg.configFile."xkb/symbols/us-german".source = ../../config/hypr/us-german.xkb;
     xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
 
+    programs.zsh.shellAliases = { 
+        "discord" = "discordcanary --enable-features=UseOzonePlatform,WaylandWindowDecorations,WebRTCPipeWireCapturer --ozone-platform=wayland >/dev/null 2>&1 &";
+    };
+
     # Use kitty as terminal emulator
     programs.kitty = {
         enable = true;
