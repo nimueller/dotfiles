@@ -20,6 +20,7 @@
         ltex-ls
 
         # JavaScript/TypeScript
+        biome
         nodePackages.vscode-langservers-extracted
         nodePackages.eslint
         nodePackages.typescript-language-server

@@ -7,6 +7,7 @@ local servers = {
     },
   },
   nixd = {},
+  biome = {},
   tsserver = {},
   cssls = {},
   eslint = {},

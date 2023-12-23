@@ -11,7 +11,7 @@
 
 <b>Desktop Environment</b>: Hyprland
 
-<b>Status Bar</b>: EWW (configuration very experimental and not uploaded yet)
+<b>Status Bar</b>: Waybar
 
 <b>Notification Daemon</b>: dunst
 
