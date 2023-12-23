@@ -11,7 +11,7 @@
 
 #waybar > box {
   background: #363a4f;
-  margin: 10px 10px;
+  margin: 10px 10px 0 10px;
   border-radius: 10px;
 }
 
@@ -21,7 +21,7 @@
 #tray,
 #clock {
   background-color: #494d64;
-  padding: 0.5rem 1rem;
+  padding: 0 0.5rem;
 }
 
 #window {
@@ -46,11 +46,15 @@
   border-radius: 10px;
 }
 
-#pulseaudio {
+#pulseaudio.sink {
   color: #a6da95;
-  border-radius: 10px 0px 0px 10px;
+  border-radius: 10px 0 0 10px;
+}
+
+#pulseaudio.source {
+  color: #f5bde6;
 }
 
 #clock {
-  border-radius: 0px 10px 10px 0px;
+  border-radius: 0 10px 10px 0;
 }
