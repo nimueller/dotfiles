@@ -27,6 +27,7 @@ in
     # Link custom XKB file
     xdg.configFile."xkb/symbols/us-german".source = ../../config/hypr/us-german.xkb;
     xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
+    xdg.configFile."waybar".source = ../../config/waybar;
 
     programs.zsh.shellAliases = { 
         "discord" = "discordcanary --enable-features=UseOzonePlatform,WaylandWindowDecorations,WebRTCPipeWireCapturer --ozone-platform=wayland >/dev/null 2>&1 &";

@@ -1,0 +1,58 @@
+@import "macchiato.css";
+
+* {
+  font-family: JetBrainsMono Nerd Font;
+  font-size: 12px;
+  min-height: 0;
+}
+
+#waybar {
+  background: transparent;
+  color: #cad3f5;
+}
+
+#waybar > box {
+  background: #363a4f;
+  margin: 10px 10px;
+  border-radius: 10px;
+}
+
+#window,
+#workspaces,
+#pulseaudio,
+#tray,
+#clock {
+  background-color: #494d64;
+  padding: 0.5rem 1rem;
+}
+
+#window {
+  border-radius: 10px;
+}
+
+#workspaces {
+  border-radius: 10px;
+}
+
+#workspaces button {
+  border-radius: 1rem;
+  padding: 0.4rem;
+}
+
+#workspaces button.active {
+  color: #f4dbd6;
+  border-radius: 10px;
+}
+
+#workspaces button:hover {
+  border-radius: 10px;
+}
+
+#pulseaudio {
+  color: #a6da95;
+  border-radius: 10px 0px 0px 10px;
+}
+
+#clock {
+  border-radius: 0px 10px 10px 0px;
+}
