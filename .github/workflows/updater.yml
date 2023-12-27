@@ -21,3 +21,4 @@ jobs:
           git add flake.lock
           git commit -m "🩹 Update flake.lock"
           git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+

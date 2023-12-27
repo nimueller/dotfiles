@@ -119,6 +119,7 @@ in
         gnome.eog # Image viewer
         gnome.totem # Video player
         gnome.gnome-font-viewer
+        gimp
         nautilus-open-any-terminal
         keepassxc
         brave

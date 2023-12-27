@@ -1,5 +1,7 @@
 { pkgs, username, ... }:
 {
+    virtualisation.docker.enable = true;
+
     # boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "vfio-pci.ids=10de:2704,10de:22bb" "hugepages=8192" ];
     boot.kernelParams = [ "intel_iommu=on" "iommu=pt" ];
     boot.extraModprobeConfig = "softdep drm pre: vfio-pci";
@@ -14,13 +16,13 @@
         };
     };
 
-    users.users.${username} = {
-        extraGroups = [ "libvirtd" ];
-    };
-
     systemd.tmpfiles.rules = [
         "f /dev/shm/looking-glass 0660 ${username} kvm -"
     ];
+
+    users.users.${username} = {
+        extraGroups = [ "docker" "libvirtd" ];
+    };
 
     environment.systemPackages = with pkgs; [
         (writeScriptBin "iommu-groups" ''

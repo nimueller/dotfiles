@@ -1,6 +1,7 @@
 #!/bin/bash
 
 INSTALL_OPTION=$1
+SKIP_SHELL_CHECK=$2
 DOTFILES_CLONE_DIRECTORY=$HOME/.dotfiles
 
 case "$INSTALL_OPTION" in
@@ -106,6 +107,9 @@ fi
 
 install_repo
 post_install_steps
-set_default_shell
+
+if [ -n "$SKIP_SHELL_CHECK" ]; then
+  set_default_shell
+fi
 
 # vim: ts=2 sts=2 sw=2 et

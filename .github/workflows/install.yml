@@ -1,0 +1,13 @@
+name: check installation script
+on: push
+    
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Checkout repository
+        uses: actions/checkout@v3
+      - name: 💻 Trigger installation script
+        run: |
+          ./install.sh headless
+
