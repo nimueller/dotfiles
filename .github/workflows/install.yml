@@ -9,9 +9,10 @@ jobs:
         uses: actions/checkout@v3
       - name: 🛠️ Trigger installation script
         run: |
-          ./install.sh headless
+          SET_DEFAULT_SHELL=1 ./install.sh runner
       - name: 📲 Check commands available
         run: |
+          source ~/.bashrc
           nix
           home-manager
 

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 INSTALL_OPTION=$1
-SKIP_SHELL_CHECK=$2
 DOTFILES_CLONE_DIRECTORY=$HOME/.dotfiles
 
 case "$INSTALL_OPTION" in
@@ -66,7 +65,7 @@ If '\$HOME/.bashrc.backup' already exists, this step will be automatically skipp
 You may run this script again if you want to set ZSH as your default shell or in case the .bashrc.backup already exists. 
 
 '
-  while true; do
+  while [ -z "$SET_DEFAULT_SHELL" ]; do
     echo -n 'Skip? [y/n] '
     read -n 1 option
     echo ''
@@ -108,9 +107,6 @@ fi
 
 install_repo
 post_install_steps
-
-if [ -n "$SKIP_SHELL_CHECK" ]; then
-  set_default_shell
-fi
+set_default_shell
 
 # vim: ts=2 sts=2 sw=2 et
