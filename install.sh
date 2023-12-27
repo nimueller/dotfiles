@@ -7,6 +7,7 @@ DOTFILES_CLONE_DIRECTORY=$HOME/.dotfiles
 case "$INSTALL_OPTION" in
   headless) ;;
   desktop) ;;
+  runner) ;;
   *) >&2 echo "Installation option '$INSTALL_OPTION' is not valid. Please provide one of [headless|desktop]"; exit 1 ;;
 esac
 

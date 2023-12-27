@@ -44,6 +44,20 @@
                     ./home-manager/desktop
                 ];
             };
+
+            runner = home-manager.lib.homeManagerConfiguration {
+                pkgs = nixpkgs.legacyPackages.${system};
+
+                extraSpecialArgs = { 
+                    inherit inputs;
+                    username = "runner";
+                };
+
+                modules = [
+                    ./home-manager/headless
+                ];
+            };
+
         };
     };
 }
