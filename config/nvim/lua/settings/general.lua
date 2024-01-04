@@ -28,6 +28,7 @@ vim.o.smartcase = true
 
 -- Spell checking
 vim.o.spell = true
+vim.o.spelllang = "en,de"
 
 -- Keep signcolumn on by default
 vim.wo.signcolumn = 'yes'
@@ -41,3 +42,9 @@ vim.o.completeopt = 'menuone,noselect'
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
+
+-- Enable .vimrc files and editorconfig for the CWD in a secured mode
+vim.g.editorconfig = true
+vim.o.exrc = true
+vim.o.secure = true
+
