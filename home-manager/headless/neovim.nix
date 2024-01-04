@@ -16,6 +16,8 @@
         nixd
 
         # LaTeX
+        texliveFull
+        evince
         texlab
         ltex-ls
 
