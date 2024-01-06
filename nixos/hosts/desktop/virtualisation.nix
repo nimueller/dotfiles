@@ -2,8 +2,7 @@
 {
     virtualisation.docker.enable = true;
 
-    # boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "vfio-pci.ids=10de:2704,10de:22bb" "hugepages=8192" ];
-    boot.kernelParams = [ "intel_iommu=on" "iommu=pt" ];
+    boot.kernelParams = [ "intel_iommu=on" "iommu=pt" "vfio-pci.ids=1002:6fdf,1002:aaf0" "hugepages=8192" ];
     boot.extraModprobeConfig = "softdep drm pre: vfio-pci";
 
     virtualisation.libvirtd = {
