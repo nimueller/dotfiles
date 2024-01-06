@@ -60,7 +60,7 @@ in
 
     dconf.settings = {
         "org/gnome/desktop/interface" = {
-            color-scheme = theme.gtk-theme-name;
+            color-scheme = "prefer-dark";
             cursor-theme = theme.cursor-theme-name;
         };
     };

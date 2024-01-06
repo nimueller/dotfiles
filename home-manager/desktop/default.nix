@@ -103,6 +103,7 @@ in
         slurp
         jq
         libnotify
+        libsecret
         inotify-tools
         waybar
 
