@@ -6,8 +6,8 @@
     "modules-center": ["hyprland/workspaces"],
     "modules-right": ["privacy", "pulseaudio#sink", "pulseaudio#source", "tray", "clock"],
     "pulseaudio#sink": {
-        "format": "{volume}% {icon}",
-        "format-bluetooth": "{volume}% {icon}",
+        "format": " {icon} {volume}%",
+        "format-bluetooth": "{icon} {volume}% ",
         "format-bluetooth-muted": " {icon}",
         "format-muted": " {format_source}",
         "format-icons": {
@@ -26,7 +26,7 @@
         "format-bluetooth": "{format_source}",
         "format-bluetooth-muted": "{format_source}",
         "format-muted": " {format_source}",
-        "format-source": "{volume}% ",
+        "format-source": " {volume}% ",
         "format-source-muted": "",
         "format-icons": {
             "headphone": "",
@@ -39,12 +39,12 @@
         },
         "on-click": "pavucontrol"
     },
-    "clock": {
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
-        "format-alt": "{:%Y-%m-%d}"
-    },
     "tray": {
         "spacing": 10
+    },
+    "clock": {
+        "format": "  {:%H:%M}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
     }
 }
 

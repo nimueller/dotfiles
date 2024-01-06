@@ -57,7 +57,8 @@ in
 
         settings = {
             global = {
-                monitor = 0;
+                monitor = 1;
+                idle_threshold = "1m";
                 format = "<b>%s</b>\\n%b\\n%p";
                 vertical_alignment = "top";
             };
