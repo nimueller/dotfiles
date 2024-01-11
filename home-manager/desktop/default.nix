@@ -48,22 +48,21 @@ in
         };
     };
 
-    # Sway On-Screen-Display for volume feedback
-    services.swayosd.enable = true;
-
     # Dunst as notification daemon
     services.dunst = {
         enable = true;
 
         settings = {
             global = {
-                monitor = 1;
+                monitor = 0;
                 idle_threshold = "1m";
                 format = "<b>%s</b>\\n%b\\n%p";
                 vertical_alignment = "top";
             };
         };
     };
+
+    services.swayosd.enable = true;
 
     programs.spicetify.enable = true;
 
@@ -97,6 +96,10 @@ in
         (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
 
         # Utility
+        polkit-kde-agent
+        qt5.qtwayland
+        qt6.qtwayland
+
         playerctl
         hyprpaper
         hyprpicker
@@ -127,6 +130,7 @@ in
         brave
         firefox
         discord-canary
+        webcord
         jetbrains.idea-ultimate
         wl-clipboard
         wf-recorder
