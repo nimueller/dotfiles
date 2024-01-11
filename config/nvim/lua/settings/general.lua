@@ -9,10 +9,15 @@ vim.wo.relativenumber = true
 vim.o.scrolloff = 10
 
 -- Line break column
-vim.o.colorcolumn = '120'
+vim.o.colorcolumn = '80'
 
--- Enable break indent
+-- Indentation settings
+vim.o.tabstop = 4
+vim.o.shiftwidth = 4
+vim.o.expandtab = true
+vim.o.autoindent = true
 vim.o.breakindent = true
+vim.o.smartindent = true
 
 -- Save undo history
 vim.o.swapfile = false
