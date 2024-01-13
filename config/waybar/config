@@ -5,6 +5,24 @@
     "modules-left": ["hyprland/window"],
     "modules-center": ["hyprland/workspaces"],
     "modules-right": ["privacy", "pulseaudio#sink", "pulseaudio#source", "tray", "clock"],
+    "hyprland/workspaces": {
+        "format": "<sup>{id}</sup> {windows}",
+        "window-rewrite": {
+            "class<firefox>": "󰈹",
+            "class<brave-browser>": "",
+            "class<discord>": "󰙯",
+            "class<spotify>": "",
+            "class<org.keepassxc.KeePassXC>": "",
+            "class<nautilus>": "󰷏",
+            "class<geary>": "",
+            "class<virt-manager>": "󰢩",
+            "class<looking-glass-client>": "",
+            "class<jetbrains>": "󱃖",
+            "class<steam>": "󰓓",
+            "class<kitty>": "",
+            "class<lutris>": "󰊗"
+        }
+    },
     "pulseaudio#sink": {
         "format": " {icon} {volume}%",
         "format-bluetooth": "{icon} {volume}% ",
