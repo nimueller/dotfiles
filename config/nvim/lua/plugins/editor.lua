@@ -1,6 +1,6 @@
 return {
-  -- Non-LSP linters
-  'jose-elias-alvarez/null-ls.nvim',
+  -- Non-LSP linters and formatters
+  'nvimtools/none-ls.nvim',
 
   -- Easily surround text 
   {

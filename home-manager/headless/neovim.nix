@@ -15,6 +15,10 @@
         # Nix
         nixd
 
+        # Kotlin
+        kotlin-language-server
+        ktlint
+
         # LaTeX
         texliveFull
         evince

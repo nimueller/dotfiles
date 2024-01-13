@@ -15,6 +15,7 @@ local servers = {
   bashls = {},
   texlab = {},
   ltex = {},
+  kotlin_language_server = {}
 }
 
 local on_attach = function(_, bufnr)
@@ -27,7 +28,8 @@ local on_attach = function(_, bufnr)
   end
 
   nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-  nmap('<leader>cr', vim.lsp.buf.format, '[C]ode [R]eformat')
+  nmap('<leader>cf', vim.lsp.buf.format, '[C]ode [F]ormat')
+  nmap('<leader>cr', vim.lsp.buf.rename, '[C]ode [R]ename')
 
   nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
   nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
@@ -61,3 +63,12 @@ for server_name, config in pairs(servers) do
     settings = config,
   }
 end
+
+local null_ls = require'null-ls'
+null_ls.setup({
+  sources = {
+    null_ls.builtins.diagnostics.ktlint,
+    null_ls.builtins.formatting.ktlint
+  }
+})
+
