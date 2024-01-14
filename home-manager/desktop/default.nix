@@ -66,11 +66,6 @@ in
 
     programs.spicetify.enable = true;
 
-    programs.ags = {
-        enable = true;
-        extraPackages = [ pkgs.libsoup_3 ];
-    };
-
     programs.rofi = {
         enable = true;
         package = pkgs.rofi-wayland;
@@ -112,8 +107,6 @@ in
         waybar
 
         my-pkgs.hyprshot
-        # my-pkgs.eww-wayland-tray
-        my-pkgs.xwaylandvideobridge
         my-pkgs.recorder
         my-pkgs.applauncher
 

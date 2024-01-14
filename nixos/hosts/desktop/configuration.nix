@@ -17,9 +17,6 @@
 
     # Hyprland Desktop Environment
     programs.hyprland.enable = true;
-    nixpkgs.config.environment.sessionVariables = {
-        NIXOS_OZONE_WL = "1";
-    };
 
     # Greetd as Display Manager
     services.greetd = {
