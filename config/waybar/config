@@ -10,7 +10,7 @@
         "window-rewrite": {
             "class<firefox>": "󰈹",
             "class<brave-browser>": "",
-            "class<discord>": "󰙯",
+            "class<WebCord>": "󰙯",
             "class<spotify>": "",
             "class<org.keepassxc.KeePassXC>": "",
             "class<nautilus>": "󰷏",

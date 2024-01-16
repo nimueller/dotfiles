@@ -7,7 +7,6 @@
         };
         hyprland.url = "github:hyprwm/Hyprland";
         spicetify-nix.url = "github:the-argus/spicetify-nix";
-        ags.url = "github:Aylur/ags";
     };
 
     outputs = { nixpkgs, home-manager, ... } @ inputs:

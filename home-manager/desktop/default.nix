@@ -7,7 +7,6 @@ in
 
     imports = [ 
         inputs.hyprland.homeManagerModules.default
-        inputs.ags.homeManagerModules.default
         inputs.spicetify-nix.homeManagerModule
         ../headless
         ../theme/desktop.nix
@@ -28,10 +27,6 @@ in
     xdg.configFile."xkb/symbols/us-german".source = ../../config/hypr/us-german.xkb;
     xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
     xdg.configFile."waybar".source = ../../config/waybar;
-
-    programs.zsh.shellAliases = { 
-        "discord" = "discordcanary --enable-features=UseOzonePlatform,WaylandWindowDecorations,WebRTCPipeWireCapturer --ozone-platform=wayland >/dev/null 2>&1 &";
-    };
 
     # Use kitty as terminal emulator
     programs.kitty = {
@@ -61,8 +56,6 @@ in
             };
         };
     };
-
-    services.swayosd.enable = true;
 
     programs.spicetify.enable = true;
 
