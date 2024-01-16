@@ -98,6 +98,7 @@ in
         libsecret
         inotify-tools
         waybar
+        swayosd
 
         my-pkgs.hyprshot
         my-pkgs.recorder
