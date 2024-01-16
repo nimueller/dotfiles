@@ -122,8 +122,8 @@ in
         keepassxc
         brave
         firefox
-        discord-canary
         webcord
+        obs-studio
         jetbrains.idea-ultimate
         wl-clipboard
         wf-recorder
