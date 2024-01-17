@@ -49,7 +49,7 @@ in
 
         settings = {
             global = {
-                monitor = 0;
+                follow = "mouse";
                 idle_threshold = "1m";
                 format = "<b>%s</b>\\n%b\\n%p";
                 vertical_alignment = "top";
