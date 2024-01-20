@@ -67,7 +67,7 @@
         # Some core packages
         gcc
         gdb
-        jdk
+        jdk21
         python3Full
         nodejs_latest
         cargo
