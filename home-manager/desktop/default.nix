@@ -99,6 +99,7 @@ in
         inotify-tools
         waybar
         swayosd
+        wtype
 
         my-pkgs.hyprshot
         my-pkgs.recorder
