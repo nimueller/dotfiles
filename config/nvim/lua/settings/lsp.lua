@@ -15,6 +15,7 @@ local servers = {
   bashls = {},
   texlab = {},
   ltex = {},
+  jdtls = {},
   kotlin_language_server = {}
 }
 
@@ -72,4 +73,3 @@ null_ls.setup({
     null_ls.builtins.formatting.ktlint
   }
 })
-

@@ -15,7 +15,8 @@
         # Nix
         nixd
 
-        # Kotlin
+        # Kotlin/Java
+        jdt-language-server
         kotlin-language-server
         ktlint
 

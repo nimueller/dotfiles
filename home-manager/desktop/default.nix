@@ -93,13 +93,13 @@ in
         hyprpicker
         grim
         slurp
-        jq
         libnotify
         libsecret
         inotify-tools
         waybar
         swayosd
         wtype
+        cliphist
 
         my-pkgs.hyprshot
         my-pkgs.recorder

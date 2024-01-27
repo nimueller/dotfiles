@@ -64,23 +64,26 @@
     programs.command-not-found.enable = true;
 
     environment.systemPackages = with pkgs; [
-        # Some core packages
+        # Some core programs
+        jq
+        unzip
+        git
+        wget
+
+        # Development
         gcc
         gdb
         jdk21
         python3Full
         nodejs_latest
         cargo
+        gradle
 
-        # Some core programs
-        unzip
-        git
-        wget
-
-        # Custom user programs
+        # CLI programs
         neovim
         btop
         tree
+
     ];
 
     users.users.${username} = {
