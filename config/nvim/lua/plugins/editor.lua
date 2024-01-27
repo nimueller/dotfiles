@@ -1,4 +1,9 @@
 return {
+  {
+    "luckasRanarison/tree-sitter-hyprlang",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+  },
+
   -- Non-LSP linters and formatters
   'nvimtools/none-ls.nvim',
 
