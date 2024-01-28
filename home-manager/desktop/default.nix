@@ -23,8 +23,6 @@ in
             builtins.readFile ../../config/hypr/autostart.conf;
     };
 
-    # Link custom XKB file
-    xdg.configFile."xkb/symbols/us-german".source = ../../config/hypr/us-german.xkb;
     xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
     xdg.configFile."waybar".source = ../../config/waybar;
 
@@ -119,7 +117,6 @@ in
         firefox
         webcord
         obs-studio
-        jetbrains.idea-ultimate
         wl-clipboard
         wf-recorder
     ];
