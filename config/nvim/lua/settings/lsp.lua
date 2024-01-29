@@ -67,10 +67,13 @@ for server_name, config in pairs(servers) do
   }
 end
 
-local null_ls = require'null-ls'
+local null_ls = require 'null-ls'
 null_ls.setup({
   sources = {
     null_ls.builtins.diagnostics.ktlint,
     null_ls.builtins.formatting.ktlint
   }
 })
+
+local telescope = require 'telescope'
+telescope.load_extension('ui-select')

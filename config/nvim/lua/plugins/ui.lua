@@ -15,11 +15,11 @@ return {
         },
       },
       presets = {
-        bottom_search = false, -- dont use a classic bottom cmdline for search
-        command_palette = false, -- dont position the cmdline and popupmenu together
-        long_message_to_split = true, -- long messages will be sent to a split
-        inc_rename = true, -- enables an input dialog for inc-rename.nvim
-        lsp_doc_border = true, -- add a border to hover docs and signature help
+        bottom_search = false,
+        command_palette = true,
+        long_message_to_split = true,
+        inc_rename = false,
+        lsp_doc_border = true
       },
     },
   },
@@ -108,7 +108,44 @@ return {
         end,
       },
     },
-  }
-}
+    keys = {
+      { '<leader>?',       "<cmd>Telescope oldfiles<cr>", desc = '[?] Find recently opened files', silent = true },
+      { '<leader><space>', "<cmd>Telescope buffers<cr>",  desc = '[ ] Find existing buffers',      silent = true },
+      {
+        '<leader>/',
+        function()
+          require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
+            winblend = 10,
+            previewer = false,
+          })
+        end,
+        desc = '[/] Fuzzily search in current buffer',
+        silent = true
+      },
+      { "<leader>fh", "<cmd>Telescope help_tags<cr>",   desc = "[F]ind [H]elp",                  silent = true },
+      { '<leader>gf', "<cmd>Telescope git_files<cr>",   desc = 'Search [G]it [F]iles',           silent = true },
+      { '<leader>sf', "<cmd>Telescope find_files<cr>",  desc = '[S]earch [F]iles',               silent = true },
+      { '<leader>sh', "<cmd>Telescope help_tags<cr>",   desc = '[S]earch [H]elp',                silent = true },
+      { '<leader>sw', "<cmd>Telescope grep_string<cr>", desc = '[S]earch current [W]ord',        silent = true },
+      { '<leader>sg', "<cmd>Telescope live_grep<cr>",   desc = '[S]earch by [G]rep',             silent = true },
+      { '<leader>sd', "<cmd>Telescope diagnostics<cr>", desc = '[S]earch [D]iagnostics',         silent = true },
+      { '<leader>sr', "<cmd>Telescope resume<cr>",      desc = '[S]earch [R]esume',              silent = true },
+    },
+    opts = function()
+      local actions = require 'telescope.actions'
 
--- vim: ts=2 sts=2 sw=2 et
+      return {
+        defaults = {
+          mappings = {
+            i = {
+              ['<esc>'] = actions.close,
+            },
+          },
+        },
+      }
+    end
+  },
+
+  -- Use Telescope for Code Actions
+  'nvim-telescope/telescope-ui-select.nvim',
+}
