@@ -13,7 +13,9 @@
         # Lua
         lua-language-server
         # Nix
-        nixd
+        # nixd
+        nil
+        statix
 
         # Kotlin/Java
         jdt-language-server
