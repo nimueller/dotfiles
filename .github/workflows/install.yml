@@ -12,7 +12,7 @@ jobs:
           SET_DEFAULT_SHELL=1 ./install.sh runner
       - name: 📲 Check commands available
         run: |
-          source ~/.bashrc
+          source ~/.profile
           nix
           home-manager
 

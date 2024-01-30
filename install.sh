@@ -58,10 +58,10 @@ Trying to set your default shell to ZSH (assuming your default login shell is Ba
 
 This process will use a little hack to automatically start ZSH every time you want to start Bash.
 Changing the default shell using chsh is not possible with Home-Manager, as NixOS is required to automatically set the default login shell.
-Thus, the generated .bashrc file should not be deleted, although using ZSH.
+Thus, the generated .profile file should not be deleted, although using ZSH.
 
-This step will copy your existing '\$HOME/.bashrc' file to '\$HOME/.bashrc.backup' and bootstrap ZSH from bashrc in the future.
-If '\$HOME/.bashrc.backup' already exists, this step will be automatically skipped.
+This step will copy your existing '\$HOME/.profile' file to '\$HOME/.profile.backup' and bootstrap ZSH from .profile in the future.
+If '\$HOME/.profile.backup' already exists, this step will be automatically skipped.
 You may run this script again if you want to set ZSH as your default shell or in case the .bashrc.backup already exists. 
 
 '
@@ -77,19 +77,23 @@ You may run this script again if you want to set ZSH as your default shell or in
     esac
   done
 
-  if [ -f "$HOME/.bashrc.backup" ]; then
-    echo "$HOME/.bashrc.backup already exists. Please move this file to a safe place and restart this installation script."
+  if [ -f "$HOME/.profile.backup" ]; then
+    echo "$HOME/.profile.backup already exists. Please move this file to a safe place and restart this installation script."
     return
   fi
 
-  if [ -f "$HOME/.bashrc" ]; then
-    mv "$HOME/.bashrc" "$HOME/.bashrc.backup"
+  if [ -f "$HOME/.profile" ]; then
+    mv "$HOME/.profile" "$HOME/.profile.backup"
   fi
 
   echo -n '
-PATH=$PATH:$HOME/.nix-profile/bin
-exec zsh
-' > "$HOME/.bashrc"
+# execute zsh if it exists
+if [ -n "$BASH_VERSION" ]; then 
+    if (which zsh >/dev/null 2>&1); then
+		    exec zsh
+    fi
+fi
+' >> "$HOME/.profile"
   echo 'Made ZSH the default shell. Please restart your terminal session.'
 }
 
