@@ -152,4 +152,25 @@ return {
 
   -- Use Telescope for Code Actions
   'nvim-telescope/telescope-ui-select.nvim',
+
+  -- Diagnostics view
+  {
+    "folke/trouble.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+  },
+
+  -- Set lualine as statusline
+  {
+    'nvim-lualine/lualine.nvim',
+    opts = {
+      options = {
+        ignore_focus = { "neo-tree" },
+        globalstatus = true,
+        icons_enabled = false,
+        theme = 'onedark',
+        component_separators = '|',
+        section_separators = '',
+      },
+    },
+  },
 }

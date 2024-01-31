@@ -24,7 +24,7 @@ vim.keymap.set('n', 'N', 'Nzz')
 vim.keymap.set('x', '<leader>p', '"_dP')
 
 -- Who needs this anyway?
-vim.keymap.set('n', 'Q', '<Nop>')
+vim.keymap.set('n', 'Q', '<Nop')
 
 -- Bufferline maps to switch tabs
 vim.keymap.set({ 'n', 'v', 'i' }, '<A-Left>', '<ESC>:BufferLineCyclePrev<CR>', { silent = true })
@@ -36,4 +36,3 @@ vim.keymap.set({ 'n', 'v', 'i' }, '<A-S-Right>', '<ESC>:BufferLineMoveNext<CR>',
 
 vim.keymap.set('n', '<A-CR>', ':Telescope spell_suggest<CR>', { silent = true })
 
--- vim: ts=2 sts=2 sw=2 et

@@ -1,5 +1,14 @@
 return {
   {
+    -- Highlight, edit, and navigate code
+    'nvim-treesitter/nvim-treesitter',
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter-textobjects',
+    },
+    build = ':TSUpdate',
+  },
+
+  {
     "luckasRanarison/tree-sitter-hyprlang",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
   },
@@ -19,9 +28,16 @@ return {
     end
   },
 
-  -- Diagnostics view
+    -- Add indentation guides even on blank lines
   {
-    "folke/trouble.nvim",
-    dependencies = { "nvim-tree/nvim-web-devicons" },
+    'lukas-reineke/indent-blankline.nvim',
+    main = 'ibl',
+    opts = {},
+  },
+
+  -- "gc" to comment visual regions/lines
+  {
+    'numToStr/Comment.nvim',
+    opts = {}
   },
 }
