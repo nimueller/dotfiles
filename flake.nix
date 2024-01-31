@@ -7,6 +7,7 @@
         };
         hyprland.url = "github:hyprwm/Hyprland";
         spicetify-nix.url = "github:the-argus/spicetify-nix";
+        neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
     };
 
     outputs = { nixpkgs, home-manager, ... } @ inputs:
