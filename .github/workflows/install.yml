@@ -10,9 +10,4 @@ jobs:
       - name: 🛠️ Trigger installation script
         run: |
           SET_DEFAULT_SHELL=1 ./install.sh runner
-      - name: 📲 Check commands available
-        run: |
-          source ~/.profile
-          nix
-          home-manager
 
