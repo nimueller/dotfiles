@@ -16,11 +16,15 @@ local servers = {
   bashls = {},
   texlab = {},
   ltex = {},
+
+  lemminx = {},
   jdtls = {},
   kotlin_language_server = {}
 }
 
-local on_attach = function(_, bufnr)
+local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+
+local on_attach = function(client, bufnr)
   local nmap = function(keys, func, desc)
     if desc then
       desc = 'LSP: ' .. desc
@@ -49,10 +53,16 @@ local on_attach = function(_, bufnr)
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
 
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-    vim.lsp.buf.format()
-  end, { desc = 'Format current buffer with LSP' })
+  if client.supports_method("textDocument/formatting") then
+      vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+      vim.api.nvim_create_autocmd("BufWritePre", {
+          group = augroup,
+          buffer = bufnr,
+          callback = function()
+              vim.lsp.buf.format({ bufnr = bufnr })
+          end,
+      })
+  end
 end
 
 -- Setup neovim lua configuration
@@ -70,6 +80,8 @@ end
 local null_ls = require 'null-ls'
 null_ls.setup({
   sources = {
+    null_ls.builtins.diagnostics.luacheck,
+    null_ls.builtins.formatting.stylua,
     null_ls.builtins.diagnostics.ktlint,
     null_ls.builtins.formatting.ktlint
   }

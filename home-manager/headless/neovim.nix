@@ -15,11 +15,16 @@
 
         ## language servers
         # Lua
+        luaPackages.luacheck
         lua-language-server
+        stylua
+
         # Nix
-        # nixd
         nil
         statix
+
+        # XML
+        lemminx
 
         # Kotlin/Java
         jdt-language-server

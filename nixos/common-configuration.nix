@@ -78,6 +78,7 @@
         nodejs_latest
         cargo
         gradle
+        maven
 
         # CLI programs
         neovim
