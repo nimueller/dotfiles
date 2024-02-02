@@ -12,6 +12,8 @@
     home.packages = with pkgs; [
         # neovim plugin package dependencies
         ripgrep
+        fd
+        tree-sitter
 
         ## language servers
         # Lua

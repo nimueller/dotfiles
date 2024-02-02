@@ -7,6 +7,11 @@ return {
 			"nvim-treesitter/nvim-treesitter-textobjects",
 			"windwp/nvim-ts-autotag",
 		},
+		build = ":TSUpdate",
+		cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
+		config = function(_, opts)
+			require("nvim-treesitter.configs").setup(opts)
+		end,
 		opts = {
 			-- Add languages to be installed here that you want installed for treesitter
 			ensure_installed = {
@@ -22,6 +27,8 @@ return {
 				"vimdoc",
 				"vim",
 				"bash",
+				"xml",
+				"html",
 			},
 
 			-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
@@ -84,9 +91,11 @@ return {
 			},
 			autotag = {
 				enable = true,
+				enable_rename = true,
+				enable_close = true,
+				enable_close_on_slash = true,
 			},
 		},
-		build = ":TSUpdate",
 	},
 
 	-- Non-LSP linters and formatters
