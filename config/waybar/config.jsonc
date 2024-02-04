@@ -2,9 +2,24 @@
     "layer": "top",
     "position": "top",
     "height": 50,
-    "modules-left": ["hyprland/window"],
-    "modules-center": ["hyprland/workspaces"],
-    "modules-right": ["privacy", "pulseaudio#sink", "pulseaudio#source", "tray", "clock"],
+    "modules-left": [
+        "custom/system",
+        "hyprland/window"
+    ],
+    "modules-center": [
+        "hyprland/workspaces"
+    ],
+    "modules-right": [
+        "privacy",
+        "pulseaudio#sink",
+        "pulseaudio#source",
+        "tray",
+        "clock"
+    ],
+    "custom/system": {
+        "format": "󱄅",
+        "on-click": "nwg-bar"
+    },
     "hyprland/workspaces": {
         "format": "<sup>{id}</sup> {windows}",
         "window-rewrite": {
@@ -35,7 +50,11 @@
             "phone": "",
             "portable": "",
             "car": "",
-            "default": ["", "", ""]
+            "default": [
+                "",
+                "",
+                ""
+            ]
         },
         "on-click": "pavucontrol"
     },
@@ -53,7 +72,11 @@
             "phone": "",
             "portable": "",
             "car": "",
-            "default": ["", "", ""]
+            "default": [
+                "",
+                "",
+                ""
+            ]
         },
         "on-click": "pavucontrol"
     },
@@ -65,5 +88,3 @@
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
     }
 }
-
-// vim: set ft=jsonc

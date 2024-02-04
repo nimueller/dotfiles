@@ -6,7 +6,19 @@ local servers = {
 			telemetry = { enable = false },
 		},
 	},
-	nil_ls = {},
+	nil_ls = {
+		["nil"] = {
+			formatting = {
+				command = { "nixpkgs-fmt" },
+			},
+			nix = {
+				maxMemoryMB = 4096,
+				flake = {
+					autoArchive = true,
+				},
+			},
+		},
+	},
 	statix = {},
 	biome = {},
 	tsserver = {},
