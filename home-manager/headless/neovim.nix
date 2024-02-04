@@ -25,8 +25,9 @@
         nil
         statix
 
-        # XML
+        # XML/HTML
         lemminx
+        html-tidy
 
         # Kotlin/Java
         jdt-language-server
