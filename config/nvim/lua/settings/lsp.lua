@@ -22,6 +22,7 @@ local servers = {
 	statix = {},
 	biome = {},
 	tsserver = {},
+	prismals = {},
 	jsonls = {},
 	cssls = {},
 	eslint = {},

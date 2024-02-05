@@ -45,6 +45,7 @@
     biome
     nodePackages.vscode-langservers-extracted
     nodePackages.eslint
+    nodePackages."@prisma/language-server"
     nodePackages.typescript-language-server
     # Bash
     nodePackages.bash-language-server
