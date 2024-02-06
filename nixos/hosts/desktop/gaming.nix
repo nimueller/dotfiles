@@ -1,11 +1,12 @@
 { pkgs, ... }:
 {
-    nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.allowUnfree = true;
 
-    environment.systemPackages = with pkgs; [
-        mangohud
-        wine
-        steam
-        lutris
-    ];
+  environment.systemPackages = with pkgs; [
+    gamemode
+    mangohud
+    wine
+    steam
+    lutris
+  ];
 }

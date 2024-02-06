@@ -1,5 +1,5 @@
 -- Enable mouse mode
-vim.o.mouse = 'a'
+vim.o.mouse = "a"
 
 -- Enable line numbers and relative line numbers
 vim.wo.number = true
@@ -9,7 +9,7 @@ vim.wo.relativenumber = true
 vim.o.scrolloff = 10
 
 -- Line break column
-vim.o.colorcolumn = '80'
+vim.o.colorcolumn = "80"
 
 -- Indentation settings
 vim.o.tabstop = 4
@@ -20,9 +20,9 @@ vim.o.breakindent = true
 vim.o.smartindent = true
 
 -- Save undo history
-vim.o.swapfile = false
+vim.o.swapfile = true
 vim.o.backup = false
-vim.o.undodir = os.getenv('HOME') .. '/.vim/undodir'
+vim.o.undodir = os.getenv("HOME") .. "/.vim/undodir"
 vim.o.undofile = true
 
 -- Search settings
@@ -36,14 +36,14 @@ vim.o.spell = true
 vim.o.spelllang = "en,de"
 
 -- Keep signcolumn on by default
-vim.wo.signcolumn = 'yes'
+vim.wo.signcolumn = "yes"
 
 -- Decrease update time
 vim.o.updatetime = 250
 vim.o.timeoutlen = 300
 
 -- Set completeopt to have a better completion experience
-vim.o.completeopt = 'menuone,noselect'
+vim.o.completeopt = "menuone,noselect"
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
@@ -52,4 +52,3 @@ vim.o.termguicolors = true
 vim.g.editorconfig = true
 vim.o.exrc = true
 vim.o.secure = true
-

@@ -21,11 +21,15 @@ local servers = {
 	},
 	statix = {},
 	biome = {},
+
+	eslint = {},
 	tsserver = {},
 	prismals = {},
 	jsonls = {},
+
+	docker_compose_language_service = {},
+
 	cssls = {},
-	eslint = {},
 	bashls = {},
 	texlab = {},
 	ltex = {},
