@@ -80,6 +80,15 @@ local on_attach = function(client, bufnr)
 			end,
 		})
 	end
+
+	for key, value in pairs(client) do
+		if key == "name" and value == "ltex" then
+			print("setting up ltex extra")
+			require("ltex_extra").setup({
+				path = ".ltex",
+			})
+		end
+	end
 end
 
 -- Setup neovim lua configuration

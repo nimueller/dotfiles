@@ -99,7 +99,7 @@ return {
 	},
 
 	-- Non-LSP linters and formatters
-	"nvimtools/none-ls.nvim",
+	{ "nvimtools/none-ls.nvim" },
 
 	-- Easily surround text
 	{
@@ -125,4 +125,7 @@ return {
 		"numToStr/Comment.nvim",
 		opts = {},
 	},
+
+	-- Extras for Ltex LSP
+	{ "barreiroleo/ltex-extra.nvim" },
 }
