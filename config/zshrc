@@ -29,6 +29,7 @@ function fzd() {
   fi
 }
 
+export EDITOR=nvim
 zle -N fzd
 bindkey '^F' fzd 
 
