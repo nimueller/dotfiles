@@ -35,6 +35,7 @@ in
       copy_on_select = "clipboard";
       strip_trailing_spaces = "smart";
       focus_follows_mouse = true;
+      shell = "tmux";
     };
     keybindings = {
       "ctrl+v" = "paste_from_clipboard";
