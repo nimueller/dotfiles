@@ -83,6 +83,9 @@
         diff.tool = "nvimdiff";
         merge.tool = "nvimdiff";
       };
+      aliases = {
+        tree = "log --oneline --graph --all";
+      };
     };
   };
 }
