@@ -77,12 +77,11 @@
         key = "~/.ssh/id_rsa_github.pub";
       };
       extraConfig = {
-        init = {
-          defaultBranch = "main";
-        };
-        gpg = {
-          format = "ssh";
-        };
+        init.defaultBranch = "main";
+        gpg.format = "ssh";
+        difftool.prompt = false;
+        diff.tool = "nvimdiff";
+        merge.tool = "nvimdiff";
       };
     };
   };
