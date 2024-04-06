@@ -18,6 +18,10 @@ if [ ! $(which curl) ]; then
   echo 'Before running this script, you must install curl using your favourite package manager'
 fi
 
+if [ ! $(which xz) ]; then
+  echo 'Before running this script, you must install xz using your favourite package manager'
+fi
+
 install_nix () {
   curl -L 'https://nixos.org/nix/install' | sh
   mkdir -p "$HOME/.config/nix/"
