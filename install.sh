@@ -12,14 +12,17 @@ esac
 
 if [ ! $(which git) ]; then
   echo 'Before running this script, you must install git using your favourite package manager'
+  exit 1
 fi
 
 if [ ! $(which curl) ]; then
   echo 'Before running this script, you must install curl using your favourite package manager'
+  exit 1
 fi
 
 if [ ! $(which xz) ]; then
   echo 'Before running this script, you must install xz using your favourite package manager'
+  exit 1
 fi
 
 install_nix () {
