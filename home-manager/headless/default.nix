@@ -20,6 +20,7 @@
 
     typescript
     sassc
+    copilot-cli
   ];
 
   imports = [
@@ -35,7 +36,7 @@
       autocd = true;
 
       # Plugins
-      enableAutosuggestions = true;
+      autosuggestion.enable = true;
       enableCompletion = true;
       syntaxHighlighting.enable = true;
 
