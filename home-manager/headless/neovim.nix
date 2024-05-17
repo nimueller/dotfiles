@@ -1,9 +1,5 @@
 { config, pkgs, inputs, ... }:
 {
-  nixpkgs.overlays = [
-    inputs.neovim-nightly-overlay.overlay
-  ];
-
   programs.neovim.enable = true;
 
   xdg.configFile."nvim/init.lua".source = ../../config/nvim/init.lua;
