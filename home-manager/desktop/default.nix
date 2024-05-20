@@ -62,7 +62,7 @@ in
     enable = true;
     package = pkgs.rofi-wayland;
     extraConfig = {
-      modi = "combi,calc";
+      modi = "combi";
       combi-modes = "drun,ssh";
       show-icons = true;
       drun-display-format = "{icon} {name}";
@@ -100,6 +100,7 @@ in
     wtype
     cliphist
     nwg-bar
+    pavucontrol
 
     my-pkgs.hyprshot
     my-pkgs.recorder
