@@ -68,6 +68,7 @@
   };
 
   programs.command-not-found.enable = true;
+  programs.adb.enable = true;
 
   environment.systemPackages = with pkgs; [
     # Some core programs
@@ -97,6 +98,6 @@
     shell = pkgs.zsh;
     isNormalUser = true;
     description = username;
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "adbusers" ];
   };
 }
