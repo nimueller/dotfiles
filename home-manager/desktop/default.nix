@@ -122,5 +122,6 @@ in
     obs-studio
     wl-clipboard
     wf-recorder
+    jetbrains.idea-ultimate
   ];
 }
