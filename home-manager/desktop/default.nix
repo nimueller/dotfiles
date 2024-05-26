@@ -56,6 +56,9 @@ in
     };
   };
 
+  # Auto Mount USB devices
+  services.udiskie.enable = true;
+
   programs.spicetify.enable = true;
 
   programs.rofi = {

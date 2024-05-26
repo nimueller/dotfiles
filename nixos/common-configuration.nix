@@ -67,6 +67,15 @@
     #media-session.enable = true;
   };
 
+  services.udisks2 = {
+    enable = true;
+    mountOnMedia = true;
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /media 0755 root root -"
+  ];
+
   programs.command-not-found.enable = true;
   programs.adb.enable = true;
 
