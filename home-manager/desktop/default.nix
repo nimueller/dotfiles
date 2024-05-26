@@ -56,6 +56,8 @@ in
     };
   };
 
+  services.swayosd.enable = true;
+
   # Auto Mount USB devices
   services.udiskie.enable = true;
 
@@ -99,7 +101,6 @@ in
     libsecret
     inotify-tools
     waybar
-    swayosd
     wtype
     cliphist
     nwg-bar
