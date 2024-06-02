@@ -26,6 +26,36 @@ in
 
   xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
   xdg.configFile."waybar".source = ../../config/waybar;
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      # Terminal
+      "application/x-shellscript" = "kitty.desktop";
+      "application/x-sh" = "kitty.desktop";
+      "application/x-terminal" = "kitty.desktop";
+      # Browser
+      "text/html" = "brave.desktop";
+      "x-scheme-handler/http" = "brave.desktop";
+      "x-scheme-handler/https" = "brave.desktop";
+      "x-scheme-handler/about" = "brave.desktop";
+      "x-scheme-handler/unknown" = "brave.desktop";
+      # Text
+      "text/plain" = "nvim.desktop";
+      # Images
+      "image/png" = "org.gnome.eog.desktop";
+      "image/jpeg" = "org.gnome.eog.desktop";
+      # Other
+      "inode/directory" = "org.gnome.Nautilus.desktop";
+      "x-scheme-handler/mailspring" = "Mailspring.desktop";
+      "application/pdf" = "org.gnome.Evince.desktop";
+    };
+  };
+
+  dconf.settings = {
+    "com/github/stunkymonkey/nautilus-open-any-terminal" = {
+      terminal = "kitty";
+    };
+  };
 
   # Use kitty as terminal emulator
   programs.kitty = {
@@ -92,7 +122,10 @@ in
     polkit-kde-agent
     qt5.qtwayland
     qt6.qtwayland
+    gtk3
+    gtk4
 
+    xdg-terminal-exec
     playerctl
     hyprpaper
     hyprpicker
