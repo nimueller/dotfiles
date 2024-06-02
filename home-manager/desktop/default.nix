@@ -1,4 +1,4 @@
-{ config, pkgs, lib, stdenv, inputs, ... }:
+{ pkgs, lib, inputs, ... }:
 let
   my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
@@ -8,6 +8,7 @@ in
   imports = [
     inputs.hyprland.homeManagerModules.default
     inputs.spicetify-nix.homeManagerModule
+    ./gaming.nix
     ../headless
     ../theme/desktop.nix
   ];

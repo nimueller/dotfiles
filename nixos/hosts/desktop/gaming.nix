@@ -6,8 +6,8 @@
     glfw-wayland
     gamemode
     mangohud
-    wine
-    wine64
+    wineWowPackages.waylandFull
+    winetricks
     steam
     lutris
   ];
