@@ -41,6 +41,7 @@ in
       "x-scheme-handler/unknown" = "brave.desktop";
       # Text
       "text/plain" = "nvim.desktop";
+      "text/markdown" = "org.gnome.gitlab.somas.Apostrophe.desktop";
       # Images
       "image/png" = "org.gnome.eog.desktop";
       "image/jpeg" = "org.gnome.eog.desktop";
@@ -144,13 +145,17 @@ in
     my-pkgs.recorder
     my-pkgs.applauncher
 
-    # GUI apps
+    # Gnome GUI apps
     gnome.adwaita-icon-theme
     gnome.nautilus # File explorer
     gnome.evince # PDF viewer
     gnome.eog # Image viewer
     gnome.totem # Video player
+    gnome.gnome-characters # Emoji picker
     gnome.gnome-font-viewer
+    # Gnome Circle GUI apps
+    apostrophe # Markdown viewer
+    # Other GUI apps
     gimp
     nautilus-open-any-terminal
     keepassxc
