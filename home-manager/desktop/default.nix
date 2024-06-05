@@ -8,6 +8,7 @@ in
   imports = [
     inputs.hyprland.homeManagerModules.default
     inputs.spicetify-nix.homeManagerModule
+    ./apps.nix
     ./gaming.nix
     ../headless
     ../theme/desktop.nix
@@ -147,17 +148,16 @@ in
 
     # Gnome GUI apps
     gnome.adwaita-icon-theme
-    gnome.nautilus # File explorer
     gnome.evince # PDF viewer
     gnome.eog # Image viewer
     gnome.totem # Video player
     gnome.gnome-characters # Emoji picker
     gnome.gnome-font-viewer
+    gnome.dconf-editor
     # Gnome Circle GUI apps
     apostrophe # Markdown viewer
     # Other GUI apps
     gimp
-    nautilus-open-any-terminal
     keepassxc
     brave
     firefox

@@ -105,7 +105,7 @@
     neovim
     btop
     tree
-
+    busybox
   ];
 
   users.users.${username} = {
