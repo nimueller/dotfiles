@@ -50,6 +50,8 @@
   environment.systemPackages = with pkgs; [
     networkmanager-openvpn
     networkmanagerapplet
+    freerdp
+    teams-for-linux
   ];
 
 }
