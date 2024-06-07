@@ -15,6 +15,8 @@ local servers = {
 				maxMemoryMB = 4096,
 				flake = {
 					autoArchive = true,
+					autoEvalInputs = true,
+					nixpkgsInputName = "nixpkgs"
 				},
 			},
 		},
@@ -79,6 +81,10 @@ local on_attach = function(client, bufnr)
 				vim.lsp.buf.format({ bufnr = bufnr })
 			end,
 		})
+	end
+
+	if vim.lsp.inlay_hint then
+		vim.lsp.inlay_hint.enable(true)
 	end
 
 	for key, value in pairs(client) do

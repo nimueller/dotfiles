@@ -114,6 +114,8 @@ in
     ];
   };
 
+  services.kdeconnect.enable = true;
+
   fonts.fontconfig.enable = true;
 
   # Packages needed on Hyprland specifically, in addition to a standard desktop
