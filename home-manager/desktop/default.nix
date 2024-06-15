@@ -27,6 +27,13 @@ in
 
   xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
   xdg.configFile."waybar".source = ../../config/waybar;
+  xdg.configFile."nwg-bar/style.css".source = ../../config/nwg-bar/style.css;
+  xdg.configFile."nwg-bar/bar.json".text =
+    builtins.replaceStrings
+      [ "$nwg_install_path" ]
+      [ "${pkgs.nwg-bar}" ]
+      (builtins.readFile ../../config/nwg-bar/bar.json);
+
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
