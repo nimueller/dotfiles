@@ -49,6 +49,6 @@
     docker-compose-language-service
 
     # Bash
-    nodePackages.bash-language-server
+    # nodePackages.bash-language-server
   ];
 }

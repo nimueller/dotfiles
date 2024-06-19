@@ -52,6 +52,7 @@
     networkmanagerapplet
     freerdp
     teams-for-linux
+    unityhub
   ];
 
 }
