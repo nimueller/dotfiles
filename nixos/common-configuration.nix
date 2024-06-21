@@ -94,7 +94,7 @@
     # Development
     gcc
     gdb
-    jdk21
+    (jdk21.override { enableJavaFX = true; })
     python3Full
     nodejs_latest
     cargo
