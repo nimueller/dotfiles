@@ -84,6 +84,11 @@
   programs.command-not-found.enable = true;
   programs.adb.enable = true;
 
+  programs.nix-ld = {
+    enable = true;
+    libraries = [ ];
+  };
+
   environment.systemPackages = with pkgs; [
     # Some core programs
     jq

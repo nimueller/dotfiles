@@ -1,4 +1,4 @@
-{ pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 let
   my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
@@ -10,7 +10,6 @@ in
     inputs.spicetify-nix.homeManagerModule
     ./apps.nix
     ./gaming.nix
-    ../headless
     ../theme/desktop.nix
   ];
 
@@ -25,8 +24,8 @@ in
       builtins.readFile ../../config/hypr/autostart.conf;
   };
 
-  xdg.configFile."hypr/hyprpaper.conf".source = ../../config/hypr/hyprpaper.conf;
-  xdg.configFile."waybar".source = ../../config/waybar;
+  xdg.configFile."waybar".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/waybar";
+
   xdg.configFile."nwg-bar/style.css".source = ../../config/nwg-bar/style.css;
   xdg.configFile."nwg-bar/bar.json".text =
     builtins.replaceStrings

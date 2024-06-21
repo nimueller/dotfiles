@@ -41,6 +41,7 @@
           extraSpecialArgs = { inherit inputs username; };
 
           modules = [
+            ./options
             ./home-manager/headless
           ];
         };
@@ -51,6 +52,9 @@
           extraSpecialArgs = { inherit inputs username; };
 
           modules = [
+            ./options
+            ({ config, ... }: { config.dotfiles = "${config.home.homeDirectory}/dotfiles"; })
+            ./home-manager/headless
             ./home-manager/desktop
           ];
         };

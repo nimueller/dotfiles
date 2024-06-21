@@ -1,4 +1,4 @@
-{ pkgs, username, ... }:
+{ config, lib, pkgs, username, ... }:
 {
   # Basic home manager settings
   programs.home-manager.enable = true;
