@@ -10,21 +10,20 @@ in
     inputs.spicetify-nix.homeManagerModule
     ./apps.nix
     ./gaming.nix
+    ./symlinks.nix
     ../theme/desktop.nix
   ];
 
   # Basic Hyprland configuration
-  wayland.windowManager.hyprland = {
-    enable = true;
-    extraConfig =
-      builtins.readFile ../../config/hypr/general.conf +
-      builtins.readFile ../../config/hypr/windowrules.conf +
-      builtins.readFile ../../config/hypr/workspacerules.conf +
-      builtins.readFile ../../config/hypr/keybinds.conf +
-      builtins.readFile ../../config/hypr/autostart.conf;
-  };
-
-  xdg.configFile."waybar".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/waybar";
+  # wayland.windowManager.hyprland = {
+  #   enable = true;
+  #   extraConfig =
+  #     builtins.readFile ../../config/hypr/general.conf +
+  #     builtins.readFile ../../config/hypr/windowrules.conf +
+  #     builtins.readFile ../../config/hypr/workspacerules.conf +
+  #     builtins.readFile ../../config/hypr/keybinds.conf +
+  #     builtins.readFile ../../config/hypr/autostart.conf;
+  # };
 
   xdg.configFile."nwg-bar/style.css".source = ../../config/nwg-bar/style.css;
   xdg.configFile."nwg-bar/bar.json".text =
