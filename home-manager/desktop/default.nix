@@ -6,9 +6,9 @@ in
   nixpkgs.config.allowUnfree = true;
 
   imports = [
-    inputs.hyprland.homeManagerModules.default
+    # inputs.hyprland.homeManagerModules.default
     inputs.spicetify-nix.homeManagerModule
-    ./apps.nix
+    # ./apps.nix
     ./gaming.nix
     ./symlinks.nix
     ../theme/desktop.nix
@@ -65,20 +65,20 @@ in
   };
 
   # Use kitty as terminal emulator
-  programs.kitty = {
-    enable = true;
-    settings = {
-      font_family = "Jet Brains Mono";
-      show_hyperlink_targets = true;
-      copy_on_select = "clipboard";
-      strip_trailing_spaces = "smart";
-      focus_follows_mouse = true;
-      shell = "tmux";
-    };
-    keybindings = {
-      "ctrl+v" = "paste_from_clipboard";
-    };
-  };
+  # programs.kitty = {
+  #   enable = true;
+  #   settings = {
+  #     font_family = "Jet Brains Mono";
+  #     show_hyperlink_targets = true;
+  #     copy_on_select = "clipboard";
+  #     strip_trailing_spaces = "smart";
+  #     focus_follows_mouse = true;
+  #     shell = "tmux";
+  #   };
+  #   keybindings = {
+  #     "ctrl+v" = "paste_from_clipboard";
+  #   };
+  # };
 
   # Dunst as notification daemon
   services.dunst = {
@@ -161,13 +161,14 @@ in
     gnome.gnome-characters # Emoji picker
     gnome.gnome-font-viewer
     gnome.dconf-editor
+    gnome.file-roller
     # Gnome Circle GUI apps
     apostrophe # Markdown viewer
     # Other GUI apps
     gimp
     keepassxc
-    brave
-    firefox
+    # brave
+    # firefox
     webcord
     obs-studio
     wl-clipboard

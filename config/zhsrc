@@ -70,7 +70,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(adb colored-man-pages command-not-found docker fzf git sudo tmux)
+plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -102,46 +102,5 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-#
-if [ -n "${commands[fzf-share]}" ]; then
-  source "$(fzf-share)/key-bindings.zsh"
-  source "$(fzf-share)/completion.zsh"
-fi
 
-function packages_plain() {
-  nix search nixpkgs 2>/dev/null | awk 'BEGIN {RS=""; FS="\n"} {print $1, ";", $2}' | fzf --prompt="Nix Packages>" --ansi --reverse --with-nth='2' --preview='echo {2}; echo -e "\n"; echo {} | awk -F ";" "{ print \$2 }"' | awk '{ print $2 }' | awk -F'.' '{for (i=3; i<=NF; i++)printf $i (i==NF ? "\n" : ".")}' | tr -d '\n'
-}
-
-function packages() {
-  local selected_package=$(packages_plain)
-  
-  if [[ -n "$selected_package" ]]; then
-    echo "$selected_package" | tr -d '\n' | wl-copy
-  fi
-}
-
-function fzd() {
-  local selection=$(find . -type d -print | fzf +m --preview "ls -lah {}")
-
-  if [ -n "$selection" ]; then
-    cd "$selection"
-    zle reset-prompt
-  fi
-}
-
-function nix-clean () {
-  nix-env --delete-generations old
-  nix-store --gc
-  nix-channel --update
-  nix-env -u --always
-  for link in /nix/var/nix/gcroots/auto/*
-  do
-    rm $(readlink "$link")
-  done
-  nix-collect-garbage -d
-}
-
-export EDITOR=nvim
-zle -N fzd
-bindkey '^F' fzd 
-
+# vim: ft=zsh

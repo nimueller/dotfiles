@@ -8,6 +8,9 @@ return {
   -- Highlight unique jumps for the f and F motions
   'unblevable/quick-scope',
 
+  -- Write files with sudo
+  'lambdalisue/vim-suda',
+
   -- Some Neovim improvements and enhancements
   { 'echasnovski/mini.nvim', version = '*' },
 }

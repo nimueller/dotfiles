@@ -5,6 +5,7 @@ let
 
     paths = with pkgs; [
       gnome.nautilus
+      gnome.file-roller
       gnome.nautilus-python
       nautilus-open-any-terminal
     ];

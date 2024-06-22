@@ -18,6 +18,7 @@
     tldr
     bat
     lsd
+    jq
 
     typescript
     sassc
