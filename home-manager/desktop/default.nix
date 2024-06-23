@@ -14,49 +14,12 @@ in
     ../theme/desktop.nix
   ];
 
-  # Basic Hyprland configuration
-  # wayland.windowManager.hyprland = {
-  #   enable = true;
-  #   extraConfig =
-  #     builtins.readFile ../../config/hypr/general.conf +
-  #     builtins.readFile ../../config/hypr/windowrules.conf +
-  #     builtins.readFile ../../config/hypr/workspacerules.conf +
-  #     builtins.readFile ../../config/hypr/keybinds.conf +
-  #     builtins.readFile ../../config/hypr/autostart.conf;
-  # };
-
   xdg.configFile."nwg-bar/style.css".source = ../../config/nwg-bar/style.css;
   xdg.configFile."nwg-bar/bar.json".text =
     builtins.replaceStrings
       [ "$nwg_install_path" ]
       [ "${pkgs.nwg-bar}" ]
       (builtins.readFile ../../config/nwg-bar/bar.json);
-
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      # Terminal
-      "application/x-shellscript" = "kitty.desktop";
-      "application/x-sh" = "kitty.desktop";
-      "application/x-terminal" = "kitty.desktop";
-      # Browser
-      "text/html" = "brave.desktop";
-      "x-scheme-handler/http" = "brave.desktop";
-      "x-scheme-handler/https" = "brave.desktop";
-      "x-scheme-handler/about" = "brave.desktop";
-      "x-scheme-handler/unknown" = "brave.desktop";
-      # Text
-      "text/plain" = "nvim.desktop";
-      "text/markdown" = "org.gnome.gitlab.somas.Apostrophe.desktop";
-      # Images
-      "image/png" = "org.gnome.eog.desktop";
-      "image/jpeg" = "org.gnome.eog.desktop";
-      # Other
-      "inode/directory" = "org.gnome.Nautilus.desktop";
-      "x-scheme-handler/mailspring" = "Mailspring.desktop";
-      "application/pdf" = "org.gnome.Evince.desktop";
-    };
-  };
 
   dconf.settings = {
     "com/github/stunkymonkey/nautilus-open-any-terminal" = {
@@ -94,11 +57,6 @@ in
     };
   };
 
-  services.swayosd.enable = true;
-
-  # Auto Mount USB devices
-  services.udiskie.enable = true;
-
   programs.spicetify.enable = true;
 
   programs.rofi = {
@@ -128,11 +86,13 @@ in
     (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
 
     # Utility
-    polkit-kde-agent
     qt5.qtwayland
     qt6.qtwayland
     gtk3
     gtk4
+
+    swayosd
+    udiskie
 
     xdg-terminal-exec
     playerctl
@@ -157,20 +117,18 @@ in
     gnome.adwaita-icon-theme
     gnome.evince # PDF viewer
     gnome.eog # Image viewer
-    gnome.totem # Video player
+    # gnome.totem # Video player
     gnome.gnome-characters # Emoji picker
     gnome.gnome-font-viewer
     gnome.dconf-editor
     gnome.file-roller
+    gnome.seahorse # Manage keyring
+    gnome.geary
     # Gnome Circle GUI apps
     apostrophe # Markdown viewer
     # Other GUI apps
-    gimp
     keepassxc
-    # brave
-    # firefox
     webcord
-    obs-studio
     wl-clipboard
     wf-recorder
     jetbrains.idea-ultimate
