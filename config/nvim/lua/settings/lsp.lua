@@ -25,7 +25,6 @@ local servers = {
 	biome = {},
 
 	eslint = {},
-	tsserver = {},
 	prismals = {},
 	jsonls = {},
 
@@ -36,6 +35,7 @@ local servers = {
 	texlab = {},
 	ltex = {},
 
+	hyprls = {},
 	lemminx = {},
 	jdtls = {},
 	kotlin_language_server = {},

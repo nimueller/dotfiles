@@ -141,7 +141,8 @@ function nix-clean () {
   nix-collect-garbage -d
 }
 
-alias install="pacman -Slq | fzf --multi --preview 'pacman -Si {1}' | xargs -ro sudo pacman -S"
+alias install="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S"
+alias uninstall="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns"
 
 export EDITOR=nvim
 zle -N fzd

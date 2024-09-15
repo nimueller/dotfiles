@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }:
+{ pkgs, lib, ... }:
 let
   my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
@@ -6,9 +6,6 @@ in
   nixpkgs.config.allowUnfree = true;
 
   imports = [
-    # inputs.hyprland.homeManagerModules.default
-    inputs.spicetify-nix.homeManagerModule
-    # ./apps.nix
     ./gaming.nix
     ./symlinks.nix
     ../theme/desktop.nix
@@ -27,22 +24,6 @@ in
     };
   };
 
-  # Use kitty as terminal emulator
-  # programs.kitty = {
-  #   enable = true;
-  #   settings = {
-  #     font_family = "Jet Brains Mono";
-  #     show_hyperlink_targets = true;
-  #     copy_on_select = "clipboard";
-  #     strip_trailing_spaces = "smart";
-  #     focus_follows_mouse = true;
-  #     shell = "tmux";
-  #   };
-  #   keybindings = {
-  #     "ctrl+v" = "paste_from_clipboard";
-  #   };
-  # };
-
   # Dunst as notification daemon
   services.dunst = {
     enable = true;
@@ -56,8 +37,6 @@ in
       };
     };
   };
-
-  programs.spicetify.enable = true;
 
   programs.rofi = {
     enable = true;
@@ -84,15 +63,10 @@ in
   # Packages needed on Hyprland specifically, in addition to a standard desktop
   home.packages = with pkgs; [
     (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
-
-    # Utility
-    qt5.qtwayland
-    qt6.qtwayland
-    gtk3
-    gtk4
+    noto-fonts
+    noto-fonts-color-emoji
 
     swayosd
-    udiskie
 
     xdg-terminal-exec
     playerctl
@@ -103,7 +77,7 @@ in
     libnotify
     libsecret
     inotify-tools
-    waybar
+    # waybar
     wtype
     cliphist
     nwg-bar
@@ -131,6 +105,5 @@ in
     webcord
     wl-clipboard
     wf-recorder
-    jetbrains.idea-ultimate
   ];
 }

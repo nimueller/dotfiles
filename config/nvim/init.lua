@@ -43,12 +43,17 @@ require("lazy").setup({
     -- LSP Configuration & Plugins
     "neovim/nvim-lspconfig",
     dependencies = {
+      -- Automatically install LSPs and related tools to stdpath for Neovim
+      { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
+      'williamboman/mason-lspconfig.nvim',
+      'WhoIsSethDaniel/mason-tool-installer.nvim',
+
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { "j-hui/fidget.nvim", tag = "legacy", opts = {} },
+      { "j-hui/fidget.nvim",       tag = "legacy", opts = {} },
 
       -- Additional lua configuration, makes nvim stuff amazing!
-      { "folke/neodev.nvim", opts = {} },
+      { "folke/neodev.nvim",       opts = {} },
     },
   },
   {
@@ -96,18 +101,6 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
   group = highlight_group,
   pattern = "*",
-})
-
--- document existing key chains
-require("which-key").register({
-  ["<leader>c"] = { name = "[C]ode", _ = "which_key_ignore" },
-  ["<leader>d"] = { name = "[D]ocument", _ = "which_key_ignore" },
-  ["<leader>g"] = { name = "[G]it", _ = "which_key_ignore" },
-  ["<leader>h"] = { name = "More git", _ = "which_key_ignore" },
-  ["<leader>r"] = { name = "[R]ename", _ = "which_key_ignore" },
-  ["<leader>s"] = { name = "[S]earch", _ = "which_key_ignore" },
-  ["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
-  ["<leader>f"] = { name = "[F]ile", _ = "which_key_ignore" },
 })
 
 -- nvim-cmp supports additional completion capabilities, so broadcast that to servers

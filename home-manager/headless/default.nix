@@ -8,9 +8,6 @@
   home.stateVersion = "23.05";
 
   home.packages = with pkgs; [
-    # Ensure essential programs are installed
-    gcc
-
     # Terminal programs
     tmux # GOAT
     fzf # Lifesaver!
@@ -19,10 +16,6 @@
     bat
     lsd
     jq
-
-    typescript
-    sassc
-    copilot-cli
   ];
 
   imports = [

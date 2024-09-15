@@ -1,10 +1,9 @@
 {
     "layer": "top",
-    "position": "top",
-    "height": 50,
+    "position": "bottom",
+    "height": 5,
     "modules-left": [
-        "custom/system",
-        "hyprland/window"
+        "custom/system"
     ],
     "modules-center": [
         "hyprland/workspaces"
@@ -27,12 +26,16 @@
             "class<brave-browser>": "",
             "class<WebCord>": "󰙯",
             "class<Spotify>": "",
+            "class<unityhub>": "󰚯",
+            "class<Unity>": "󰚯",
             "class<org.keepassxc.KeePassXC>": "",
             "class<org.gnome.Nautilus>": "󰷏",
             "class<geary>": "",
             "class<virt-manager>": "󰢩",
             "class<looking-glass-client>": "",
             "class<jetbrains-idea>": "",
+            "class<jetbrains-rider>": "",
+            "class<jetbrains-studio>": "",
             "class<com.nextcloud.desktopclient.nextcloud>": "󰅟",
             "class<steam>": "󰓓",
             "class<kitty>": "",
@@ -40,7 +43,7 @@
         }
     },
     "pulseaudio#sink": {
-        "format": " {icon} {volume}%",
+        "format": " {icon}  {volume}%",
         "format-bluetooth": "{icon} {volume}% ",
         "format-bluetooth-muted": " {icon}",
         "format-muted": " {format_source}",
@@ -64,7 +67,7 @@
         "format-bluetooth": "{format_source}",
         "format-bluetooth-muted": "{format_source}",
         "format-muted": " {format_source}",
-        "format-source": " {volume}% ",
+        "format-source": "  {volume}% ",
         "format-source-muted": "",
         "format-icons": {
             "headphone": "",
@@ -82,10 +85,10 @@
         "on-click": "pavucontrol"
     },
     "tray": {
-        "spacing": 10
+        "spacing": 5
     },
     "clock": {
-        "format": "  {:%H:%M %n  %a, %d.%m.%Y}",
+        "format": "  {:%H:%M   %a, %d.%m.%Y}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
     }
 }
