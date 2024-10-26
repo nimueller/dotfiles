@@ -141,8 +141,15 @@ function nix-clean () {
   nix-collect-garbage -d
 }
 
-alias install="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S"
-alias uninstall="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns"
+function notify-command-finished() {
+  if ! hyprctl activewindow | grep kitty > /dev/null; then 
+    printf '\x1b]99;;Command finished\x1b\\'
+  fi
+}
+
+alias install="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S ; notify-command-finished"
+alias uninstall="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns ; notify-command-finished"
+alias upgrade="yay -Syu ; notify-command-finished"
 
 export EDITOR=nvim
 zle -N fzd

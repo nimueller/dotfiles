@@ -15,6 +15,7 @@
       vram = 1;
       swap = 1;
       wine = 1;
+      blacklist = "nautilus";
     };
   };
 }
