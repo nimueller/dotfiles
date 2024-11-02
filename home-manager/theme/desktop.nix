@@ -84,10 +84,10 @@ in
   };
 
   # Wallpaper
-  xdg.configFile."hypr/wallpaper.jpg".source = builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/saint-13/Linux_Dynamic_Wallpapers/main/Dynamic_Wallpapers/ZorinMountainFog/ZorinMountainFog1.jpg";
-    sha256 = "1l2rvpyn2ab7cd1y93v3im3ki8dhrlcwar30lb4kyl078pxh52kd";
-  };
+  # xdg.configFile."hypr/wallpaper.jpg".source = builtins.fetchurl {
+  #   url = "https://raw.githubusercontent.com/saint-13/Linux_Dynamic_Wallpapers/main/Dynamic_Wallpapers/ZorinMountainFog/ZorinMountainFog1.jpg";
+  #   sha256 = "1l2rvpyn2ab7cd1y93v3im3ki8dhrlcwar30lb4kyl078pxh52kd";
+  # };
 
   home.packages = with pkgs; [
     breeze-gtk

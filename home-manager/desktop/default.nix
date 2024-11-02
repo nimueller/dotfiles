@@ -1,4 +1,4 @@
-{ config, pkgs, lib, inputs, ... }:
+{ pkgs, lib, ... }:
 let
   my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
@@ -6,25 +6,10 @@ in
   nixpkgs.config.allowUnfree = true;
 
   imports = [
-    inputs.hyprland.homeManagerModules.default
-    inputs.spicetify-nix.homeManagerModule
-    ./apps.nix
     ./gaming.nix
+    ./symlinks.nix
     ../theme/desktop.nix
   ];
-
-  # Basic Hyprland configuration
-  wayland.windowManager.hyprland = {
-    enable = true;
-    extraConfig =
-      builtins.readFile ../../config/hypr/general.conf +
-      builtins.readFile ../../config/hypr/windowrules.conf +
-      builtins.readFile ../../config/hypr/workspacerules.conf +
-      builtins.readFile ../../config/hypr/keybinds.conf +
-      builtins.readFile ../../config/hypr/autostart.conf;
-  };
-
-  xdg.configFile."waybar".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/waybar";
 
   xdg.configFile."nwg-bar/style.css".source = ../../config/nwg-bar/style.css;
   xdg.configFile."nwg-bar/bar.json".text =
@@ -33,51 +18,9 @@ in
       [ "${pkgs.nwg-bar}" ]
       (builtins.readFile ../../config/nwg-bar/bar.json);
 
-  xdg.mimeApps = {
-    enable = true;
-    defaultApplications = {
-      # Terminal
-      "application/x-shellscript" = "kitty.desktop";
-      "application/x-sh" = "kitty.desktop";
-      "application/x-terminal" = "kitty.desktop";
-      # Browser
-      "text/html" = "brave.desktop";
-      "x-scheme-handler/http" = "brave.desktop";
-      "x-scheme-handler/https" = "brave.desktop";
-      "x-scheme-handler/about" = "brave.desktop";
-      "x-scheme-handler/unknown" = "brave.desktop";
-      # Text
-      "text/plain" = "nvim.desktop";
-      "text/markdown" = "org.gnome.gitlab.somas.Apostrophe.desktop";
-      # Images
-      "image/png" = "org.gnome.eog.desktop";
-      "image/jpeg" = "org.gnome.eog.desktop";
-      # Other
-      "inode/directory" = "org.gnome.Nautilus.desktop";
-      "x-scheme-handler/mailspring" = "Mailspring.desktop";
-      "application/pdf" = "org.gnome.Evince.desktop";
-    };
-  };
-
   dconf.settings = {
     "com/github/stunkymonkey/nautilus-open-any-terminal" = {
       terminal = "kitty";
-    };
-  };
-
-  # Use kitty as terminal emulator
-  programs.kitty = {
-    enable = true;
-    settings = {
-      font_family = "Jet Brains Mono";
-      show_hyperlink_targets = true;
-      copy_on_select = "clipboard";
-      strip_trailing_spaces = "smart";
-      focus_follows_mouse = true;
-      shell = "tmux";
-    };
-    keybindings = {
-      "ctrl+v" = "paste_from_clipboard";
     };
   };
 
@@ -94,13 +37,6 @@ in
       };
     };
   };
-
-  services.swayosd.enable = true;
-
-  # Auto Mount USB devices
-  services.udiskie.enable = true;
-
-  programs.spicetify.enable = true;
 
   programs.rofi = {
     enable = true;
@@ -127,13 +63,10 @@ in
   # Packages needed on Hyprland specifically, in addition to a standard desktop
   home.packages = with pkgs; [
     (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
+    noto-fonts
+    noto-fonts-color-emoji
 
-    # Utility
-    polkit-kde-agent
-    qt5.qtwayland
-    qt6.qtwayland
-    gtk3
-    gtk4
+    swayosd
 
     xdg-terminal-exec
     playerctl
@@ -144,7 +77,7 @@ in
     libnotify
     libsecret
     inotify-tools
-    waybar
+    # waybar
     wtype
     cliphist
     nwg-bar
@@ -158,21 +91,19 @@ in
     gnome.adwaita-icon-theme
     gnome.evince # PDF viewer
     gnome.eog # Image viewer
-    gnome.totem # Video player
+    # gnome.totem # Video player
     gnome.gnome-characters # Emoji picker
     gnome.gnome-font-viewer
     gnome.dconf-editor
+    gnome.file-roller
+    gnome.seahorse # Manage keyring
+    gnome.geary
     # Gnome Circle GUI apps
     apostrophe # Markdown viewer
     # Other GUI apps
-    gimp
     keepassxc
-    brave
-    firefox
     webcord
-    obs-studio
     wl-clipboard
     wf-recorder
-    jetbrains.idea-ultimate
   ];
 }

@@ -1,4 +1,4 @@
-{ config, lib, pkgs, username, ... }:
+{ pkgs, username, ... }:
 {
   # Basic home manager settings
   programs.home-manager.enable = true;
@@ -8,24 +8,19 @@
   home.stateVersion = "23.05";
 
   home.packages = with pkgs; [
-    # Ensure essential programs are installed
-    gcc
-
     # Terminal programs
+    tmux # GOAT
     fzf # Lifesaver!
     autojump # Lifesaver #2!
     tldr
     bat
     lsd
-
-    typescript
-    sassc
-    copilot-cli
+    jq
   ];
 
   imports = [
-    ./tmux.nix
     ./neovim.nix
+    ./symlinks.nix
     ../theme/default.nix
   ];
 
@@ -39,8 +34,6 @@
       autosuggestion.enable = true;
       enableCompletion = true;
       syntaxHighlighting.enable = true;
-
-      initExtra = builtins.readFile ../../config/zshrc;
 
       oh-my-zsh = {
         enable = true;

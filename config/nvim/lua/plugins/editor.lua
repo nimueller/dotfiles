@@ -33,6 +33,7 @@ return {
 
 			-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
 			auto_install = true,
+			main = 'nvim-treesitter.configs', -- Sets main module to use for opts
 
 			highlight = { enable = true },
 			indent = { enable = true },

@@ -64,7 +64,23 @@ return {
 	-- Useful plugin to show you pending keybinds.
 	{
 		"folke/which-key.nvim",
-		opts = {},
+		opts = {
+
+			icons = {
+				-- set icon mappings to true if you have a Nerd Font
+				mappings = vim.g.have_nerd_font,
+			},
+			spec = {
+				{ "<leader>c", group = "[C]ode" },
+				{ "<leader>d", group = "[D]ocument" },
+				{ "<leader>f", group = "[F]ile" },
+				{ "<leader>g", group = "[G]it" },
+				{ "<leader>h", group = "More git" },
+				{ "<leader>r", group = "[R]ename" },
+				{ "<leader>s", group = "[S]earch" },
+				{ "<leader>w", group = "[W]orkspace" },
+			}
+		},
 	},
 
 	-- Display VIM buffers as tabs to act like a real IDE
@@ -136,14 +152,14 @@ return {
 				desc = "[/] Fuzzily search in current buffer",
 				silent = true,
 			},
-			{ "<leader>fh", "<cmd>Telescope help_tags<cr>", desc = "[F]ind [H]elp", silent = true },
-			{ "<leader>gf", "<cmd>Telescope git_files<cr>", desc = "Search [G]it [F]iles", silent = true },
-			{ "<leader>sf", "<cmd>Telescope find_files<cr>", desc = "[S]earch [F]iles", silent = true },
-			{ "<leader>sh", "<cmd>Telescope help_tags<cr>", desc = "[S]earch [H]elp", silent = true },
+			{ "<leader>fh", "<cmd>Telescope help_tags<cr>",   desc = "[F]ind [H]elp",           silent = true },
+			{ "<leader>gf", "<cmd>Telescope git_files<cr>",   desc = "Search [G]it [F]iles",    silent = true },
+			{ "<leader>sf", "<cmd>Telescope find_files<cr>",  desc = "[S]earch [F]iles",        silent = true },
+			{ "<leader>sh", "<cmd>Telescope help_tags<cr>",   desc = "[S]earch [H]elp",         silent = true },
 			{ "<leader>sw", "<cmd>Telescope grep_string<cr>", desc = "[S]earch current [W]ord", silent = true },
-			{ "<leader>sg", "<cmd>Telescope live_grep<cr>", desc = "[S]earch by [G]rep", silent = true },
-			{ "<leader>sd", "<cmd>Telescope diagnostics<cr>", desc = "[S]earch [D]iagnostics", silent = true },
-			{ "<leader>sr", "<cmd>Telescope resume<cr>", desc = "[S]earch [R]esume", silent = true },
+			{ "<leader>sg", "<cmd>Telescope live_grep<cr>",   desc = "[S]earch by [G]rep",      silent = true },
+			{ "<leader>sd", "<cmd>Telescope diagnostics<cr>", desc = "[S]earch [D]iagnostics",  silent = true },
+			{ "<leader>sr", "<cmd>Telescope resume<cr>",      desc = "[S]earch [R]esume",       silent = true },
 		},
 		opts = function()
 			return {

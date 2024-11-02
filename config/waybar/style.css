@@ -1,31 +1,26 @@
 #waybar {
   font-family: JetBrainsMono Nerd Font;
-  font-size: 12px;
+  font-size: 10px;
   background: transparent;
   color: #cad3f5;
 }
 
 #waybar>box {
-  background: #363a4f;
-  margin: 10px 10px 0 10px;
-  border-radius: 10px;
+  background: #1e2030;
 }
 
-#custom-system,
-#window,
 #workspaces,
 #privacy,
 #pulseaudio,
 #tray,
 #clock {
-  background-color: #494d64;
-  padding: 0 0.5rem;
+  background-color: #24273a;
 }
 
 #custom-system {
-  border-radius: 10px 0 0 10px;
   font-size: 20px;
   color: #8caaee;
+  padding: 0 0.5rem 0 0;
 }
 
 #window {
@@ -33,11 +28,11 @@
 }
 
 #workspaces {
-  border-radius: 10px;
+  border-radius: 0.5rem;
 }
 
 #workspaces label {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 #workspaces button {
@@ -68,5 +63,5 @@
 }
 
 #clock {
-  border-radius: 0 10px 10px 0;
+  padding: 0px 0.5rem 0px 0.5rem;
 }
