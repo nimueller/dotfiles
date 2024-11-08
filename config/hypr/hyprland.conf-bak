@@ -5,16 +5,3 @@ source=~/.config/hypr/windowrules.conf
 source=~/.config/hypr/workspacerules.conf
 
 # vim: ft=hyprlang
-
-render {
-    explicit_sync = 2
-    explicit_sync_kms = 2
-}
-
-debug {
-    overlay = false
-}
-
-opengl {
-    nvidia_anti_flicker = true
-}
