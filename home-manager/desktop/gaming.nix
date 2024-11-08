@@ -2,7 +2,6 @@
 {
   programs.mangohud = {
     enable = true;
-    enableSessionWide = true;
     settings = {
       cpu_temp = 1;
       gpu_temp = 1;
