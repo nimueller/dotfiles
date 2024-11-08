@@ -88,16 +88,16 @@ in
     my-pkgs.applauncher
 
     # Gnome GUI apps
-    gnome.adwaita-icon-theme
-    gnome.evince # PDF viewer
-    gnome.eog # Image viewer
-    # gnome.totem # Video player
-    gnome.gnome-characters # Emoji picker
-    gnome.gnome-font-viewer
-    gnome.dconf-editor
-    gnome.file-roller
-    gnome.seahorse # Manage keyring
-    gnome.geary
+    adwaita-icon-theme
+    evince # PDF viewer
+    eog # Image viewer
+    totem # Video player
+    gnome-characters # Emoji picker
+    gnome-font-viewer
+    dconf-editor
+    file-roller
+    seahorse # Manage keyring
+    geary
     # Gnome Circle GUI apps
     apostrophe # Markdown viewer
     # Other GUI apps
