@@ -50,6 +50,9 @@
         "ls" = "lsd";
         "la" = "lsd -lah";
         "virsh" = "virsh -c qemu:///system";
+        # Disable Explicit Sync for looking-glass-client on Nvidia GPUs until 
+        # https://github.com/NVIDIA/egl-wayland/issues/149 is fixed
+        "looking-glass-client" = "__NV_DISABLE_EXPLICIT_SYNC=1 looking-glass-client";
         "fzf" = "fzf --reverse";
       };
     };
