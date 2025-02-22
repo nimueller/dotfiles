@@ -1,0 +1,15 @@
+configuration {
+combi-modes: "drun,ssh";
+display-calc: " 󰃬 Calc ";
+display-combi: " 󱓞 Launch ";
+display-drun: " App";
+display-ssh: " 󱘖 SSH";
+drun-display-format: "{icon} {name}";
+font: "NotoMono Nerd Font";
+location: 0;
+modi: "combi";
+show-icons: true;
+xoffset: 0;
+yoffset: 0;
+}
+@theme "catppuccin-default"

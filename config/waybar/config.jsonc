@@ -22,26 +22,37 @@
     "hyprland/workspaces": {
         "format": "<sup>{id}</sup> {windows}",
         "window-rewrite": {
+            // System
+            "class<kitty>": "",
+            "class<geary>": "",
             "class<firefox>": "󰈹",
             "class<brave-browser>": "",
-            "class<WebCord>": "󰙯",
-            "class<vesktop>": "󰙯",
-            "class<Spotify>": "",
-            "class<unityhub>": "󰚯",
-            "class<Unity>": "󰚯",
-            "class<org.keepassxc.KeePassXC>": "",
-            "class<org.gnome.Nautilus>": "󰷏",
-            "class<geary>": "",
             "class<thunderbird>": "",
             "class<virt-manager>": "󰢩",
             "class<looking-glass-client>": "",
+            "class<org.keepassxc.KeePassXC>": "",
+            // Gnome
+            "class<evince>": "",
+            "class<gnome-disks>": "󱛟",
+            "class<org.gnome.Nautilus>": "󰷏",
+            "class<org.gnome.FileRoller>": "",
+            "class<org.gnome.Calculator>": "󰃬",
+            "class<org.gnome.font-viewer>": "",
+            // Productive
             "class<jetbrains-idea>": "",
             "class<jetbrains-rider>": "",
             "class<jetbrains-studio>": "",
+            "class<unityhub>": "󰚯",
+            "class<Unity>": "󰚯",
+            "class<Gimp-2.10>": "",
+            // Third-Party
             "class<com.nextcloud.desktopclient.nextcloud>": "󰅟",
             "class<steam>": "󰓓",
-            "class<kitty>": "",
-            "class<lutris>": "󰊗"
+            "class<lutris>": "󰊗",
+            "class<WebCord>": "󰙯",
+            "class<vesktop>": "󰙯",
+            "class<discord>": "󰙯",
+            "class<Spotify>": ""
         }
     },
     "pulseaudio#sink": {

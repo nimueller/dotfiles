@@ -4,6 +4,7 @@ let
 in
 {
   nixpkgs.config.allowUnfree = true;
+  targets.genericLinux.enable = true;
 
   imports = [
     ./gaming.nix
@@ -38,19 +39,10 @@ in
     };
   };
 
+  xdg.configFile."rofi".source = ../../config/rofi;
   programs.rofi = {
     enable = true;
     package = pkgs.rofi-wayland;
-    extraConfig = {
-      modi = "combi";
-      combi-modes = "drun,ssh";
-      show-icons = true;
-      drun-display-format = "{icon} {name}";
-      display-combi = " 󱓞 Launch ";
-      display-calc = " 󰃬 Calc ";
-      display-drun = " App";
-      display-ssh = " 󱘖 SSH";
-    };
     plugins = [
       pkgs.rofi-calc
     ];
@@ -62,7 +54,7 @@ in
 
   # Packages needed on Hyprland specifically, in addition to a standard desktop
   home.packages = with pkgs; [
-    (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
+    nerd-fonts.noto
     noto-fonts
     noto-fonts-color-emoji
 

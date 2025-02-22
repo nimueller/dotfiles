@@ -21,8 +21,9 @@ in
 
   programs.kitty.themeFile = "Catppuccin-Macchiato";
   programs.rofi.theme = builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/catppuccin/rofi/5350da41a11814f950c3354f090b90d4674a95ce/basic/.local/share/rofi/themes/catppuccin-macchiato.rasi";
-    sha256 = "0n9cixyv4ladvcfbybq5dsfyzklfh732cd8nmvjckd09pjkb62f1";
+    # url = "https://raw.githubusercontent.com/catppuccin/rofi/5350da41a11814f950c3354f090b90d4674a95ce/basic/.local/share/rofi/themes/catppuccin-macchiato.rasi";
+    url = "https://raw.githubusercontent.com/catppuccin/rofi/refs/heads/main/catppuccin-default.rasi";
+    sha256 = "1lwzc71cdb7nd0qmmdnnkr512rdj6xk62mx260m049wi1vlg5pdv";
   };
 
   services.dunst = {
@@ -33,7 +34,7 @@ in
 
     settings = {
       global = {
-        font = "JetBrainsMono Nerd Font 12";
+        font = "NotoMono Nerd Font 12";
         frame_width = 2;
         corner_radius = 10;
         frame_color = "#8AADF4";

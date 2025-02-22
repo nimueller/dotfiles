@@ -37,8 +37,8 @@
     biome
     nodePackages.vscode-langservers-extracted
     nodePackages.eslint
-    nodePackages.prisma
-    nodePackages."@prisma/language-server"
+    # nodePackages.prisma
+    # nodePackages."@prisma/language-server"
     nodePackages.typescript-language-server
 
     # Docker

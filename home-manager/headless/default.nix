@@ -1,4 +1,4 @@
-{ pkgs, username, ... }:
+{ lib, pkgs, username, ... }:
 {
   # Basic home manager settings
   programs.home-manager.enable = true;
@@ -72,10 +72,10 @@
       signing = {
         signByDefault = true;
         key = "~/.ssh/id_rsa_github.pub";
+        format = "ssh";
       };
       extraConfig = {
         init.defaultBranch = "main";
-        gpg.format = "ssh";
         difftool.prompt = false;
         diff.tool = "nvimdiff";
         merge.tool = "nvimdiff";
