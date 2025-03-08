@@ -56,7 +56,12 @@ in
   home.packages = with pkgs; [
     nerd-fonts.noto
     noto-fonts
+    noto-fonts-lgc-plus
+    noto-fonts-cjk-sans
+    noto-fonts-cjk-serif
+    noto-fonts-emoji-blob-bin
     noto-fonts-color-emoji
+    noto-fonts-monochrome-emoji
 
     swayosd
 
@@ -71,6 +76,7 @@ in
     inotify-tools
     # waybar
     wtype
+    xdotool
     cliphist
     nwg-bar
     pavucontrol

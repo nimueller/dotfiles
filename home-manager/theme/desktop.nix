@@ -91,7 +91,7 @@ in
   # };
 
   home.packages = with pkgs; [
-    breeze-gtk
+    kdePackages.breeze-gtk
   ];
 
 }
