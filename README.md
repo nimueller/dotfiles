@@ -17,7 +17,7 @@
 
 <b>Application Launcher</b>: rofi
 
-<b>Browser</b>: Firefox
+<b>Browser</b>: Brave
 
 
 | ![Images](resources/2023-11-29-213212_hyprshot.png) | ![Images](resources/2023-11-29-203138_hyprshot.png) |
