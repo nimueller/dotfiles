@@ -28,6 +28,8 @@ local servers = {
 	prismals = {},
 	jsonls = {},
 
+	sourcekit = {},
+
 	docker_compose_language_service = {},
 
 	cssls = {},

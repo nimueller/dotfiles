@@ -22,6 +22,9 @@
     lemminx
     html-tidy
 
+    # C/C++
+    sourcekit-lsp
+
     # Kotlin/Java
     jdt-language-server
     kotlin-language-server
