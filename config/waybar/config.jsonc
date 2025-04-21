@@ -48,7 +48,9 @@
             // Third-Party
             "class<com.nextcloud.desktopclient.nextcloud>": "󰅟",
             "class<steam>": "󰓓",
-            "class<lutris>": "󰊗",
+            "class<net.lutris.Lutris>": "󰊗",
+            "class<.*\\.exe>": "󰊗",
+            "class<steam.*>": "󰺵",
             "class<WebCord>": "󰙯",
             "class<vesktop>": "󰙯",
             "class<discord>": "󰙯",
