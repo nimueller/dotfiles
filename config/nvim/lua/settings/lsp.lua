@@ -34,8 +34,6 @@ local servers = {
 
 	cssls = {},
 	bashls = {},
-	texlab = {},
-	ltex = {},
 
 	hyprls = {},
 	lemminx = {},
