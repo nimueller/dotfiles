@@ -87,6 +87,8 @@ window {
     padding:          5;
     background-color: @background;
     border:           1;
+    border-color:     @blue;
+    border-radius:    5px;
 }
 mainbox {
     padding: 0;
@@ -160,11 +162,14 @@ entry {
 }
 prompt {
     spacing:    0;
-    text-color: @normal-foreground;
+    text-color: @selected-normal-foreground;
+    background-color: @green;
+    border-radius: 5px;
+    padding: 5px 15px 5px 5px;
 }
 textbox-prompt-colon {
     margin:     0px 0.3000em 0.0000em 0.0000em ;
     expand:     false;
-    str:        ":";
+    // str:        ":";
     text-color: inherit;
 }

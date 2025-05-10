@@ -39,15 +39,6 @@ in
     };
   };
 
-  xdg.configFile."rofi".source = ../../config/rofi;
-  programs.rofi = {
-    enable = true;
-    package = pkgs.rofi-wayland;
-    plugins = [
-      pkgs.rofi-calc
-    ];
-  };
-
   services.kdeconnect.enable = true;
 
   fonts.fontconfig.enable = true;
@@ -63,6 +54,7 @@ in
     noto-fonts-color-emoji
     noto-fonts-monochrome-emoji
 
+    rofi-wayland
     swayosd
 
     xdg-terminal-exec

@@ -1,15 +1,19 @@
 configuration {
-combi-modes: "drun,ssh";
-display-calc: " 󰃬 Calc ";
-display-combi: " 󱓞 Launch ";
-display-drun: " App";
-display-ssh: " 󱘖 SSH";
-drun-display-format: "{icon} {name}";
-font: "NotoMono Nerd Font";
-location: 0;
-modi: "combi";
-show-icons: true;
-xoffset: 0;
-yoffset: 0;
+    combi-modes: "drun,ssh";
+    display-calc: " 󰃬 Calc ";
+    display-combi: " 󱓞 Launch ";
+    display-drun: " App";
+    display-ssh: " 󱘖 SSH";
+    drun-display-format: "{icon} {name}";
+    font: "NotoSans Nerd Font Bold 14";
+    location: 0;
+    matching: "fuzzy";
+    modi: "combi";
+    show-icons: true;
+    xoffset: 0;
+    yoffset: 0;
+    kb-clear-line: "Ctrl+u";
+    kb-remove-word-back: "Ctrl+w";
+    kb-remove-to-sol: "";
 }
 @theme "catppuccin-default"

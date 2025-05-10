@@ -1,7 +1,16 @@
-{ lib, pkgs, username, ... }:
+{ pkgs, username, ... }:
 {
   # Basic home manager settings
   programs.home-manager.enable = true;
+  services.home-manager.autoExpire = {
+    enable = true;
+    frequency = "weekly";
+    store = {
+      cleanup = true;
+      options = "--delete-older-than 7d";
+    };
+    timestamp = "-7 days";
+  };
 
   home.username = username;
   home.homeDirectory = "/home/${username}";
