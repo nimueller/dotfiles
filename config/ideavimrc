@@ -1,0 +1,120 @@
+let g:WhichKey_ShowVimActions = "false"
+
+set scrolloff=10
+set incsearch
+set number
+set hlsearch
+set which-key
+
+" --- Set IdeaVim options https://github.com/JetBrains/ideavim/blob/master/doc/set-commands.md
+set idearefactormode=select
+set ideajoin
+
+" --- Enable IdeaVim plugins https://jb.gg/ideavim-plugins
+set quickscope
+Plug 'easymotion/vim-easymotion'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-commentary'
+Plug 'machakann/vim-highlightedyank'
+Plug 'preservim/nerdtree'
+Plug 'vim-scripts/ReplaceWithRegister'
+Plug 'justinmk/vim-sneak'
+
+" Handlers
+sethandler <C-a> a:vim
+sethandler <C-x> a:vim
+sethandler <C-c> n-v:ide i:vim
+sethandler <C-v> a:ide
+sethandler <C-\> a:ide
+sethandler <C-h> a:vim
+sethandler <C-l> a:vim
+sethandler <C-j> a:vim
+sethandler <C-k> a:vim
+sethandler <C-z> a:vim
+
+" Set the leader key to space while also removing default space key mappings
+map <Space> <Nop>
+map <Esc> <Esc>:noh<CR>
+let mapleader = " "
+set notimeout
+set timeoutlen=5000
+
+nmap <S-h> <Action>(PreviousTab)
+nmap <S-l> <Action>(NextTab)
+
+nmap gf <Action>(GotoImplementation)
+
+" Misc actions
+map [q <Action>(GotoPreviousError)
+map ]q <Action>(GotoNextError)
+map [[ :action MethodUp<CR>
+map ]] :action MethodDown<CR>
+
+map <C-h> <C-w>h
+map <C-j> <C-w>j
+map <C-k> <C-w>k
+map <C-l> <C-w>l
+map <C-z> <Action>(ToggleDistractionFreeMode)
+map <C-t> <Action>(ActivateTerminalToolWindow)
+
+" Leader actions
+nmap <leader>a <Action>($SelectAll)
+
+map <leader>ft :NERDTreeToggle<CR><Action>(SelectInProjectView)
+
+map <leader>sf <Action>(GotoFile)
+map <leader>sg <Action>(FindInPath)
+
+map <leader>rn :set relativenumber<CR>
+map <leader>rl :set norelativenumber<CR>
+map <leader>rr <Action>(RenameElement)
+map <leader>rs <Action>(ChangeSignature)
+
+map <leader>gc <Action>(CheckinProject)<Esc><Action>(Vcs.LLMCommitMessageAction)
+
+map <leader>cr <Action>(RenameElement)
+map <leader>cf <Action>(ReformatCode)
+map <leader>cu <Action>(FindUsages)
+map <leader>ce ^v$<Action>(osmedile.intellij.stringmanip.NonAsciiToUnicodeEscapedAction)<ESC>
+
+map <leader>nc <Action>(NewClass)
+
+map Q <Action>(ReformatCode)
+
+map gK <Action>(QuickImplementations)
+
+" entire lines when in visual mode
+vmap K :m '<-2<CR>gv=gv
+vmap J :m '<+1<CR>gv=gv
+
+" Cursor jump fixes when scrolling or searching
+nmap <C-d> <C-d>zz
+nmap <C-u> <C-u>zz
+nmap n nzz
+nmap N Nzz
+
+nmap * *N
+
+nmap <leader>vam va{o{V
+nmap <leader>dam va{o{Vd
+
+map <leader>d <Action>(Debug)
+
+let g:WhichKeyDesc_refactor = "<leader>r  [R]efactor"
+let g:WhichKeyDesc_refactor_rename = "<leader>rr  [R]efactor [R]ename"
+let g:WhichKeyDesc_refactor_signature = "<leader>rs  [R]efactor [S]ignature"
+
+let g:WhichKeyDesc_select_all = "<leader>a  Select [A]ll"
+
+let g:WhichKeyDesc_find = "<leader>f  [F]ind"
+let g:WhichKeyDesc_find_file = "<leader>ft  [F]ile [T]ree"
+let g:WhichKeyDesc_find_search = "<leader>sf  [S]earch [F]ile"
+let g:WhichKeyDesc_find_grep = "<leader>sg  [S]earch using [G]rep"
+
+let g:WhichKeyDesc_new = "<leader>n  [N]ew"
+let g:WhichKeyDesc_new_class = "<leader>nc  [N]ew [C]lass"
+
+let g:WhichKeyDesc_git = "<leader>g [G]it"
+let g:WhichKeyDesc_git_commit = "<leader>gc [G]it [C]ommit"
+
+let g:WhichKeyDesc_g = "gK Quick Definition (Source Code Popup)"
