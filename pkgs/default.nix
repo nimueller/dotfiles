@@ -14,4 +14,6 @@
 
   recorder = pkgs.writeShellScriptBin "recorder" (builtins.readFile ./scripts/recorder.sh);
   applauncher = pkgs.writeShellScriptBin "applauncher" (builtins.readFile ./scripts/applauncher.sh);
+  init-tex = pkgs.writeShellScriptBin "init-tex" (builtins.readFile ./scripts/init-tex.sh);
+  edit-tex = pkgs.writeShellScriptBin "edit-tex" (builtins.readFile ./scripts/edit-tex.sh);
 }

@@ -31,10 +31,10 @@
     ktlint
 
     # LaTeX
-    # texliveFull
-    # evince
-    # texlab
-    # ltex-ls
+    texliveFull
+    evince
+    texlab
+    ltex-ls
 
     # JavaScript/TypeScript
     biome

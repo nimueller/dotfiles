@@ -76,6 +76,8 @@ in
     my-pkgs.hyprshot
     my-pkgs.recorder
     my-pkgs.applauncher
+    my-pkgs.init-tex
+    my-pkgs.edit-tex
 
     # Gnome GUI apps
     adwaita-icon-theme
