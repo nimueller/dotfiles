@@ -151,6 +151,7 @@ alias install="less $HOME/.cache/yay/completion.cache | awk '{print \$1}' | fzf 
 alias install_query="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S ; notify-command-finished"
 alias uninstall="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns ; notify-command-finished"
 alias upgrade="yay -Syu ; notify-command-finished"
+alias cleanup="sudo pacman -Qdtq | sudo pacman -Rns -"
 
 export EDITOR=nvim
 zle -N fzd

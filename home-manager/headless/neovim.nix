@@ -40,14 +40,13 @@
     biome
     nodePackages.vscode-langservers-extracted
     nodePackages.eslint
-    # nodePackages.prisma
-    # nodePackages."@prisma/language-server"
+    nodePackages.prisma
     nodePackages.typescript-language-server
 
     # Docker
     docker-compose-language-service
 
     # Bash
-    # nodePackages.bash-language-server
+    nodePackages.bash-language-server
   ];
 }
