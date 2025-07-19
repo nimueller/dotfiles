@@ -41,6 +41,42 @@ return {
 					},
 				},
 			},
+			keymap = {
+				preset = "enter"
+			}
 		},
 	},
+
+	{
+		"nvimtools/none-ls.nvim",
+		event = { "BufReadPre", "BufNewFile" },
+
+		config = function()
+			local null_ls = require("null-ls")
+			local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+
+			null_ls.setup({
+				sources = {
+					null_ls.builtins.diagnostics.deadnix,
+					null_ls.builtins.diagnostics.editorconfig_checker,
+					null_ls.builtins.diagnostics.tidy,
+					null_ls.builtins.diagnostics.ktlint,
+					null_ls.builtins.diagnostics.markdownlint2,
+					null_ls.builtins.formatting.stylua,
+					null_ls.builtins.formatting.ktlint,
+					null_ls.builtins.formatting.tidy,
+				},
+				on_attach = function(_, bufnr)
+					vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+					vim.api.nvim_create_autocmd("BufWritePre", {
+						group = augroup,
+						buffer = bufnr,
+						callback = function()
+							vim.lsp.buf.format({ async = false })
+						end,
+					})
+				end,
+			})
+		end,
+	}
 }

@@ -33,3 +33,5 @@ vim.keymap.set({ 'n', 'v' }, '<S-H>', '<ESC>:BufferLineCyclePrev<CR>', { silent 
 vim.keymap.set({ 'n', 'v' }, '<S-L>', '<ESC>:BufferLineCycleNext<CR>', { silent = true })
 vim.keymap.set({ 'n', 'v', 'i' }, '<A-S-Left>', '<ESC>:BufferLineMovePrev<CR>', { silent = true })
 vim.keymap.set({ 'n', 'v', 'i' }, '<A-S-Right>', '<ESC>:BufferLineMoveNext<CR>', { silent = true })
+
+vim.keymap.set({ 'n' }, '<leader>cf', function() vim.lsp.buf.format({ async = false }) end, { desc = "[C]ode [F]ormat" })

@@ -9,8 +9,9 @@
     tree-sitter
 
     ## language servers
-    # Spell checker
+    # General
     codebook
+    editorconfig-checker
 
     # LaTeX
     texliveFull
@@ -20,6 +21,7 @@
 
     # Markdown
     marksman
+    markdownlint-cli2
 
     # Lua
     luaPackages.luacheck
@@ -30,6 +32,7 @@
     nixpkgs-fmt
     nil
     statix
+    deadnix
 
     # XML/HTML
     lemminx
