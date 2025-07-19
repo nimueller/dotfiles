@@ -83,38 +83,6 @@ return {
 		},
 	},
 
-	-- Display VIM buffers as tabs to act like a real IDE
-	{
-		"akinsho/bufferline.nvim",
-		version = "*",
-		dependencies = "nvim-tree/nvim-web-devicons",
-		event = "VeryLazy",
-		opts = {
-			options = {
-				-- style_preset = require('bufferline').style_preset.slant,
-				close_command = function(n)
-					require("mini.bufremove").delete(n, false)
-				end,
-				right_mouse_command = function(n)
-					require("mini.bufremove").delete(n, false)
-				end,
-				diagnostics = "nvim_lsp",
-				diagnostics_indicator = function(count, level, diagnostics_dict, context)
-					local icon = level:match("error") and " " or " "
-					return " " .. icon .. count
-				end,
-				offsets = {
-					{
-						filetype = "neo-tree",
-						text = "Neo-tree",
-						highlight = "Directory",
-						text_align = "left",
-					},
-				},
-			},
-		},
-	},
-
 	-- Fuzzy finder UI
 	{
 		"nvim-telescope/telescope.nvim",
@@ -153,14 +121,15 @@ return {
 				desc = "[/] Fuzzily search in current buffer",
 				silent = true,
 			},
-			{ "<leader>fh", "<cmd>Telescope help_tags<cr>",   desc = "[F]ind [H]elp",           silent = true },
-			{ "<leader>gf", "<cmd>Telescope git_files<cr>",   desc = "Search [G]it [F]iles",    silent = true },
-			{ "<leader>sf", "<cmd>Telescope find_files<cr>",  desc = "[S]earch [F]iles",        silent = true },
-			{ "<leader>sh", "<cmd>Telescope help_tags<cr>",   desc = "[S]earch [H]elp",         silent = true },
-			{ "<leader>sw", "<cmd>Telescope grep_string<cr>", desc = "[S]earch current [W]ord", silent = true },
-			{ "<leader>sg", "<cmd>Telescope live_grep<cr>",   desc = "[S]earch by [G]rep",      silent = true },
-			{ "<leader>sd", "<cmd>Telescope diagnostics<cr>", desc = "[S]earch [D]iagnostics",  silent = true },
-			{ "<leader>sr", "<cmd>Telescope resume<cr>",      desc = "[S]earch [R]esume",       silent = true },
+			{ "<leader>fh", "<cmd>Telescope help_tags<cr>",              desc = "[F]ind [H]elp",           silent = true },
+			{ "<leader>gf", "<cmd>Telescope git_files<cr>",              desc = "Search [G]it [F]iles",    silent = true },
+			{ "<leader>sf", "<cmd>Telescope find_files<cr>",             desc = "[S]earch [F]iles",        silent = true },
+			{ "<leader>sh", "<cmd>Telescope help_tags<cr>",              desc = "[S]earch [H]elp",         silent = true },
+			{ "<leader>sw", "<cmd>Telescope grep_string<cr>",            desc = "[S]earch current [W]ord", silent = true },
+			{ "<leader>sg", "<cmd>Telescope live_grep<cr>",              desc = "[S]earch by [G]rep",      silent = true },
+			{ "<leader>sd", "<cmd>Telescope diagnostics<cr>",            desc = "[S]earch [D]iagnostics",  silent = true },
+			{ "<leader>sr", "<cmd>Telescope resume<cr>",                 desc = "[S]earch [R]esume",       silent = true },
+			{ "<C-e>",      "<cmd>Telescope oldfiles only_cwd=true<cr>", desc = "Recent files",            silent = true },
 		},
 		opts = function()
 			return {
