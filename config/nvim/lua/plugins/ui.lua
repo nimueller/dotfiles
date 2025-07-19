@@ -28,14 +28,13 @@ return {
 	{
 		"nvim-neo-tree/neo-tree.nvim",
 		branch = "v3.x",
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-			"nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-			"MunifTanjim/nui.nvim",
-			-- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
-		},
 		keys = {
 			{ "<leader>ft", ":Neotree focus<CR>", desc = "[F]ile [T]ree", silent = true },
+		},
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"nvim-tree/nvim-web-devicons",
+			"MunifTanjim/nui.nvim",
 		},
 		opts = {
 			sources = { "filesystem", "buffers", "git_status", "document_symbols" },
@@ -202,4 +201,28 @@ return {
 			},
 		},
 	},
+
+	-- Zen mode
+	{
+		"folke/zen-mode.nvim",
+		keys = {
+			{
+				"<C-z>",
+				"<cmd>ZenMode<cr>",
+				desc = "Toogle Zen Mode",
+				silent = true
+			},
+		},
+		opts = {
+			window = {
+				width = 130
+			},
+			plugins = {
+				kitty = {
+					enabled = true,
+					font = "+4"
+				}
+			}
+		}
+	}
 }
