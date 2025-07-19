@@ -109,7 +109,7 @@ return {
 	{
 		"kylechui/nvim-surround",
 		version = "*", -- Use for stability; omit to use `main` branch for the latest features
-		event = "VeryLazy",
+		event = { "BufReadPost", "BufNewFile" },
 		config = function()
 			require("nvim-surround").setup({
 				-- Configuration here, or leave empty to use defaults
@@ -120,6 +120,7 @@ return {
 	-- Add indentation guides even on blank lines
 	{
 		"lukas-reineke/indent-blankline.nvim",
+		event = { "BufReadPost", "BufNewFile" },
 		main = "ibl",
 		opts = {},
 	},
@@ -127,9 +128,13 @@ return {
 	-- "gc" to comment visual regions/lines
 	{
 		"numToStr/Comment.nvim",
+		event = { "BufReadPost", "BufNewFile" },
 		opts = {},
 	},
 
 	-- Vim Sneak
-	{ "justinmk/vim-sneak" },
+	{
+		"justinmk/vim-sneak",
+		event = { "BufReadPost", "BufNewFile" },
+	},
 }

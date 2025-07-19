@@ -64,8 +64,8 @@ return {
 	-- Useful plugin to show you pending keybinds.
 	{
 		"folke/which-key.nvim",
+		event = "VeryLazy",
 		opts = {
-
 			icons = {
 				-- set icon mappings to true if you have a Nerd Font
 				mappings = vim.g.have_nerd_font,
@@ -88,6 +88,7 @@ return {
 		"akinsho/bufferline.nvim",
 		version = "*",
 		dependencies = "nvim-tree/nvim-web-devicons",
+		event = "VeryLazy",
 		opts = {
 			options = {
 				-- style_preset = require('bufferline').style_preset.slant,
@@ -191,6 +192,7 @@ return {
 	-- Set lualine as statusline
 	{
 		"nvim-lualine/lualine.nvim",
+		event = "VeryLazy",
 		opts = {
 			options = {
 				ignore_focus = { "neo-tree" },
