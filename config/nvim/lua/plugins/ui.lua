@@ -98,38 +98,52 @@ return {
 			},
 		},
 		keys = {
+			-- General
 			{
-				"<leader>?",
-				"<cmd>Telescope oldfiles<cr>",
-				desc = "[?] Find recently opened files",
-				silent = true,
-			},
-			{
-				"<leader><space>",
-				"<cmd>Telescope buffers<cr>",
-				desc = "[ ] Find existing buffers",
-				silent = true,
-			},
-			{
-				"<leader>/",
-				function()
-					require("telescope.builtin").current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
-						winblend = 10,
-						previewer = false,
-					}))
-				end,
+				"<C-f>",
+				"<cmd>Telescope current_buffer_fuzzy_find theme=dropdown winblend=10 previewer=true<cr>",
 				desc = "[/] Fuzzily search in current buffer",
 				silent = true,
 			},
-			{ "<leader>fh", "<cmd>Telescope help_tags<cr>",              desc = "[F]ind [H]elp",           silent = true },
-			{ "<leader>gf", "<cmd>Telescope git_files<cr>",              desc = "Search [G]it [F]iles",    silent = true },
-			{ "<leader>sf", "<cmd>Telescope find_files<cr>",             desc = "[S]earch [F]iles",        silent = true },
-			{ "<leader>sh", "<cmd>Telescope help_tags<cr>",              desc = "[S]earch [H]elp",         silent = true },
-			{ "<leader>sw", "<cmd>Telescope grep_string<cr>",            desc = "[S]earch current [W]ord", silent = true },
-			{ "<leader>sg", "<cmd>Telescope live_grep<cr>",              desc = "[S]earch by [G]rep",      silent = true },
-			{ "<leader>sd", "<cmd>Telescope diagnostics<cr>",            desc = "[S]earch [D]iagnostics",  silent = true },
-			{ "<leader>sr", "<cmd>Telescope resume<cr>",                 desc = "[S]earch [R]esume",       silent = true },
-			{ "<C-e>",      "<cmd>Telescope oldfiles only_cwd=true<cr>", desc = "Recent files",            silent = true },
+			{
+				"<C-e>",
+				"<cmd>Telescope oldfiles only_cwd=true theme=dropdown winblend=10 previewer=true<cr>",
+				desc = "Recent files",
+				silent = true
+			},
+			{ "<leader>sf", "<cmd>Telescope find_files<cr>",  desc = "[S]earch [F]iles",        silent = true },
+			{ "<leader>sg", "<cmd>Telescope live_grep<cr>",   desc = "[S]earch by [G]rep",      silent = true },
+			{ "<leader>sw", "<cmd>Telescope grep_string<cr>", desc = "[S]earch current [W]ord", silent = true },
+			{ "<leader>sh", "<cmd>Telescope help_tags<cr>",   desc = "[S]earch [H]elp",         silent = true },
+			{ "<leader>sd", "<cmd>Telescope diagnostics<cr>", desc = "[S]earch [D]iagnostics",  silent = true },
+
+			-- Git
+			{
+				"<leader>gs",
+				"<cmd>Telescope git_status theme=dropdown previewer=true<cr>",
+				desc = "[G]it [S]tatus",
+				silent = true
+			},
+
+			-- LSP
+			{
+				"<leader>sr",
+				"<cmd>Telescope lsp_references theme=cursor<cr>",
+				desc = "[S]earch [R]eferences",
+				silent = true
+			},
+			{
+				"<leader>si",
+				"<cmd>Telescope lsp_implementations theme=cursor<cr>",
+				desc = "[S]earch [I]implentations",
+				silent = true
+			},
+			{
+				"<leader>ss",
+				"<cmd>Telescope lsp_workspace_symbols<cr>",
+				desc = "[S]earch [S]ymbols",
+				silent = true
+			},
 		},
 		opts = function()
 			return {
