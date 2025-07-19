@@ -21,6 +21,16 @@ local servers = {
 			},
 		},
 	},
+
+	-- Unholy spellchecker for code
+	codebook = {},
+
+	-- LaTeX
+	ltex = {},
+
+	-- Markdown
+	marksman = {},
+
 	statix = {},
 	biome = {},
 
@@ -61,6 +71,7 @@ local on_attach = function(client, bufnr)
 
 	-- See `:help K` for why this keymap
 	nmap("K", vim.lsp.buf.hover, "Hover Documentation")
+	nmap("gK", vim.lsp.buf.declaration, "Declaration")
 	nmap("<C-p>", vim.lsp.buf.signature_help, "Signature Documentation")
 
 	-- Lesser used LSP functionality
@@ -81,10 +92,6 @@ local on_attach = function(client, bufnr)
 				vim.lsp.buf.format({ bufnr = bufnr })
 			end,
 		})
-	end
-
-	if vim.lsp.inlay_hint then
-		vim.lsp.inlay_hint.enable(true)
 	end
 
 	for key, value in pairs(client) do

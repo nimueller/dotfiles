@@ -1,7 +1,7 @@
 -- Non VIM-ish keymaps because I'm used to them...
-vim.keymap.set({ 'n', 'v', 'i' }, '<C-a>', '<ESC>gg0vG$')
+vim.keymap.set({ 'n', 'v', 'i' }, '<leader>a', '<ESC>gg0vG$')
 vim.keymap.set('v', '<C-c>', '"+y')
-vim.keymap.set({ 'n', 'v', 'i' }, '<C-v>', '"+p')
+vim.keymap.set({ 'n', 'v', 'i' }, '<C-v>', '<ESC>"+p')
 
 -- Clear highlighting after search
 vim.keymap.set('n', '<ESC>', ':nohlsearch<CR>', { silent = true })
@@ -24,7 +24,7 @@ vim.keymap.set('n', 'N', 'Nzz')
 vim.keymap.set('x', '<leader>p', '"_dP')
 
 -- Who needs this anyway?
-vim.keymap.set('n', 'Q', '<Nop')
+vim.keymap.set('n', 'Q', '<Nop>')
 
 -- Bufferline maps to switch tabs
 vim.keymap.set({ 'n', 'v', 'i' }, '<A-Left>', '<ESC>:BufferLineCyclePrev<CR>', { silent = true })
@@ -35,4 +35,3 @@ vim.keymap.set({ 'n', 'v', 'i' }, '<A-S-Left>', '<ESC>:BufferLineMovePrev<CR>', 
 vim.keymap.set({ 'n', 'v', 'i' }, '<A-S-Right>', '<ESC>:BufferLineMoveNext<CR>', { silent = true })
 
 vim.keymap.set('n', '<A-CR>', ':Telescope spell_suggest<CR>', { silent = true })
-

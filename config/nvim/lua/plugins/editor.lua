@@ -29,6 +29,7 @@ return {
 				"bash",
 				"xml",
 				"html",
+				"markdown"
 			},
 
 			-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
@@ -129,4 +130,7 @@ return {
 
 	-- Extras for Ltex LSP
 	{ "barreiroleo/ltex-extra.nvim" },
+
+	-- Vim Sneak
+	{ "justinmk/vim-sneak" },
 }

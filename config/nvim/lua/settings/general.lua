@@ -3,7 +3,7 @@ vim.o.mouse = "a"
 
 -- Enable line numbers and relative line numbers
 vim.wo.number = true
-vim.wo.relativenumber = true
+vim.wo.relativenumber = false
 
 -- Always show 10 lines below or above the cursor
 vim.o.scrolloff = 10
