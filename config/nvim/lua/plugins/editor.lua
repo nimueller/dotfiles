@@ -1,5 +1,10 @@
 return {
 	{
+		"tpope/vim-sleuth",
+		event = { "BufReadPost", "BufNewFile" },
+	},
+
+	{
 		-- Highlight, edit, and navigate code
 		"nvim-treesitter/nvim-treesitter",
 		dependencies = {
@@ -8,7 +13,7 @@ return {
 			"windwp/nvim-ts-autotag",
 		},
 		build = ":TSUpdate",
-		cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
+		event = { "BufReadPost", "BufNewFile" },
 		config = function(_, opts)
 			require("nvim-treesitter.configs").setup(opts)
 		end,
@@ -100,9 +105,6 @@ return {
 		},
 	},
 
-	-- Non-LSP linters and formatters
-	{ "nvimtools/none-ls.nvim" },
-
 	-- Easily surround text
 	{
 		"kylechui/nvim-surround",
@@ -127,9 +129,6 @@ return {
 		"numToStr/Comment.nvim",
 		opts = {},
 	},
-
-	-- Extras for Ltex LSP
-	{ "barreiroleo/ltex-extra.nvim" },
 
 	-- Vim Sneak
 	{ "justinmk/vim-sneak" },

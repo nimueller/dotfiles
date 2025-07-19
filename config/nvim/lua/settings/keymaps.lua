@@ -1,5 +1,5 @@
 -- Non VIM-ish keymaps because I'm used to them...
-vim.keymap.set({ 'n', 'v', 'i' }, '<leader>a', '<ESC>gg0vG$')
+vim.keymap.set({ 'n', 'v' }, '<leader>a', '<ESC>gg0vG$')
 vim.keymap.set('v', '<C-c>', '"+y')
 vim.keymap.set({ 'n', 'v', 'i' }, '<C-v>', '<ESC>"+p')
 
@@ -33,5 +33,3 @@ vim.keymap.set({ 'n', 'v' }, '<S-H>', '<ESC>:BufferLineCyclePrev<CR>', { silent 
 vim.keymap.set({ 'n', 'v' }, '<S-L>', '<ESC>:BufferLineCycleNext<CR>', { silent = true })
 vim.keymap.set({ 'n', 'v', 'i' }, '<A-S-Left>', '<ESC>:BufferLineMovePrev<CR>', { silent = true })
 vim.keymap.set({ 'n', 'v', 'i' }, '<A-S-Right>', '<ESC>:BufferLineMoveNext<CR>', { silent = true })
-
-vim.keymap.set('n', '<A-CR>', ':Telescope spell_suggest<CR>', { silent = true })
