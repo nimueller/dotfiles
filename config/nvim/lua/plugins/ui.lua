@@ -43,20 +43,50 @@ return {
 				bind_to_cwd = false,
 				follow_current_file = { enabled = true },
 				use_libuv_file_watcher = true,
-			},
-			window = {
-				mappings = {
-					["<space>"] = "none",
+				window = {
+					mappings = {
+						["o"] = "system_open",
+						["<space>"] = "none",
+					},
 				},
 			},
 			default_component_configs = {
 				indent = {
-					with_expanders = true, -- if nil and file nesting is enabled, will enable expanders
+					with_expanders = true,
 					expander_collapsed = "",
 					expander_expanded = "",
 					expander_highlight = "NeoTreeExpander",
 				},
 			},
+			commands = {
+				system_open = function(state)
+					local node = state.tree:get_node()
+					local path = node:get_id()
+
+					if vim.fn.has("unix") then
+						vim.fn.jobstart({ "xdg-open", path }, { detach = true })
+					elseif vim.fn.has("mac") then
+						vim.fn.jobstart({ "open", path }, { detach = true })
+					elseif vim.fn.has("win32") then
+						local p
+						local lastSlashIndex = path:match("^.+()\\[^\\]*$")
+						if lastSlashIndex then
+							p = path:sub(1, lastSlashIndex - 1)
+						else
+							p = path
+						end
+						vim.cmd("silent !start explorer " .. p)
+					end
+				end,
+			},
+			event_handlers = {
+				{
+					event = "file_open_requested",
+					handler = function()
+						vim.cmd("Neotree close")
+					end
+				},
+			}
 		},
 	},
 
