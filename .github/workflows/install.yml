@@ -7,7 +7,9 @@ jobs:
     steps:
       - name: 🔍 Checkout repository
         uses: actions/checkout@v3
-      - name: 🛠️ Trigger installation script
+      - uses: cachix/install-nix-action@v31
+      - name: 🛠️ Check if Nix Flake outputs configs
         run: |
-          SET_DEFAULT_SHELL=1 ./install.sh runner
+          nix flake show
+          nix flake check
 
