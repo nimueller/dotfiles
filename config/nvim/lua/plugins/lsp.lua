@@ -61,7 +61,7 @@ return {
 					null_ls.builtins.diagnostics.editorconfig_checker,
 					null_ls.builtins.diagnostics.tidy,
 					null_ls.builtins.diagnostics.ktlint,
-					null_ls.builtins.diagnostics.markdownlint2,
+					null_ls.builtins.diagnostics.markdownlint_cli2,
 					null_ls.builtins.formatting.stylua,
 					null_ls.builtins.formatting.ktlint,
 					null_ls.builtins.formatting.tidy,

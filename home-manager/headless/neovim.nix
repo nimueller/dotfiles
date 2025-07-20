@@ -29,7 +29,7 @@
     stylua
 
     # Nix
-    nixpkgs-fmt
+    nixfmt
     nil
     statix
     deadnix

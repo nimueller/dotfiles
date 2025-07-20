@@ -62,6 +62,9 @@ nmap('<S-j>', '<C-w>j')
 nmap('<S-k>', '<C-w>k')
 nmap('<S-l>', '<C-w>l')
 
+-- Diagnostics
+nmap("<leader>e", vim.diagnostic.open_float, "Open floating diagnostic message")
+nmap("<leader>q", vim.diagnostic.setloclist, "Open diagnostics list")
 
 -- LSP
 vim.api.nvim_create_autocmd('LspAttach', {
