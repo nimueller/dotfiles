@@ -37,16 +37,22 @@ return {
 			"MunifTanjim/nui.nvim",
 		},
 		opts = {
+			close_if_last_window = true,
 			sources = { "filesystem", "buffers", "git_status", "document_symbols" },
 			open_files_do_not_replace_types = { "terminal", "Trouble", "trouble", "qf", "Outline" },
 			filesystem = {
+				follow_current_file = true,
 				bind_to_cwd = false,
-				follow_current_file = { enabled = true },
 				use_libuv_file_watcher = true,
 				window = {
 					mappings = {
 						["o"] = "system_open",
-						["<space>"] = "none",
+						["<space>"] = {
+							"toggle_preview",
+							config = {
+								use_float = true,
+							}
+						},
 					},
 				},
 			},
@@ -232,6 +238,17 @@ return {
 		},
 	},
 
+	{
+		'MeanderingProgrammer/render-markdown.nvim',
+		dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.nvim' },
+		ft = { "markdown" },
+		---@module 'render-markdown'
+		---@type render.md.UserConfig
+		opts = {
+			completions = { lsp = { enabled = true }, blink = { enabled = true } },
+		},
+	},
+
 	-- Zen mode
 	{
 		"folke/zen-mode.nvim",
@@ -252,7 +269,13 @@ return {
 					enabled = true,
 					font = "+4"
 				}
-			}
+			},
+			on_open = function()
+				vim.cmd("RenderMarkdown buf_disable")
+			end,
+			on_close = function()
+				vim.cmd("RenderMarkdown buf_enable")
+			end,
 		}
 	}
 }
