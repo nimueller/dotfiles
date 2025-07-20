@@ -16,20 +16,13 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, ... } @ inputs:
+  outputs =
+    { nixpkgs, home-manager, ... }@inputs:
     let
       username = "nico";
       system = "x86_64-linux";
-      system_x64 = "x86_64-linux";
     in
     {
-      nixosConfigurations = {
-        desktop = import ./nixos/hosts/desktop {
-          inherit nixpkgs username;
-          system = system_x64;
-        };
-      };
-
       homeConfigurations = {
         headless = home-manager.lib.homeManagerConfiguration {
           pkgs = nixpkgs.legacyPackages.${system};
@@ -49,7 +42,12 @@
 
           modules = [
             ./options
-            ({ config, ... }: { config.dotfiles = "${config.home.homeDirectory}/dotfiles"; })
+            (
+              { config, ... }:
+              {
+                config.dotfiles = "${config.home.homeDirectory}/dotfiles";
+              }
+            )
             ./home-manager/headless
             ./home-manager/desktop
           ];
