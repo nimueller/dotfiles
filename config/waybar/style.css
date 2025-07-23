@@ -1,6 +1,6 @@
 #waybar {
   font-family: NotoMono Nerd Font;
-  font-size: 10px;
+  font-size: 18px;
   background: transparent;
   color: #cad3f5;
 }
@@ -18,9 +18,11 @@
 }
 
 #custom-system {
-  font-size: 20px;
   color: #8caaee;
-  padding: 0 0.5rem 0 0;
+  font-size: 2rem;
+  padding: 0 1.5rem 0 0.5rem;
+  background-color: #24273a;
+  border-radius: 0 10px 10px 0;
 }
 
 #window {
@@ -28,11 +30,8 @@
 }
 
 #workspaces {
-  border-radius: 0.5rem;
-}
-
-#workspaces label {
-  font-size: 14px;
+  border-radius: 0.5rem ;
+  padding: 0 0.5rem 0 0;
 }
 
 #workspaces button {

@@ -1,7 +1,7 @@
 {
     "layer": "top",
-    "position": "bottom",
-    "height": 5,
+    "position": "top",
+    "height": 40,
     "modules-left": [
         "custom/system"
     ],
@@ -16,7 +16,7 @@
         "clock"
     ],
     "custom/system": {
-        "format": "󱄅",
+        "format": "󰣇",
         "on-click": "nwg-bar"
     },
     "hyprland/workspaces": {
@@ -100,10 +100,10 @@
         "on-click": "pavucontrol"
     },
     "tray": {
-        "spacing": 5
+        "spacing": 10
     },
     "clock": {
-        "format": "  {:%H:%M   %a, %d.%m.%Y}",
+        "format": " {:%H:%M %Y-%m-%d}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
     }
 }
