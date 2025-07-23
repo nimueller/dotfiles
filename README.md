@@ -3,13 +3,13 @@
 > [!WARNING]  
 > *Still heavily WIP*
 
-<b>Package Manager</b>: Nix
+<b>OS</b>: Arch Linux
+
+<b>Desktop Environment</b>: Hyprland
 
 <b>Shell</b>: ZSH
 
 <b>Editor</b>: Neovim
-
-<b>Desktop Environment</b>: Hyprland
 
 <b>Status Bar</b>: Waybar
 
@@ -48,23 +48,4 @@ Prerequisites before running the install.sh script
   curl -L https://raw.githubusercontent.com/LegendSalocin/dotfiles/main/install.sh | sh -s desktop
   ```
 </details>
-
-<br/>
-
-### NixOS configuration (NixOS required)
-
-> [!NOTE]  
-> This configuration is specific for my system. It is not recommended to run the following on any other system as this might require additional tinkering to work. Please use the Home-Manager configuration instead (either headless or desktop mode), as it will already give you what you want seen in the screenshots above.
-
-To (re-)build entire NixOS system:
-```sh
-sudo nixos-rebuild switch --flake .#desktop
-```
-
-Post-install scripts you should run after switching to NixOS config (only needed once after initial nixos-rebuild)
-```sh
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-bat cache --build
-```
-To apply tmux plugins, press CTRL + Space followed by I and restart tmux.
 

@@ -39,7 +39,7 @@
     html-tidy
 
     # C/C++
-    sourcekit-lsp
+    clang-tools
 
     # Kotlin/Java
     jdt-language-server

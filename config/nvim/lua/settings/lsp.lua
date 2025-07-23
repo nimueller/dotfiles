@@ -20,7 +20,7 @@ vim.lsp.config("nil_ls", {
 			flake = {
 				autoArchive = true,
 				autoEvalInputs = true,
-				nixpkgsInputName = "nixpkgs"
+				nixpkgsInputName = "nixpkgs",
 			},
 		},
 	},
@@ -29,6 +29,9 @@ vim.lsp.enable("statix")
 
 -- Hyprland
 vim.lsp.enable("hyprls")
+
+-- C++
+vim.lsp.enable("clangd")
 
 -- Enable diagnostic virtual_lines
 vim.diagnostic.config({ virtual_lines = true })

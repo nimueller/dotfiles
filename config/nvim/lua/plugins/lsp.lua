@@ -4,14 +4,14 @@ return {
 		"neovim/nvim-lspconfig",
 		event = { "BufReadPre", "BufNewFile" },
 		dependencies = {
-			{ 'williamboman/mason.nvim', config = true },
-			'williamboman/mason-lspconfig.nvim',
-			'WhoIsSethDaniel/mason-tool-installer.nvim',
+			{ "williamboman/mason.nvim", config = true },
+			"williamboman/mason-lspconfig.nvim",
+			"WhoIsSethDaniel/mason-tool-installer.nvim",
 		},
 		config = function()
 			require("lspconfig")
 			require("settings.lsp")
-		end
+		end,
 	},
 
 	{
@@ -42,8 +42,8 @@ return {
 				},
 			},
 			keymap = {
-				preset = "enter"
-			}
+				preset = "enter",
+			},
 		},
 	},
 
@@ -61,22 +61,22 @@ return {
 					null_ls.builtins.diagnostics.editorconfig_checker,
 					null_ls.builtins.diagnostics.tidy,
 					null_ls.builtins.diagnostics.ktlint,
-					null_ls.builtins.diagnostics.markdownlint_cli2,
+					null_ls.builtins.diagnostics.markdownlint2,
 					null_ls.builtins.formatting.stylua,
 					null_ls.builtins.formatting.ktlint,
 					null_ls.builtins.formatting.tidy,
 				},
 				on_attach = function(_, bufnr)
-					vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-					vim.api.nvim_create_autocmd("BufWritePre", {
-						group = augroup,
-						buffer = bufnr,
-						callback = function()
-							vim.lsp.buf.format({ async = false })
-						end,
-					})
+					-- vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+					-- vim.api.nvim_create_autocmd("BufWritePre", {
+					-- 	group = augroup,
+					-- 	buffer = bufnr,
+					-- 	callback = function()
+					-- 		vim.lsp.buf.format({ async = false })
+					-- 	end,
+					-- })
 				end,
 			})
 		end,
-	}
+	},
 }
