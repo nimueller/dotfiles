@@ -12,13 +12,6 @@ in
     ../theme/desktop.nix
   ];
 
-  xdg.configFile."nwg-bar/style.css".source = ../../config/nwg-bar/style.css;
-  xdg.configFile."nwg-bar/bar.json".text =
-    builtins.replaceStrings
-      [ "$nwg_install_path" ]
-      [ "${pkgs.nwg-bar}" ]
-      (builtins.readFile ../../config/nwg-bar/bar.json);
-
   dconf.settings = {
     "com/github/stunkymonkey/nautilus-open-any-terminal" = {
       terminal = "kitty";
@@ -71,6 +64,7 @@ in
     xdotool
     cliphist
     nwg-bar
+    wleave
     pavucontrol
 
     my-pkgs.hyprshot

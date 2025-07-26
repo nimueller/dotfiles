@@ -7,12 +7,9 @@ if [ $ACTIVE_WINDOW_CLASS != "looking-glass-client" ]; then
     rofi=$(pgrep -x rofi)
 
     if [ -z "$rofi" ]; then
-        waybar &
         rofi -show combi
-        pkill waybar
     else
         kill "$rofi"
-        pkill waybar
     fi
 fi
 
