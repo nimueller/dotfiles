@@ -25,6 +25,7 @@
     bat
     lsd
     jq
+    zsh
   ];
 
   imports = [
@@ -34,38 +35,6 @@
   ];
 
   programs = {
-    zsh = {
-      enable = true;
-      defaultKeymap = null;
-      autocd = true;
-
-      # Plugins
-      autosuggestion.enable = true;
-      enableCompletion = true;
-      syntaxHighlighting.enable = true;
-
-      oh-my-zsh = {
-        enable = true;
-        theme = "skaro";
-        plugins = [
-          "autojump"
-          "colorize"
-        ];
-      };
-
-      # Aliases
-      shellAliases = {
-        "cat" = "bat";
-        "ls" = "lsd";
-        "la" = "lsd -lah";
-        "virsh" = "virsh -c qemu:///system";
-        # Disable Explicit Sync for looking-glass-client on Nvidia GPUs until 
-        # https://github.com/NVIDIA/egl-wayland/issues/149 is fixed
-        "looking-glass-client" = "__NV_DISABLE_EXPLICIT_SYNC=1 looking-glass-client";
-        "fzf" = "fzf --reverse";
-      };
-    };
-
     btop = {
       enable = true;
       settings = {
