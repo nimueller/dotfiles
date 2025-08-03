@@ -39,6 +39,7 @@ in
   # Packages needed on Hyprland specifically, in addition to a standard desktop
   home.packages = with pkgs; [
     nerd-fonts.noto
+    nerd-fonts.monofur
     noto-fonts
     noto-fonts-lgc-plus
     noto-fonts-cjk-sans
