@@ -3,21 +3,25 @@
     "position": "top",
     "height": 40,
     "modules-left": [
-        "custom/system"
+        "custom/system",
+        "tray"
     ],
     "modules-center": [
         "hyprland/workspaces"
     ],
     "modules-right": [
-        "privacy",
         "pulseaudio#sink",
         "pulseaudio#source",
-        "tray",
+        "privacy",
         "clock"
     ],
     "custom/system": {
         "format": "󰣇",
         "on-click": "nwg-bar"
+    },
+    "tray": {
+        "icon-size": 20,
+        "spacing": 10
     },
     "hyprland/workspaces": {
         "format": "<sup>{id}</sup> {windows}",
@@ -99,8 +103,8 @@
         },
         "on-click": "pavucontrol"
     },
-    "tray": {
-        "spacing": 10
+    "privacy": {
+        "expand": true
     },
     "clock": {
         "format": " {:%H:%M %Y-%m-%d}",
