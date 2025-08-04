@@ -58,5 +58,9 @@
 
     # Bash
     nodePackages.bash-language-server
+
+    # Python
+    pyright
+    pylyzer
   ];
 }

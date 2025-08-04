@@ -33,5 +33,9 @@ vim.lsp.enable("hyprls")
 -- C++
 vim.lsp.enable("clangd")
 
--- Enable diagnostic virtual_lines
-vim.diagnostic.config({ virtual_lines = true })
+-- Python
+vim.lsp.enable("pyright")
+vim.lsp.enable("pylyzer")
+
+-- Enable diagnostic virtual_text
+vim.diagnostic.config({ virtual_text = true })

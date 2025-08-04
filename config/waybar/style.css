@@ -1,27 +1,29 @@
+@import "macchiato.css";
+
 #waybar {
   font-family: Monofur Nerd Font;
   font-size: 18px;
   background: transparent;
-  color: #cad3f5;
+  color: @text;
 }
 
 #waybar>box {
-  background: #1e2030;
+  background-color: @crust;
 }
 
+#custom-system,
 #workspaces,
-#privacy,
 #pulseaudio,
+#privacy,
 #tray,
 #clock {
-  background-color: #24273a;
+  background-color: @base;
 }
 
 #custom-system {
   color: #8caaee;
   font-size: 2rem;
   padding: 0 1.5rem 0 0.5rem;
-  background-color: #24273a;
 }
 
 #tray {
@@ -29,41 +31,46 @@
   border-radius: 0 10px 10px 0;
 }
 
-#window {
-  border-radius: 0 10px 10px 0;
-}
-
 #workspaces {
-  border-radius: 0.5rem ;
-  padding: 0 0.5rem 0 0;
+  border-radius: 0.5rem;
 }
 
 #workspaces button {
-  border-radius: 1rem;
-  padding: 0 0.5rem 0 0.5rem;
+  border-radius: 0.5rem;
+  padding: 0 1rem 0 0.5rem;
 }
 
 #workspaces button.active {
-  color: #f4dbd6;
-  border-radius: 10px;
+  color: @rosewater;
 }
 
-#workspaces button:hover {
-  border-radius: 10px;
+#workspaces button.urgent {
+  color: @red;
+}
+
+#network.up {
+  padding: 0 1rem 0 0;
+  color: @rosewater;
+}
+
+#network.down {
+  min-width: 7rem;
+  padding: 0 1rem 0 0;
+  color: @mauve;
 }
 
 #pulseaudio.sink {
-  color: #a6da95;
   border-radius: 10px 0 0 10px;
-  padding: 0 0 0 0.5rem;
+  padding: 0 0.5rem 0 0.5rem;
+  color: @green;
 }
 
 #pulseaudio.source {
-  color: #f5bde6;
+  color: @pink;
 }
 
 #privacy {
-  color: #ed8796;
+  color: @red;
 }
 
 #clock {

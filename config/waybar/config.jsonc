@@ -4,12 +4,15 @@
     "height": 40,
     "modules-left": [
         "custom/system",
-        "tray"
+        "tray",
+        "wlr/taskbar"
     ],
     "modules-center": [
         "hyprland/workspaces"
     ],
     "modules-right": [
+        "network#up",
+        "network#down",
         "pulseaudio#sink",
         "pulseaudio#source",
         "privacy",
@@ -22,6 +25,10 @@
     "tray": {
         "icon-size": 20,
         "spacing": 10
+    },
+    "wlr/taskbar": {
+        "on-click": "activate",
+        "tooltip-format": "{app_id} - {title}",
     },
     "hyprland/workspaces": {
         "format": "<sup>{id}</sup> {windows}",
@@ -60,6 +67,14 @@
             "class<discord>": "󰙯",
             "class<Spotify>": ""
         }
+    },
+    "network#up": {
+        "format": "󰕒 {bandwidthUpBytes}",
+        "interval": 1,
+    },
+    "network#down": {
+        "format": "󰇚 {bandwidthDownBytes}",
+        "interval": 1,
     },
     "pulseaudio#sink": {
         "format": " {icon}  {volume}%",
