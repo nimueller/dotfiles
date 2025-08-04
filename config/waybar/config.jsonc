@@ -3,7 +3,7 @@
     "position": "top",
     "height": 40,
     "modules-left": [
-        "custom/system",
+        "group/system",
         "tray",
         "wlr/taskbar"
     ],
@@ -18,9 +18,39 @@
         "privacy",
         "clock"
     ],
+    "group/system": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 500,
+            "children-class": "not-power",
+            "transition-left-to-right": true,
+            "click-to-reveal": true,
+        },
+        "modules": [
+            "custom/system",
+            "custom/quit",
+            "custom/reboot",
+            "custom/power",
+        ],
+    },
     "custom/system": {
         "format": "󰣇",
-        "on-click": "nwg-bar"
+        "tooltip": false,
+    },
+    "custom/quit": {
+        "format": "󰗼",
+        "tooltip": false,
+        "on-click": "hyprctl dispatch exit"
+    },
+    "custom/reboot": {
+        "format": "󰜉",
+        "tooltip": false,
+        "on-click": "systemctl reboot"
+    },
+    "custom/power": {
+        "format": "",
+        "tooltip": false,
+        "on-click": "systemctl poweroff"
     },
     "tray": {
         "icon-size": 20,

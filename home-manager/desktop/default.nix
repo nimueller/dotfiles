@@ -64,7 +64,6 @@ in
     wtype
     xdotool
     cliphist
-    nwg-bar
     wleave
     pavucontrol
 

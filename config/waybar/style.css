@@ -12,6 +12,9 @@
 }
 
 #custom-system,
+#custom-quit,
+#custom-reboot,
+#custom-power,
 #workspaces,
 #pulseaudio,
 #privacy,
@@ -21,8 +24,26 @@
 }
 
 #custom-system {
-  color: #8caaee;
+  color: @blue;
   font-size: 2rem;
+  padding: 0 1.5rem 0 0.5rem;
+}
+
+#custom-quit {
+  color: @red;
+  font-size: 1.2rem;
+  padding: 0 1.5rem 0 0.5rem;
+}
+
+#custom-reboot {
+  color: @red;
+  font-size: 1.2rem;
+  padding: 0 1.5rem 0 0.5rem;
+}
+
+#custom-power {
+  color: @red;
+  font-size: 1.2rem;
   padding: 0 1.5rem 0 0.5rem;
 }
 
