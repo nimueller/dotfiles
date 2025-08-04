@@ -29,15 +29,34 @@
   alternate-active-foreground: @blue;
 
 }
+
+// Inputbar
+inputbar {
+    spacing:    10px;
+    text-color: @normal-foreground;
+    children:   [ "entry" ];
+}
+
+// Inputbar elements
+entry {
+    text-color: @normal-foreground;
+    background-color: @crust;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: text;
+    placeholder-color: @overlay0;
+    placeholder: "Type to filter";
+}
+
+// Listview elements
 element {
-    padding: 1px ;
     cursor:  pointer;
-    spacing: 5px ;
-    border:  0;
+    padding: 10px;
+    border-radius: 10px;
 }
 element normal.normal {
     background-color: @normal-background;
-    text-color:       @normal-foreground;
+    text-color: @normal-foreground;
 }
 element normal.urgent {
     background-color: @urgent-background;
@@ -84,36 +103,26 @@ element-icon {
     text-color:       inherit;
 }
 window {
-    padding:          5;
+    padding:          10px;
     background-color: @background;
     border:           1;
     border-color:     @blue;
-    border-radius:    5px;
+    border-radius:    10px;
 }
 mainbox {
     padding: 0;
     border:  0;
 }
-message {
-    padding:      1px ;
-    border-color: @separatorcolor;
-    border:       2px dash 0px 0px ;
-}
-textbox {
-    text-color: @foreground;
-}
 listview {
-    padding:      2px 0px 0px ;
+    padding:      10px 0 0 0;
     scrollbar:    true;
     border-color: @separatorcolor;
-    spacing:      2px ;
     fixed-height: 0;
-    border:       2px dash 0px 0px ;
 }
 scrollbar {
-    width:        4px ;
+    width:        4px;
     padding:      0;
-    handle-width: 8px ;
+    handle-width: 8px;
     border:       0;
     handle-color: @normal-foreground;
 }
@@ -129,47 +138,4 @@ button {
 button selected {
     background-color: @selected-normal-background;
     text-color:       @selected-normal-foreground;
-}
-num-filtered-rows {
-    expand:     false;
-    text-color: Gray;
-}
-num-rows {
-    expand:     false;
-    text-color: Gray;
-}
-textbox-num-sep {
-    expand:     false;
-    str:        "/";
-    text-color: Gray;
-}
-inputbar {
-    padding:    1px ;
-    spacing:    0px ;
-    text-color: @normal-foreground;
-    children:   [ "prompt","textbox-prompt-colon","entry","num-filtered-rows","textbox-num-sep","num-rows","case-indicator" ];
-}
-case-indicator {
-    spacing:    0;
-    text-color: @normal-foreground;
-}
-entry {
-    text-color:        @normal-foreground;
-    cursor:            text;
-    spacing:           0;
-    placeholder-color: Gray;
-    placeholder:       "Type to filter";
-}
-prompt {
-    spacing:    0;
-    text-color: @selected-normal-foreground;
-    background-color: @green;
-    border-radius: 5px;
-    padding: 5px 15px 5px 5px;
-}
-textbox-prompt-colon {
-    margin:     0px 0.3000em 0.0000em 0.0000em ;
-    expand:     false;
-    // str:        ":";
-    text-color: inherit;
 }

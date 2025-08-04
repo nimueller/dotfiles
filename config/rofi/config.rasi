@@ -6,7 +6,6 @@ configuration {
     display-ssh: " 󱘖 SSH";
     drun-display-format: "{icon} {name}";
     font: "NotoSans Nerd Font Bold 14";
-    location: 0;
     matching: "fuzzy";
     modi: "combi";
     show-icons: true;
