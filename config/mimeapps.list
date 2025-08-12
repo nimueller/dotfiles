@@ -8,14 +8,15 @@ application/x-terminal=kitty.desktop
 image/jpeg=org.gnome.eog.desktop
 image/png=org.gnome.eog.desktop
 inode/directory=org.gnome.Nautilus.desktop
-text/html=brave.desktop
+text/html=zen-browser.desktop
 text/markdown=org.gnome.gitlab.somas.Apostrophe.desktop
 text/plain=nvim.desktop
-x-scheme-handler/about=brave.desktop
-x-scheme-handler/http=brave.desktop
-x-scheme-handler/https=brave.desktop
+x-scheme-handler/about=zen-browser.desktop
+x-scheme-handler/http=zen-browser.desktop
+x-scheme-handler/https=zen-browser.desktop
 x-scheme-handler/mailspring=Mailspring.desktop
-x-scheme-handler/unknown=brave.desktop
+x-scheme-handler/unknown=zen-browser.desktop
 modrinth=modrinth-app-handler.desktop
+x-scheme-handler/discord=discord.desktop
 
 [Removed Associations]
