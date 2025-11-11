@@ -69,7 +69,7 @@
             "class<firefox>": "󰈹",
             "class<zen>": "󰈹",
             "class<brave-browser>": "",
-            "class<thunderbird>": "",
+            "class<org.mozilla.Thunderbird>": "",
             "class<virt-manager>": "󰢩",
             "class<looking-glass-client>": "",
             "class<org.keepassxc.KeePassXC>": "",
