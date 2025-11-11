@@ -8,7 +8,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="robbyrussell"
+ZSH_THEME="skaro"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -156,6 +156,7 @@ alias la='lsd -lah'
 alias fzf='fzf --reverse'
 alias upgrade="yay -Syu ; notify-command-finished"
 alias cleanup="sudo pacman -Qdtq | sudo pacman -Rns -"
+alias ssh="kitten ssh"
 
 export EDITOR=nvim
 zle -N fzd

@@ -1,4 +1,5 @@
 [Added Associations]
+application/x-zerosize=org.gnome.gitlab.somas.Apostrophe.desktop;
 
 [Default Applications]
 application/pdf=org.gnome.Evince.desktop
@@ -17,6 +18,6 @@ x-scheme-handler/https=zen-browser.desktop
 x-scheme-handler/mailspring=Mailspring.desktop
 x-scheme-handler/unknown=zen-browser.desktop
 modrinth=modrinth-app-handler.desktop
-x-scheme-handler/discord=discord.desktop
+x-scheme-handler/discord=vesktop.desktop
 
 [Removed Associations]
