@@ -136,11 +136,5 @@ return {
 	{
 		"justinmk/vim-sneak",
 		event = { "BufReadPost", "BufNewFile" },
-	},
-
-	-- Copilot
-	{
-		"github/copilot.vim",
-		event = { "BufReadPost", "BufNewFile" },
 	}
 }
