@@ -45,21 +45,25 @@
     git = {
       enable = true;
       lfs.enable = true;
-      userEmail = "mueller@cryptospace.dev";
-      userName = "Nico Müller";
       signing = {
         signByDefault = true;
         key = "~/.ssh/id_rsa_github.pub";
         format = "ssh";
       };
-      extraConfig = {
+      settings = {
+        user = {
+          name = "Nico Müller";
+          email = "mueller@cryptospace.dev";
+        };
+
         init.defaultBranch = "main";
         difftool.prompt = false;
         diff.tool = "nvimdiff";
         merge.tool = "nvimdiff";
-      };
-      aliases = {
-        tree = "log --oneline --graph --all";
+
+        alias = {
+          tree = "log --oneline --graph --all";
+        };
       };
     };
   };

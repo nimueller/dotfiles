@@ -48,7 +48,7 @@ in
     noto-fonts-color-emoji
     noto-fonts-monochrome-emoji
 
-    rofi-wayland
+    rofi
     swayosd
 
     xdg-terminal-exec
