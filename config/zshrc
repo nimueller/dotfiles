@@ -156,7 +156,10 @@ alias la='lsd -lah'
 alias fzf='fzf --reverse'
 alias upgrade="yay -Syu ; notify-command-finished"
 alias cleanup="sudo pacman -Qdtq | sudo pacman -Rns -"
-alias ssh="kitten ssh"
+
+if command -v kitten >/dev/null 2>&1; then
+  alias ssh="kitten ssh"
+fi
 
 export EDITOR=nvim
 zle -N fzd
