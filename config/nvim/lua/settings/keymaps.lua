@@ -29,9 +29,9 @@ local function imap(keys, func, desc) map("i", keys, func, desc) end
 
 
 -- Non VIM-ish keymaps because I'm used to them...
-vim.keymap.set({ 'n', 'v' }, '<leader>a', '<ESC>gg0vG$')
-vim.keymap.set('v', '<C-c>', '"+y')
-vim.keymap.set({ 'n', 'v', 'i' }, '<C-v>', '<ESC>"+p')
+vim.keymap.set({ 'n', 'v' }, '<leader>a', '<ESC>gg0vG$', {silent = true})
+vim.keymap.set('v', '<C-c>', '"+y', {silent = true})
+vim.keymap.set({ 'n', 'v', 'i' }, '<C-v>', '<ESC>"+p', {silent = true})
 
 -- Clear highlighting after search
 vim.keymap.set('n', '<ESC>', ':nohlsearch<CR>', { silent = true })
