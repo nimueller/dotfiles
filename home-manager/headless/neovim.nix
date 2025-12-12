@@ -62,5 +62,9 @@
     # Python
     pyright
     pylyzer
+
+    # Go
+    go
+    gopls
   ];
 }

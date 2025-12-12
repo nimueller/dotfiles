@@ -26,6 +26,7 @@
     lsd
     jq
     zsh
+    lua
   ];
 
   imports = [

@@ -37,5 +37,8 @@ vim.lsp.enable("clangd")
 vim.lsp.enable("pyright")
 vim.lsp.enable("pylyzer")
 
+-- Go
+vim.lsp.enable("gopls")
+
 -- Enable diagnostic virtual_text
 vim.diagnostic.config({ virtual_text = true })
