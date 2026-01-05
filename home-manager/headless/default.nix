@@ -1,4 +1,4 @@
-{ pkgs, username, ... }:
+{ pkgs, username, config, ... }:
 {
   # Basic home manager settings
   programs.home-manager.enable = true;
@@ -25,8 +25,8 @@
     bat
     lsd
     jq
-    zsh
     lua
+    tree
   ];
 
   imports = [
@@ -35,7 +35,41 @@
     ../theme/default.nix
   ];
 
+  home.file.".p10k.zsh".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/zsh/p10k.zsh";
+
   programs = {
+    zsh = {
+      enable = true;
+      autosuggestion = {
+        enable = true;
+      };
+      syntaxHighlighting = {
+        enable = true;
+      };
+      oh-my-zsh = {
+        enable = true;
+        plugins = [
+          "colored-man-pages"
+          "command-not-found"
+          "docker"
+          "fzf"
+          "git"
+          "sudo"
+          "tmux"
+          "autojump"
+          "colorize"
+        ];
+      };
+      plugins = [
+        {
+          name = "powerlevel10k";
+          src = pkgs.zsh-powerlevel10k;
+          file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
+        }
+      ];
+      initContent = builtins.readFile ../../config/zsh/init-content.zsh;
+    };
+
     btop = {
       enable = true;
       settings = {
