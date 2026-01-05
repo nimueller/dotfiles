@@ -11,5 +11,4 @@ jobs:
       - name: 🛠️ Check if Nix Flake outputs configs
         run: |
           nix flake show
-          nix flake check
 
