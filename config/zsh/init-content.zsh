@@ -1,5 +1,6 @@
 source ~/.p10k.zsh
 
+autoload -Uz add-zsh-hook
 
 export EDITOR=nvim
 
@@ -36,4 +37,16 @@ fi
 
 zle -N fzd
 bindkey '^F' fzd
+
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^X^E' edit-command-line
+
+# Undo and Redo
+bindkey '^_' undo
+bindkey '^X^_' redo
+
+chpwd() {
+  ls
+}
 

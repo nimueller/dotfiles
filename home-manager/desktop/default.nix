@@ -88,7 +88,6 @@ in
     apostrophe # Markdown viewer
     # Other GUI apps
     keepassxc
-    webcord
     wl-clipboard
     wf-recorder
   ];
