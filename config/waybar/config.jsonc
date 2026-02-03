@@ -93,6 +93,8 @@
             "class<com.nextcloud.desktopclient.nextcloud>": "󰅟",
             "class<steam>": "󰓓",
             "class<net.lutris.Lutris>": "󰊗",
+            "class<org.prismlauncher.PrismLauncher>": "󰍳",
+            "class<Minecraft>": "󰍳",
             "class<.*\\.exe>": "󰊗",
             "class<steam.*>": "󰺵",
             "class<WebCord>": "󰙯",
