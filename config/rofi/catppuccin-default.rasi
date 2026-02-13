@@ -104,10 +104,12 @@ element-icon {
 }
 window {
     padding:          10px;
-    background-color: @background;
+    // background-color: @background;
     border:           1;
     border-color:     @blue;
     border-radius:    10px;
+    transparency: "real";
+    background-color: #282c34d0;
 }
 mainbox {
     padding: 0;

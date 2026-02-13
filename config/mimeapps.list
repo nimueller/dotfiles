@@ -1,5 +1,6 @@
 [Added Associations]
 application/x-zerosize=org.gnome.gitlab.somas.Apostrophe.desktop;
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=onlyoffice-desktopeditors.desktop;
 
 [Default Applications]
 application/pdf=org.gnome.Evince.desktop
