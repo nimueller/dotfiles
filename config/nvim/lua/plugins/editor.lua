@@ -8,7 +8,6 @@ return {
 		-- Highlight, edit, and navigate code
 		"nvim-treesitter/nvim-treesitter",
 		dependencies = {
-			"luckasRanarison/tree-sitter-hyprlang",
 			"nvim-treesitter/nvim-treesitter-textobjects",
 			"windwp/nvim-ts-autotag",
 		},
@@ -34,7 +33,8 @@ return {
 				"bash",
 				"xml",
 				"html",
-				"markdown"
+				"markdown",
+				"hyprlang"
 			},
 
 			-- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)

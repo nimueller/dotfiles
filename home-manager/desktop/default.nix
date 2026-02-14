@@ -18,20 +18,6 @@ in
     };
   };
 
-  # Dunst as notification daemon
-  services.dunst = {
-    enable = true;
-
-    settings = {
-      global = {
-        follow = "mouse";
-        idle_threshold = "1m";
-        format = "<b>%s</b>\\n%b\\n%p";
-        vertical_alignment = "top";
-      };
-    };
-  };
-
   services.kdeconnect.enable = true;
 
   fonts.fontconfig.enable = true;
@@ -60,7 +46,6 @@ in
     libnotify
     libsecret
     inotify-tools
-    # waybar
     wtype
     xdotool
     cliphist
