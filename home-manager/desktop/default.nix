@@ -62,7 +62,7 @@ in
     adwaita-icon-theme
     evince # PDF viewer
     eog # Image viewer
-    totem # Video player
+    # totem # Video player
     gnome-characters # Emoji picker
     gnome-font-viewer
     dconf-editor
