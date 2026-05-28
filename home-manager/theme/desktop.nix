@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 let
   theme = {
     cursor = pkgs.bibata-cursors;
@@ -77,6 +77,7 @@ in
         variant = "macchiato";
       };
     };
+    gtk4.theme = config.gtk.theme;
   };
 
   # Wallpaper

@@ -1,6 +1,5 @@
 { pkgs, ... }:
 {
-  programs.neovim.enable = true;
   home.packages = with pkgs; [
     # neovim plugin package dependencies
     luarocks
@@ -29,7 +28,7 @@
     stylua
 
     # Nix
-    nixfmt-classic
+    nixfmt
     nil
     statix
     deadnix
@@ -48,16 +47,16 @@
 
     # JavaScript/TypeScript
     biome
-    nodePackages.vscode-langservers-extracted
-    nodePackages.eslint
-    nodePackages.prisma
-    nodePackages.typescript-language-server
+    vscode-langservers-extracted
+    eslint
+    prisma
+    typescript-language-server
 
     # Docker
     docker-compose-language-service
 
     # Bash
-    nodePackages.bash-language-server
+    bash-language-server
 
     # Python
     pyright
