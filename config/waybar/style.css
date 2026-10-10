@@ -171,7 +171,7 @@ window#waybar.empty #window {
     background: alpha(@red, 0.18);
 }
 
-/* Notification center (dunst history) */
+/* Notification bell (status from the quickshell daemon) */
 #custom-notifications {
     padding: 0 10px;
     margin: 4px 3px;

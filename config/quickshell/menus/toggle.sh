@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
-#   toggle.sh audio|network|notifications|power|launcher
+#   toggle.sh audio|calendar|network|notifications|power|launcher
+#   toggle.sh launcher|daemon --start     start a resident instance (Hyprland)
 # Each bar menu is its own short-lived quickshell instance (<menu>.qml), so
-# nothing runs while they're closed. The launcher is the exception, see below.
-menu=${1:?usage: toggle.sh <menu>}
-entry=$(dirname "$(readlink -f "$0")")/$menu.qml
+# nothing runs while they're closed. The exceptions stay resident so they
+# open instantly: the launcher, and daemon.qml (notifications, OSD) which
+# holds the notification center.
+dir=$(dirname "$(readlink -f "$0")")
+menu=${1:?usage: toggle.sh <menu> [--start]}
+
+case $menu in
+    launcher | daemon)
+        [[ $2 == --start ]] && exec qs -p "$dir/$menu.qml" -n -d >/dev/null 2>&1
+        ;;
+    notifications)
+        exec "$dir/ipc.sh" notifications toggle
+        ;;
+esac
+
+entry=$dir/$menu.qml
 [[ -f $entry ]] || { echo "no such menu: $menu" >&2; exit 1; }
 
-# The launcher stays resident so it opens instantly: Hyprland starts it hidden
-# (`toggle.sh launcher --start`) and here we only ask it to show/hide. If it
-# isn't running, start it already shown.
+# The launcher only needs to be shown; if it isn't running, start it shown
 if [[ $menu == launcher ]]; then
-    [[ $2 == --start ]] && exec qs -p "$entry" -n -d >/dev/null 2>&1
     qs ipc -p "$entry" call launcher toggle >/dev/null 2>&1 && exit 0
     QS_OPEN=1 exec qs -p "$entry" -n -d >/dev/null 2>&1
 fi

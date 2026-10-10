@@ -7,8 +7,8 @@ local function exec(cmd, rules) return hl.dsp.exec_cmd(cmd, rules) end
 hl.bind(mainMod .. " + D", hl.dsp.event("quickshell-launcher")) -- resident launcher, see quickshell/menus/launcher.qml
 
 -- Brightness
-hl.bind("XF86MonBrightnessUp",   exec("swayosd-client --brightness raise"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", exec("swayosd-client --brightness lower"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessUp",   hl.dsp.event("quickshell-osd brightness +5"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.event("quickshell-osd brightness -5"), { locked = true, repeating = true })
 
 -- Media (prefer the chromium/Electron player, fall back to any)
 hl.bind("XF86AudioPlay",  exec("playerctl -p chromium,%any play-pause"), { locked = true })
@@ -22,11 +22,12 @@ hl.bind("XF86Calculator", exec("gnome-calculator"))
 -- /etc/systemd/logind.conf.d/power-key.conf)
 hl.bind("XF86PowerOff", exec("~/.config/quickshell/menus/toggle.sh power"))
 
--- Volume (swayosd shows the OSD; max_volume = 100 in config/swayosd/config.toml)
-hl.bind("XF86AudioMicMute",     exec("swayosd-client --input-volume mute-toggle"),  { locked = true })
-hl.bind("XF86AudioMute",        exec("swayosd-client --output-volume mute-toggle"), { locked = true })
-hl.bind("XF86AudioRaiseVolume", exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; swayosd-client --output-volume +5"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; swayosd-client --output-volume -5"), { locked = true, repeating = true })
+-- Volume and brightness: the quickshell daemon changes them and shows the OSD
+-- (config/quickshell/menus/Osd.qml); events, so no process starts per press
+hl.bind("XF86AudioMicMute",     hl.dsp.event("quickshell-osd mic-mute"),  { locked = true })
+hl.bind("XF86AudioMute",        hl.dsp.event("quickshell-osd mute"),      { locked = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.event("quickshell-osd volume +5"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.event("quickshell-osd volume -5"), { locked = true, repeating = true })
 
 -- Workspace controls (key 0 maps to workspace 10)
 for i = 1, 10 do

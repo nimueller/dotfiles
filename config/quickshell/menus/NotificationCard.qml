@@ -2,13 +2,15 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
 
-// One entry of dunst's history. Click to jump to the app, ✕ to remove.
+// One entry of the notification center. Click to act on it (default action
+// or focus the app), ✕ to remove it.
 Rectangle {
     id: root
 
     required property var entry
-    required property real now
-    readonly property bool critical: entry.urgency === "CRITICAL"
+    required property real now // ms, for the age
+    readonly property var n: entry.n
+    readonly property bool critical: entry.urgency === 2
 
     signal activated
     signal dismissed
@@ -21,8 +23,8 @@ Rectangle {
 
     Behavior on color { ColorAnimation { duration: 120 } }
 
-    function age(seconds) {
-        const s = Math.max(0, Math.floor(seconds));
+    function age(ms) {
+        const s = Math.max(0, Math.floor(ms / 1000));
         if (s < 60)
             return "now";
         if (s < 3600)
@@ -62,8 +64,8 @@ Rectangle {
                 id: icon
                 anchors.centerIn: parent
                 implicitSize: 24
-                source: root.entry.icon ? `file://${root.entry.icon}` : ""
-                visible: status === Image.Ready
+                source: root.entry.icon
+                visible: !!root.entry.icon && status === Image.Ready
             }
             Label {
                 anchors.centerIn: parent
@@ -84,7 +86,7 @@ Rectangle {
 
                 Label {
                     Layout.fillWidth: true
-                    text: root.entry.summary || root.entry.app
+                    text: root.n?.summary ?? root.entry.summary ?? root.entry.app
                     font.bold: true
                     color: root.critical ? Theme.red : Theme.text
                 }
@@ -94,7 +96,7 @@ Rectangle {
                     color: Theme.overlay0
                 }
 
-                // Remove from history
+                // Remove
                 Rectangle {
                     Layout.preferredWidth: 18
                     Layout.preferredHeight: 18
@@ -130,12 +132,15 @@ Rectangle {
             Label {
                 Layout.fillWidth: true
                 Layout.topMargin: 2
-                visible: !!root.entry.body
-                text: root.entry.body
+                visible: !!text
+                text: root.n?.body ?? root.entry.body ?? ""
+                textFormat: Text.StyledText
                 color: Theme.subtext0
+                linkColor: Theme.blue
                 font.pixelSize: 11
                 wrapMode: Text.Wrap
                 maximumLineCount: 3
+                onLinkActivated: link => Qt.openUrlExternally(link)
             }
         }
     }

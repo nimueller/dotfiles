@@ -6,21 +6,50 @@ import Quickshell.Wayland
 
 // Card above the right end of the bar (or its centre, for the clock), shared
 // by the bar menus. Closes on Escape or a click outside; `toggle.sh <name>`
-// opens and closes it.
+// opens and closes it. Menus are short-lived instances that quit on close,
+// unless `resident` (inside daemon.qml): then they only hide, and toggle()
+// shows them again.
 PanelWindow {
     id: root
 
     required property string name
     property int cardWidth: 380
     property bool centered: false
+    property bool resident: false
+    property bool shown: !resident
+    property real closedAt: 0
     default property alias content: body.data
 
     function close() {
+        if (resident) {
+            shown = false;
+            closedAt = Date.now();
+            return;
+        }
         // Clicking the bar icon clears the grab before waybar runs toggle.sh;
         // the stamp tells toggle.sh not to reopen the menu right away.
         Quickshell.execDetached(["touch", `${Quickshell.env("XDG_RUNTIME_DIR")}/qs-${name}-closed`]);
         Qt.quit();
     }
+
+    // Resident menus: a click on the bar icon first closes the menu through
+    // the focus grab, so ignore the toggle that follows right after
+    function toggle() {
+        if (shown)
+            close();
+        else if (Date.now() - closedAt > 400)
+            shown = true;
+    }
+
+    onShownChanged: {
+        if (shown) {
+            card.opacity = 0;
+            slide.y = 12;
+            intro.restart();
+        }
+    }
+
+    visible: shown
 
     anchors {
         bottom: true
@@ -41,7 +70,7 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
     HyprlandFocusGrab {
-        active: true
+        active: root.shown
         windows: [root]
         onCleared: root.close()
     }

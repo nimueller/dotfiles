@@ -50,13 +50,14 @@
         "on-click": "~/.config/quickshell/menus/toggle.sh network"
     },
     "custom/notifications": {
-        "exec": "~/.config/waybar/scripts/notifications.sh status",
+        // Status written by the quickshell daemon, which signals on changes
+        "exec": "cat \"$XDG_RUNTIME_DIR/quickshell-notifications.json\" 2>/dev/null || echo '{\"text\":\"󰂚\",\"class\":\"empty\"}'",
         "return-type": "json",
-        "interval": 3,
+        "interval": 60,
         "signal": 8,
         "on-click": "~/.config/quickshell/menus/toggle.sh notifications",
-        "on-click-right": "dunstctl set-paused toggle; pkill -RTMIN+8 waybar",
-        "on-click-middle": "dunstctl history-clear; pkill -RTMIN+8 waybar"
+        "on-click-right": "~/.config/quickshell/menus/ipc.sh notifications dnd",
+        "on-click-middle": "~/.config/quickshell/menus/ipc.sh notifications clear"
     },
     "custom/power": {
         "format": "󰐥",

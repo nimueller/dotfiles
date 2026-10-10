@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ config, pkgs, lib, ... }:
 let
   my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
@@ -19,6 +19,33 @@ in
   };
 
   services.kdeconnect.enable = true;
+
+  # Notifications and the volume/brightness OSD come from the resident
+  # quickshell daemon (config/quickshell/menus/daemon.qml). Hyprland starts
+  # it; D-Bus activation also starts it (instead of dunst) when a
+  # notification arrives while it isn't running.
+  systemd.user.services.quickshell-daemon = {
+    Unit = {
+      Description = "Quickshell notification daemon and OSD";
+      PartOf = [ "graphical-session.target" ];
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "dbus";
+      BusName = "org.freedesktop.Notifications";
+      ExecStart = "${pkgs.quickshell}/bin/qs -n -p ${config.dotfiles}/config/quickshell/menus/daemon.qml";
+      Restart = "on-failure";
+    };
+  };
+  # Same file name as dunst's, so it takes precedence over /usr/share
+  xdg.dataFile."dbus-1/services/org.knopwob.dunst.service".text = ''
+    [D-BUS Service]
+    Name=org.freedesktop.Notifications
+    Exec=/bin/false
+    SystemdService=quickshell-daemon.service
+  '';
+  # Mask dunst's own unit in case anything asks for it directly
+  xdg.configFile."systemd/user/dunst.service".source = config.lib.file.mkOutOfStoreSymlink "/dev/null";
 
   # Desktop notifications for calendar reminders (VALARMs of the calendars
   # enabled in the quickshell calendar menu), checked every minute
@@ -54,7 +81,6 @@ in
     noto-fonts-monochrome-emoji
 
     rofi
-    swayosd
 
     xdg-terminal-exec
     playerctl

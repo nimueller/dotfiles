@@ -4,12 +4,12 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --watch cliphist store")
     hl.exec_cmd("sunshine")
     hl.exec_cmd("waybar")
-    hl.exec_cmd("swayosd-server")
     hl.exec_cmd("~/.config/quickshell/menus/toggle.sh launcher --start") -- resident so SUPER+D opens instantly
+    hl.exec_cmd("~/.config/quickshell/menus/toggle.sh daemon --start")   -- notifications and OSD
     hl.exec_cmd("hyprpaper")
 
     -- Utilities
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE")
 
     -- User programs
     hl.exec_cmd("zen-browser", { workspace = "1 silent" })
