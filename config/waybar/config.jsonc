@@ -1,163 +1,49 @@
 {
     "layer": "top",
-    "position": "top",
-    "height": 40,
-    "modules-left": [
-        "group/system",
-        "tray",
-        "wlr/taskbar"
-    ],
-    "modules-center": [
-        "hyprland/workspaces"
-    ],
-    "modules-right": [
-        "network#up",
-        "network#down",
-        "pulseaudio#sink",
-        "pulseaudio#source",
-        "privacy",
-        "clock"
-    ],
-    "group/system": {
-        "orientation": "inherit",
-        "drawer": {
-            "transition-duration": 500,
-            "children-class": "not-power",
-            "transition-left-to-right": true,
-            "click-to-reveal": true,
-        },
-        "modules": [
-            "custom/system",
-            "custom/quit",
-            "custom/reboot",
-            "custom/power",
-        ],
+    "position": "bottom",
+    "height": 10,
+    "modules-left": ["hyprland/workspaces", "hyprland/window"],
+    "modules-center": ["clock"],
+    "modules-right": ["tray", "privacy", "pulseaudio", "battery", "network"],
+    
+    "hyprland/workspaces": {
+        "format": "{name}",
+        "on-click": "activate",
+        "workspace-taskbar": true,
+        "show-special": true,
+        "special-visible-only": true
     },
-    "custom/system": {
-        "format": "󰣇",
-        "tooltip": false,
-    },
-    "custom/quit": {
-        "format": "󰗼",
-        "tooltip": false,
-        "on-click": "hyprctl dispatch exit"
-    },
-    "custom/reboot": {
-        "format": "󰜉",
-        "tooltip": false,
-        "on-click": "systemctl reboot"
-    },
-    "custom/power": {
-        "format": "",
-        "tooltip": false,
-        "on-click": "systemctl poweroff"
+    "hyprland/window": {
+        "format": "{}"
     },
     "tray": {
-        "icon-size": 20,
-        "spacing": 10
-    },
-    "wlr/taskbar": {
-        "on-click": "activate",
-        "tooltip-format": "{app_id} - {title}",
-    },
-    "hyprland/workspaces": {
-        "format": "<sup>{id}</sup> {windows}",
-        "window-rewrite": {
-            // System
-            "class<kitty>": "",
-            "class<geary>": "",
-            "class<firefox>": "󰈹",
-            "class<zen>": "󰈹",
-            "class<brave-browser>": "",
-            "class<org.mozilla.Thunderbird>": "",
-            "class<virt-manager>": "󰢩",
-            "class<looking-glass-client>": "",
-            "class<org.keepassxc.KeePassXC>": "",
-            // Gnome
-            "class<evince>": "",
-            "class<gnome-disks>": "󱛟",
-            "class<org.gnome.Nautilus>": "󰷏",
-            "class<org.gnome.FileRoller>": "",
-            "class<org.gnome.Calculator>": "󰃬",
-            "class<org.gnome.font-viewer>": "",
-            // Productive
-            "class<jetbrains-idea>": "",
-            "class<jetbrains-rider>": "",
-            "class<jetbrains-studio>": "",
-            "class<jetbrains-goland>": "",
-            "class<unityhub>": "󰚯",
-            "class<Unity>": "󰚯",
-            "class<Gimp-2.10>": "",
-            "class<ONLYOFFICE>": "󰏆",
-            // Third-Party
-            "class<com.nextcloud.desktopclient.nextcloud>": "󰅟",
-            "class<steam>": "󰓓",
-            "class<net.lutris.Lutris>": "󰊗",
-            "class<org.prismlauncher.PrismLauncher>": "󰍳",
-            "class<Minecraft>": "󰍳",
-            "class<.*\\.exe>": "󰊗",
-            "class<steam.*>": "󰺵",
-            "class<WebCord>": "󰙯",
-            "class<vesktop>": "󰙯",
-            "class<discord>": "󰙯",
-            "class<Spotify>": ""
-        }
-    },
-    "network#up": {
-        "format": "󰕒 {bandwidthUpBytes}",
-        "interval": 1,
-    },
-    "network#down": {
-        "format": "󰇚 {bandwidthDownBytes}",
-        "interval": 1,
-    },
-    "pulseaudio#sink": {
-        "format": " {icon}  {volume}%",
-        "format-bluetooth": "{icon} {volume}% ",
-        "format-bluetooth-muted": " {icon}",
-        "format-muted": " {format_source}",
-        "format-icons": {
-            "headphone": "",
-            "hands-free": "",
-            "headset": "",
-            "phone": "",
-            "portable": "",
-            "car": "",
-            "default": [
-                "",
-                "",
-                ""
-            ]
-        },
-        "on-click": "pavucontrol"
-    },
-    "pulseaudio#source": {
-        "format": "{format_source}",
-        "format-bluetooth": "{format_source}",
-        "format-bluetooth-muted": "{format_source}",
-        "format-muted": " {format_source}",
-        "format-source": "  {volume}% ",
-        "format-source-muted": "",
-        "format-icons": {
-            "headphone": "",
-            "hands-free": "",
-            "headset": "",
-            "phone": "",
-            "portable": "",
-            "car": "",
-            "default": [
-                "",
-                "",
-                ""
-            ]
-        },
-        "on-click": "pavucontrol"
-    },
-    "privacy": {
-        "expand": true
+        "icon-size": 15,
+        "spacing": 2
     },
     "clock": {
-        "format": " {:%H:%M %Y-%m-%d}",
+        "format": "  {:%Y-%m-%d    %H:%M}",
         "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+    },
+    "pulseaudio": {
+        "format": "{icon}  {volume}%",
+        "format-muted": "  Muted",
+        "format-icons": {
+            "default": ["", "", ""]
+        },
+        "on-click": "pavucontrol"
+    },
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{icon}  {capacity}%",
+        "format-icons": ["", "", "", "", ""]
+    },
+    "network": {
+        "format-wifi": "  {essid}",
+        "format-ethernet": "  Connected",
+        "format-disconnected": "⚠ Disconnected",
+        "tooltip-format": "{ifname} via {gwaddr}"
     }
 }

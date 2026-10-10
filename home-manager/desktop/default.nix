@@ -39,7 +39,6 @@ in
 
     xdg-terminal-exec
     playerctl
-    hyprpaper
     hyprpicker
     grim
     slurp

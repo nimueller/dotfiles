@@ -50,3 +50,5 @@ chpwd() {
   ls
 }
 
+export PATH="$HOME/.cargo/bin:$PATH"
+
