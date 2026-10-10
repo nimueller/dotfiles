@@ -14,7 +14,6 @@
 
     # LaTeX
     texliveFull
-    evince
     texlab
     ltex-ls
 
@@ -52,6 +51,9 @@
     prisma
     typescript-language-server
 
+    # Hyprland
+    hyprls
+
     # Docker
     docker-compose-language-service
 
@@ -60,7 +62,6 @@
 
     # Python
     pyright
-    pylyzer
 
     # Go
     go

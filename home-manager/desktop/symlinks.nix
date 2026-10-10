@@ -6,6 +6,5 @@
   xdg.configFile."brave-flags.conf".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/brave-flags.conf";
   xdg.configFile."rofi".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/rofi";
   xdg.configFile."swayosd".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/swayosd";
-  xdg.configFile."caelestia".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/caelestia";
 }
 

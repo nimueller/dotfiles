@@ -1,7 +1,7 @@
 #!/bin/bash
 
 INSTALL_OPTION=$1
-DOTFILES_CLONE_DIRECTORY=$HOME/.dotfiles
+DOTFILES_CLONE_DIRECTORY=$HOME/dotfiles
 
 case "$INSTALL_OPTION" in
   headless) ;;
