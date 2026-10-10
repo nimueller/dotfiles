@@ -1,0 +1,93 @@
+# Catppuccin Macchiato, styled to match waybar (see config/waybar/style.css):
+# dark crust background, lavender accent, rounded corners, soft urgency colours.
+
+[global]
+    # Always on the 4K main display, regardless of focus
+    monitor = DP-1
+    follow = none
+
+    # Geometry: top-right stack, away from the bottom bar
+    origin = top-right
+    offset = (16, 16)
+    width = (280, 380)
+    height = (0, 220)
+    notification_limit = 6
+    gap_size = 8
+    padding = 12
+    horizontal_padding = 14
+    text_icon_padding = 12
+    corner_radius = 10
+    frame_width = 2
+    separator_height = 2
+    separator_color = frame
+
+    # Progress bar (for notifications that send a value, e.g. volume or downloads)
+    progress_bar = true
+    progress_bar_height = 8
+    progress_bar_frame_width = 0
+    progress_bar_min_width = 150
+    progress_bar_max_width = 352
+    progress_bar_corner_radius = 4
+    highlight = "#c6a0f6"
+
+    # Text
+    font = CaskaydiaCove Nerd Font 10
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    vertical_alignment = center
+    ellipsize = end
+    ignore_newline = no
+    show_age_threshold = 60
+    stack_duplicates = true
+    hide_duplicate_count = false
+    show_indicators = yes
+
+    # Icons
+    enable_recursive_icon_lookup = true
+    icon_position = left
+    min_icon_size = 32
+    max_icon_size = 48
+    icon_corner_radius = 6
+
+    # History: feeds the waybar notification center
+    sticky_history = yes
+    history_length = 50
+
+    # Interaction
+    dmenu = rofi -dmenu -p dunst
+    browser = xdg-open
+    mouse_left_click = do_action, close_current
+    mouse_middle_click = close_all
+    mouse_right_click = close_current
+
+[experimental]
+    # Pause the timeout while hovering
+    pause_on_mouse_over = true
+
+[urgency_low]
+    background = "#181926"
+    foreground = "#a5adcb"
+    frame_color = "#494d64"
+    highlight = "#8aadf4"
+    timeout = 5
+
+[urgency_normal]
+    background = "#181926"
+    foreground = "#cad3f5"
+    frame_color = "#b7bdf8"
+    highlight = "#c6a0f6"
+    timeout = 8
+
+[urgency_critical]
+    background = "#181926"
+    foreground = "#cad3f5"
+    frame_color = "#ed8796"
+    highlight = "#ed8796"
+    timeout = 0
+
+# Popups re-shown from the waybar notification center are copies of entries
+# that are already in the history, so don't store them a second time
+[center-preview]
+    category = "center.preview"
+    history_ignore = yes

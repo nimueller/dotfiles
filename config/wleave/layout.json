@@ -1,0 +1,39 @@
+{
+    "buttons": [
+        {
+            "label": "lock",
+            "action": "hyprlock",
+            "text": "Lock",
+            "keybind": "l",
+            "icon": "/home/nico/.nix-profile/share/wleave/icons/lock.svg"
+        },
+        {
+            "label": "logout",
+            "action": "hyprctl dispatch exit",
+            "text": "Logout",
+            "keybind": "e",
+            "icon": "/home/nico/.nix-profile/share/wleave/icons/logout.svg"
+        },
+        {
+            "label": "suspend",
+            "action": "systemctl suspend",
+            "text": "Suspend",
+            "keybind": "u",
+            "icon": "/home/nico/.nix-profile/share/wleave/icons/suspend.svg"
+        },
+        {
+            "label": "reboot",
+            "action": "systemctl reboot",
+            "text": "Reboot",
+            "keybind": "r",
+            "icon": "/home/nico/.nix-profile/share/wleave/icons/reboot.svg"
+        },
+        {
+            "label": "shutdown",
+            "action": "systemctl poweroff",
+            "text": "Shutdown",
+            "keybind": "s",
+            "icon": "/home/nico/.nix-profile/share/wleave/icons/shutdown.svg"
+        }
+    ]
+}

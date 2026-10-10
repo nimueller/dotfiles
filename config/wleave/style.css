@@ -1,0 +1,43 @@
+/* Catppuccin Macchiato power menu, matching waybar and dunst: a centred row
+   of round buttons (sized by powermenu.sh), one muted accent per action. */
+
+window {
+    background-color: rgba(24, 25, 38, 0.8); /* crust */
+}
+
+button {
+    color: #cad3f5; /* text */
+    background-color: #24273a; /* base */
+    border: 2px solid #363a4f; /* surface0 */
+    border-radius: 9999px;
+    padding: 22px;
+    transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+button label.action-name {
+    font-family: "CaskaydiaCove Nerd Font", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+button label.keybind {
+    opacity: 0;
+}
+
+button:focus,
+button:hover {
+    background-color: color-mix(in srgb, var(--accent) 15%, #24273a);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+button:active {
+    background-color: var(--accent);
+    color: #181926;
+}
+
+button#lock     { --accent: #b7bdf8; } /* lavender */
+button#logout   { --accent: #8aadf4; } /* blue */
+button#suspend  { --accent: #c6a0f6; } /* mauve */
+button#reboot   { --accent: #f5a97f; } /* peach */
+button#shutdown { --accent: #ed8796; } /* red */

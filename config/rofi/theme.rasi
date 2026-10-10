@@ -1,0 +1,129 @@
+/* Catppuccin Macchiato rofi theme, matching waybar, dunst and wleave:
+   solid crust window, rounded surfaces, lavender accent on soft tints. */
+
+@import "catppuccin-macchiato"
+
+* {
+    font:             "CaskaydiaCove Nerd Font 12";
+    background-color: transparent;
+    text-color:       @text;
+    margin:           0;
+    padding:          0;
+    spacing:          0;
+
+    /* 18% tints of the accents, like the waybar chips */
+    lavender-tint:    #b7bdf82e;
+    mauve-tint:       #c6a0f62e;
+    red-tint:         #ed87962e;
+}
+
+window {
+    location:         center;
+    width:            640px;
+    padding:          16px;
+    background-color: @crust;
+    border:           2px;
+    border-color:     @surface0;
+    border-radius:    16px;
+}
+
+mainbox {
+    spacing:  12px;
+    children: [ "inputbar", "message", "listview" ];
+}
+
+/* Search field with the mode name as a lavender chip */
+inputbar {
+    padding:          8px 10px;
+    spacing:          10px;
+    background-color: @base;
+    border:           1px;
+    border-color:     @surface0;
+    border-radius:    12px;
+    children:         [ "prompt", "entry" ];
+}
+
+prompt {
+    padding:          2px 10px;
+    background-color: @lavender-tint;
+    text-color:       @lavender;
+    border-radius:    8px;
+    vertical-align:   0.5;
+}
+
+entry {
+    placeholder:       "Search…";
+    placeholder-color: @overlay0;
+    cursor:            text;
+    vertical-align:    0.5;
+}
+
+message {
+    padding:          8px 12px;
+    background-color: @base;
+    border-radius:    10px;
+}
+
+textbox {
+    text-color: @subtext0;
+}
+
+listview {
+    lines:        8;
+    columns:      1;
+    spacing:      4px;
+    cycle:        true;
+    dynamic:      true;
+    scrollbar:    false;
+    fixed-height: false;
+}
+
+element {
+    padding:       8px 12px;
+    spacing:       12px;
+    border-radius: 10px;
+    cursor:        pointer;
+}
+
+element normal.normal,
+element alternate.normal {
+    text-color: @subtext1;
+}
+
+element selected.normal {
+    background-color: @lavender-tint;
+    text-color:       @lavender;
+}
+
+element normal.active,
+element alternate.active {
+    text-color: @mauve;
+}
+
+element selected.active {
+    background-color: @mauve-tint;
+    text-color:       @mauve;
+}
+
+element normal.urgent,
+element alternate.urgent {
+    text-color: @red;
+}
+
+element selected.urgent {
+    background-color: @red-tint;
+    text-color:       @red;
+}
+
+element-icon {
+    size:           28px;
+    vertical-align: 0.5;
+    cursor:         inherit;
+}
+
+element-text {
+    vertical-align: 0.5;
+    highlight:      bold;
+    text-color:     inherit;
+    cursor:         inherit;
+}

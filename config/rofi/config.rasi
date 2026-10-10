@@ -1,18 +1,21 @@
 configuration {
     combi-modes: "drun,ssh";
-    display-calc: " 󰃬 Calc ";
-    display-combi: " 󱓞 Launch ";
-    display-drun: " App";
-    display-ssh: " 󱘖 SSH";
+    combi-hide-mode-prefix: true;
+    display-calc: "󰃬 Calc";
+    display-combi: "󱓞 Launch";
+    display-drun: " Apps";
+    display-ssh: "󱘖 SSH";
     drun-display-format: "{icon} {name}";
-    font: "NotoSans Nerd Font Bold 14";
     matching: "fuzzy";
     modi: "combi";
     show-icons: true;
     xoffset: 0;
     yoffset: 0;
+    // Single click runs an entry (default is select on click, run on double click)
+    me-select-entry: "";
+    me-accept-entry: "MousePrimary";
     kb-clear-line: "Ctrl+u";
     kb-remove-word-back: "Ctrl+w";
     kb-remove-to-sol: "";
 }
-@theme "catppuccin-default"
+@theme "theme"

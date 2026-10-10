@@ -1,0 +1,14 @@
+[server]
+# Sit just above the bottom waybar, centred
+top_margin = 0.88
+
+# The volume keys never go above 100 %
+max_volume = 100
+min_brightness = 5
+
+show_percentage = true
+playerctl_format = "{artist} - {title}"
+keyboard_backlight = true
+
+# How long the OSD stays visible, in milliseconds
+duration = 1500

@@ -1,41 +1,69 @@
+/* Catppuccin Macchiato OSD, matching waybar, dunst, wleave and rofi:
+   a solid crust pill with a thin outline and a lavender-to-mauve bar. */
+
 window#osd {
-    padding: 20px 20px;
-    border-radius: 10px;
+    background: #181926; /* crust */
+    border: 2px solid #363a4f; /* surface0 */
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+
+window#osd #container {
+    margin: 12px 18px;
+}
+
+window#osd image {
+    color: #b7bdf8; /* lavender */
+    -gtk-icon-size: 22px;
+}
+
+window#osd label {
+    color: #cad3f5; /* text */
+    font-family: "CaskaydiaCove Nerd Font", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 3em;
+}
+
+window#osd progressbar,
+window#osd segmentedprogress {
+    min-height: 8px;
+    min-width: 220px;
+    border-radius: 999px;
+    background: transparent;
     border: none;
-    background: #{"alpha(@theme_bg_color, 0.8)"};
+}
 
-    #container {
-        margin: 16px;
-    }
+window#osd trough,
+window#osd segment {
+    min-height: inherit;
+    border-radius: inherit;
+    border: none;
+    background: #363a4f; /* surface0 */
+}
 
-    image,
-    label {
-        color: #{"@theme_fg_color"};
-    }
+window#osd progress,
+window#osd segment.active {
+    min-height: inherit;
+    border-radius: inherit;
+    border: none;
+    background: linear-gradient(to right, #b7bdf8, #c6a0f6); /* lavender → mauve */
+}
 
-    progressbar:disabled,
-    image:disabled {
-        opacity: 0.5;
-    }
+window#osd segment {
+    margin-left: 6px;
+}
 
-    progressbar {
-        min-height: 6px;
-        border-radius: 999px;
-        background: transparent;
-        border: none;
-    }
+window#osd segment:first-child {
+    margin-left: 0;
+}
 
-    trough {
-        min-height: inherit;
-        border-radius: inherit;
-        border: none;
-        background: #{"alpha(@theme_fg_color, 0.5)"};
-    }
+/* Muted output/mic: everything greys out */
+window#osd image:disabled,
+window#osd label:disabled {
+    color: #6e738d; /* overlay0 */
+}
 
-    progress {
-        min-height: inherit;
-        border-radius: inherit;
-        border: none;
-        background: #{"@theme_fg_color"};
-    }
+window#osd progressbar:disabled progress {
+    background: #6e738d;
 }

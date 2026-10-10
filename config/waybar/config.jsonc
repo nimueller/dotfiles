@@ -4,7 +4,7 @@
     "height": 10,
     "modules-left": ["hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "privacy", "pulseaudio", "battery", "network"],
+    "modules-right": ["tray", "privacy", "pulseaudio", "battery", "network", "custom/notifications", "custom/power"],
     
     "hyprland/workspaces": {
         "format": "{name}",
@@ -45,5 +45,19 @@
         "format-ethernet": "  Connected",
         "format-disconnected": "⚠ Disconnected",
         "tooltip-format": "{ifname} via {gwaddr}"
+    },
+    "custom/notifications": {
+        "exec": "~/.config/waybar/scripts/notifications.sh status",
+        "return-type": "json",
+        "interval": 3,
+        "signal": 8,
+        "on-click": "~/.config/waybar/scripts/notifications.sh center",
+        "on-click-right": "dunstctl set-paused toggle; pkill -RTMIN+8 waybar",
+        "on-click-middle": "dunstctl history-clear; pkill -RTMIN+8 waybar"
+    },
+    "custom/power": {
+        "format": "󰐥",
+        "tooltip-format": "Power menu",
+        "on-click": "~/.config/wleave/powermenu.sh"
     }
 }

@@ -3,7 +3,7 @@ let
   theme = {
     cursor = pkgs.bibata-cursors;
     cursor-theme-name = "Bibata-Modern-Ice";
-    gtk-theme-name = "Catppuccin-Macchiato-Standard-Blue-Dark";
+    gtk-theme-name = "catppuccin-macchiato-blue-standard";
   };
 in
 {
@@ -15,6 +15,7 @@ in
   };
 
   home.pointerCursor = {
+    enable = true;
     name = theme.cursor-theme-name;
     package = theme.cursor;
     gtk.enable = true;

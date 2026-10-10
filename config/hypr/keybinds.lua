@@ -7,8 +7,8 @@ local function exec(cmd, rules) return hl.dsp.exec_cmd(cmd, rules) end
 hl.bind(mainMod .. " + D", exec("applauncher"))
 
 -- Brightness
-hl.bind("XF86MonBrightnessUp",   exec("brightnessctl set 5%+"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", exec("brightnessctl set 5%-"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessUp",   exec("swayosd-client --brightness raise"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", exec("swayosd-client --brightness lower"), { locked = true, repeating = true })
 
 -- Media (prefer the chromium/Electron player, fall back to any)
 hl.bind("XF86AudioPlay",  exec("playerctl -p chromium,%any play-pause"), { locked = true })
@@ -18,11 +18,15 @@ hl.bind("XF86AudioPrev",  exec("playerctl -p chromium,%any previous"),   { locke
 hl.bind("XF86AudioStop",  exec("playerctl -p chromium,%any stop"),       { locked = true })
 hl.bind("XF86Calculator", exec("gnome-calculator"))
 
--- Volume
-hl.bind("XF86AudioMicMute",     exec("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true })
-hl.bind("XF86AudioMute",        exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),   { locked = true })
-hl.bind("XF86AudioRaiseVolume", exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })
+-- Case power button opens the power menu (logind must ignore the key, see
+-- /etc/systemd/logind.conf.d/power-key.conf)
+hl.bind("XF86PowerOff", exec("~/.config/wleave/powermenu.sh"))
+
+-- Volume (swayosd shows the OSD; max_volume = 100 in config/swayosd/config.toml)
+hl.bind("XF86AudioMicMute",     exec("swayosd-client --input-volume mute-toggle"),  { locked = true })
+hl.bind("XF86AudioMute",        exec("swayosd-client --output-volume mute-toggle"), { locked = true })
+hl.bind("XF86AudioRaiseVolume", exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; swayosd-client --output-volume +5"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", exec("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; swayosd-client --output-volume -5"), { locked = true, repeating = true })
 
 -- Workspace controls (key 0 maps to workspace 10)
 for i = 1, 10 do

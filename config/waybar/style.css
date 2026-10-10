@@ -1,24 +1,221 @@
+@import "macchiato.css";
+
+/* Solid Catppuccin Macchiato bar. Each module is a rounded chip with its own
+   accent colour on a soft tint of that colour, so the bar is colourful but
+   low-contrast enough not to pull focus. */
+
 * {
-    font-family: "monospace", "JetBrainsMono Nerd Font";
+    font-family: "CaskaydiaCove Nerd Font", "JetBrainsMono Nerd Font", monospace;
     font-size: 12px;
-    color: #ffffff;
-    background: #000000; /* Solid black background like default i3bar */
+    min-height: 0;
     border: none;
-    border-radius: 0; /* No rounded corners */
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
 }
 
-#waybar {
-    background: #000000;
-    border-bottom: 2px solid #5f5f5f; /* Optional: subtle bottom line */
+window#waybar {
+    background: @crust;
+    color: @text;
+    border-top: 1px solid @surface0;
 }
 
-/* Example: Add a separator between modules */
+tooltip {
+    background: @mantle;
+    border: 1px solid @lavender;
+    border-radius: 8px;
+}
+
+tooltip label {
+    color: @text;
+}
+
+/* Shared chip shape */
+#workspaces,
+#window,
+#clock,
+#tray,
+#privacy,
+#pulseaudio,
+#battery,
+#network {
+    padding: 0 10px;
+    margin: 4px 3px;
+    border-radius: 8px;
+    transition: background 200ms ease, color 200ms ease;
+}
+
+/* Workspaces: numbers in a surface chip; focused one is a solid lavender pill */
+#workspaces {
+    padding: 0 3px;
+    margin-left: 6px;
+    background: @surface0;
+}
+
 #workspaces button {
-    padding: 0 5px;
-    border-left: 1px solid #5f5f5f;
-}   
+    padding: 0 7px;
+    margin: 2px 1px;
+    background: transparent;
+    border-radius: 6px;
+    transition: background 200ms ease;
+}
+
+#workspaces button label {
+    color: @overlay2;
+}
+
+#workspaces button:hover {
+    background: @surface1;
+    box-shadow: none;
+}
+
+#workspaces button:hover label {
+    color: @text;
+}
+
+#workspaces button.active {
+    background: @lavender;
+}
+
+#workspaces button.active label {
+    color: @crust;
+    font-weight: bold;
+}
+
+#workspaces button.urgent {
+    background: @peach;
+}
+
+#workspaces button.urgent label {
+    color: @crust;
+}
+
+/* Focused window title: plain text, no chip, so it stays in the background */
+#window {
+    color: @subtext0;
+    background: transparent;
+}
+
+window#waybar.empty #window {
+    padding: 0;
+    margin: 0;
+}
+
+/* Clock */
+#clock {
+    color: @mauve;
+    background: alpha(@mauve, 0.15);
+    font-weight: bold;
+    padding: 0 14px;
+}
+
+/* Right side: one accent per module */
+#tray {
+    background: @surface0;
+}
+
+#privacy {
+    padding: 0 6px;
+}
+
+#privacy-item {
+    color: @peach;
+}
 
 #pulseaudio {
-    padding: 0 1rem 0 1rem;
+    color: @blue;
+    background: alpha(@blue, 0.15);
 }
 
+#pulseaudio:hover {
+    background: alpha(@blue, 0.25);
+}
+
+#pulseaudio.muted {
+    color: @overlay0;
+    background: @surface0;
+}
+
+#battery {
+    color: @green;
+    background: alpha(@green, 0.15);
+}
+
+#battery.charging,
+#battery.plugged {
+    color: @teal;
+    background: alpha(@teal, 0.15);
+}
+
+#battery.warning:not(.charging) {
+    color: @yellow;
+    background: alpha(@yellow, 0.18);
+}
+
+#battery.critical:not(.charging) {
+    color: @red;
+    background: alpha(@red, 0.22);
+}
+
+#network {
+    color: @sapphire;
+    background: alpha(@sapphire, 0.15);
+}
+
+#network:hover {
+    background: alpha(@sapphire, 0.25);
+}
+
+#network.disconnected {
+    color: @red;
+    background: alpha(@red, 0.18);
+}
+
+/* Notification center (dunst history) */
+#custom-notifications {
+    padding: 0 10px;
+    margin: 4px 3px;
+    border-radius: 8px;
+    color: @overlay2;
+    background: @surface0;
+    transition: background 200ms ease, color 200ms ease;
+}
+
+#custom-notifications.unread {
+    color: @lavender;
+    background: alpha(@lavender, 0.18);
+}
+
+#custom-notifications.dnd {
+    color: @overlay0;
+    background: @surface0;
+}
+
+#custom-notifications:hover {
+    background: @surface1;
+}
+
+/* Power menu button: muted until hovered */
+#custom-power {
+    padding: 0 12px 0 10px;
+    margin: 4px 6px 4px 0;
+    border-radius: 8px;
+    color: @overlay1;
+    background: @surface0;
+    transition: background 200ms ease, color 200ms ease;
+}
+
+#custom-power:hover {
+    color: @red;
+    background: alpha(@red, 0.18);
+}
+
+#tray menu {
+    background: @mantle;
+    color: @text;
+    border-radius: 8px;
+}
+
+#tray > .needs-attention {
+    background: alpha(@peach, 0.25);
+}
