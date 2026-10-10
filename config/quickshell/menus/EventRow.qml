@@ -2,12 +2,19 @@ import QtQuick
 import QtQuick.Layouts
 
 // One event of the selected day: calendar colour, time, title, location.
+// One-off Nextcloud events can be edited and deleted (hover; delete asks
+// to confirm).
 Rectangle {
     id: root
 
     required property var event // { title, location, allDay, start: Date, end: Date }
     required property date day
     property color colour: Theme.lavender
+    property bool editable: false
+    property bool confirming: false
+
+    signal editRequested
+    signal deleteRequested
 
     function clock(d) {
         return Qt.formatTime(d, "HH:mm");
@@ -25,7 +32,12 @@ Rectangle {
 
     implicitHeight: row.implicitHeight + 14
     radius: 8
-    color: Theme.alpha(Theme.surface0, 0.5)
+    color: Theme.alpha(Theme.surface0, hover.hovered ? 0.8 : 0.5)
+
+    HoverHandler {
+        id: hover
+        onHoveredChanged: if (!hovered) root.confirming = false
+    }
 
     RowLayout {
         id: row
@@ -66,6 +78,23 @@ Rectangle {
                 text: `${Theme.glyph(0xf034e)} ${root.event.location}` // 󰍎
                 font.pixelSize: 10
                 color: Theme.overlay1
+            }
+        }
+        IconButton {
+            visible: root.editable && hover.hovered && !root.confirming
+            glyph: Theme.glyph(0xf03eb) // 󰏫
+            onClicked: root.editRequested()
+        }
+        IconButton {
+            visible: root.editable && (hover.hovered || root.confirming)
+            glyph: Theme.glyph(0xf01b4) // 󰆴
+            text: root.confirming ? "Delete?" : ""
+            accent: Theme.red
+            active: root.confirming
+            onClicked: {
+                if (root.confirming)
+                    root.deleteRequested();
+                root.confirming = !root.confirming;
             }
         }
     }

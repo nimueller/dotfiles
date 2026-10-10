@@ -53,6 +53,7 @@ in
 
     my-pkgs.hyprshot
     my-pkgs.recorder
+    my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
     my-pkgs.edit-tex
 

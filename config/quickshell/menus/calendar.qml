@@ -3,9 +3,11 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
-// Calendar for the waybar clock: month grid, the selected day's events from
-// Nextcloud (CalDAV through calendar-dav.py, one or more calendars) and a
-// weather forecast from Open-Meteo. The gear opens the settings.
+// Calendar for the waybar clock: a month of day boxes with their
+// appointments and forecast, the selected day in a sidebar with the current
+// weather, and a form to add appointments to Nextcloud. Events come from
+// Nextcloud (CalDAV) and read-only ICS subscriptions via calendar-dav.py;
+// weather from Open-Meteo. The gear opens the settings.
 //
 // Settings: ~/.local/state/quickshell-calendar.json (the app password is in
 // the keyring). Last events and weather are cached in
@@ -15,14 +17,16 @@ Popup {
 
     name: "calendar"
     centered: true
-    cardWidth: 700
+    cardWidth: 1120
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string helper: Quickshell.shellPath("calendar-dav.py")
+    readonly property var palette: [Theme.peach, Theme.teal, Theme.pink, Theme.yellow, Theme.green, Theme.maroon, Theme.sky]
 
-    property var settings: ({}) // { location: { name, lat, lon }, nextcloud: { url, user, calendars } }
+    property var settings: ({}) // { location, weekStart, weekNumbers, nextcloud: { url, user, calendars }, ics: [...] }
     property var cache: ({}) // { weather: { at, place, data }, events: { "yyyy-MM": [...] } }
     property bool editing: false
+    property bool creating: false
 
     property date today: new Date()
     property date selected: new Date()
@@ -30,23 +34,33 @@ Popup {
     property int viewMonth: today.getMonth()
 
     property bool syncing: false
-    property string syncError: ""
+    property var syncErrors: ({})
     property string weatherError: ""
     property var locationResults: []
     property bool accountBusy: false
     property string accountError: ""
+    property bool saving: false
+    property string saveError: ""
     property var prefill: ({})
     property int filesReady: 0 // settings and cache loaded (or missing)
 
+    readonly property int weekStart: settings.weekStart ?? 1
+    readonly property bool weekNumbers: settings.weekNumbers ?? true
     readonly property var nextcloud: settings.nextcloud ?? null
-    readonly property var calendars: nextcloud?.calendars ?? []
-    readonly property var enabled: calendars.filter(c => c.enabled)
-    readonly property var colours: byHref(enabled, c => c.color)
+    readonly property var subscriptions: settings.ics ?? []
+    // Every enabled calendar: { id, color, writable }
+    readonly property var sources: [
+        ...(nextcloud?.calendars ?? []).filter(c => c.enabled).map(c => ({ id: c.href, color: c.color, writable: c.writable !== false })),
+        ...subscriptions.filter(s => s.enabled).map(s => ({ id: s.id, color: s.color, writable: false }))
+    ]
+    readonly property var writable: (nextcloud?.calendars ?? []).filter(c => c.writable !== false)
+    readonly property var colours: byId(sources, s => s.color)
+    readonly property var canWrite: byId(sources, s => s.writable)
 
     // First and last (exclusive) day of the six-week grid
     readonly property date gridStart: {
         const d = new Date(viewYear, viewMonth, 1);
-        return new Date(viewYear, viewMonth, 1 - (d.getDay() + 6) % 7);
+        return new Date(viewYear, viewMonth, 1 - (d.getDay() - weekStart + 7) % 7);
     }
     readonly property date gridEnd: new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + 42)
     readonly property string viewKey: Qt.formatDate(new Date(viewYear, viewMonth, 1), "yyyy-MM")
@@ -56,36 +70,39 @@ Popup {
                 location: e.location,
                 allDay: e.allDay,
                 calendar: e.calendar,
+                colour: colours[e.calendar],
                 start: parseTime(e.start, e.allDay),
-                end: parseTime(e.end, e.allDay)
-            }))
-    readonly property var dots: {
+                end: parseTime(e.end, e.allDay),
+                href: e.href ?? "",
+                etag: e.etag ?? "",
+                editable: !!e.href && !e.recurring && canWrite[e.calendar]
+            })).sort((a, b) => b.allDay - a.allDay || a.start - b.start)
+    // "yyyy-MM-dd" -> events touching that day
+    readonly property var byDay: {
         const out = {};
         for (const e of events) {
-            for (let d = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate()); d < e.end || +d === +e.start; d.setDate(d.getDate() + 1)) {
+            const zero = +e.end === +e.start;
+            for (let d = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate()); d < e.end || (zero && +d <= +e.start); d.setDate(d.getDate() + 1)) {
+                if (d >= gridEnd)
+                    break;
+                if (d < gridStart)
+                    continue;
                 const key = Qt.formatDate(d, "yyyy-MM-dd");
                 if (!out[key])
                     out[key] = [];
-                const list = out[key];
-                if (!list.includes(colours[e.calendar]))
-                    list.push(colours[e.calendar]);
-                if (+e.end === +e.start)
-                    break;
+                out[key].push(e);
             }
         }
         return out;
     }
-    readonly property var dayEvents: {
-        const from = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate());
-        const to = new Date(from.getFullYear(), from.getMonth(), from.getDate() + 1);
-        return events.filter(e => e.start < to && (e.end > from || (+e.end === +e.start && e.start >= from))).sort((a, b) => b.allDay - a.allDay || a.start - b.start);
-    }
+    readonly property var dayEvents: byDay[Qt.formatDate(selected, "yyyy-MM-dd")] ?? []
+    readonly property var forecast: Weather.daily(cache.weather?.data)
+    readonly property string syncError: Object.values(syncErrors)[0] ?? ""
 
-    // { href: value(calendar) } (Qt's JS engine has no Object.fromEntries)
-    function byHref(list, value) {
+    function byId(list, value) {
         const out = {};
-        for (const c of list)
-            out[c.href] = value(c);
+        for (const s of list)
+            out[s.id] = value(s);
         return out;
     }
 
@@ -97,7 +114,8 @@ Popup {
         return new Date(y, m - 1, d);
     }
 
-    function saveSettings() {
+    function update(changes) {
+        settings = Object.assign({}, settings, changes);
         settingsFile.setText(JSON.stringify(settings, null, 2));
     }
 
@@ -112,57 +130,39 @@ Popup {
         fetchEvents();
     }
 
-    function goToday() {
-        today = new Date();
-        selected = today;
-        if (viewYear !== today.getFullYear() || viewMonth !== today.getMonth()) {
-            viewYear = today.getFullYear();
-            viewMonth = today.getMonth();
+    function select(day) {
+        selected = day;
+        if (day.getFullYear() !== viewYear || day.getMonth() !== viewMonth) {
+            viewYear = day.getFullYear();
+            viewMonth = day.getMonth();
             fetchEvents();
         }
     }
 
-    // Events -----------------------------------------------------------------
-
-    function fetchEvents() {
-        if (!nextcloud || enabled.length === 0)
-            return;
-        if (eventsProc.running) {
-            eventsProc.again = true;
-            return;
-        }
-        eventsProc.key = viewKey;
-        eventsProc.command = [helper, "events", nextcloud.url, nextcloud.user, Qt.formatDate(gridStart, "yyyy-MM-dd"), Qt.formatDate(gridEnd, "yyyy-MM-dd"), ...enabled.map(c => c.href)];
-        syncing = true;
-        eventsProc.running = true;
+    function goToday() {
+        today = new Date();
+        select(today);
     }
 
-    Process {
-        id: eventsProc
+    function newAppointment(day) {
+        select(day);
+        saveError = "";
+        creating = true;
+        form.reset();
+    }
 
-        property string key: ""
+    function editAppointment(event) {
+        saveError = "";
+        creating = true;
+        form.edit(event);
+    }
+
+    // Helper calls --------------------------------------------------------------
+
+    HelperCall {
+        id: eventsCall
+        helper: popup.helper
         property bool again: false
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                popup.syncing = false;
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (e) {
-                    result = { error: "The calendar helper failed" };
-                }
-                if (result.error) {
-                    popup.syncError = result.error;
-                    return;
-                }
-                popup.syncError = "";
-                const events = Object.assign({}, popup.cache.events);
-                events[eventsProc.key] = result.events;
-                popup.cache = Object.assign({}, popup.cache, { events });
-                popup.saveCache();
-            }
-        }
         onExited: {
             if (again) {
                 again = false;
@@ -170,36 +170,72 @@ Popup {
             }
         }
     }
+    HelperCall {
+        id: accountCall
+        helper: popup.helper
+    }
+    HelperCall {
+        id: writeCall
+        helper: popup.helper
+    }
 
-    // Nextcloud account --------------------------------------------------------
+    function fetchEvents() {
+        if (sources.length === 0) {
+            syncErrors = {};
+            return;
+        }
+        if (eventsCall.running) {
+            eventsCall.again = true;
+            return;
+        }
+        const key = viewKey;
+        const spec = {
+            start: Qt.formatDate(gridStart, "yyyy-MM-dd"),
+            end: Qt.formatDate(gridEnd, "yyyy-MM-dd"),
+            nextcloud: nextcloud ? { url: nextcloud.url, user: nextcloud.user, calendars: nextcloud.calendars.filter(c => c.enabled).map(c => c.href) } : null,
+            ics: subscriptions.filter(s => s.enabled).map(s => ({ id: s.id, url: s.url }))
+        };
+        syncing = true;
+        eventsCall.run(["events"], JSON.stringify(spec), result => {
+            syncing = false;
+            syncErrors = result.errors;
+            const events = Object.assign({}, cache.events);
+            events[key] = result.events;
+            cache = Object.assign({}, cache, { events });
+            saveCache();
+        }, error => {
+            syncing = false;
+            syncErrors = { all: error };
+        });
+    }
 
     function mergeCalendars(found) {
-        const old = byHref(calendars, c => c.enabled);
+        const old = byId((nextcloud?.calendars ?? []).map(c => ({ id: c.href, enabled: c.enabled })), c => c.enabled);
         return found.map(c => Object.assign({}, c, { enabled: old[c.href] ?? true }));
     }
 
     function account(args, input, done) {
         accountBusy = true;
         accountError = "";
-        accountProc.done = done;
-        accountProc.input = input ?? "";
-        accountProc.stdinEnabled = !!input;
-        accountProc.command = [helper, ...args];
-        accountProc.running = true;
+        accountCall.run(args, input, result => {
+            accountBusy = false;
+            done(result);
+        }, error => {
+            accountBusy = false;
+            accountError = error;
+        });
     }
 
     function signIn(url, user, password) {
         account(["login", url, user], `${password}\n`, result => {
-            settings = Object.assign({}, settings, { nextcloud: { url, user, calendars: mergeCalendars(result.calendars) } });
-            saveSettings();
+            update({ nextcloud: { url, user, calendars: mergeCalendars(result.calendars) } });
             fetchEvents();
         });
     }
 
     function refreshCalendars() {
         account(["calendars", nextcloud.url, nextcloud.user], "", result => {
-            settings = Object.assign({}, settings, { nextcloud: Object.assign({}, nextcloud, { calendars: mergeCalendars(result.calendars) }) });
-            saveSettings();
+            update({ nextcloud: Object.assign({}, nextcloud, { calendars: mergeCalendars(result.calendars) }) });
             fetchEvents();
         });
     }
@@ -209,46 +245,47 @@ Popup {
         const next = Object.assign({}, settings);
         delete next.nextcloud;
         settings = next;
-        cache = Object.assign({}, cache, { events: {} });
-        saveSettings();
-        saveCache();
-    }
-
-    function toggleCalendar(href) {
-        const list = calendars.map(c => c.href === href ? Object.assign({}, c, { enabled: !c.enabled }) : c);
-        settings = Object.assign({}, settings, { nextcloud: Object.assign({}, nextcloud, { calendars: list }) });
-        saveSettings();
+        update({});
         fetchEvents();
     }
 
-    Process {
-        id: accountProc
+    function toggleCalendar(href) {
+        update({ nextcloud: Object.assign({}, nextcloud, { calendars: nextcloud.calendars.map(c => c.href === href ? Object.assign({}, c, { enabled: !c.enabled }) : c) }) });
+        fetchEvents();
+    }
 
-        property var done: null
-        property string input: ""
+    function addSubscription(name, url) {
+        const id = `ics:${Date.now().toString(36)}`;
+        update({ ics: [...subscriptions, { id, name, url, color: `${palette[subscriptions.length % palette.length]}`, enabled: true }] });
+        fetchEvents();
+    }
 
-        onStarted: {
-            if (input) {
-                write(input);
-                stdinEnabled = false;
-            }
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                popup.accountBusy = false;
-                accountProc.input = "";
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (e) {
-                    result = { error: "The calendar helper failed" };
-                }
-                if (result.error)
-                    popup.accountError = result.error;
-                else if (accountProc.done)
-                    accountProc.done(result);
-            }
-        }
+    function toggleSubscription(id) {
+        update({ ics: subscriptions.map(s => s.id === id ? Object.assign({}, s, { enabled: !s.enabled }) : s) });
+        fetchEvents();
+    }
+
+    function removeSubscription(id) {
+        update({ ics: subscriptions.filter(s => s.id !== id) });
+        fetchEvents();
+    }
+
+    // New event, or an edited one (it has an href)
+    function saveEvent(event) {
+        saving = true;
+        saveError = "";
+        writeCall.run([event.href ? "update" : "create", nextcloud.url, nextcloud.user], JSON.stringify(event), () => {
+            saving = false;
+            creating = false;
+            fetchEvents();
+        }, error => {
+            saving = false;
+            saveError = error;
+        });
+    }
+
+    function deleteEvent(event) {
+        writeCall.run(["delete", nextcloud.url, nextcloud.user], JSON.stringify({ href: event.href, etag: event.etag }), () => fetchEvents(), error => syncErrors = { delete: error });
     }
 
     // Weather ------------------------------------------------------------------
@@ -277,10 +314,10 @@ Popup {
             return;
         }
         const w = cache.weather;
-        if (!force && w && w.place === place.name && Date.now() - w.at < 30 * 60 * 1000)
+        if (!force && w && w.place === place.name && w.data?.daily?.time?.length >= 16 && Date.now() - w.at < 30 * 60 * 1000)
             return;
         weatherError = "";
-        get(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=7` + "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max", data => {
+        get(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=16` + "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max", data => {
             cache = Object.assign({}, cache, { weather: { at: Date.now(), place: place.name, data } });
             saveCache();
         }, () => weatherError = "Couldn't load the weather");
@@ -300,8 +337,7 @@ Popup {
 
     function pickLocation(r) {
         locationResults = [];
-        settings = Object.assign({}, settings, { location: { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude } });
-        saveSettings();
+        update({ location: { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude } });
         fetchWeather(true);
     }
 
@@ -391,7 +427,15 @@ Popup {
         title: popup.editing ? "Calendar settings" : Qt.formatDate(popup.today, "dddd, d MMMM yyyy")
 
         IconButton {
-            visible: !popup.editing && !!popup.nextcloud
+            visible: !popup.editing && popup.writable.length > 0
+            glyph: Theme.glyph(0xf0415) // 󰐕
+            text: "New"
+            accent: Theme.mauve
+            active: popup.creating
+            onClicked: popup.creating ? popup.creating = false : popup.newAppointment(popup.selected)
+        }
+        IconButton {
+            visible: !popup.editing && popup.sources.length > 0
             glyph: Theme.glyph(0xf0450) // 󰑐
             text: popup.syncing ? "Syncing…" : ""
             onClicked: {
@@ -412,24 +456,27 @@ Popup {
         }
     }
 
-    // Main view: month and weather side by side, the day's events below
+    // Main view: month on the left, weather and the selected day on the right
     RowLayout {
         Layout.fillWidth: true
         visible: !popup.editing
         spacing: 16
 
         MonthGrid {
-            Layout.preferredWidth: 360
+            Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             year: popup.viewYear
             month: popup.viewMonth
             today: popup.today
             selected: popup.selected
-            dots: popup.dots
-            onPicked: day => {
-                popup.selected = day;
-                if (day.getMonth() !== popup.viewMonth)
-                    popup.shiftMonth(day < new Date(popup.viewYear, popup.viewMonth, 1) ? -1 : 1);
+            weekStart: popup.weekStart
+            weekNumbers: popup.weekNumbers
+            events: popup.byDay
+            forecast: popup.forecast
+            onPicked: day => popup.select(day)
+            onActivated: day => {
+                if (popup.writable.length > 0)
+                    popup.newAppointment(day);
             }
             onShift: months => popup.shiftMonth(months)
             onReset: popup.goToday()
@@ -441,81 +488,137 @@ Popup {
             color: Theme.surface0
         }
 
-        WeatherPanel {
-            Layout.fillWidth: true
+        ColumnLayout {
+            Layout.preferredWidth: 300
+            Layout.maximumWidth: 300
             Layout.fillHeight: true
-            weather: popup.cache.weather?.data ?? null
-            place: popup.settings.location?.name.split(",")[0] ?? ""
-            error: popup.weatherError
-            onConfigure: popup.editing = true
-        }
-    }
+            Layout.alignment: Qt.AlignTop
+            spacing: 12
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        visible: !popup.editing
-        spacing: 8
-
-        SectionTitle {
-            readonly property int offset: Math.round((new Date(popup.selected.getFullYear(), popup.selected.getMonth(), popup.selected.getDate()) - new Date(popup.today.getFullYear(), popup.today.getMonth(), popup.today.getDate())) / 86400000)
-
-            text: (offset === 0 ? "Today · " : offset === 1 ? "Tomorrow · " : offset === -1 ? "Yesterday · " : "") + Qt.formatDate(popup.selected, "dddd, d MMMM")
-        }
-
-        // Not connected yet
-        RowLayout {
-            Layout.fillWidth: true
-            visible: !popup.nextcloud
-            spacing: 10
-
-            Label {
+            WeatherPanel {
                 Layout.fillWidth: true
-                text: "Connect your Nextcloud to see your events here."
-                color: Theme.overlay1
+                weather: popup.cache.weather?.data ?? null
+                place: popup.settings.location?.name.split(",")[0] ?? ""
+                error: popup.weatherError
+                onConfigure: popup.editing = true
             }
-            IconButton {
-                glyph: Theme.glyph(0xf0342) // 󰍂
-                text: "Connect"
-                accent: Theme.blue
-                active: true
-                onClicked: popup.editing = true
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: Theme.surface0
             }
-        }
 
-        Label {
-            Layout.fillWidth: true
-            visible: !!popup.syncError
-            text: popup.syncError
-            font.pixelSize: 10
-            color: Theme.red
-            wrapMode: Text.Wrap
-        }
-
-        Label {
-            visible: !!popup.nextcloud && popup.dayEvents.length === 0
-            text: popup.syncing && !(popup.viewKey in (popup.cache.events ?? {})) ? "Loading events…" : "Nothing planned"
-            color: Theme.overlay0
-            font.italic: true
-        }
-
-        ListView {
-            id: eventList
-
-            Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(contentHeight, 240)
-            visible: popup.dayEvents.length > 0
-            clip: true
-            spacing: 6
-            boundsBehavior: Flickable.StopAtBounds
-            model: popup.dayEvents
-
-            delegate: EventRow {
-                required property var modelData
-
-                width: eventList.width
-                event: modelData
+            EventForm {
+                id: form
+                Layout.fillWidth: true
+                visible: popup.creating
                 day: popup.selected
-                colour: popup.colours[modelData.calendar] ?? Theme.lavender
+                calendars: popup.writable
+                busy: popup.saving
+                error: popup.saveError
+                onSaveRequested: event => popup.saveEvent(event)
+                onCancelled: popup.creating = false
+            }
+
+            // The selected day
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: !popup.creating
+                spacing: 8
+
+                SectionTitle {
+                    readonly property int offset: Math.round((new Date(popup.selected.getFullYear(), popup.selected.getMonth(), popup.selected.getDate()) - new Date(popup.today.getFullYear(), popup.today.getMonth(), popup.today.getDate())) / 86400000)
+
+                    Layout.fillWidth: true
+                    text: (offset === 0 ? "Today · " : offset === 1 ? "Tomorrow · " : offset === -1 ? "Yesterday · " : "") + Qt.formatDate(popup.selected, "ddd, d MMMM")
+                }
+
+                // Day forecast
+                Label {
+                    readonly property var day: popup.forecast[Qt.formatDate(popup.selected, "yyyy-MM-dd")] ?? null
+                    readonly property var info: day ? Weather.describe(day.code, false) : null
+
+                    Layout.fillWidth: true
+                    visible: !!day
+                    text: day ? `${Theme.glyph(info[0])}  ${info[1]}  ·  ${day.max}° / ${day.min}°${day.rain ? `  ·  ${Theme.glyph(0xf058c)} ${day.rain}%` : ""}` : ""
+                    font.pixelSize: 11
+                    color: Theme.subtext0
+                }
+
+                // Nothing connected yet
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: popup.sources.length === 0
+                    spacing: 8
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "Connect your Nextcloud or subscribe to a calendar to see your appointments."
+                        color: Theme.overlay1
+                        wrapMode: Text.Wrap
+                    }
+                    IconButton {
+                        glyph: Theme.glyph(0xf0342) // 󰍂
+                        text: "Set up"
+                        accent: Theme.blue
+                        active: true
+                        onClicked: popup.editing = true
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    visible: !!popup.syncError
+                    text: popup.syncError
+                    font.pixelSize: 10
+                    color: Theme.red
+                    wrapMode: Text.Wrap
+                }
+
+                Label {
+                    visible: popup.sources.length > 0 && popup.dayEvents.length === 0
+                    text: popup.syncing && !(popup.viewKey in (popup.cache.events ?? {})) ? "Loading appointments…" : "Nothing planned"
+                    color: Theme.overlay0
+                    font.italic: true
+                }
+
+                ListView {
+                    id: eventList
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: popup.dayEvents.length > 0
+                    clip: true
+                    spacing: 6
+                    boundsBehavior: Flickable.StopAtBounds
+                    model: popup.dayEvents
+
+                    delegate: EventRow {
+                        required property var modelData
+
+                        width: eventList.width
+                        event: modelData
+                        day: popup.selected
+                        colour: modelData.colour
+                        editable: modelData.editable
+                        onEditRequested: popup.editAppointment(modelData)
+                        onDeleteRequested: popup.deleteEvent(modelData)
+                    }
+                }
+
+                Item {
+                    Layout.fillHeight: true
+                    visible: !eventList.visible
+                }
+                Label {
+                    Layout.fillWidth: true
+                    visible: popup.writable.length > 0
+                    text: "Double-click a day to add an appointment"
+                    font.pixelSize: 10
+                    color: Theme.overlay0
+                }
             }
         }
     }
@@ -526,15 +629,26 @@ Popup {
         visible: popup.editing
         location: popup.settings.location ?? null
         locationResults: popup.locationResults
+        weekStart: popup.weekStart
+        weekNumbers: popup.weekNumbers
         nextcloud: popup.nextcloud
+        subscriptions: popup.subscriptions
         prefill: popup.prefill
         busy: popup.accountBusy
         error: popup.accountError || popup.weatherError
         onSearchLocation: query => popup.searchLocation(query, false)
         onPickLocation: place => popup.pickLocation(place)
+        onSetWeekStart: day => {
+            popup.update({ weekStart: day });
+            popup.fetchEvents();
+        }
+        onSetWeekNumbers: on => popup.update({ weekNumbers: on })
         onSignIn: (url, user, password) => popup.signIn(url, user, password)
         onSignOut: popup.signOut()
         onRefreshCalendars: popup.refreshCalendars()
         onToggleCalendar: href => popup.toggleCalendar(href)
+        onAddSubscription: (name, url) => popup.addSubscription(name, url)
+        onToggleSubscription: id => popup.toggleSubscription(id)
+        onRemoveSubscription: id => popup.removeSubscription(id)
     }
 }
