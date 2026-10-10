@@ -3,7 +3,7 @@
 > [!WARNING]  
 > *Still heavily WIP*
 
-<b>OS</b>: Arch Linux
+<b>OS</b>: Arch Linux (packages via Nix + Home-Manager)
 
 <b>Desktop Environment</b>: Hyprland
 
@@ -13,11 +13,13 @@
 
 <b>Status Bar</b>: Waybar
 
-<b>Notification Daemon</b>: dunst
+<b>Wallpaper / Lock</b>: hyprpaper / hyprlock
+
+<b>Terminal</b>: kitty
 
 <b>Application Launcher</b>: rofi
 
-<b>Browser</b>: Brave
+<b>Browser</b>: Zen
 
 
 | ![Images](resources/2023-11-29-213212_hyprshot.png) | ![Images](resources/2023-11-29-203138_hyprshot.png) |

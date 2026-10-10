@@ -1,14 +1,19 @@
-name: check installation script
+name: check flake
 on: push
-    
+
 jobs:
-  install:
+  check:
     runs-on: ubuntu-latest
     steps:
       - name: 🔍 Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
-      - name: 🛠️ Check if Nix Flake outputs configs
+      - name: 🛠️ Check flake
+        run: nix flake check --no-build
+      - name: 🏠 Evaluate Home-Manager configurations
         run: |
-          nix flake show
-
+          for config in headless headless_aarch64 desktop runner; do
+            echo "Evaluating $config"
+            nix eval --raw ".#homeConfigurations.$config.activationPackage.drvPath"
+            echo
+          done
