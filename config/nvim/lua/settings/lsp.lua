@@ -14,7 +14,7 @@ vim.lsp.config("nil_ls", {
 	settings = {
 		nix = {
 			formatting = {
-				command = "nixpkgs-fmt",
+				command = { "nixfmt" },
 			},
 			maxMemoryMB = 4096,
 			flake = {
@@ -35,7 +35,6 @@ vim.lsp.enable("clangd")
 
 -- Python
 vim.lsp.enable("pyright")
-vim.lsp.enable("pylyzer")
 
 -- Go
 vim.lsp.enable("gopls")

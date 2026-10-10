@@ -69,23 +69,23 @@ nmap("<leader>q", vim.diagnostic.setloclist, "Open diagnostics list")
 -- LSP
 vim.api.nvim_create_autocmd('LspAttach', {
 	callback = function(ev)
-		local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
+		local function bmap(mode, key, keymap, description)
+			vim.keymap.set(mode, key, keymap, { buffer = ev.buf, desc = description })
+		end
 
-		nmap('<leader>ca', vim.lsp.buf.code_action, "[C]ode [A]ction")
-		nmap('<leader>ci', vim.lsp.buf.implementation, "[C]ode [I]mplementation")
-		nmap('<leader>cr', vim.lsp.buf.references, "[C]ode [R]eferences")
-		nmap('<leader>cs', vim.lsp.buf.document_symbol, "[C]ode [S]ymbols")
-		nmap('<leader>cd', vim.lsp.buf.definition, "[C]ode [D]efinition")
-		nmap('<leader>ct', vim.lsp.buf.type_definition, "[C]ode [T]ype Definition")
-		nmap('<leader>cr', vim.lsp.buf.rename, "[C]ode [R]ename")
-		nmap('<leader>cf', function() vim.lsp.buf.format({ async = false }) end, "[C]ode [F]ormat")
-		nmap('K', vim.lsp.buf.hover, "Code Hover")
-		nmap('gK', vim.lsp.buf.declaration, "Code Declaration")
+		bmap('n', '<leader>ca', vim.lsp.buf.code_action, "[C]ode [A]ction")
+		bmap('n', '<leader>ci', vim.lsp.buf.implementation, "[C]ode [I]mplementation")
+		bmap('n', '<leader>cr', vim.lsp.buf.references, "[C]ode [R]eferences")
+		bmap('n', '<leader>cs', vim.lsp.buf.document_symbol, "[C]ode [S]ymbols")
+		bmap('n', '<leader>cd', vim.lsp.buf.definition, "[C]ode [D]efinition")
+		bmap('n', '<leader>ct', vim.lsp.buf.type_definition, "[C]ode [T]ype Definition")
+		bmap('n', '<leader>rn', vim.lsp.buf.rename, "[R]e[n]ame")
+		bmap('n', '<leader>cf', function() vim.lsp.buf.format({ async = false }) end, "[C]ode [F]ormat")
+		bmap('n', 'K', vim.lsp.buf.hover, "Code Hover")
+		bmap('n', 'gK', vim.lsp.buf.declaration, "Code Declaration")
+		bmap({ 'n', 'i' }, "<C-p>", vim.lsp.buf.signature_help, "Signature Documentation")
 
-
-		vim.keymap.set({ 'n', 'i' }, "<C-p>", vim.lsp.buf.signature_help, { desc = "Signature Documentation" })
-
-		nmap("<leader>wa", vim.lsp.buf.add_workspace_folder, "[W]orkspace [A]dd Folder")
-		nmap("<leader>wr", vim.lsp.buf.remove_workspace_folder, "[W]orkspace [R]emove Folder")
+		bmap('n', "<leader>wa", vim.lsp.buf.add_workspace_folder, "[W]orkspace [A]dd Folder")
+		bmap('n', "<leader>wr", vim.lsp.buf.remove_workspace_folder, "[W]orkspace [R]emove Folder")
 	end
 })

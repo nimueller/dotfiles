@@ -69,11 +69,11 @@ return {
 					local node = state.tree:get_node()
 					local path = node:get_id()
 
-					if vim.fn.has("unix") then
+					if vim.fn.has("unix") == 1 then
 						vim.fn.jobstart({ "xdg-open", path }, { detach = true })
-					elseif vim.fn.has("mac") then
+					elseif vim.fn.has("mac") == 1 then
 						vim.fn.jobstart({ "open", path }, { detach = true })
-					elseif vim.fn.has("win32") then
+					elseif vim.fn.has("win32") == 1 then
 						local p
 						local lastSlashIndex = path:match("^.+()\\[^\\]*$")
 						if lastSlashIndex then
@@ -124,6 +124,7 @@ return {
 		branch = "0.1.x",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
+			"nvim-telescope/telescope-ui-select.nvim",
 			{
 				"nvim-telescope/telescope-fzf-native.nvim",
 				build = "make",
@@ -180,6 +181,11 @@ return {
 				silent = true
 			},
 		},
+		config = function(_, opts)
+			local telescope = require("telescope")
+			telescope.setup(opts)
+			telescope.load_extension("ui-select")
+		end,
 		opts = function()
 			return {
 				defaults = {

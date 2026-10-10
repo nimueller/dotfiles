@@ -3,11 +3,6 @@ return {
 		-- Base LSP plugin for easier LSP setup
 		"neovim/nvim-lspconfig",
 		event = { "BufReadPre", "BufNewFile" },
-		dependencies = {
-			{ "williamboman/mason.nvim", config = true },
-			"williamboman/mason-lspconfig.nvim",
-			"WhoIsSethDaniel/mason-tool-installer.nvim",
-		},
 		config = function()
 			require("lspconfig")
 			require("settings.lsp")
