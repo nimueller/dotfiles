@@ -4,13 +4,15 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 
-// Card above the right end of the bar, shared by the bar menus. Closes on
-// Escape or a click outside; `toggle.sh <name>` opens and closes it.
+// Card above the right end of the bar (or its centre, for the clock), shared
+// by the bar menus. Closes on Escape or a click outside; `toggle.sh <name>`
+// opens and closes it.
 PanelWindow {
     id: root
 
     required property string name
     property int cardWidth: 380
+    property bool centered: false
     default property alias content: body.data
 
     function close() {
@@ -22,11 +24,11 @@ PanelWindow {
 
     anchors {
         bottom: true
-        right: true
+        right: !centered
     }
     margins {
         bottom: 6
-        right: 6
+        right: centered ? 0 : 6
     }
 
     implicitWidth: cardWidth

@@ -105,16 +105,18 @@ Rectangle {
         }
 
         // Password (and one-time code) for VPNs that don't store them
-        PasswordField {
+        InputField {
             id: password
+            masked: true
             Layout.fillWidth: true
             visible: root.askPassword
             placeholder: "Password"
             accent: Theme.green
             onAccepted: root.connectWithFields()
         }
-        PasswordField {
+        InputField {
             id: code
+            masked: true
             Layout.fillWidth: true
             visible: root.askPassword && root.vpn.hasChallenge
             placeholder: "One-time code (if required)"

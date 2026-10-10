@@ -22,7 +22,8 @@
     },
     "clock": {
         "format": "  {:%Y-%m-%d    %H:%M}",
-        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+        "tooltip": false,
+        "on-click": "~/.config/quickshell/menus/toggle.sh calendar"
     },
     "pulseaudio": {
         "format": "{icon}  {volume}%",

@@ -1,11 +1,12 @@
 import QtQuick
 
-// Masked text field with a placeholder, for passwords and one-time codes.
+// Text field with a placeholder; `masked` for passwords and one-time codes.
 Rectangle {
     id: root
 
     property alias text: input.text
     property string placeholder: ""
+    property bool masked: false
     property color accent: Theme.sapphire
 
     signal accepted
@@ -27,7 +28,7 @@ Rectangle {
         anchors.leftMargin: 10
         anchors.rightMargin: 10
         verticalAlignment: TextInput.AlignVCenter
-        echoMode: TextInput.Password
+        echoMode: root.masked ? TextInput.Password : TextInput.Normal
         color: Theme.text
         font.family: Theme.font
         font.pixelSize: 12
