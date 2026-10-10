@@ -9,6 +9,7 @@ RowLayout {
     property color accent: Theme.blue
     property string title: ""
     property string badge: ""
+    property color badgeColor: accent
     default property alias actions: actionRow.data
 
     Layout.fillWidth: true
@@ -29,7 +30,7 @@ RowLayout {
         implicitWidth: badgeLabel.implicitWidth + 12
         implicitHeight: 18
         radius: 9
-        color: Theme.alpha(root.accent, 0.18)
+        color: Theme.alpha(root.badgeColor, 0.18)
 
         Label {
             id: badgeLabel
@@ -37,7 +38,7 @@ RowLayout {
             text: root.badge
             font.pixelSize: 10
             font.bold: true
-            color: root.accent
+            color: root.badgeColor
         }
     }
     Item {
