@@ -144,8 +144,8 @@ Scope {
         screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
         anchors.bottom: true
         margins.bottom: 64
-        implicitWidth: pill.implicitWidth
-        implicitHeight: pill.implicitHeight
+        implicitWidth: pill.implicitWidth + 16
+        implicitHeight: pill.implicitHeight + 16 // room to rise into place
         visible: root.shown || pill.opacity > 0
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
@@ -155,20 +155,27 @@ Scope {
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
+        // Same look as the notification popups: crust card, thin outline,
+        // icon on a tinted chip. Rises and grows in, sinks and fades out.
         Rectangle {
             id: pill
 
             readonly property color accent: root.muted ? Theme.overlay0 : Theme.lavender
 
-            implicitWidth: row.implicitWidth + 44
-            implicitHeight: 52
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            implicitWidth: row.implicitWidth + 28
+            implicitHeight: 56
             radius: height / 2
             color: Theme.crust
-            border.width: 2
+            border.width: 1
             border.color: Theme.surface0
             opacity: root.shown ? 1 : 0
+            scale: root.shown ? 1 : 0.92
+            transform: Translate { y: root.shown ? 0 : 12; Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } } }
 
             Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
 
             RowLayout {
                 id: row
@@ -176,21 +183,29 @@ Scope {
                 anchors.centerIn: parent
                 spacing: 14
 
-                Label {
-                    Layout.preferredWidth: 24
-                    horizontalAlignment: Text.AlignHCenter
-                    font.pixelSize: 20
-                    color: pill.accent
-                    text: {
-                        if (root.kind === "caps")
-                            return Theme.glyph(0xf0632); // 󰘲
-                        if (root.kind === "num")
-                            return Theme.glyph(0xf061c); // 󰘜
-                        if (root.kind === "mic")
-                            return Theme.glyph(root.muted ? 0xf036d : 0xf036c); // 󰍭 / 󰍬
-                        if (root.kind === "brightness")
-                            return Theme.glyph(root.value < 0.34 ? 0xf00de : root.value < 0.67 ? 0xf00df : 0xf00e0); // 󰃞 󰃟 󰃠
-                        return Audio.volumeIcon({ volume: root.value, muted: root.muted });
+                Rectangle {
+                    Layout.preferredWidth: 38
+                    Layout.preferredHeight: 38
+                    radius: 19
+                    color: Theme.alpha(pill.accent, 0.15)
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                    Label {
+                        anchors.centerIn: parent
+                        font.pixelSize: 18
+                        color: pill.accent
+                        text: {
+                            if (root.kind === "caps")
+                                return Theme.glyph(0xf0632); // 󰘲
+                            if (root.kind === "num")
+                                return Theme.glyph(0xf061c); // 󰘜
+                            if (root.kind === "mic")
+                                return Theme.glyph(root.muted ? 0xf036d : 0xf036c); // 󰍭 / 󰍬
+                            if (root.kind === "brightness")
+                                return Theme.glyph(root.value < 0.34 ? 0xf00de : root.value < 0.67 ? 0xf00df : 0xf00e0); // 󰃞 󰃟 󰃠
+                            return Audio.volumeIcon({ volume: root.value, muted: root.muted });
+                        }
                     }
                 }
 
