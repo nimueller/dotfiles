@@ -181,9 +181,23 @@ window#waybar.empty #window {
     transition: background 200ms ease, color 200ms ease;
 }
 
+/* Unread: solid lavender pill like the active workspace (the script adds
+   a red dot to the bell), with a short pulse when it switches to unread */
 #custom-notifications.unread {
-    color: @lavender;
-    background: alpha(@lavender, 0.18);
+    color: @crust;
+    background: @lavender;
+    font-weight: bold;
+    box-shadow: 0 0 0 0 alpha(@lavender, 0.6);
+    animation: bell-pulse 1.2s ease-out 3;
+}
+
+#custom-notifications.unread:hover {
+    background: shade(@lavender, 1.08);
+}
+
+@keyframes bell-pulse {
+    0% { box-shadow: 0 0 0 0 alpha(@lavender, 0.7); }
+    100% { box-shadow: 0 0 0 6px alpha(@lavender, 0); }
 }
 
 #custom-notifications.dnd {

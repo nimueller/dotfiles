@@ -5,8 +5,13 @@
 # The notification center itself is config/quickshell/menus/notifications.qml.
 
 ICON_BELL=$'\U000f009a'   # 󰂚
-ICON_BADGE=$'\U000f116b'  # 󱅫
 ICON_OFF=$'\U000f009b'    # 󰂛
+
+# Red dot over the bell's top-right corner while there are notifications:
+# negative letter spacing pulls the raised dot back onto the glyph. Pango
+# can't see waybar's CSS colours; this is Catppuccin Latte's red, since
+# Macchiato's is too pale on the lavender pill (see .unread in style.css).
+BELL_DOT="<span letter_spacing='-4800'>$ICON_BELL</span><span foreground='#e64553' size='75%' rise='5pt'>●</span>"
 
 status() {
     local count paused text class tooltip
@@ -18,7 +23,7 @@ status() {
         class=dnd
         tooltip="Do not disturb is on"
     elif ((count > 0)); then
-        text="$ICON_BADGE $count"
+        text="$BELL_DOT $count"
         class=unread
         tooltip="$count missed notification(s)"
     else
