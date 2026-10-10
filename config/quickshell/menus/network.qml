@@ -3,7 +3,8 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
-// Network menu for the waybar network module, on top of nmcli.
+// Network menu for the waybar network module, on top of nmcli: wired
+// devices, Wi-Fi and VPN connections (OpenVPN etc. and WireGuard).
 Popup {
     id: popup
 
@@ -14,11 +15,13 @@ Popup {
     property var wired: [] // { device, state, connection, address, speed }
     property var wifi: null // { device, state, connection }
     property var networks: [] // { ssid, signal, secure, active, known }
+    property var vpns: [] // { name, uuid, kind, state, address, needsPassword, hasChallenge }
+    property var vpnInfo: ({}) // uuid -> { service, data } for type "vpn"
     property bool loaded: false
 
-    property string expanded: "" // SSID with its details open
-    property string busy: "" // SSID being connected
-    property string error: ""
+    property string expanded: "" // SSID or VPN uuid with its details open
+    property string busy: "" // SSID or VPN uuid being (dis)connected
+    property string error: "" // shown on the expanded row
 
     readonly property var connectivityInfo: ({
             full: ["Online", Theme.green],
@@ -31,10 +34,13 @@ Popup {
         status.running = true;
     }
 
-    // Run nmcli, show its error if it fails, then refresh
-    function nmcli(args, ssid) {
-        busy = ssid ?? "";
+    // Run nmcli, show its error on the row `key` if it fails, then refresh.
+    // `input` is written to its stdin (VPN passwords via passwd-file).
+    function nmcli(args, key, input) {
+        busy = key ?? "";
         error = "";
+        action.input = input ?? "";
+        action.stdinEnabled = !!input;
         action.command = ["nmcli", ...args];
         action.running = true;
     }
@@ -88,7 +94,8 @@ Popup {
         wired = devices.filter(d => d.type === "ethernet");
         wifi = devices.find(d => d.type === "wifi") ?? null;
 
-        const known = new Set((sections.known ?? []).map(fields).filter(f => f[1].includes("wireless")).map(f => f[0]));
+        const connections = (sections.connections ?? []).map(fields); // NAME,UUID,TYPE,STATE,DEVICE
+        const known = new Set(connections.filter(f => f[2].includes("wireless")).map(f => f[0]));
         const bySsid = {};
         for (const f of (sections.wifi ?? []).map(fields)) {
             const [inUse, signal, security, ssid] = f;
@@ -106,6 +113,22 @@ Popup {
                 bySsid[ssid] = n;
         }
         networks = Object.values(bySsid).sort((a, b) => b.active - a.active || b.known - a.known || b.signal - a.signal);
+
+        vpns = connections.filter(f => f[2] === "vpn" || f[2] === "wireguard").map(([name, uuid, type, state, device]) => {
+            const info = vpnInfo[uuid] ?? {};
+            const service = (info.service ?? "").split(".").pop();
+            return {
+                name,
+                uuid,
+                kind: type === "wireguard" ? "WireGuard" : service === "openvpn" ? "OpenVPN" : service || "VPN",
+                state,
+                address: type === "wireguard" ? addresses[device] ?? "" : "",
+                // Secrets the profile doesn't store itself (agent-owned or
+                // not saved); with no secret agent running we ask for them
+                needsPassword: /password-flags\s*=\s*[12]/.test(info.data ?? ""),
+                hasChallenge: /challenge-response-flags\s*=\s*[12]/.test(info.data ?? "")
+            };
+        }).sort((a, b) => (b.state === "activated") - (a.state === "activated") || a.name.localeCompare(b.name));
         loaded = true;
     }
 
@@ -117,7 +140,7 @@ Popup {
             echo @radio; nmcli radio wifi
             echo @dev; nmcli -t -f DEVICE,TYPE,STATE,CONNECTION device
             echo @wifi; nmcli -t -f IN-USE,SIGNAL,SECURITY,SSID device wifi list --rescan no
-            echo @known; nmcli -t -f NAME,TYPE connection show
+            echo @connections; nmcli -t -f NAME,UUID,TYPE,STATE,DEVICE connection show
             echo @addr; ip -j -4 addr
             echo @speed; for d in /sys/class/net/*; do echo "\${d##*/}:$(cat "$d/speed" 2>/dev/null)"; done
         `]
@@ -126,16 +149,53 @@ Popup {
         }
     }
 
+    // Service type and (non-secret) settings of each VPN, to know whether it
+    // needs a password. Only once: these don't change while the menu is open.
+    Process {
+        running: true
+        command: ["sh", "-c", `
+            nmcli -t -f UUID,TYPE connection show | while IFS=: read -r uuid type; do
+                [ "$type" = vpn ] || continue
+                printf '%s\\t%s\\t%s\\n' "$uuid" "$(nmcli -g vpn.service-type connection show uuid "$uuid")" \\
+                    "$(nmcli -g vpn.data connection show uuid "$uuid" | tr '\\n' ' ')"
+            done
+        `]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const info = {};
+                for (const line of text.split("\n").filter(l => l)) {
+                    const [uuid, service, data] = line.split("\t");
+                    info[uuid] = { service, data };
+                }
+                popup.vpnInfo = info;
+                popup.refresh();
+            }
+        }
+    }
+
     Process {
         id: action
+
+        property string input: ""
+
         stderr: StdioCollector {
             id: actionErr
         }
+        onStarted: {
+            if (input) {
+                write(input);
+                stdinEnabled = false; // EOF for passwd-file /dev/stdin
+            }
+        }
         onExited: code => {
-            if (code !== 0)
+            input = "";
+            if (code !== 0) {
                 popup.error = actionErr.text.replace(/^Error:\s*/, "").trim() || "Something went wrong";
-            else if (popup.busy)
+                if (popup.busy)
+                    popup.expanded = popup.busy;
+            } else if (popup.busy) {
                 popup.expanded = "";
+            }
             popup.busy = "";
             popup.refresh();
         }
@@ -318,6 +378,99 @@ Popup {
                 }
                 onDisconnectRequested: popup.nmcli(["device", "disconnect", popup.wifi.device])
                 onForgetRequested: popup.nmcli(["connection", "delete", "id", modelData.ssid])
+            }
+        }
+    }
+
+    // VPN
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+
+            SectionTitle {
+                Layout.fillWidth: true
+                text: "VPN"
+            }
+
+            // .ovpn (OpenVPN) or .conf (WireGuard) file. The file chooser
+            // would close the menu anyway, so hand over to a detached script
+            // that reports back with a notification.
+            IconButton {
+                glyph: Theme.glyph(0xf0220) // 󰈠
+                text: "Import"
+                onClicked: {
+                    Quickshell.execDetached(["sh", "-c", `
+                        f=$(zenity --file-selection --title="Import VPN configuration" \\
+                            --file-filter="VPN configuration | *.ovpn *.conf" --file-filter="All files | *") || exit 0
+                        case $f in *.conf) type=wireguard ;; *) type=openvpn ;; esac
+                        if out=$(nmcli connection import type "$type" file "$f" 2>&1); then
+                            notify-send -a Network "VPN imported" "$out"
+                        else
+                            notify-send -u critical -a Network "VPN import failed" "$out"
+                        fi
+                    `]);
+                    popup.close();
+                }
+            }
+            IconButton {
+                glyph: Theme.glyph(0xf0415) // 󰐕
+                text: "New"
+                onClicked: {
+                    Quickshell.execDetached(["nm-connection-editor", "--create"]);
+                    popup.close();
+                }
+            }
+        }
+
+        Label {
+            visible: popup.loaded && popup.vpns.length === 0
+            text: "No VPN connections yet"
+            color: Theme.overlay0
+            font.italic: true
+        }
+
+        Repeater {
+            model: popup.vpns
+
+            delegate: VpnRow {
+                required property var modelData
+
+                Layout.fillWidth: true
+                vpn: modelData
+                expanded: popup.expanded === modelData.uuid
+                busy: popup.busy === modelData.uuid
+                error: popup.expanded === modelData.uuid ? popup.error : ""
+
+                onClicked: {
+                    popup.error = "";
+                    popup.expanded = popup.expanded === modelData.uuid ? "" : modelData.uuid;
+                }
+                onToggled: {
+                    const on = modelData.state === "activated" || modelData.state === "activating";
+                    if (on) {
+                        popup.nmcli(["connection", "down", "uuid", modelData.uuid], modelData.uuid);
+                    } else if (modelData.needsPassword) {
+                        popup.error = "";
+                        popup.expanded = modelData.uuid;
+                    } else {
+                        popup.nmcli(["connection", "up", "uuid", modelData.uuid], modelData.uuid);
+                    }
+                }
+                onConnectRequested: (password, code) => {
+                    let secrets = `vpn.secrets.password:${password}\n`;
+                    if (code)
+                        secrets += `vpn.secrets.challenge-response:${code}\n`;
+                    popup.nmcli(["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"], modelData.uuid, secrets);
+                }
+                onEditRequested: {
+                    Quickshell.execDetached(["nm-connection-editor", `--edit=${modelData.uuid}`]);
+                    popup.close();
+                }
+                onRemoveRequested: popup.nmcli(["connection", "delete", "uuid", modelData.uuid])
             }
         }
     }
