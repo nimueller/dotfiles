@@ -6,14 +6,15 @@ import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 
-// On-screen display for the volume, microphone and brightness keys (replaces
-// SwayOSD), part of daemon.qml. The keys send Hyprland events (see
-// keybinds.lua) that daemon.qml passes to volume(), toggleMute(),
-// toggleMic() and brightness(). Shown above the bar on the focused monitor.
+// On-screen display for the volume, microphone and brightness keys and for
+// Caps Lock / Num Lock (replaces SwayOSD), part of daemon.qml. The keys send
+// Hyprland events (see keybinds.lua) that daemon.qml passes to volume(),
+// toggleMute(), toggleMic(), brightness() and lockKey(). Shown above the bar
+// on the focused monitor.
 Scope {
     id: root
 
-    property string kind: "volume" // volume | mic | brightness
+    property string kind: "volume" // volume | mic | brightness | caps | num
     property real value: 0 // 0..1
     property bool muted: false
     property bool shown: false
@@ -60,6 +61,59 @@ Scope {
     function brightness(step) {
         brightnessProc.command = ["brightnessctl", "-m", "-n5%", "-e4", "set", `${Math.abs(step)}%${step < 0 ? "-" : "+"}`];
         brightnessProc.running = true;
+    }
+
+    // Caps Lock / Num Lock. Caps Lock turns on when the key goes down but
+    // off only when it comes back up, so the state read right after the press
+    // can still be the old one. Show the flipped last known state at once,
+    // then confirm it from the main keyboard (every 80 ms for about a second;
+    // if it never matches, e.g. another keyboard changed it, show the real one).
+    property var locks: ({ caps: false, num: false })
+    property string lockWhich: "caps"
+    property bool lockExpected: false
+    property int lockTries: 0
+
+    function lockKey(which) {
+        lockWhich = which;
+        lockExpected = !locks[which];
+        lockTries = 0;
+        show(which, lockExpected ? 1 : 0, !lockExpected);
+        lockPoll.restart();
+    }
+
+    Timer {
+        id: lockPoll
+        interval: 80
+        repeat: true
+        onTriggered: lockProc.running = true
+    }
+
+    Process {
+        id: lockProc
+
+        command: ["hyprctl", "devices", "-j"]
+        running: true // the state at startup
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let keyboard;
+                try {
+                    keyboard = JSON.parse(text).keyboards.find(k => k.main);
+                } catch (e) {
+                    return;
+                }
+                if (!keyboard)
+                    return;
+                root.locks = { caps: keyboard.capsLock, num: keyboard.numLock };
+                if (!lockPoll.running)
+                    return;
+                const actual = root.locks[root.lockWhich];
+                if (actual === root.lockExpected || ++root.lockTries >= 12) {
+                    lockPoll.stop();
+                    if (actual !== root.lockExpected)
+                        root.show(root.lockWhich, actual ? 1 : 0, !actual);
+                }
+            }
+        }
     }
 
     PwObjectTracker {
@@ -128,6 +182,10 @@ Scope {
                     font.pixelSize: 20
                     color: pill.accent
                     text: {
+                        if (root.kind === "caps")
+                            return Theme.glyph(0xf0632); // 󰘲
+                        if (root.kind === "num")
+                            return Theme.glyph(0xf061c); // 󰘜
                         if (root.kind === "mic")
                             return Theme.glyph(root.muted ? 0xf036d : 0xf036c); // 󰍭 / 󰍬
                         if (root.kind === "brightness")
@@ -136,8 +194,33 @@ Scope {
                     }
                 }
 
+                // Caps Lock / Num Lock: name and an On/Off pill
+                Label {
+                    visible: root.kind === "caps" || root.kind === "num"
+                    Layout.preferredWidth: 150
+                    text: root.kind === "caps" ? "Caps Lock" : "Num Lock"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
+                Rectangle {
+                    visible: root.kind === "caps" || root.kind === "num"
+                    Layout.preferredWidth: 52
+                    Layout.preferredHeight: 22
+                    radius: 11
+                    color: root.muted ? Theme.surface0 : Theme.lavender
+
+                    Label {
+                        anchors.centerIn: parent
+                        text: root.muted ? "Off" : "On"
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.muted ? Theme.overlay1 : Theme.crust
+                    }
+                }
+
                 // Level
                 Rectangle {
+                    visible: root.kind !== "caps" && root.kind !== "num"
                     Layout.preferredWidth: 220
                     Layout.preferredHeight: 8
                     radius: 4
@@ -158,6 +241,7 @@ Scope {
                 }
 
                 Label {
+                    visible: root.kind !== "caps" && root.kind !== "num"
                     Layout.preferredWidth: 46
                     horizontalAlignment: Text.AlignRight
                     text: root.muted ? "Muted" : `${Math.round(root.value * 100)}%`

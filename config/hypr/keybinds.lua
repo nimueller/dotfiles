@@ -29,6 +29,10 @@ hl.bind("XF86AudioMute",        hl.dsp.event("quickshell-osd mute"),      { lock
 hl.bind("XF86AudioRaiseVolume", hl.dsp.event("quickshell-osd volume +5"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.event("quickshell-osd volume -5"), { locked = true, repeating = true })
 
+-- Caps Lock / Num Lock state in the OSD; non_consuming so the keys still work
+hl.bind("Caps_Lock", hl.dsp.event("quickshell-osd lock caps"), { locked = true, non_consuming = true })
+hl.bind("Num_Lock",  hl.dsp.event("quickshell-osd lock num"),  { locked = true, non_consuming = true })
+
 -- Workspace controls (key 0 maps to workspace 10)
 for i = 1, 10 do
     local key = i % 10

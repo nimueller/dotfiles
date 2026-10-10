@@ -11,7 +11,8 @@ import Quickshell.Io
 //   toggle.sh notifications            open/close the notification center
 //   ipc.sh notifications dnd|clear     waybar's right/middle click on the bell
 //   hl.dsp.event("quickshell-osd volume +5")    keybinds.lua: volume +/-N,
-//                                      mute, mic-mute, brightness +/-N
+//                                      mute, mic-mute, brightness +/-N,
+//                                      lock caps|num
 ShellRoot {
     NotificationStore {
         id: store
@@ -60,6 +61,8 @@ ShellRoot {
                 osd.toggleMic();
             else if (what === "brightness")
                 osd.brightness(parseInt(arg));
+            else if (what === "lock")
+                osd.lockKey(arg);
         }
     }
 }
