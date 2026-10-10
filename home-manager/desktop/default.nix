@@ -48,7 +48,6 @@ in
     wtype
     xdotool
     cliphist
-    wleave
     pavucontrol
     quickshell # bar menus and app launcher (config/quickshell/menus)
 

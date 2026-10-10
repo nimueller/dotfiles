@@ -20,7 +20,7 @@ hl.bind("XF86Calculator", exec("gnome-calculator"))
 
 -- Case power button opens the power menu (logind must ignore the key, see
 -- /etc/systemd/logind.conf.d/power-key.conf)
-hl.bind("XF86PowerOff", exec("~/.config/wleave/powermenu.sh"))
+hl.bind("XF86PowerOff", exec("~/.config/quickshell/menus/toggle.sh power"))
 
 -- Volume (swayosd shows the OSD; max_volume = 100 in config/swayosd/config.toml)
 hl.bind("XF86AudioMicMute",     exec("swayosd-client --input-volume mute-toggle"),  { locked = true })

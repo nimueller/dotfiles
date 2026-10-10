@@ -1,4 +1,4 @@
-/* Catppuccin Macchiato rofi theme, matching waybar, dunst and wleave:
+/* Catppuccin Macchiato rofi theme, matching waybar, dunst and the quickshell menus:
    solid crust window, rounded surfaces, lavender accent on soft tints. */
 
 @import "catppuccin-macchiato"

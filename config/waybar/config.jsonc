@@ -59,6 +59,6 @@
     "custom/power": {
         "format": "󰐥",
         "tooltip-format": "Power menu",
-        "on-click": "~/.config/wleave/powermenu.sh"
+        "on-click": "~/.config/quickshell/menus/toggle.sh power"
     }
 }
