@@ -8,5 +8,6 @@
   xdg.configFile."dunst".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/dunst";
   xdg.configFile."wleave".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/wleave";
   xdg.configFile."swayosd".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/swayosd";
+  xdg.configFile."quickshell".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/quickshell";
 }
 

@@ -50,6 +50,7 @@ in
     cliphist
     wleave
     pavucontrol
+    quickshell # sound popup (config/quickshell/audio)
 
     my-pkgs.hyprshot
     my-pkgs.recorder
