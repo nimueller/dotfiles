@@ -5,6 +5,7 @@ import QtQuick.Layouts
 // its appointments as coloured chips. Weeks start on `weekStart` (0 = Sunday,
 // 1 = Monday, 6 = Saturday) with optional ISO week numbers. Click a day to
 // select it, double-click to add an appointment, scroll to change the month.
+// Click the month's name to pick any month and year.
 ColumnLayout {
     id: root
 
@@ -22,6 +23,10 @@ ColumnLayout {
     signal activated(date day)
     signal shift(int months)
     signal reset
+    signal jump(int year, int month)
+
+    property bool picking: false // month/year picker shown instead of the days
+    property int pickerYear: year
 
     readonly property date first: {
         const d = new Date(year, month, 1);
@@ -52,10 +57,43 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
 
-        Label {
-            text: Qt.formatDate(new Date(root.year, root.month, 1), "MMMM yyyy")
-            font.pixelSize: 14
-            font.bold: true
+        // Month and year: click to pick another
+        Rectangle {
+            implicitWidth: titleRow.implicitWidth + 16
+            implicitHeight: 28
+            radius: 8
+            color: root.picking ? Theme.alpha(Theme.lavender, 0.18) : titleMouse.containsMouse ? Theme.surface0 : "transparent"
+
+            Behavior on color { ColorAnimation { duration: 120 } }
+
+            Row {
+                id: titleRow
+                anchors.centerIn: parent
+                spacing: 6
+
+                Label {
+                    text: Qt.formatDate(new Date(root.year, root.month, 1), "MMMM yyyy")
+                    font.pixelSize: 14
+                    font.bold: true
+                    color: root.picking ? Theme.lavender : Theme.text
+                }
+                Label {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: Theme.glyph(root.picking ? 0xf0143 : 0xf0140) // 󰅃 / 󰅀
+                    font.pixelSize: 11
+                    color: titleMouse.containsMouse || root.picking ? Theme.lavender : Theme.overlay1
+                }
+            }
+            MouseArea {
+                id: titleMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    root.pickerYear = root.year;
+                    root.picking = !root.picking;
+                }
+            }
         }
 
         // Which colour is which calendar
@@ -88,23 +126,35 @@ ColumnLayout {
             }
         }
         IconButton {
-            visible: !root.showingToday
+            visible: !root.showingToday || root.picking
             glyph: Theme.glyph(0xf00f6) // 󰃶
             text: "Today"
-            onClicked: root.reset()
+            onClicked: {
+                root.picking = false;
+                root.reset();
+            }
         }
         IconButton {
             glyph: Theme.glyph(0xf0141) // 󰅁
-            onClicked: root.shift(-1)
+            onClicked: root.picking ? root.pickerYear-- : root.shift(-1)
         }
         IconButton {
             glyph: Theme.glyph(0xf0142) // 󰅂
-            onClicked: root.shift(1)
+            onClicked: root.picking ? root.pickerYear++ : root.shift(1)
         }
     }
 
-    GridLayout {
+    // The days, or the month/year picker in the same space
+    Item {
         Layout.fillWidth: true
+        Layout.preferredHeight: grid.implicitHeight
+
+    GridLayout {
+        id: grid
+
+        width: parent.width
+        opacity: root.picking ? 0 : 1
+        enabled: !root.picking
         columns: root.weekNumbers ? 8 : 7
         columnSpacing: 4
         rowSpacing: 4
@@ -149,6 +199,82 @@ ColumnLayout {
                 sourceComponent: column === 0 ? weekNumber : dayBox
             }
         }
+    }
+
+    // Month/year picker: a year with ‹ › (or scroll) and its twelve months
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: 8
+        visible: root.picking
+        spacing: 16
+
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 16
+
+            IconButton {
+                glyph: Theme.glyph(0xf0141) // 󰅁
+                onClicked: root.pickerYear--
+            }
+            Label {
+                text: root.pickerYear
+                font.pixelSize: 26
+                font.bold: true
+                color: root.pickerYear === root.today.getFullYear() ? Theme.lavender : Theme.text
+            }
+            IconButton {
+                glyph: Theme.glyph(0xf0142) // 󰅂
+                onClicked: root.pickerYear++
+            }
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            columns: 4
+            rowSpacing: 10
+            columnSpacing: 10
+
+            Repeater {
+                model: 12
+
+                delegate: Rectangle {
+                    id: monthButton
+
+                    required property int index
+                    readonly property bool viewing: root.pickerYear === root.year && index === root.month
+                    readonly property bool current: root.pickerYear === root.today.getFullYear() && index === root.today.getMonth()
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: 12
+                    color: viewing ? Theme.lavender : monthMouse.containsMouse ? Theme.surface1 : Theme.alpha(Theme.surface0, 0.6)
+                    border.width: current && !viewing ? 1 : 0
+                    border.color: Theme.lavender
+
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    Label {
+                        anchors.centerIn: parent
+                        text: Qt.locale().standaloneMonthName(monthButton.index, Locale.LongFormat)
+                        font.pixelSize: 14
+                        font.bold: monthButton.viewing || monthButton.current
+                        color: monthButton.viewing ? Theme.crust : monthButton.current ? Theme.lavender : Theme.text
+                    }
+                    MouseArea {
+                        id: monthMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            root.picking = false;
+                            root.jump(root.pickerYear, monthButton.index);
+                        }
+                    }
+                }
+            }
+        }
+    }
     }
 
     Component {
@@ -286,6 +412,12 @@ ColumnLayout {
 
     WheelHandler {
         target: null
-        onWheel: event => root.shift(event.angleDelta.y > 0 ? -1 : 1)
+        onWheel: event => {
+            const step = event.angleDelta.y > 0 ? -1 : 1;
+            if (root.picking)
+                root.pickerYear += step;
+            else
+                root.shift(step);
+        }
     }
 }

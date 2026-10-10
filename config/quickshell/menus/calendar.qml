@@ -127,10 +127,14 @@ Popup {
         cacheFile.setText(JSON.stringify(cache));
     }
 
+    // Show another month; the selected day moves along (today in the
+    // current month, else the 1st) so the sidebar matches the grid
     function shiftMonth(by) {
         const d = new Date(viewYear, viewMonth + by, 1);
         viewYear = d.getFullYear();
         viewMonth = d.getMonth();
+        const now = new Date();
+        selected = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() ? now : d;
         fetchEvents();
     }
 
@@ -502,6 +506,7 @@ Popup {
             }
             onShift: months => popup.shiftMonth(months)
             onReset: popup.goToday()
+            onJump: (year, month) => popup.shiftMonth((year - popup.viewYear) * 12 + month - popup.viewMonth)
         }
 
         Rectangle {
