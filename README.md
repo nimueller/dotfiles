@@ -17,7 +17,7 @@
 
 <b>Terminal</b>: kitty
 
-<b>Application Launcher</b>: rofi
+<b>Application Launcher / menus</b>: Quickshell
 
 <b>Browser</b>: Zen
 

@@ -22,7 +22,8 @@
   `keybinds`, `windowrules` and `workspacerules`). It covers a 4K@1.5 BenQ plus a 1080p BenQ and NVIDIA env vars.
   Check it with `Hyprland --verify-config -c ~/.config/hypr/hyprland.lua`.
 - **Bar / wallpaper / lock:** Waybar, hyprpaper (rotates through `hypr/wallpapers/`), hyprlock
-- **Launcher / clipboard:** rofi (`applauncher`), cliphist
+- **Launcher / bar menus:** Quickshell (`quickshell/menus`: launcher, sound, network, notifications, power), opened by `toggle.sh <menu>`
+- **Clipboard:** cliphist in rofi
 - **Terminal / shell:** kitty, zsh with p10k, tmux (prefix `C-a`, tpm, catppuccin)
 - **Editor:** Neovim with lazy.nvim, treesitter, telescope, neo-tree, blink.cmp, none-ls. All LSPs come from Nix.
 - **Theme:** Catppuccin Macchiato throughout
