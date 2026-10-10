@@ -52,12 +52,13 @@ Popup {
     readonly property var subscriptions: settings.ics ?? []
     // Every enabled calendar: { id, color, writable }
     readonly property var sources: [
-        ...(nextcloud?.calendars ?? []).filter(c => c.enabled).map(c => ({ id: c.href, color: c.color, writable: c.writable !== false })),
-        ...subscriptions.filter(s => s.enabled).map(s => ({ id: s.id, color: s.color, writable: false }))
+        ...(nextcloud?.calendars ?? []).filter(c => c.enabled).map(c => ({ id: c.href, name: c.name, color: c.color, writable: c.writable !== false })),
+        ...subscriptions.filter(s => s.enabled).map(s => ({ id: s.id, name: s.name, color: s.color, writable: false }))
     ]
     readonly property var writable: (nextcloud?.calendars ?? []).filter(c => c.writable !== false)
     readonly property var colours: byId(sources, s => s.color)
     readonly property var canWrite: byId(sources, s => s.writable)
+    readonly property var names: byId(sources, s => s.name)
 
     // First and last (exclusive) day of the six-week grid
     readonly property date gridStart: {
@@ -493,6 +494,7 @@ Popup {
             weekNumbers: popup.weekNumbers
             events: popup.byDay
             forecast: popup.forecast
+            legend: popup.sources
             onPicked: day => popup.select(day)
             onActivated: day => {
                 if (popup.writable.length > 0)
@@ -630,6 +632,7 @@ Popup {
                         event: modelData
                         day: popup.selected
                         colour: modelData.colour
+                        calendarName: popup.names[modelData.calendar] ?? ""
                         editable: modelData.editable
                         onEditRequested: popup.editAppointment(modelData)
                         onDeleteRequested: popup.deleteEvent(modelData)

@@ -30,8 +30,16 @@ Singleton {
 
     readonly property string font: "CaskaydiaCove Nerd Font"
 
+    // Colour `c` (a color or a "#rrggbb"/name string) with opacity `a`
     function alpha(c, a) {
-        return Qt.rgba(c.r, c.g, c.b, a);
+        const col = typeof c === "string" ? Qt.lighter(c, 1) : c;
+        return Qt.rgba(col.r, col.g, col.b, a);
+    }
+
+    // Dark or light text, whichever reads better on `c`
+    function readableOn(c) {
+        const col = typeof c === "string" ? Qt.lighter(c, 1) : c;
+        return 0.2126 * col.r + 0.7152 * col.g + 0.0722 * col.b > 0.55 ? crust : text;
     }
 
     // Nerd Font glyph by code point, e.g. glyph(0xf057e)

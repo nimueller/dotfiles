@@ -16,6 +16,7 @@ ColumnLayout {
     property bool weekNumbers: true
     property var events: ({}) // "yyyy-MM-dd" -> [{ title, colour, allDay, start }]
     property var forecast: ({}) // "yyyy-MM-dd" -> { code, max, min, rain }
+    property var legend: [] // calendars shown: [{ name, color }]
 
     signal picked(date day)
     signal activated(date day)
@@ -52,10 +53,39 @@ ColumnLayout {
         spacing: 6
 
         Label {
-            Layout.fillWidth: true
             text: Qt.formatDate(new Date(root.year, root.month, 1), "MMMM yyyy")
             font.pixelSize: 14
             font.bold: true
+        }
+
+        // Which colour is which calendar
+        Flow {
+            Layout.fillWidth: true
+            Layout.leftMargin: 12
+            spacing: 12
+
+            Repeater {
+                model: root.legend
+
+                delegate: Row {
+                    required property var modelData
+
+                    spacing: 5
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 10
+                        height: 10
+                        radius: 3
+                        color: modelData.color
+                    }
+                    Label {
+                        text: modelData.name
+                        font.pixelSize: 10
+                        color: Theme.subtext0
+                    }
+                }
+            }
         }
         IconButton {
             visible: !root.showingToday
@@ -219,7 +249,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 16
                         radius: 4
-                        color: Theme.alpha(modelData.colour, modelData.allDay ? 0.5 : 0.24)
+                        // All day: solid in the calendar's colour; timed: tinted with a bar
+                        color: modelData.allDay ? modelData.colour : Theme.alpha(modelData.colour, 0.3)
                         opacity: cell.inMonth ? 1 : 0.5
                         clip: true
 
@@ -235,7 +266,7 @@ ColumnLayout {
                             anchors.rightMargin: 3
                             text: chip.modelData.allDay ? chip.modelData.title : `${Qt.formatTime(chip.modelData.start, "HH:mm")} ${chip.modelData.title}`
                             font.pixelSize: 10
-                            color: Theme.text
+                            color: chip.modelData.allDay ? Theme.readableOn(chip.modelData.colour) : Theme.text
                         }
                     }
                 }

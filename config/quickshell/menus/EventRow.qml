@@ -10,6 +10,7 @@ Rectangle {
     required property var event // { title, location, allDay, start: Date, end: Date }
     required property date day
     property color colour: Theme.lavender
+    property string calendarName: ""
     property bool editable: false
     property bool confirming: false
 
@@ -71,6 +72,13 @@ Rectangle {
             Label {
                 Layout.fillWidth: true
                 text: root.event.title
+            }
+            Label {
+                Layout.fillWidth: true
+                visible: !!root.calendarName
+                text: `● ${root.calendarName}`
+                font.pixelSize: 10
+                color: Qt.lighter(root.colour, 1.5) // readable for dark calendar colours too
             }
             Label {
                 Layout.fillWidth: true
