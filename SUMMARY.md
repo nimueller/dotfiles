@@ -18,8 +18,9 @@
 
 ## Stack
 
-- **Compositor:** Hyprland, with monitorv2 for a 4K@1.5 BenQ plus a 1080p BenQ and NVIDIA env vars. It's split into
-  `general`, `autostart`, `keybinds`, `windowrules` and `workspacerules`.
+- **Compositor:** Hyprland, configured in Lua (`hyprland.lua`, which requires `colors`, `general`, `autostart`,
+  `keybinds`, `windowrules` and `workspacerules`). It covers a 4K@1.5 BenQ plus a 1080p BenQ and NVIDIA env vars.
+  Check it with `Hyprland --verify-config -c ~/.config/hypr/hyprland.lua`.
 - **Bar / wallpaper / lock:** Waybar, hyprpaper (rotates through `hypr/wallpapers/`), hyprlock
 - **Launcher / clipboard:** rofi (`applauncher`), cliphist
 - **Terminal / shell:** kitty, zsh with p10k, tmux (prefix `C-a`, tpm, catppuccin)
