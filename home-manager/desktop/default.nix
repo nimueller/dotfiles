@@ -50,7 +50,7 @@ in
     cliphist
     wleave
     pavucontrol
-    quickshell # sound popup (config/quickshell/audio)
+    quickshell # bar menus and app launcher (config/quickshell/menus)
 
     my-pkgs.hyprshot
     my-pkgs.recorder

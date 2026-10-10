@@ -30,7 +30,7 @@
         "format-icons": {
             "default": ["", "", ""]
         },
-        "on-click": "~/.config/quickshell/audio/toggle.sh",
+        "on-click": "~/.config/quickshell/menus/toggle.sh audio",
         "on-click-right": "pavucontrol"
     },
     "battery": {

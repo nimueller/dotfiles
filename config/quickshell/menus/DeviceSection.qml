@@ -57,7 +57,7 @@ ColumnLayout {
             }
             Label {
                 visible: root.others.length > 0
-                text: Audio.glyph(root.expanded ? 0xf0143 : 0xf0140) // 󰅃 / 󰅀
+                text: Theme.glyph(root.expanded ? 0xf0143 : 0xf0140) // 󰅃 / 󰅀
                 color: Theme.overlay1
             }
         }

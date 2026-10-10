@@ -15,10 +15,6 @@ Singleton {
         return Pipewire.nodes.values.filter(n => n.audio && !n.isStream && n.isSink === sink);
     }
 
-    function glyph(cp) {
-        return String.fromCodePoint(cp);
-    }
-
     // "AD103 ... Digital Stereo (HDMI) [BenQ EL2870U]" -> "BenQ EL2870U",
     // "CORSAIR HS80 ... Receiver Analog Stereo" -> "CORSAIR HS80 ... Receiver"
     function deviceName(node) {
@@ -35,26 +31,26 @@ Singleton {
         const p = node?.properties ?? {};
         const hint = `${p["device.form-factor"] ?? ""} ${node?.name ?? ""} ${node?.description ?? ""}`.toLowerCase();
         if (hint.includes("bluez"))
-            return glyph(0xf00b0); // 󰂰
+            return Theme.glyph(0xf00b0); // 󰂰
         if (hint.includes("hdmi") || hint.includes("displayport"))
-            return glyph(0xf0379); // 󰍹
+            return Theme.glyph(0xf0379); // 󰍹
         if (hint.includes("headset") || hint.includes("headphone") || hint.includes("hs80"))
-            return glyph(0xf02cb); // 󰋋
-        return node?.isSink ? glyph(0xf04c3) : glyph(0xf036c); // 󰓃 / 󰍬
+            return Theme.glyph(0xf02cb); // 󰋋
+        return node?.isSink ? Theme.glyph(0xf04c3) : Theme.glyph(0xf036c); // 󰓃 / 󰍬
     }
 
     function volumeIcon(audio) {
         if (!audio || audio.muted || audio.volume <= 0)
-            return glyph(0xf075f); // 󰝟
+            return Theme.glyph(0xf075f); // 󰝟
         if (audio.volume < 0.34)
-            return glyph(0xf057f); // 󰕿
+            return Theme.glyph(0xf057f); // 󰕿
         if (audio.volume < 0.67)
-            return glyph(0xf0580); // 󰖀
-        return glyph(0xf057e); // 󰕾
+            return Theme.glyph(0xf0580); // 󰖀
+        return Theme.glyph(0xf057e); // 󰕾
     }
 
     function micIcon(audio) {
-        return !audio || audio.muted ? glyph(0xf036d) : glyph(0xf036c); // 󰍭 / 󰍬
+        return !audio || audio.muted ? Theme.glyph(0xf036d) : Theme.glyph(0xf036c); // 󰍭 / 󰍬
     }
 
     function appName(node) {

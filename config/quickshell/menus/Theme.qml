@@ -33,4 +33,9 @@ Singleton {
     function alpha(c, a) {
         return Qt.rgba(c.r, c.g, c.b, a);
     }
+
+    // Nerd Font glyph by code point, e.g. glyph(0xf057e)
+    function glyph(cp) {
+        return String.fromCodePoint(cp);
+    }
 }
