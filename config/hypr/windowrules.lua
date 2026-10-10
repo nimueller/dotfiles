@@ -7,7 +7,7 @@ hl.window_rule({
 })
 
 -- Special workspaces
-hl.window_rule({ match = { class = "com.github.th_ch.youtube_music" }, workspace = "special:music silent" })
+hl.window_rule({ match = { class = "^com\\.github\\.th[-_]ch\\.youtube[-_]music$" }, workspace = "special:music silent" })
 hl.window_rule({ match = { class = "discord" },                        workspace = "special:chat silent" })
 hl.window_rule({ match = { class = "org.keepassxc.KeePassXC" },        workspace = "special:passwords silent" })
 

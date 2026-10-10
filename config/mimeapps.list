@@ -23,9 +23,10 @@ application/x-extension-xhtml=zen.desktop;
 application/x-extension-xht=zen.desktop;
 application/json=nvim.desktop;
 x-scheme-handler/net.thunderbird=userapp-Thunderbird-CYRLS3.desktop;
+application/pdf=ai.storyteller.pdfcraft.desktop;
 
 [Default Applications]
-application/pdf=org.gnome.Evince.desktop
+application/pdf=ai.storyteller.pdfcraft.desktop
 application/x-sh=kitty.desktop
 application/x-shellscript=kitty.desktop
 application/x-terminal=kitty.desktop
