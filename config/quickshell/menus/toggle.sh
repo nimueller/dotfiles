@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
 #   toggle.sh audio|network|notifications|power|launcher
-# Each menu is its own short-lived quickshell instance (<menu>.qml), so
-# nothing runs while the menus are closed.
+# Each bar menu is its own short-lived quickshell instance (<menu>.qml), so
+# nothing runs while they're closed. The launcher is the exception, see below.
 menu=${1:?usage: toggle.sh <menu>}
 entry=$(dirname "$(readlink -f "$0")")/$menu.qml
 [[ -f $entry ]] || { echo "no such menu: $menu" >&2; exit 1; }
+
+# The launcher stays resident so it opens instantly: Hyprland starts it hidden
+# (`toggle.sh launcher --start`) and here we only ask it to show/hide. If it
+# isn't running, start it already shown.
+if [[ $menu == launcher ]]; then
+    [[ $2 == --start ]] && exec qs -p "$entry" -n -d >/dev/null 2>&1
+    qs ipc -p "$entry" call launcher toggle >/dev/null 2>&1 && exit 0
+    QS_OPEN=1 exec qs -p "$entry" -n -d >/dev/null 2>&1
+fi
 
 qs kill -p "$entry" >/dev/null 2>&1 && exit 0
 

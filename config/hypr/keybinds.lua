@@ -4,7 +4,7 @@ local resizeStep = 50
 local function exec(cmd, rules) return hl.dsp.exec_cmd(cmd, rules) end
 
 -- Launcher
-hl.bind(mainMod .. " + D", exec("applauncher"))
+hl.bind(mainMod .. " + D", hl.dsp.event("quickshell-launcher")) -- resident launcher, see quickshell/menus/launcher.qml
 
 -- Brightness
 hl.bind("XF86MonBrightnessUp",   exec("swayosd-client --brightness raise"), { locked = true, repeating = true })

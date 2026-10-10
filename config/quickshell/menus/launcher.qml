@@ -9,8 +9,57 @@ import Quickshell.Widgets
 // App launcher. Type to filter, ↑/↓ (or Ctrl+J/K, Tab) to move, Enter to
 // launch. Apps you launch often float to the top. The last row runs the text
 // as a command ("ssh host" opens in a terminal).
+//
+// Unlike the bar menus it stays resident (started hidden with Hyprland) so
+// SUPER+D only has to show it. The key sends the Hyprland event
+// "quickshell-launcher" (hl.dsp.event), which arrives here over Hyprland's
+// event socket without starting any process; `toggle.sh launcher` (IPC) does
+// the same from scripts. QS_OPEN=1 starts it already shown.
+//
+// Not a GlobalShortcut: in Quickshell 0.3.1 its destructor segfaults when the
+// instance exits, and the crash handler then restarts it.
 PanelWindow {
     id: root
+
+    property bool shown: Quickshell.env("QS_OPEN") === "1"
+
+    function show() {
+        search.text = "";
+        list.positionViewAtBeginning();
+        shown = true;
+        search.forceActiveFocus();
+    }
+
+    function hide() {
+        shown = false;
+    }
+
+    function toggle() {
+        if (shown)
+            hide();
+        else
+            show();
+    }
+
+    IpcHandler {
+        target: "launcher"
+
+        function toggle(): void {
+            root.toggle();
+        }
+    }
+
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            if (event.name !== "custom" || event.data !== "quickshell-launcher")
+                return;
+            // Looking Glass passes SUPER+D on to the VM
+            if (root.shown || ToplevelManager.activeToplevel?.appId !== "looking-glass-client")
+                root.toggle();
+        }
+    }
 
     readonly property int rows: 8
     readonly property int rowHeight: 52
@@ -73,7 +122,7 @@ PanelWindow {
         if (item.run !== undefined) {
             const ssh = item.run.startsWith("ssh ");
             Quickshell.execDetached(ssh ? ["xdg-terminal-exec", "sh", "-c", item.run] : ["sh", "-c", item.run]);
-            Qt.quit();
+            hide();
             return;
         }
         if (item.runInTerminal) {
@@ -84,11 +133,10 @@ PanelWindow {
         }
         counts[item.id] = (counts[item.id] ?? 0) + 1;
         store.setText(JSON.stringify(counts));
-        quitTimer.start();
+        hide();
     }
 
-    // Launch counts survive restarts. Quit once they're written (or after a
-    // short fallback) so a launch is never lost.
+    // Launch counts survive restarts
     FileView {
         id: store
         path: root.historyPath
@@ -99,14 +147,9 @@ PanelWindow {
                 root.counts = JSON.parse(text());
             } catch (e) {}
         }
-        onSaved: Qt.quit()
-    }
-    Timer {
-        id: quitTimer
-        interval: 400
-        onTriggered: Qt.quit()
     }
 
+    visible: shown
     implicitWidth: 560
     implicitHeight: card.implicitHeight
     color: "transparent"
@@ -117,9 +160,9 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     HyprlandFocusGrab {
-        active: true
+        active: root.shown
         windows: [root]
-        onCleared: Qt.quit()
+        onCleared: root.hide()
     }
 
     Rectangle {
@@ -132,12 +175,8 @@ PanelWindow {
         border.width: 1
         border.color: Theme.surface0
 
-        opacity: 0
-        scale: 0.97
-        Component.onCompleted: {
-            opacity = 1;
-            scale = 1;
-        }
+        opacity: root.shown ? 1 : 0
+        scale: root.shown ? 1 : 0.97
         Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
@@ -187,7 +226,7 @@ PanelWindow {
                     Keys.onPressed: event => {
                         const ctrl = event.modifiers & Qt.ControlModifier;
                         if (event.key === Qt.Key_Escape)
-                            Qt.quit();
+                            root.hide();
                         else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N)))
                             list.incrementCurrentIndex();
                         else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P)))
