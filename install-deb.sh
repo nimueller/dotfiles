@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+cd "$(dirname "$(readlink -f "$0")")"
+
 echo "###################################"
 echo "# Desktop Setup (Debian + Hyprland)"
 echo "###################################"
@@ -21,8 +23,8 @@ sudo apt install -y \
   hyprpaper \
   hyprlock
 
-# NOTE: hyprlauncher / hyrpland-guiutils may NOT exist in Debian repos
-# If they fail, script continues safely due to set -e only on commands, not pipeline
+# NOTE: some Hyprland tools may be missing from the Debian repos. Because of
+# `set -e`, a missing package makes apt fail and aborts the whole script.
 
 echo "[2/4] Setting up Flatpak..."
 

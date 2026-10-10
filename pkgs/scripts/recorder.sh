@@ -1,35 +1,27 @@
-#!/usr/bin/env nix-shell
-#!nix-shell -i bash -p wf-recorder slurp
-
-function start_region() {
-    wf-recorder -g "$(slurp -d)" -f $OUTPUT_FILE
-}
-
-function start_monitor() {
-    wf-recorder -g "$(slurp -o)" -f $OUTPUT_FILE
-}
-
-function end() {
-    pgrep -l wf-recorder | awk '{print $1}'
-}
+# Usage: recorder [region|monitor]
+# Running it again while a recording is active stops that recording.
 
 OUTPUT_FILE="$HOME/Videos/$(date --iso-8601=seconds).mp4"
-RUNNING_PID=$(pgrep wf-recorder)
+RUNNING_PID=$(pgrep -x wf-recorder)
 
-if [ -z $RUNNING_PID ]; then 
-    case "$1" in
-        window)
-            ;;
-        region)
-            start_region
-            ;;
-        monitor)
-            start_monitor
-            ;;
-    esac
-
-    notify-send "Recording stopped" "The recording was saved to $OUTPUT_FILE" --action="Click here to open" --wait --expire-time=5000
-else
+if [ -n "$RUNNING_PID" ]; then
     kill $RUNNING_PID
+    exit 0
 fi
 
+case "$1" in
+    region)
+        GEOMETRY=$(slurp -d) || exit 1
+        ;;
+    monitor)
+        GEOMETRY=$(slurp -o) || exit 1
+        ;;
+    *)
+        echo "Usage: recorder [region|monitor]" >&2
+        exit 1
+        ;;
+esac
+
+wf-recorder -g "$GEOMETRY" -f "$OUTPUT_FILE"
+
+notify-send "Recording stopped" "The recording was saved to $OUTPUT_FILE" --expire-time=5000

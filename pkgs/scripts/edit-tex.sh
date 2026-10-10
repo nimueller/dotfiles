@@ -3,7 +3,7 @@
 texfiles=$(find . -maxdepth 1 -type f -name "*.tex")
 count=$(echo "$texfiles" | wc -l)
 
-if [ "$count" -eq 0 ]; then
+if [ -z "$texfiles" ]; then
     echo "❌ No .tex file found"
     exit 1
 elif [ "$count" -eq 1 ]; then

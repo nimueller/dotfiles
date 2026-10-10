@@ -7,20 +7,20 @@ case "$INSTALL_OPTION" in
   headless) ;;
   desktop) ;;
   runner) ;;
-  *) >&2 echo "Installation option '$INSTALL_OPTION' is not valid. Please provide one of [headless|desktop]"; exit 1 ;;
+  *) >&2 echo "Installation option '$INSTALL_OPTION' is not valid. Please provide one of [headless|desktop|runner]"; exit 1 ;;
 esac
 
-if [ ! $(which git) ]; then
+if ! command -v git >/dev/null 2>&1; then
   echo 'Before running this script, you must install git using your favourite package manager'
   exit 1
 fi
 
-if [ ! $(which curl) ]; then
+if ! command -v curl >/dev/null 2>&1; then
   echo 'Before running this script, you must install curl using your favourite package manager'
   exit 1
 fi
 
-if [ ! $(which xz) ]; then
+if ! command -v xz >/dev/null 2>&1; then
   echo 'Before running this script, you must install xz using your favourite package manager'
   exit 1
 fi
@@ -28,7 +28,9 @@ fi
 install_nix () {
   curl -L 'https://nixos.org/nix/install' | sh
   mkdir -p "$HOME/.config/nix/"
-  echo 'experimental-features = nix-command flakes' >> "$HOME/.config/nix/nix.conf"
+  if ! grep -qs 'experimental-features' "$HOME/.config/nix/nix.conf"; then
+    echo 'experimental-features = nix-command flakes' >> "$HOME/.config/nix/nix.conf"
+  fi
   source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 }
 
@@ -38,12 +40,11 @@ install_home_manager() {
 
 install_repo() {
   if [ -d "$DOTFILES_CLONE_DIRECTORY" ]; then
-    cd "$DOTFILES_CLONE_DIRECTORY"
+    cd "$DOTFILES_CLONE_DIRECTORY" || exit 1
     git pull
   else
-    mkdir -p "$DOTFILES_CLONE_DIRECTORY"
     git clone 'https://github.com/LegendSalocin/dotfiles' "$DOTFILES_CLONE_DIRECTORY"
-    cd "$DOTFILES_CLONE_DIRECTORY"
+    cd "$DOTFILES_CLONE_DIRECTORY" || exit 1
   fi
 
   home-manager switch --flake ".#$INSTALL_OPTION"
@@ -104,13 +105,13 @@ fi
   echo 'Made ZSH the default shell. Please restart your terminal session.'
 }
 
-if [ ! $(which nix) ]; then
+if ! command -v nix >/dev/null 2>&1; then
   install_nix
 else 
   echo 'Nix is already installed, skipping'
 fi
 
-if [ ! $(which home-manager) ]; then
+if ! command -v home-manager >/dev/null 2>&1; then
   install_home_manager
 else 
   echo 'Home-Manager is already installed, skipping'
