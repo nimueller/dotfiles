@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
 
-// New or edited appointment: title, place, date(s), times or all day, and
-// for new ones the (writable) calendar to save it in. Dates as yyyy-mm-dd or
+// New or edited appointment: title, place, date(s), times or all day,
+// reminders, and for new ones the (writable) calendar to save it in. Dates as yyyy-mm-dd or
 // dd.mm.yyyy. Picking another day in the grid moves it there.
 ColumnLayout {
     id: root
@@ -15,6 +15,7 @@ ColumnLayout {
     property var target: null // the event being edited, null for a new one
     property string calendar: ""
     property bool allDay: false
+    property var alarms: [] // minutes before the start
     property string problem: ""
 
     signal saveRequested(var event)
@@ -30,6 +31,7 @@ ColumnLayout {
         startTime.text = "09:00";
         endTime.text = "10:00";
         allDay = false;
+        alarms = [15];
         problem = "";
         if (!calendars.some(c => c.href === calendar))
             calendar = calendars[0]?.href ?? "";
@@ -48,6 +50,7 @@ ColumnLayout {
         startTime.text = event.allDay ? "09:00" : Qt.formatTime(event.start, "HH:mm");
         endTime.text = event.allDay ? "10:00" : Qt.formatTime(event.end, "HH:mm");
         calendar = event.calendar;
+        alarms = (event.alarms ?? []).slice();
         problem = "";
         title.focusField();
     }
@@ -93,7 +96,8 @@ ColumnLayout {
                 location: place.text.trim(),
                 allDay,
                 start: Qt.formatDateTime(start, fmt),
-                end: Qt.formatDateTime(end, fmt)
+                end: Qt.formatDateTime(end, fmt),
+                alarms
             });
         }
     }
@@ -189,6 +193,82 @@ ColumnLayout {
             placeholder: "hh:mm"
             accent: Theme.mauve
             onAccepted: root.submit()
+        }
+    }
+
+    function toggleAlarm(m) {
+        alarms = alarms.includes(m) ? alarms.filter(x => x !== m) : [...alarms, m].sort((a, b) => a - b);
+    }
+
+    // Reminders: presets, plus any other value typed in
+    Label {
+        text: allDay ? "Reminders (before midnight at the start)" : "Reminders"
+        font.pixelSize: 11
+        color: Theme.overlay1
+    }
+    Flow {
+        Layout.fillWidth: true
+        spacing: 6
+
+        Repeater {
+            model: [...new Set([...Reminders.presets, ...root.alarms])].sort((a, b) => a - b)
+
+            delegate: Rectangle {
+                id: reminder
+
+                required property int modelData
+                readonly property bool on: root.alarms.includes(modelData)
+
+                width: reminderLabel.implicitWidth + 16
+                height: 22
+                radius: 11
+                color: on ? Theme.alpha(Theme.mauve, 0.25) : reminderMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                border.width: on ? 1 : 0
+                border.color: Theme.mauve
+
+                Label {
+                    id: reminderLabel
+                    anchors.centerIn: parent
+                    text: Reminders.describe(reminder.modelData)
+                    font.pixelSize: 10
+                    color: reminder.on ? Theme.mauve : Theme.subtext0
+                }
+                MouseArea {
+                    id: reminderMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.toggleAlarm(reminder.modelData)
+                }
+            }
+        }
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 6
+
+        InputField {
+            id: customAlarm
+            Layout.fillWidth: true
+            placeholder: "Other: 45m, 2h, 3d …"
+            accent: Theme.mauve
+            onAccepted: addAlarm.clicked()
+        }
+        IconButton {
+            id: addAlarm
+            glyph: Theme.glyph(0xf0415) // 󰐕
+            text: "Add"
+            onClicked: {
+                const m = Reminders.parse(customAlarm.text);
+                if (m === null) {
+                    root.problem = "Reminders like 45m, 2h or 3d";
+                    return;
+                }
+                root.problem = "";
+                if (!root.alarms.includes(m))
+                    root.toggleAlarm(m);
+                customAlarm.text = "";
+            }
         }
     }
 

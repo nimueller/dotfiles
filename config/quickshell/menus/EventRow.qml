@@ -32,7 +32,7 @@ Rectangle {
 
     implicitHeight: row.implicitHeight + 14
     radius: 8
-    color: Theme.alpha(Theme.surface0, hover.hovered ? 0.8 : 0.5)
+    color: Qt.tint(Theme.alpha(Theme.surface0, hover.hovered ? 0.8 : 0.5), Theme.alpha(colour, 0.1))
 
     HoverHandler {
         id: hover
@@ -76,6 +76,13 @@ Rectangle {
                 Layout.fillWidth: true
                 visible: !!root.event.location
                 text: `${Theme.glyph(0xf034e)} ${root.event.location}` // 󰍎
+                font.pixelSize: 10
+                color: Theme.overlay1
+            }
+            Label {
+                Layout.fillWidth: true
+                visible: (root.event.alarms ?? []).length > 0
+                text: `${Theme.glyph(0xf009a)} ${(root.event.alarms ?? []).map(m => Reminders.describe(m)).join(", ")}` // 󰂚
                 font.pixelSize: 10
                 color: Theme.overlay1
             }

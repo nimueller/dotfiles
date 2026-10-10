@@ -11,11 +11,19 @@ read-only ICS subscriptions.
                                        events in [start, end), recurrences
                                        expanded, errors per calendar
   calendar-dav.py create URL USER      stdin {calendar, title, location, allDay,
-                                       start, end}: new event on Nextcloud
+                                       start, end, alarms}: new event on Nextcloud
   calendar-dav.py update URL USER      stdin {href, etag, title, location, allDay,
-                                       start, end}: change a (non-recurring)
-                                       event, keeping everything else in it
+                                       start, end, alarms}: change a
+                                       (non-recurring) event, keeping
+                                       everything else in it
   calendar-dav.py delete URL USER      stdin {href, etag}: delete an event
+  calendar-dav.py remind               desktop notifications for reminders that
+                                       are due (run every minute by a systemd
+                                       user timer, see home-manager/desktop)
+
+`alarms` are reminders as minutes before the start (VALARMs with a
+start-related trigger); they are stored in the event, so Nextcloud and its
+clients show them too. Events carry their own `color` if they have one.
 
 URL is the Nextcloud address (https://cloud.example.com) or a DAV root. The
 password lives in the Secret Service keyring (secret-tool); it is never
@@ -47,8 +55,10 @@ import icalendar
 import recurring_ical_events
 
 NS = {"d": "DAV:", "c": "urn:ietf:params:xml:ns:caldav", "a": "http://apple.com/ns/ical/"}
-ICS_CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "quickshell-calendar" / "ics"
+CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "quickshell-calendar"
+ICS_CACHE = CACHE / "ics"
 ICS_MAX_AGE = 6 * 3600
+SETTINGS = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")) / "quickshell-calendar.json"
 USER_AGENT = "quickshell-calendar/1.0"
 
 
@@ -216,6 +226,32 @@ def apply_fields(ev, event):
         end = dt.datetime.fromisoformat(event["end"]).replace(tzinfo=zone)
         ev.add("dtstart", start)
         ev.add("dtend", max(end, start))
+    if "alarms" in event:
+        set_alarms(ev, event["alarms"], event["title"])
+
+
+def start_alarms(ev):
+    """VALARMs of a VEVENT whose trigger is relative to the start."""
+    out = []
+    for alarm in ev.walk("VALARM"):
+        trigger = alarm.get("trigger")
+        related = str(trigger.params.get("RELATED", "START")).upper() if trigger is not None else ""
+        if trigger is not None and isinstance(trigger.dt, dt.timedelta) and related == "START":
+            out.append((alarm, round(-trigger.dt.total_seconds() / 60)))
+    return out
+
+
+def set_alarms(ev, minutes, title):
+    """Replace the start-related reminders; others (absolute times, e-mail
+    alarms relative to the end, ...) stay as they are."""
+    for alarm, _ in start_alarms(ev):
+        ev.subcomponents.remove(alarm)
+    for m in sorted(set(int(m) for m in minutes)):
+        alarm = icalendar.Alarm()
+        alarm.add("action", "DISPLAY")
+        alarm.add("description", title)
+        alarm.add("trigger", dt.timedelta(minutes=-m))
+        ev.add_component(alarm)
 
 
 def create(url, auth, event):
@@ -352,6 +388,8 @@ def expand(text, start, end, source):
             "start": as_local(begin, all_day),
             "end": as_local(finish, all_day),
             "recurring": str(ev.get("uid", "")) in recurring,
+            "color": str(ev.get("color", "")),
+            "alarms": sorted(m for _, m in start_alarms(ev)),
         })
     return out
 
@@ -380,12 +418,83 @@ def events(spec):
     return {"events": out, "errors": errors}
 
 
+# Reminders --------------------------------------------------------------------
+
+
+def sources(settings):
+    """The events spec for the calendars enabled in the menu's settings."""
+    nc = settings.get("nextcloud")
+    return {
+        "nextcloud": {"url": nc["url"], "user": nc["user"], "calendars": [c["href"] for c in nc.get("calendars", []) if c.get("enabled")]} if nc else None,
+        "ics": [{"id": s["id"], "url": s["url"]} for s in settings.get("ics", []) if s.get("enabled")],
+    }
+
+
+def event_start(e):
+    if e["allDay"]:
+        return dt.datetime.combine(dt.date.fromisoformat(e["start"]), dt.time()).astimezone()
+    return dt.datetime.fromisoformat(e["start"])
+
+
+def remind():
+    """Notify about reminders that came due since the last run. Events of the
+    next days are re-fetched at most every 10 minutes."""
+    try:
+        settings = json.loads(SETTINGS.read_text())
+    except (OSError, ValueError):
+        return {}
+    if settings.get("reminders") is False:
+        return {}
+    state_file = CACHE / "reminders.json"
+    try:
+        state = json.loads(state_file.read_text())
+    except (OSError, ValueError):
+        state = {}
+    now = time.time()
+    if now - state.get("fetched", 0) > 600:
+        today = dt.date.today()
+        spec = {**sources(settings), "start": str(today - dt.timedelta(days=1)), "end": str(today + dt.timedelta(days=4))}
+        result = events(spec)
+        state["events"] = [e for e in result["events"] if e.get("alarms")]
+        state["fetched"] = now
+    # After a pause (suspend, boot) only catch up on the last 10 minutes
+    last = state.get("last", now - 60)
+    if now - last > 3600:
+        last = now - 600
+    fired = set(state.get("fired", []))
+    for e in state.get("events", []):
+        start = event_start(e)
+        for minutes in e["alarms"]:
+            due = start.timestamp() - minutes * 60
+            key = f"{e.get('uid')}|{e['start']}|{minutes}"
+            if last < due <= now and key not in fired:
+                fired.add(key)
+                notify(e, start, minutes)
+    state["last"] = now
+    state["fired"] = [k for k in fired if k.split("|")[1] >= str(dt.date.today() - dt.timedelta(days=2))]
+    CACHE.mkdir(parents=True, exist_ok=True)
+    state_file.write_text(json.dumps(state))
+    return {}
+
+
+def notify(e, start, minutes):
+    if e["allDay"]:
+        when = "today" if start.date() == dt.date.today() else start.strftime("%A, %-d %B")
+    else:
+        when = "now" if minutes <= 0 else f"in {minutes} min" if minutes < 60 else f"at {start:%H:%M}"
+        when += f" · {start:%H:%M}–{dt.datetime.fromisoformat(e['end']):%H:%M}"
+    body = " · ".join(x for x in (when, e.get("location")) if x)
+    subprocess.run(["notify-send", "-a", "Calendar", "-i", "x-office-calendar", "-u", "normal", e["title"], body], check=False)
+
+
 def main(argv):
     command = argv[1] if len(argv) > 1 else ""
     if command == "events":
         return events(json.load(sys.stdin))
+    if command == "remind":
+        return remind()
     if command not in ("login", "calendars", "logout", "create", "update", "delete") or len(argv) < 4:
-        raise Fail("usage: calendar-dav.py login|calendars|logout|create|update|delete URL USER, or events")
+        raise Fail("usage: calendar-dav.py login|calendars|logout|create|update|delete URL USER, or events, remind")
     url, user = argv[2:4]
     if command == "login":
         password = sys.stdin.read().rstrip("\n")

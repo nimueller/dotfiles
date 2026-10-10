@@ -11,6 +11,8 @@ RowLayout {
     property var locationResults: []
     property int weekStart: 1
     property bool weekNumbers: true
+    property bool reminders: true
+    property bool confirmSignOut: false
     property var nextcloud: null // { url, user, calendars: [{ href, name, color, enabled, writable }] }
     property var subscriptions: [] // [{ id, name, url, color, enabled }]
     property var prefill: ({}) // { url, user } from the Nextcloud desktop client
@@ -21,6 +23,7 @@ RowLayout {
     signal pickLocation(var place)
     signal setWeekStart(int day)
     signal setWeekNumbers(bool on)
+    signal setReminders(bool on)
     signal signIn(string url, string user, string password)
     signal signOut
     signal refreshCalendars
@@ -134,6 +137,32 @@ RowLayout {
                 onToggled: root.setWeekNumbers(!root.weekNumbers)
             }
         }
+
+        SectionTitle {
+            Layout.topMargin: 8
+            text: "Reminders"
+        }
+        RowLayout {
+            Layout.fillWidth: true
+
+            Label {
+                Layout.fillWidth: true
+                text: "Desktop notifications"
+                color: Theme.subtext1
+            }
+            Switch {
+                checked: root.reminders
+                accent: Theme.mauve
+                onToggled: root.setReminders(!root.reminders)
+            }
+        }
+        Label {
+            Layout.fillWidth: true
+            text: "Reminders are saved in the appointments, so Nextcloud and your phone show them too. This switch only affects the notifications on this computer."
+            font.pixelSize: 10
+            color: Theme.overlay1
+            wrapMode: Text.Wrap
+        }
     }
 
     Rectangle {
@@ -222,9 +251,14 @@ RowLayout {
                 }
                 IconButton {
                     glyph: Theme.glyph(0xf0343) // 󰍃
-                    text: "Sign out"
+                    text: root.confirmSignOut ? "Really sign out?" : "Sign out"
                     accent: Theme.red
-                    onClicked: root.signOut()
+                    active: root.confirmSignOut
+                    onClicked: {
+                        if (root.confirmSignOut)
+                            root.signOut();
+                        root.confirmSignOut = !root.confirmSignOut;
+                    }
                 }
             }
 

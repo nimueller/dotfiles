@@ -20,6 +20,25 @@ in
 
   services.kdeconnect.enable = true;
 
+  # Desktop notifications for calendar reminders (VALARMs of the calendars
+  # enabled in the quickshell calendar menu), checked every minute
+  systemd.user.services.quickshell-calendar-reminders = {
+    Unit.Description = "Calendar reminders for the quickshell calendar menu";
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${my-pkgs.quickshell-calendar-python}/bin/quickshell-calendar-python %h/.config/quickshell/menus/calendar-dav.py remind";
+      Environment = "PATH=${lib.makeBinPath [ pkgs.libsecret pkgs.libnotify ]}:/usr/bin";
+    };
+  };
+  systemd.user.timers.quickshell-calendar-reminders = {
+    Unit.Description = "Check calendar reminders every minute";
+    Timer = {
+      OnCalendar = "minutely";
+      AccuracySec = "5s";
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
   fonts.fontconfig.enable = true;
 
   # Packages needed on Hyprland specifically, in addition to a standard desktop

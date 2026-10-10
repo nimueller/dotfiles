@@ -219,13 +219,13 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 16
                         radius: 4
-                        color: Theme.alpha(modelData.colour, modelData.allDay ? 0.35 : 0.16)
+                        color: Theme.alpha(modelData.colour, modelData.allDay ? 0.5 : 0.24)
                         opacity: cell.inMonth ? 1 : 0.5
                         clip: true
 
                         Rectangle {
                             visible: !chip.modelData.allDay
-                            width: 2
+                            width: 3
                             height: parent.height
                             color: chip.modelData.colour
                         }
@@ -235,7 +235,7 @@ ColumnLayout {
                             anchors.rightMargin: 3
                             text: chip.modelData.allDay ? chip.modelData.title : `${Qt.formatTime(chip.modelData.start, "HH:mm")} ${chip.modelData.title}`
                             font.pixelSize: 10
-                            color: chip.modelData.allDay ? Theme.text : Theme.subtext1
+                            color: Theme.text
                         }
                     }
                 }
