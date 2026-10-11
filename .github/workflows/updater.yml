@@ -3,22 +3,82 @@ on:
   workflow_dispatch: # allows manual triggering
   schedule:
     - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
-    
+
+# Updates flake.lock in a pull request, builds the configurations from it
+# and merges it when they all build; otherwise the pull request is closed
+# and main keeps the previous lock.
+#
+# Needs in the repository settings (Actions > General > Workflow
+# permissions): "Read and write permissions" and "Allow GitHub Actions to
+# create and approve pull requests".
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    outputs:
+      pr: ${{ steps.update.outputs.pull-request-number }}
     steps:
       - name: 🔍 Checkout repository
         uses: actions/checkout@v4
       - name: 🔡 Install Nix
         uses: cachix/install-nix-action@v31
-      - name: 🩹 Update flake.lock
-        run: nix flake update
-      - name: 🚀 Push update
-        run: |
-          git config --local user.name '🤖 Aktualisiernix'
-          git config --local user.email 'noreply@noreply.github.com'
-          git add flake.lock
-          git commit -m "🩹 Update flake.lock"
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+      - name: 🩹 Update flake.lock in a pull request
+        id: update
+        uses: DeterminateSystems/update-flake-lock@v24
+        with:
+          branch: update-flake-lock
+          pr-title: "🩹 Update flake.lock"
+          commit-msg: "🩹 Update flake.lock"
+          git-author-name: "🤖 Aktualisiernix"
+          git-author-email: "noreply@noreply.github.com"
+          git-committer-name: "🤖 Aktualisiernix"
+          git-committer-email: "noreply@noreply.github.com"
 
+  build:
+    needs: update
+    if: needs.update.outputs.pr != ''
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - config: desktop
+            runner: ubuntu-latest
+          - config: headless
+            runner: ubuntu-latest
+          - config: headless_aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: 🧹 Free disk space (the desktop closure is large)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+      - name: 🔍 Checkout the updated lock
+        uses: actions/checkout@v4
+        with:
+          ref: update-flake-lock
+      - name: 🔡 Install Nix
+        uses: cachix/install-nix-action@v31
+      - name: 🏗️ Build ${{ matrix.config }}
+        run: nix build --print-build-logs ".#homeConfigurations.${{ matrix.config }}.activationPackage"
+
+  merge:
+    needs: [update, build]
+    if: always() && needs.update.outputs.pr != ''
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR: ${{ needs.update.outputs.pr }}
+    steps:
+      - name: 🚀 Merge, everything builds
+        if: needs.build.result == 'success'
+        run: gh pr merge "$PR" --squash --delete-branch
+      - name: 🗑️ Close, something doesn't build
+        if: needs.build.result != 'success'
+        run: |
+          gh pr close "$PR" --delete-branch \
+            --comment "Not merged: a configuration failed to build (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
