@@ -68,8 +68,10 @@ hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Utilities
-hl.bind(mainMod .. " + SHIFT + S",           exec("hyprshot -o $HOME/Pictures/Screenshots/ -m region"))
-hl.bind(mainMod .. " + CONTROL + SHIFT + S", exec("hyprshot -o $HOME/Pictures/Screenshots/ -m window"))
+-- Screenshot editor (config/quickshell/menus/screenshot.sh): select, draw, scale, copy or save
+hl.bind(mainMod .. " + SHIFT + S",           exec("~/.config/quickshell/menus/screenshot.sh"))
+hl.bind(mainMod .. " + CONTROL + SHIFT + S", exec("~/.config/quickshell/menus/screenshot.sh window"))
+hl.bind("Print",                             exec("~/.config/quickshell/menus/screenshot.sh screen"))
 hl.bind(mainMod .. " + SHIFT + C",           exec("hyprpicker -a")) -- Colour picker
 
 -- German letters on a US layout, at their German key positions. The letters

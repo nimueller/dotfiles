@@ -21,6 +21,8 @@
 
 <b>Application launcher / menus / clipboard</b>: Quickshell
 
+<b>Screenshots</b>: Quickshell editor on top of grim
+
 <b>Browser</b>: Zen
 
 

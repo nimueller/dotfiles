@@ -99,7 +99,8 @@ in
     xdg-terminal-exec
     playerctl
     hyprpicker
-    hyprshot # screenshots; brings grim, slurp, jq etc. along
+    grim # screenshots (config/quickshell/menus/screenshot.sh)
+    imagemagick
     slurp
     libnotify
     libsecret
