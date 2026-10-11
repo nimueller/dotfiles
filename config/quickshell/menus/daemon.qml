@@ -4,10 +4,11 @@ import Quickshell.Hyprland
 import Quickshell.Io
 
 // Resident part of the desktop shell (started with Hyprland, see
-// autostart.lua; also D-Bus activated for notifications): the notification
-// daemon with its popups and center (replaces dunst) and the OSD for the
-// volume and brightness keys (replaces SwayOSD).
+// autostart.lua; also D-Bus activated for notifications): the app launcher,
+// the notification daemon with its popups and center (replaces dunst) and
+// the OSD for the volume and brightness keys (replaces SwayOSD).
 //
+//   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   toggle.sh notifications            open/close the notification center
 //   ipc.sh notifications dnd|clear     waybar's right/middle click on the bell
 //   hl.dsp.event("quickshell-osd volume +5")    keybinds.lua: volume +/-N,
@@ -30,6 +31,8 @@ ShellRoot {
     Osd {
         id: osd
     }
+
+    Launcher {}
 
     IpcHandler {
         target: "notifications"

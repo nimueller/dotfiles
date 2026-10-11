@@ -10,18 +10,17 @@ import Quickshell.Widgets
 // launch. Apps you launch often float to the top. The last row runs the text
 // as a command ("ssh host" opens in a terminal).
 //
-// Unlike the bar menus it stays resident (started hidden with Hyprland) so
-// SUPER+D only has to show it. The key sends the Hyprland event
-// "quickshell-launcher" (hl.dsp.event), which arrives here over Hyprland's
-// event socket without starting any process; `toggle.sh launcher` (IPC) does
-// the same from scripts. QS_OPEN=1 starts it already shown.
+// Part of the resident daemon.qml, so SUPER+D only has to show it. The key
+// sends the Hyprland event "quickshell-launcher" (hl.dsp.event), which
+// arrives here over Hyprland's event socket without starting any process;
+// `toggle.sh launcher` (IPC) does the same from scripts.
 //
 // Not a GlobalShortcut: in Quickshell 0.3.1 its destructor segfaults when the
 // instance exits, and the crash handler then restarts it.
 PanelWindow {
     id: root
 
-    property bool shown: Quickshell.env("QS_OPEN") === "1"
+    property bool shown: false
 
     function show() {
         search.text = "";

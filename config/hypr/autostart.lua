@@ -4,8 +4,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --watch cliphist store")
     hl.exec_cmd("sunshine")
     hl.exec_cmd("waybar")
-    hl.exec_cmd("~/.config/quickshell/menus/toggle.sh launcher --start") -- resident so SUPER+D opens instantly
-    hl.exec_cmd("~/.config/quickshell/menus/toggle.sh daemon --start")   -- notifications and OSD
+    hl.exec_cmd("~/.config/quickshell/menus/toggle.sh daemon --start") -- launcher, notifications, OSD
     hl.exec_cmd("hyprpaper")
 
     -- Utilities

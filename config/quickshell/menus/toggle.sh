@@ -1,31 +1,25 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
 #   toggle.sh audio|calendar|network|notifications|power|launcher
-#   toggle.sh launcher|daemon --start     start a resident instance (Hyprland)
+#   toggle.sh daemon --start             start the resident daemon (Hyprland)
 # Each bar menu is its own short-lived quickshell instance (<menu>.qml), so
-# nothing runs while they're closed. The exceptions stay resident so they
-# open instantly: the launcher, and daemon.qml (notifications, OSD) which
-# holds the notification center.
+# nothing runs while they're closed. The launcher and the notification
+# center are part of the resident daemon.qml instead, so they open instantly.
 dir=$(dirname "$(readlink -f "$0")")
 menu=${1:?usage: toggle.sh <menu> [--start]}
 
 case $menu in
-    launcher | daemon)
-        [[ $2 == --start ]] && exec qs -p "$dir/$menu.qml" -n -d >/dev/null 2>&1
+    daemon)
+        [[ $2 == --start ]] && exec qs -p "$dir/daemon.qml" -n -d >/dev/null 2>&1
+        exit 1
         ;;
-    notifications)
-        exec "$dir/ipc.sh" notifications toggle
+    launcher | notifications)
+        exec "$dir/ipc.sh" "$menu" toggle
         ;;
 esac
 
 entry=$dir/$menu.qml
 [[ -f $entry ]] || { echo "no such menu: $menu" >&2; exit 1; }
-
-# The launcher only needs to be shown; if it isn't running, start it shown
-if [[ $menu == launcher ]]; then
-    qs ipc -p "$entry" call launcher toggle >/dev/null 2>&1 && exit 0
-    QS_OPEN=1 exec qs -p "$entry" -n -d >/dev/null 2>&1
-fi
 
 qs kill -p "$entry" >/dev/null 2>&1 && exit 0
 
