@@ -89,6 +89,10 @@ PanelWindow {
         spacing: 6
 
         // Tray: left click activates, right click opens the app's menu
+        TrayMenu {
+            id: trayMenu
+        }
+
         BarChip {
             visible: SystemTray.items.values.length > 0
             plain: true
@@ -116,10 +120,8 @@ PanelWindow {
                                 item.secondaryActivate();
                             else if (event.button === Qt.LeftButton && !item.onlyMenu)
                                 item.activate();
-                            else if (item.hasMenu) {
-                                const p = trayIcon.mapToItem(null, 0, 0);
-                                item.display(bar, p.x, p.y);
-                            }
+                            else if (item.hasMenu)
+                                trayMenu.open(item, trayIcon);
                         }
                         onWheel: event => trayIcon.modelData.scroll(event.angleDelta.y, false)
                     }
