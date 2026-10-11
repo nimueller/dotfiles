@@ -1,0 +1,19 @@
+// Keyboard layout: US (with multimedia keys and Compose on Right Alt) plus
+// the German letters on F13-F16, keys this keyboard doesn't have. The SUPER
+// + ; ' [ - binds in keybinds.lua send those keys (send_shortcut), so the
+// letters reach Wayland and XWayland apps alike, unlike text typed with
+// wtype. Loaded through input.kb_file in general.lua.
+xkb_keymap {
+    xkb_keycodes { include "evdev+aliases(qwerty)" };
+    xkb_types    { include "complete" };
+    xkb_compat   { include "complete" };
+    xkb_symbols  {
+        include "pc+us+inet(evdev)+compose(ralt)"
+
+        key <FK13> { [ odiaeresis, Odiaeresis ] };
+        key <FK14> { [ adiaeresis, Adiaeresis ] };
+        key <FK15> { [ udiaeresis, Udiaeresis ] };
+        key <FK16> { [ ssharp,     U1E9E      ] };
+    };
+    xkb_geometry { include "pc(pc105)" };
+};

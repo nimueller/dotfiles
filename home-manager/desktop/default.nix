@@ -103,7 +103,6 @@ in
     slurp
     libnotify
     libsecret
-    wtype
     cliphist
     pavucontrol
     quickshell # bar, menus, launcher, notifications, OSD (config/quickshell/menus)

@@ -72,14 +72,20 @@ hl.bind(mainMod .. " + SHIFT + S",           exec("hyprshot -o $HOME/Pictures/Sc
 hl.bind(mainMod .. " + CONTROL + SHIFT + S", exec("hyprshot -o $HOME/Pictures/Screenshots/ -m window"))
 hl.bind(mainMod .. " + SHIFT + C",           exec("hyprpicker -a")) -- Colour picker
 
--- German umlauts on a US layout
-hl.bind(mainMod .. " + semicolon",           exec("wtype 'ö'"))
-hl.bind(mainMod .. " + SHIFT + semicolon",   exec("wtype 'Ö'"))
-hl.bind(mainMod .. " + bracketleft",         exec("wtype 'ü'"))
-hl.bind(mainMod .. " + SHIFT + bracketleft", exec("wtype 'Ü'"))
-hl.bind(mainMod .. " + apostrophe",          exec("wtype 'ä'"))
-hl.bind(mainMod .. " + SHIFT + apostrophe",  exec("wtype 'Ä'"))
-hl.bind(mainMod .. " + minus",               exec("wtype 'ß'"))
+-- German letters on a US layout, at their German key positions. The letters
+-- sit on F13-F16 of the keymap (keymap.xkb); Hyprland sends those keys to the
+-- focused window, which also works in XWayland apps (wtype didn't).
+local function letter(key, shifted)
+    return hl.dsp.send_shortcut({ mods = shifted and "SHIFT" or "", key = key })
+end
+hl.bind(mainMod .. " + semicolon",           letter("odiaeresis"))      -- ö
+hl.bind(mainMod .. " + SHIFT + semicolon",   letter("odiaeresis", true)) -- Ö
+hl.bind(mainMod .. " + bracketleft",         letter("udiaeresis"))      -- ü
+hl.bind(mainMod .. " + SHIFT + bracketleft", letter("udiaeresis", true)) -- Ü
+hl.bind(mainMod .. " + apostrophe",          letter("adiaeresis"))      -- ä
+hl.bind(mainMod .. " + SHIFT + apostrophe",  letter("adiaeresis", true)) -- Ä
+hl.bind(mainMod .. " + minus",               letter("ssharp"))          -- ß
+hl.bind(mainMod .. " + SHIFT + minus",       letter("ssharp", true))    -- ẞ
 
 hl.bind(mainMod .. " + V", hl.dsp.event("quickshell-clipboard")) -- clipboard history (quickshell/menus/Clipboard.qml)
 

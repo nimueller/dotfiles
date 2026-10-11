@@ -47,7 +47,8 @@ hl.config({
 
     input = {
         kb_layout          = "us",
-        kb_options         = "compose:ralt",
+        -- US with Compose on Right Alt, plus ä ö ü ß on F13-F16 for the SUPER binds
+        kb_file            = os.getenv("HOME") .. "/.config/hypr/keymap.xkb",
         numlock_by_default = true,
         follow_mouse       = 1,
         touchpad = {
