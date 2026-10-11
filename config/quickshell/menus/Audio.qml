@@ -15,8 +15,8 @@ Singleton {
         return Pipewire.nodes.values.filter(n => n.audio && !n.isStream && n.isSink === sink);
     }
 
-    // "AD103 ... Digital Stereo (HDMI) [BenQ EL2870U]" -> "BenQ EL2870U",
-    // "CORSAIR HS80 ... Receiver Analog Stereo" -> "CORSAIR HS80 ... Receiver"
+    // "GPU ... Digital Stereo (HDMI) [Some Monitor]" -> "Some Monitor",
+    // "Some Headset ... Receiver Analog Stereo" -> "Some Headset ... Receiver"
     function deviceName(node) {
         if (!node)
             return "No device";
