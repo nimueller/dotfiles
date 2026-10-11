@@ -99,6 +99,7 @@ in
     xdg-terminal-exec
     playerctl
     hyprpicker
+    hypridle # lock when idle and before suspend (config/hypr/hypridle.conf)
     grim # screenshots (config/quickshell/menus/screenshot.sh)
     imagemagick
     slurp

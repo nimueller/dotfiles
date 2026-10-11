@@ -5,6 +5,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("sunshine")
     hl.exec_cmd("~/.config/quickshell/menus/toggle.sh daemon --start") -- bar, launcher, notifications, OSD
     hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("hypridle") -- lock and screens off when idle, lock before suspend (hypridle.conf)
 
     -- Utilities
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE")

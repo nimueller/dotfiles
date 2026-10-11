@@ -10,7 +10,7 @@ PanelWindow {
     id: root
 
     readonly property var actions: [
-        { text: "Lock", key: "L", glyph: 0xf033e, accent: Theme.lavender, command: "hyprlock" },
+        { text: "Lock", key: "L", glyph: 0xf033e, accent: Theme.lavender, command: "pidof hyprlock || hyprlock" },
         { text: "Log out", key: "E", glyph: 0xf0343, accent: Theme.blue, command: "hyprctl dispatch 'hl.dsp.exit()'" },
         { text: "Suspend", key: "U", glyph: 0xf0904, accent: Theme.mauve, command: "systemctl suspend" },
         { text: "Reboot", key: "R", glyph: 0xf0709, accent: Theme.peach, command: "systemctl reboot" },

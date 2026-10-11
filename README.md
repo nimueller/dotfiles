@@ -19,7 +19,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **OS** | Arch Linux, packages via Nix + Home Manager |
 | **Compositor** | Hyprland, configured in Lua |
 | **Shell UI** | Quickshell: bar, menus, launcher, clipboard history, notifications, on-screen display, screenshot editor |
-| **Wallpaper / lock** | hyprpaper (rotating through `config/hypr/wallpapers`) / hyprlock |
+| **Wallpaper / lock** | hyprpaper (rotating through `config/hypr/wallpapers`) / hyprlock, started by hypridle when idle and before suspend |
 | **Terminal** | kitty, Zsh with Powerlevel10k, tmux |
 | **Editor** | Neovim with lazy.nvim, Treesitter, Telescope, Neo-tree and blink.cmp; language servers come from Nix |
 | **Browser** | Zen |
@@ -64,6 +64,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | `SUPER + SHIFT + S` | Screenshot: region or window |
 | `SUPER + CTRL + SHIFT + S` / `Print` | Screenshot of the active window / the whole monitor |
 | `SUPER + SHIFT + C` | Colour picker |
+| `SUPER + Escape` | Lock the screen |
 | `SUPER + 1`…`0` | Go to workspace 1–10 (`SHIFT`: move the window there) |
 | `SUPER + S` / `C` / `P` | Scratchpads for music, chat and passwords |
 | `SUPER + H J K L` | Move the focus |
@@ -102,7 +103,7 @@ Good to know:
 - Hyprland and the system services the desktop relies on (PipeWire, NetworkManager, UPower, the portals, the polkit
   agent, the keyring) come from pacman. On Arch, the script offers to install them, and to let the power button open the
   power menu instead of shutting down.
-- Start the desktop by running `Hyprland` after logging in on a TTY.
+- Start the desktop by running `start-hyprland` after logging in on a TTY.
 - Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
   `config/hypr/local.lua`, which git ignores. `config/hypr/local.example.lua` shows how; without it, every monitor runs
   at its preferred mode.
