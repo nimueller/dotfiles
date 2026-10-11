@@ -7,10 +7,11 @@ import Quickshell.Wayland
 // Keeps the screen awake (no idle lock, monitors stay on; hypridle.conf)
 // while a browser or video player is playing, a game runs or Sunshine is
 // streaming, part of daemon.qml. Pausing counts as idle again, and music
-// players don't count. Sunshine holds its own inhibitor (stay-awake.sh from
-// its prep commands, so it works without Quickshell) and reports it with the
-// Hyprland event "quickshell-awake sunshine on|off". Changes show on the OSD,
-// not as notifications.
+// players don't count. Sunshine holds its own inhibitor: its prep commands
+// (config/sunshine) run the stay-awake script (pkgs/scripts), which works
+// without Quickshell and reports to it with the Hyprland event
+// "quickshell-awake sunshine on|off". Changes show on the OSD, not as
+// notifications.
 Scope {
     id: root
 

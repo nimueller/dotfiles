@@ -106,8 +106,6 @@ Good to know:
   agent, the keyring) come from pacman. On Arch, the script offers to install them, and to let the power button open the
   power menu instead of shutting down.
 - Start the desktop by running `start-hyprland` after logging in on a TTY.
-- To keep the screen awake during Sunshine streams, add the prep commands from the top of
-  `config/quickshell/menus/stay-awake.sh` to `~/.config/sunshine/sunshine.conf`.
 - Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
   `config/hypr/local.lua`, which git ignores. `config/hypr/local.example.lua` shows how; without it, every monitor runs
   at its preferred mode.
@@ -125,7 +123,7 @@ Good to know:
 | `home-manager/theme` | Catppuccin for btop and bat, GTK and the cursor |
 | `options` | The `dotfiles` option: where this repository is checked out (`~/dotfiles`) |
 | `pkgs` | Small scripts (`recorder`, `init-tex`, `edit-tex`) and the Python for the calendar helper |
-| `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, tmux, Zsh |
+| `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, tmux, Zsh, Sunshine |
 
 The files in `config` are linked into `~/.config` with `mkOutOfStoreSymlink`, so `~/.config/<app>` points straight at
 `~/dotfiles/config/<app>`: edits take effect without rebuilding. The Quickshell daemon is the one exception; restart it

@@ -20,7 +20,7 @@ import Quickshell.Io
 //   hl.dsp.event("quickshell-osd volume +5")    keybinds.lua: volume +/-N,
 //                                      mute, mic-mute, brightness +/-N,
 //                                      lock caps|num
-//   hl.dsp.event("quickshell-awake sunshine on")  stay-awake.sh: on|off
+//   hl.dsp.event("quickshell-awake sunshine on")  the stay-awake script: on|off
 ShellRoot {
     // No live reload: reloading while it holds the notification service and
     // the tray made the next exit hang. Apply changes with

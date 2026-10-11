@@ -110,6 +110,7 @@ in
     quickshell # bar, menus, launcher, notifications, OSD (config/quickshell/menus)
 
     my-pkgs.recorder
+    my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
     my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
     my-pkgs.edit-tex

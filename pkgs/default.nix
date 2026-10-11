@@ -23,6 +23,11 @@
     ];
     text = builtins.readFile ./scripts/recorder.sh;
   };
+  # systemd-inhibit and hyprctl come from the system, like the session they serve
+  stay-awake = pkgs.writeShellApplication {
+    name = "stay-awake";
+    text = builtins.readFile ./scripts/stay-awake.sh;
+  };
   init-tex = pkgs.writeShellApplication {
     name = "init-tex";
     text = builtins.readFile ./scripts/init-tex.sh;

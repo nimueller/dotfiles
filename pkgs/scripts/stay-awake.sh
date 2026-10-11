@@ -1,12 +1,12 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
+# Built with writeShellApplication (pkgs/default.nix), which adds the shebang
 # Keep the screen awake (no idle lock, no suspend) for another program:
-#   stay-awake.sh on <name> [why]   until   stay-awake.sh off <name>
+#   stay-awake on <name> [why]   until   stay-awake off <name>
 # A systemd inhibitor, which hypridle respects, so it also works without
-# Quickshell; the daemon only shows it (StayAwake.qml). For Sunshine, in
-# ~/.config/sunshine/sunshine.conf:
-#   global_prep_cmd = [{"do":"/home/<user>/.config/quickshell/menus/stay-awake.sh on sunshine Streaming","undo":"/home/<user>/.config/quickshell/menus/stay-awake.sh off sunshine","elevated":false}]
-action=$1
-name=${2:?usage: stay-awake.sh on|off <name> [why]}
+# Quickshell; the daemon only shows it (StayAwake.qml). Sunshine runs it from
+# its prep commands (config/sunshine/sunshine.conf).
+action=${1:-}
+name=${2:?usage: stay-awake on|off <name> [why]}
 pidfile=${XDG_RUNTIME_DIR:-/tmp}/stay-awake-$name.pid
 
 case $action in
@@ -21,14 +21,14 @@ case $action in
         fi
         ;;
     off)
-        kill "$(cat "$pidfile" 2>/dev/null)" 2>/dev/null
+        kill "$(cat "$pidfile" 2>/dev/null)" 2>/dev/null || true
         rm -f "$pidfile"
         ;;
     *)
-        echo "usage: stay-awake.sh on|off <name> [why]" >&2
+        echo "usage: stay-awake on|off <name> [why]" >&2
         exit 1
         ;;
 esac
 
-hyprctl dispatch "hl.dsp.event(\"quickshell-awake $name $action\")" >/dev/null 2>&1
-exit 0
+# Tell the Quickshell daemon, for the on-screen display
+hyprctl dispatch "hl.dsp.event(\"quickshell-awake $name $action\")" >/dev/null 2>&1 || true
