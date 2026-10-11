@@ -15,7 +15,10 @@ case $menu in
             pid=$(pgrep -f "quickshell.* -p $dir/daemon.qml" | head -1)
             qs kill -p "$dir/daemon.qml" >/dev/null 2>&1
             # Don't let a stuck instance block the new one (-n)
-            for _ in {1..20}; do [[ -n $pid ]] && kill -0 "$pid" 2>/dev/null || break; sleep 0.1; done
+            for _ in {1..20}; do
+                if [[ -z $pid ]] || ! kill -0 "$pid" 2>/dev/null; then break; fi
+                sleep 0.1
+            done
             [[ -n $pid ]] && kill -9 "$pid" 2>/dev/null
         fi
         [[ $2 == --start || $2 == --restart ]] && exec qs -p "$dir/daemon.qml" -n -d >/dev/null 2>&1

@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+# Built with writeShellApplication (pkgs/default.nix), which adds the shebang
 texfiles=$(find . -maxdepth 1 -type f -name "*.tex")
 count=$(echo "$texfiles" | wc -l)
 

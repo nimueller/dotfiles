@@ -31,6 +31,7 @@ install_nix () {
   if ! grep -qs 'experimental-features' "$HOME/.config/nix/nix.conf"; then
     echo 'experimental-features = nix-command flakes' >> "$HOME/.config/nix/nix.conf"
   fi
+  # shellcheck source=/dev/null
   source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 }
 
@@ -73,7 +74,7 @@ You may run this script again if you want to set ZSH as your default shell or in
 '
   while [ -z "$SET_DEFAULT_SHELL" ]; do
     echo -n 'Skip? [y/n] '
-    read -n 1 option
+    read -r -n 1 option
     echo ''
 
     case "$option" in
@@ -92,6 +93,7 @@ You may run this script again if you want to set ZSH as your default shell or in
     mv "$HOME/.profile" "$HOME/.profile.backup"
   fi
 
+  # shellcheck disable=SC2016 # $BASH_VERSION belongs in .profile literally
   echo -n '
 # execute zsh if it exists
 if [ -n "$BASH_VERSION" ]; then 

@@ -2,7 +2,12 @@
 {
   # Python with the iCalendar libraries, for config/quickshell/menus/calendar-dav.py
   quickshell-calendar-python = pkgs.writeShellScriptBin "quickshell-calendar-python" ''
-    exec ${pkgs.python3.withPackages (ps: [ ps.icalendar ps.recurring-ical-events ])}/bin/python3 "$@"
+    exec ${
+      pkgs.python3.withPackages (ps: [
+        ps.icalendar
+        ps.recurring-ical-events
+      ])
+    }/bin/python3 "$@"
   '';
 
   # Shell scripts: shellcheck runs at build time and the tools they need are

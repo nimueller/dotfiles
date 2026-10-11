@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+# Built with writeShellApplication (pkgs/default.nix), which adds the shebang
 echo "📄 New LaTeX document"
 read -r -p "Filename (without .tex) [main]: " fileName
 fileName=${fileName:-main}

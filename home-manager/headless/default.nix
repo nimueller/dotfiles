@@ -1,4 +1,9 @@
-{ pkgs, username, config, ... }:
+{
+  pkgs,
+  username,
+  config,
+  ...
+}:
 {
   # Basic home manager settings
   programs.home-manager.enable = true;
@@ -12,29 +17,32 @@
     timestamp = "-7 days";
   };
 
-  home.username = username;
-  home.homeDirectory = "/home/${username}";
-  home.stateVersion = "23.05";
-
-  home.packages = with pkgs; [
-    # Terminal programs
-    tmux # GOAT
-    fzf # Lifesaver!
-    autojump # Lifesaver #2!
-    tldr
-    lsd
-    jq
-    lua
-    tree
-  ];
-
   imports = [
     ./neovim.nix
     ./symlinks.nix
     ../theme/default.nix
   ];
 
-  home.file.".p10k.zsh".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/zsh/p10k.zsh";
+  home = {
+    inherit username;
+    homeDirectory = "/home/${username}";
+    stateVersion = "23.05";
+
+    packages = with pkgs; [
+      # Terminal programs
+      tmux # GOAT
+      fzf # Lifesaver!
+      autojump # Lifesaver #2!
+      tldr
+      lsd
+      jq
+      lua
+      tree
+    ];
+
+    file.".p10k.zsh".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/zsh/p10k.zsh";
+  };
 
   programs = {
     zsh = {

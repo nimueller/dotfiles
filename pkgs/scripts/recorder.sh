@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+# Built with writeShellApplication (pkgs/default.nix), which adds the shebang
 # Usage: recorder [region|monitor]
 # Running it again while a recording is active stops that recording.
 
