@@ -11,7 +11,7 @@
 
 <b>Editor</b>: Neovim
 
-<b>Status Bar</b>: Waybar
+<b>Status Bar</b>: Quickshell (Waybar config kept as fallback)
 
 <b>Wallpaper / Lock</b>: hyprpaper / hyprlock
 

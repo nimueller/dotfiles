@@ -21,7 +21,7 @@
 - **Compositor:** Hyprland, configured in Lua (`hyprland.lua`, which requires `colors`, `general`, `autostart`,
   `keybinds`, `windowrules` and `workspacerules`). It covers a 4K@1.5 BenQ plus a 1080p BenQ and NVIDIA env vars.
   Check it with `Hyprland --verify-config -c ~/.config/hypr/hyprland.lua`.
-- **Bar / wallpaper / lock:** Waybar, hyprpaper (rotates through `hypr/wallpapers/`), hyprlock
+- **Bar / wallpaper / lock:** Quickshell bar in the resident daemon (`quickshell/menus/Bar.qml`; `config/waybar` kept as fallback), hyprpaper (rotates through `hypr/wallpapers/`), hyprlock
 - **Launcher / bar menus:** Quickshell (`quickshell/menus`: launcher, sound, network with VPN, notifications, power, calendar with METAR + Open-Meteo weather, Nextcloud CalDAV (create/edit/delete, reminders) and ICS subscriptions), opened by `toggle.sh <menu>`; a resident `daemon.qml` replaces dunst and SwayOSD (notification popups/center, volume and brightness OSD); the launcher lives in the resident daemon and SUPER+D sends it the Hyprland event `quickshell-launcher`
 - **Clipboard:** cliphist in rofi
 - **Terminal / shell:** kitty, zsh with p10k, tmux (prefix `C-a`, tpm, catppuccin)

@@ -3,7 +3,10 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 || notify-send 'Authentication Agent not found.' 'You have to manually adjust the path to point to the right authentication agent installable. Adjust ~/.config/hypr/autostart.lua'")
     hl.exec_cmd("wl-paste --watch cliphist store")
     hl.exec_cmd("sunshine")
-    hl.exec_cmd("waybar")
+    -- The bar is part of the quickshell daemon below. config/waybar is kept as
+    -- a fallback: to go back, uncomment this and remove the Variants with the
+    -- Bar from config/quickshell/menus/daemon.qml
+    -- hl.exec_cmd("waybar")
     hl.exec_cmd("~/.config/quickshell/menus/toggle.sh daemon --start") -- launcher, notifications, OSD
     hl.exec_cmd("hyprpaper")
 

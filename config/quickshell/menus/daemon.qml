@@ -4,9 +4,10 @@ import Quickshell.Hyprland
 import Quickshell.Io
 
 // Resident part of the desktop shell (started with Hyprland, see
-// autostart.lua; also D-Bus activated for notifications): the app launcher,
-// the notification daemon with its popups and center (replaces dunst) and
-// the OSD for the volume and brightness keys (replaces SwayOSD).
+// autostart.lua; also D-Bus activated for notifications): the bar on every
+// monitor (replaces waybar), the app launcher, the notification daemon with
+// its popups and center (replaces dunst) and the OSD for the volume and
+// brightness keys (replaces SwayOSD).
 //
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   toggle.sh notifications            open/close the notification center
@@ -15,17 +16,22 @@ import Quickshell.Io
 //                                      mute, mic-mute, brightness +/-N,
 //                                      lock caps|num
 ShellRoot {
+    // No live reload: reloading while it holds the notification service and
+    // the tray made the next exit hang. Apply changes with
+    // `toggle.sh daemon --restart`.
+    settings.watchFiles: false
+
     NotificationStore {
-        id: store
+        id: notificationStore
     }
 
     NotificationPopups {
-        store: store
+        store: notificationStore
     }
 
     NotificationCenter {
-        id: center
-        store: store
+        id: notificationCenter
+        store: notificationStore
     }
 
     Osd {
@@ -34,17 +40,35 @@ ShellRoot {
 
     Launcher {}
 
+    NetworkStatus {
+        id: networkStatus
+    }
+
+    // The bar on every monitor (replaces waybar)
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Bar {
+            required property var modelData
+
+            screen: modelData
+            store: notificationStore
+            center: notificationCenter
+            network: networkStatus
+        }
+    }
+
     IpcHandler {
         target: "notifications"
 
         function toggle(): void {
-            center.toggle();
+            notificationCenter.toggle();
         }
         function dnd(): void {
-            store.setDnd(!store.dnd);
+            notificationStore.setDnd(!notificationStore.dnd);
         }
         function clear(): void {
-            store.clear();
+            notificationStore.clear();
         }
     }
 
