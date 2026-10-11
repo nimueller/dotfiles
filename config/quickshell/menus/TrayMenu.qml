@@ -14,7 +14,14 @@ PopupWindow {
     property var stack: [] // submenus opened, innermost last
     readonly property var menu: stack.length ? stack[stack.length - 1] : item?.menu ?? null
 
+    property real closedAt: 0
+    property var closedItem: null
+
     function open(trayItem, icon) {
+        // A click on the same icon while its menu was open has just closed it
+        // through the focus grab: leave it closed
+        if (trayItem === closedItem && Date.now() - closedAt < 400)
+            return;
         item = trayItem;
         stack = [];
         anchor.item = icon;
@@ -22,9 +29,25 @@ PopupWindow {
     }
 
     function close() {
+        closedItem = item;
+        closedAt = Date.now();
         visible = false;
         item = null;
         stack = [];
+    }
+
+    // The grab needs the window to exist, so start it once the menu shows
+    property bool grabbing: false
+    onVisibleChanged: {
+        if (visible)
+            grabStart.restart();
+        else
+            grabbing = false;
+    }
+    Timer {
+        id: grabStart
+        interval: 50
+        onTriggered: root.grabbing = root.visible
     }
 
     anchor.edges: Edges.Top
@@ -35,7 +58,7 @@ PopupWindow {
     color: "transparent"
 
     HyprlandFocusGrab {
-        active: root.visible
+        active: root.grabbing
         windows: [root]
         onCleared: root.close()
     }
