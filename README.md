@@ -38,7 +38,7 @@ Prerequisites before running the install.sh script
   For command line only (useful on servers or TTY)
   
   ```sh 
-  curl -L https://raw.githubusercontent.com/LegendSalocin/dotfiles/main/install.sh | bash -s headless
+  curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | bash -s headless
   ```
 </details>
 
@@ -47,7 +47,7 @@ Prerequisites before running the install.sh script
   Activating my desktop environment, applications, and stuff, in addition to headless mode
   
   ```sh
-  curl -L https://raw.githubusercontent.com/LegendSalocin/dotfiles/main/install.sh | bash -s desktop
+  curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | bash -s desktop
   ```
 </details>
 

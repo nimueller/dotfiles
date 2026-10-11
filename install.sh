@@ -44,7 +44,7 @@ install_repo() {
     cd "$DOTFILES_CLONE_DIRECTORY" || exit 1
     git pull
   else
-    git clone 'https://github.com/LegendSalocin/dotfiles' "$DOTFILES_CLONE_DIRECTORY"
+    git clone 'https://github.com/nimueller/dotfiles' "$DOTFILES_CLONE_DIRECTORY"
     cd "$DOTFILES_CLONE_DIRECTORY" || exit 1
   fi
 
