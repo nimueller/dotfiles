@@ -9,15 +9,18 @@ import Quickshell.Wayland
 // On-screen display for the volume, microphone and brightness keys and for
 // Caps Lock / Num Lock (replaces SwayOSD), part of daemon.qml. The keys send
 // Hyprland events (see keybinds.lua) that daemon.qml passes to volume(),
-// toggleMute(), toggleMic(), brightness() and lockKey(). Shown above the bar
-// on the focused monitor.
+// toggleMute(), toggleMic(), brightness() and lockKey(); StayAwake.qml calls
+// awake(). Shown above the bar on the focused monitor.
 Scope {
     id: root
 
-    property string kind: "volume" // volume | mic | brightness | caps | num
+    property string kind: "volume" // volume | mic | brightness | caps | num | awake
     property real value: 0 // 0..1
     property bool muted: false
+    property string detail: "" // awake: why
     property bool shown: false
+
+    readonly property bool toggle: kind === "caps" || kind === "num" || kind === "awake"
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
@@ -27,7 +30,14 @@ Scope {
         root.value = value;
         root.muted = muted;
         shown = true;
+        hideTimer.interval = kind === "awake" ? 3000 : 1500;
         hideTimer.restart();
+    }
+
+    // The screen stays awake (on) or locks when idle again (off)
+    function awake(on, why) {
+        detail = why;
+        show("awake", on ? 1 : 0, !on);
     }
 
     // step in percent; never above 100 %, unmutes like the old binding did
@@ -196,6 +206,8 @@ Scope {
                         font.pixelSize: 18
                         color: pill.accent
                         text: {
+                            if (root.kind === "awake")
+                                return Theme.glyph(root.muted ? 0xf04b2 : 0xf0176); // 󰒲 / 󰅶
                             if (root.kind === "caps")
                                 return Theme.glyph(0xf0632); // 󰘲
                             if (root.kind === "num")
@@ -209,16 +221,28 @@ Scope {
                     }
                 }
 
-                // Caps Lock / Num Lock: name and an On/Off pill
-                Label {
-                    visible: root.kind === "caps" || root.kind === "num"
-                    Layout.preferredWidth: 150
-                    text: root.kind === "caps" ? "Caps Lock" : "Num Lock"
-                    font.pixelSize: 13
-                    font.bold: true
+                // Caps Lock / Num Lock / Stay awake: name (and why) and an On/Off pill
+                Column {
+                    visible: root.toggle
+                    Layout.preferredWidth: root.kind === "awake" ? 240 : 150
+                    spacing: 2
+
+                    Label {
+                        width: parent.width
+                        text: root.kind === "caps" ? "Caps Lock" : root.kind === "num" ? "Num Lock" : "Stay awake"
+                        font.pixelSize: 13
+                        font.bold: true
+                    }
+                    Label {
+                        visible: root.kind === "awake" && !!root.detail
+                        width: parent.width
+                        text: root.detail
+                        font.pixelSize: 11
+                        color: Theme.subtext0
+                    }
                 }
                 Rectangle {
-                    visible: root.kind === "caps" || root.kind === "num"
+                    visible: root.toggle
                     Layout.preferredWidth: 52
                     Layout.preferredHeight: 22
                     radius: 11
@@ -235,7 +259,7 @@ Scope {
 
                 // Level
                 Rectangle {
-                    visible: root.kind !== "caps" && root.kind !== "num"
+                    visible: !root.toggle
                     Layout.preferredWidth: 220
                     Layout.preferredHeight: 8
                     radius: 4
@@ -256,7 +280,7 @@ Scope {
                 }
 
                 Label {
-                    visible: root.kind !== "caps" && root.kind !== "num"
+                    visible: !root.toggle
                     Layout.preferredWidth: 46
                     horizontalAlignment: Text.AlignRight
                     text: root.muted ? "Muted" : `${Math.round(root.value * 100)}%`

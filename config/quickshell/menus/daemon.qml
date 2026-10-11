@@ -10,8 +10,8 @@ import Quickshell.Io
 // Resident part of the desktop shell (started with Hyprland, see
 // autostart.lua; also D-Bus activated for notifications): the bar on every
 // monitor, the app launcher, the clipboard history, the notification daemon with
-// its popups and center (replaces dunst) and the OSD for the volume and
-// brightness keys (replaces SwayOSD).
+// its popups and center (replaces dunst), the OSD for the volume and
+// brightness keys (replaces SwayOSD) and the stay-awake inhibitor.
 //
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
@@ -20,6 +20,7 @@ import Quickshell.Io
 //   hl.dsp.event("quickshell-osd volume +5")    keybinds.lua: volume +/-N,
 //                                      mute, mic-mute, brightness +/-N,
 //                                      lock caps|num
+//   hl.dsp.event("quickshell-awake sunshine on")  stay-awake.sh: on|off
 ShellRoot {
     // No live reload: reloading while it holds the notification service and
     // the tray made the next exit hang. Apply changes with
@@ -41,6 +42,12 @@ ShellRoot {
 
     Osd {
         id: osd
+    }
+
+    // No idle lock while videos play, games run or Sunshine streams
+    StayAwake {
+        id: stayAwake
+        osd: osd
     }
 
     Launcher {}
@@ -84,6 +91,11 @@ ShellRoot {
         target: Hyprland
 
         function onRawEvent(event) {
+            if (event.name === "custom" && event.data.startsWith("quickshell-awake ")) {
+                const [, name, state] = event.data.split(" ");
+                stayAwake.event(name, state);
+                return;
+            }
             if (event.name !== "custom" || !event.data.startsWith("quickshell-osd "))
                 return;
             const [, what, arg] = event.data.split(" ");

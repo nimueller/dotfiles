@@ -46,6 +46,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
   airport's METAR report.
 - **Notifications:** popups with a countdown bar, a notification centre with history and do not disturb. They replace dunst.
 - **On-screen display:** volume, microphone, brightness, Caps Lock and Num Lock. It replaces SwayOSD.
+- **Stay awake:** no idle lock while a browser or video player is playing, a game runs or Sunshine streams; the
+  on-screen display says when that starts and ends.
 - **Clipboard history:** cliphist with image thumbnails; the chosen entry is pasted right away, in Wayland and X11 apps.
 - **Screenshots:** the screen freezes, you pick a region or window (or the whole monitor) and can still resize the box,
   draw on it (pen, line, arrow, boxes, highlighter, text, pixelate), scale it to 75, 50 or 25 %, then copy it or save
@@ -104,6 +106,8 @@ Good to know:
   agent, the keyring) come from pacman. On Arch, the script offers to install them, and to let the power button open the
   power menu instead of shutting down.
 - Start the desktop by running `start-hyprland` after logging in on a TTY.
+- To keep the screen awake during Sunshine streams, add the prep commands from the top of
+  `config/quickshell/menus/stay-awake.sh` to `~/.config/sunshine/sunshine.conf`.
 - Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
   `config/hypr/local.lua`, which git ignores. `config/hypr/local.example.lua` shows how; without it, every monitor runs
   at its preferred mode.
