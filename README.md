@@ -1,7 +1,9 @@
 # Personal dotfiles
 
 > [!WARNING]  
-> *Heavily vibecoded with Claude Code Opus 5.5, because I am lazy and it is way more effective*
+> *Heavily vibecoded with Claude Code Opus 5.5*
+>
+> Why vibecoding? Because I am lazy and it is way more effective: I can just tell Claude what I want from my desktop and dotfiles.
 
 <b>OS</b>: Arch Linux (packages via Nix + Home Manager)
 
