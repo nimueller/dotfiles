@@ -11,7 +11,7 @@
 | `home-manager/theme/` | Catppuccin Macchiato for btop/bat (headless) and GTK/cursor (desktop) |
 | `pkgs/` | `hyprshot` plus the scripts `recorder`, `init-tex`, `edit-tex` |
 | `config/` | Raw config files that are symlinked out of the store, so edits apply without a rebuild |
-| `install.sh` / `install-deb.sh` | Bootstrap Nix + Home-Manager (generic / Debian with Hyprland and Flatpaks) |
+| `install.sh` | Bootstrap Nix + Home-Manager |
 
 `config/` is linked with `mkOutOfStoreSymlink`, so `~/.config/<app>` points directly at
 `~/dotfiles/config/<app>`. Editing the checkout changes the live system right away.
