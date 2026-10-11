@@ -124,7 +124,6 @@ in
     dconf-editor
     file-roller
     seahorse # Manage keyring
-    geary
     # Other GUI apps
     keepassxc
     wl-clipboard
