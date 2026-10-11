@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 
 // Screenshot editor, started by screenshot.sh once it has frozen every
-// monitor (into QS_SCREENSHOT_DIR, with and without the cursor). Drag to
+// monitor (into QS_SCREENSHOT_DIR). Drag to
 // select a region or click a window (a click on the desktop takes the whole
 // monitor), then adjust the box by its edges and corners or move it, draw on
 // it, pick the resolution and copy (Enter) or save (Ctrl+S). The keys are in
@@ -30,7 +30,6 @@ ShellRoot {
     property string tool: "select"
 
     // Remembered between screenshots
-    property bool cursor: false
     property int percent: 100
     property string color: Theme.red
     property int size: 1 // 0 thin, 1 medium, 2 thick
@@ -76,9 +75,8 @@ ShellRoot {
     property bool loaded: false
     function remember() {
         if (loaded)
-            settingsFile.setText(JSON.stringify({ cursor, percent, color, size }, null, 2));
+            settingsFile.setText(JSON.stringify({ percent, color, size }, null, 2));
     }
-    onCursorChanged: remember()
     onPercentChanged: remember()
     onColorChanged: remember()
     onSizeChanged: remember()
@@ -124,7 +122,6 @@ ShellRoot {
         onLoaded: {
             try {
                 const s = JSON.parse(text());
-                root.cursor = !!s.cursor;
                 root.percent = root.percents.includes(s.percent) ? s.percent : 100;
                 root.color = s.color ?? Theme.red;
                 root.size = Math.max(0, Math.min(2, s.size ?? 1));

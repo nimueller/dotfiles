@@ -2,8 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 // Toolbar of the screenshot editor (ShotScreen.qml): drawing tools, colour,
-// stroke size, undo / redo, mouse pointer, resolution, then copy, save and
-// cancel. Hovering a button names it and its key underneath.
+// stroke size, undo / redo, resolution, then copy, save and cancel. Hovering a button names it and its key underneath.
 Rectangle {
     id: bar
 
@@ -122,13 +121,6 @@ Rectangle {
         }
 
         Separator {}
-
-        IconButton {
-            glyph: Theme.glyph(0xf245) //
-            active: bar.editor.cursor
-            onClicked: bar.editor.cursor = !bar.editor.cursor
-            onHoveredChanged: bar.say(hovered, `Mouse pointer ${bar.editor.cursor ? "shown" : "hidden"}   C`)
-        }
 
         Repeater {
             model: bar.editor.percents

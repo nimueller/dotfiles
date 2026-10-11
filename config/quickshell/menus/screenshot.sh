@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Screenshots with an editor in Quickshell (screenshot.qml).
 #   screenshot.sh [region|window|screen]
-#       Freeze every monitor (grim, with and without the cursor), then open
-#       the editor on top: pick a region or a window, adjust it, draw on it,
-#       choose the resolution, copy or save. `window` and `screen` start with
-#       the active window or the focused monitor already selected.
+#       Freeze every monitor (grim), then open the editor on top: pick a
+#       region or a window, adjust it, draw on it, choose the resolution, copy
+#       or save. `window` and `screen` start with the active window or the
+#       focused monitor already selected.
 #   screenshot.sh --export <dir> <source.png> <layer.png|-> <WxH+X+Y> <percent> copy|save
 #       Run by the editor as it closes: draws the layer over the screenshot,
 #       crops and scales it, copies it (and saves it), with a notification.
@@ -73,7 +73,6 @@ monitors=$(hyprctl monitors -j)
 # Uncompressed PNGs: ~70 ms for 4K instead of ~270 ms; the export compresses
 while read -r name; do
     grim -l 0 -o "$name" "$shot/$name.png" &
-    grim -l 0 -c -o "$name" "$shot/$name-cursor.png" &
 done < <(jq -r '.[].name' <<<"$monitors")
 printf '%s' "$monitors" >"$shot/monitors.json"
 hyprctl clients -j >"$shot/clients.json"

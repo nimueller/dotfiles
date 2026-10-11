@@ -10,9 +10,9 @@ import Quickshell.Wayland
 //   45° and boxes square). Double-click inside copies, right click drops the
 //   selection.
 //   Keys: Enter / Ctrl+C copy, Ctrl+S save, Escape cancel, Ctrl+Z and
-//   Ctrl+Shift+Z / Ctrl+Y undo and redo, V P L A R O M T B pick a tool, C
-//   shows the mouse pointer, F takes the whole monitor, 1-4 the resolution
-//   (100, 75, 50, 25 %), arrows move the box (Shift: 10 px).
+//   Ctrl+Shift+Z / Ctrl+Y undo and redo, V P L A R O M T B pick a tool, F
+//   takes the whole monitor, 1-4 the resolution (100, 75, 50, 25 %), arrows
+//   move the box (Shift: 10 px).
 PanelWindow {
     id: win
 
@@ -24,7 +24,7 @@ PanelWindow {
     readonly property rect sel: editor.selection
     readonly property bool selected: active && sel.width > 0 && sel.height > 0
     readonly property var monitor: editor.monitors.find(m => m.name === name) ?? null
-    readonly property string file: `${editor.dir}/${name}${editor.cursor ? "-cursor" : ""}.png`
+    readonly property string file: `${editor.dir}/${name}.png`
 
     // Physical pixels per logical one, and the size of the result
     readonly property real factor: frozen.implicitWidth > 0 ? frozen.implicitWidth / width : 1
@@ -594,8 +594,6 @@ PanelWindow {
                 return;
             else if (tools[letter])
                 e.tool = tools[letter];
-            else if (letter === "C")
-                e.cursor = !e.cursor;
             else if (letter === "F")
                 e.select(win.name, Qt.rect(0, 0, win.width, win.height));
             else if (letter >= "1" && letter <= "4")
