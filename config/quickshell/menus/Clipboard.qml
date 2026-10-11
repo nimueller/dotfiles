@@ -9,8 +9,8 @@ import Quickshell.Wayland
 // Clipboard history (cliphist), part of daemon.qml so SUPER+V opens it at
 // once: the key sends the Hyprland event "quickshell-clipboard";
 // `toggle.sh clipboard` does the same from scripts. Type to filter, ↑/↓ to
-// move, Enter or a click copies the entry and, for text, types it into the
-// focused window (like the old rofi picker); Shift+Delete removes an entry.
+// move, Enter or a click pastes the entry into the window you came from
+// (copied, then Ctrl+V; Ctrl+Shift+V in terminals); Shift+Delete removes it.
 // Images show as thumbnails: each is decoded once, when its row first shows,
 // into ~/.cache/quickshell-clipboard (files of removed entries are pruned).
 PanelWindow {
@@ -51,15 +51,21 @@ PanelWindow {
             show();
     }
 
-    // Copy the entry; text is also typed into the window that gets the focus
-    // back once the picker is gone
+    // Copy the entry, then paste it into the window that gets the focus back
+    // once the picker is gone: Ctrl+V, or Ctrl+Shift+V in terminals. Works
+    // for images too.
     function pick(entry) {
         if (!entry)
             return;
         hide();
-        const copy = 'printf "%s\\n" "$1" | cliphist decode | wl-copy';
-        const type = 'sleep 0.2; printf "%s\\n" "$1" | cliphist decode | wtype -';
-        Quickshell.execDetached(["sh", "-c", entry.image ? copy : `${copy} && ${type}`, "sh", entry.line]);
+        const paste = `printf "%s\\n" "$1" | cliphist decode | wl-copy || exit 1
+            sleep 0.15
+            case "$(hyprctl activewindow -j | jq -r .class)" in
+                kitty | Alacritty | foot | footclient | org.wezfurlong.wezterm | com.mitchellh.ghostty | xterm*)
+                    wtype -M ctrl -M shift -k v -m shift -m ctrl ;;
+                *) wtype -M ctrl -k v -m ctrl ;;
+            esac`;
+        Quickshell.execDetached(["sh", "-c", paste, "sh", entry.line]);
     }
 
     function remove(entry) {
