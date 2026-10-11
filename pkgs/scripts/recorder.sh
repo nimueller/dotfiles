@@ -2,14 +2,12 @@
 # Running it again while a recording is active stops that recording.
 
 OUTPUT_FILE="$HOME/Videos/$(date --iso-8601=seconds).mp4"
-RUNNING_PID=$(pgrep -x wf-recorder)
 
-if [ -n "$RUNNING_PID" ]; then
-    kill $RUNNING_PID
+if pkill -x wf-recorder; then
     exit 0
 fi
 
-case "$1" in
+case "${1:-}" in
     region)
         GEOMETRY=$(slurp -d) || exit 1
         ;;

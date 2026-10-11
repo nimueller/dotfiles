@@ -1,18 +1,16 @@
-#!/bin/sh
-
 echo "📄 New LaTeX document"
-read -p "Filename (without .tex) [main]: " fileName
+read -r -p "Filename (without .tex) [main]: " fileName
 fileName=${fileName:-main}
-read -p "Title []: " title
+read -r -p "Title []: " title
 title=${title:-}
-read -p "Author [Nico]: " author
+read -r -p "Author [Nico]: " author
 author=${author:-Nico}
 
 date=$(date +"%d.%m.%Y")
 texfile="${fileName:-main}.tex"
 
 if [ -f "$texfile" ]; then
-    read -p "⚠️ The file $texfile already exists. Do you want to replace it? [n] " replace
+    read -r -p "⚠️ The file $texfile already exists. Do you want to replace it? [n] " replace
 
     if [ "$replace" != "y" ] && [ "$replace" != "yes" ]; then
         echo "Not replacing $texfile"

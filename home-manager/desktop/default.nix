@@ -1,6 +1,6 @@
 { config, pkgs, lib, ... }:
 let
-  my-pkgs = import ../../pkgs { inherit pkgs lib; };
+  my-pkgs = import ../../pkgs { inherit pkgs; };
 in
 {
   targets.genericLinux.enable = true;

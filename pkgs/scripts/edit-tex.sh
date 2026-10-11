@@ -1,5 +1,3 @@
-#!/bin/sh
-
 texfiles=$(find . -maxdepth 1 -type f -name "*.tex")
 count=$(echo "$texfiles" | wc -l)
 
