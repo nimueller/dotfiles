@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls as Controls // only the scroll bar; its Label would shadow ours
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
@@ -10,11 +11,15 @@ import Quickshell.Wayland
 // `toggle.sh clipboard` does the same from scripts. Type to filter, ↑/↓ to
 // move, Enter or a click copies the entry and, for text, types it into the
 // focused window (like the old rofi picker); Shift+Delete removes an entry.
+// Images show as thumbnails: each is decoded once, when its row first shows,
+// into ~/.cache/quickshell-clipboard (files of removed entries are pruned).
 PanelWindow {
     id: root
 
     readonly property int rows: 9
     readonly property int rowHeight: 40
+    readonly property int imageRowHeight: 88
+    readonly property string cacheDir: `${Quickshell.env("HOME")}/.cache/quickshell-clipboard`
 
     property bool shown: false
     property var entries: [] // { line, id, text, image, info }
@@ -103,9 +108,13 @@ PanelWindow {
                         id: line.slice(0, tab),
                         text: image ? `Image ${image[3]}` : preview,
                         image: !!image,
-                        info: image ? `${image[2]} · ${image[1]}` : ""
+                        info: image ? `${image[2]} · ${image[1]}` : "",
+                        file: image ? `${root.cacheDir}/${line.slice(0, tab)}.${image[2]}` : ""
                     };
                 });
+                // Drop decoded images whose entries are gone
+                const keep = root.entries.filter(e => e.image).map(e => e.file.split("/").pop()).join(" ");
+                Quickshell.execDetached(["sh", "-c", 'cd "$1" 2>/dev/null || exit 0; for f in *; do case " $2 " in *" $f "*) ;; *) rm -f -- "$f" ;; esac; done', "sh", root.cacheDir, keep]);
             }
         }
     }
@@ -256,6 +265,23 @@ PanelWindow {
                     highlightMoveDuration: 80
                     keyNavigationWraps: true
 
+                    // Draggable bar for long histories
+                    Controls.ScrollBar.vertical: Controls.ScrollBar {
+                        id: scrollBar
+                        policy: Controls.ScrollBar.AsNeeded
+                        width: 12
+                        rightPadding: 3
+
+                        contentItem: Rectangle {
+                            implicitWidth: 6
+                            radius: 3
+                            color: scrollBar.pressed ? Theme.lavender : scrollBar.hovered ? Theme.overlay1 : Theme.alpha(Theme.overlay1, 0.5)
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                        }
+                        background: Item {}
+                    }
+
                     highlight: Item {
                         width: list.width
 
@@ -276,18 +302,60 @@ PanelWindow {
                         readonly property bool current: ListView.isCurrentItem
 
                         width: list.width
-                        height: root.rowHeight
+                        height: modelData.image ? root.imageRowHeight : root.rowHeight
+
+                        // Decode the image into the cache (once) when the row shows
+                        Process {
+                            id: decode
+                            command: ["sh", "-c", 'mkdir -p "$(dirname "$2")"; [ -s "$2" ] || { printf "%s\\n" "$1" | cliphist decode > "$2.part" && mv "$2.part" "$2"; }', "sh", row.modelData.line, row.modelData.file]
+                            onExited: code => {
+                                if (code === 0)
+                                    thumbnail.source = `file://${row.modelData.file}`;
+                            }
+                        }
+                        Component.onCompleted: {
+                            if (modelData.image)
+                                decode.running = true;
+                        }
 
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: 20
-                            anchors.rightMargin: 20
+                            anchors.rightMargin: 24
                             spacing: 12
 
                             Label {
+                                visible: !row.modelData.image
                                 Layout.preferredWidth: 18
-                                text: Theme.glyph(row.modelData.image ? 0xf02e9 : 0xf0147) // 󰋩 / 󰅇
+                                text: Theme.glyph(0xf0147) // 󰅇
                                 color: row.current ? Theme.lavender : Theme.overlay1
+                            }
+
+                            // Thumbnail (the image glyph until it's decoded)
+                            Rectangle {
+                                visible: row.modelData.image
+                                Layout.preferredWidth: 128
+                                Layout.preferredHeight: 72
+                                radius: 6
+                                color: Theme.surface0
+                                border.width: row.current ? 1 : 0
+                                border.color: Theme.lavender
+
+                                Image {
+                                    id: thumbnail
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: true
+                                    sourceSize.height: 144
+                                }
+                                Label {
+                                    anchors.centerIn: parent
+                                    visible: thumbnail.status !== Image.Ready
+                                    text: Theme.glyph(0xf02e9) // 󰋩
+                                    font.pixelSize: 20
+                                    color: Theme.overlay1
+                                }
                             }
                             Label {
                                 Layout.fillWidth: true
