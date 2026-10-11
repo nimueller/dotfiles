@@ -136,3 +136,33 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - Every week, CI updates `flake.lock` in a pull request, builds the configurations with it and merges it when they
   build; otherwise it closes the pull request.
 - Home Manager removes generations older than a week by itself.
+
+## TODO
+
+**Security and setup**
+- [ ] Unlock the keyring at login: `pam_gnome_keyring` for TTY logins, and a single `login` keyring instead of two
+- [ ] A settings app in Quickshell for the machine's own settings (monitor layout and scale, driver variables,
+      private autostarts) that writes `config/hypr/local.lua`
+- [ ] Make the system half reproducible: a tracked pacman package list and a setup script for PAM, logind and a firewall
+- [ ] Keep Hyprland (from Arch) and Quickshell (from Nix) in step, or take both from the same source, since the Lua config
+      API still changes
+
+**Portability**
+- [ ] Move the remaining machine-specific bits (workspaces bound to monitor ports, `JAVA_HOME`) into `local.lua`
+- [ ] tmux plugins from Home Manager instead of a `git clone` of tpm
+
+**Cleanup**
+- [ ] Remove `brave-flags.conf` (Brave isn't used any more)
+- [ ] Trim `kitty.conf` to the settings that differ from the defaults
+- [ ] Shrink the wallpapers (about 30 MB of the repository) or move them out of git
+
+**Checks**
+- [ ] Lint the Quickshell code (`qmllint`) and the calendar helper (`ruff`) in CI
+- [ ] A `formatter` in the flake, so `nix fmt` works locally, and an optional pre-commit hook
+
+**Desktop features**
+- [ ] Bluetooth menu
+- [ ] Media controls (MPRIS) in the bar or the calendar
+- [ ] Power profiles in the power menu, and a toggle that keeps the screen awake
+- [ ] Screen recording from the UI (the `recorder` script, with an indicator in the bar)
+- [ ] Night light with `hyprsunset`
