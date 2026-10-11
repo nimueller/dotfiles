@@ -22,7 +22,7 @@ jobs:
       pr: ${{ steps.update.outputs.pull-request-number }}
     steps:
       - name: 🔍 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: 🔡 Install Nix
         uses: cachix/install-nix-action@v31
       - name: 🩹 Update flake.lock in a pull request
@@ -36,6 +36,15 @@ jobs:
           git-author-email: "noreply@noreply.github.com"
           git-committer-name: "🤖 Aktualisiernix"
           git-committer-email: "noreply@noreply.github.com"
+          pr-body: |
+            Weekly `flake.lock` update. The workflow that opened this pull
+            request builds the configurations from it and merges it when all
+            of them build; otherwise it closes it and `main` keeps the
+            current lock.
+
+            ```
+            {{ env.GIT_COMMIT_MESSAGE }}
+            ```
 
   build:
     needs: update
@@ -57,7 +66,7 @@ jobs:
         with:
           tool-cache: true
       - name: 🔍 Checkout the updated lock
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: update-flake-lock
       - name: 🔡 Install Nix

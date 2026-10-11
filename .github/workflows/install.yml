@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🔍 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       - name: 🧹 Format and lint (tool versions from flake.lock)
         shell: nix shell --inputs-from . nixpkgs#nixfmt nixpkgs#statix nixpkgs#deadnix nixpkgs#shellcheck --command bash -euo pipefail {0}
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🔍 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       - name: 🛠️ Check flake
         run: nix flake check --no-build
