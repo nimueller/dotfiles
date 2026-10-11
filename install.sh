@@ -54,8 +54,6 @@ post_install_steps() {
   if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
   fi
-
-  bat cache --build
 }
 
 set_default_shell() {

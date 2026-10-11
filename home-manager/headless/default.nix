@@ -22,7 +22,6 @@
     fzf # Lifesaver!
     autojump # Lifesaver #2!
     tldr
-    bat
     lsd
     jq
     lua
