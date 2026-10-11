@@ -1,3 +1,7 @@
+// Software rendering: on the NVIDIA driver every GPU-rendered window costs
+// its own context and buffers, ~100 MB per bar; this simple UI draws fine on
+// the CPU and the daemon needs ~200 MB instead of ~490 MB.
+//@ pragma Env QT_QUICK_BACKEND=software
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland

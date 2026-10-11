@@ -1,3 +1,5 @@
+// Software rendering: as fast to open, a fraction of the memory (see daemon.qml)
+//@ pragma Env QT_QUICK_BACKEND=software
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
