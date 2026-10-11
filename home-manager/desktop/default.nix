@@ -20,13 +20,13 @@ in
 
   services.kdeconnect.enable = true;
 
-  # Notifications and the volume/brightness OSD come from the resident
-  # quickshell daemon (config/quickshell/menus/daemon.qml). Hyprland starts
-  # it; D-Bus activation also starts it (instead of dunst) when a
-  # notification arrives while it isn't running.
+  # The bar, launcher, notifications and the volume/brightness OSD come from
+  # the resident quickshell daemon (config/quickshell/menus/daemon.qml).
+  # Hyprland starts it; D-Bus activation also starts it (instead of dunst)
+  # when a notification arrives while it isn't running.
   systemd.user.services.quickshell-daemon = {
     Unit = {
-      Description = "Quickshell notification daemon and OSD";
+      Description = "Quickshell bar, launcher, notifications and OSD";
       PartOf = [ "graphical-session.target" ];
       After = [ "graphical-session.target" ];
     };
@@ -71,7 +71,6 @@ in
   # Packages needed on Hyprland specifically, in addition to a standard desktop
   home.packages = with pkgs; [
     nerd-fonts.noto
-    nerd-fonts.monofur
     noto-fonts
     noto-fonts-lgc-plus
     noto-fonts-cjk-sans
@@ -89,12 +88,10 @@ in
     slurp
     libnotify
     libsecret
-    inotify-tools
     wtype
-    xdotool
     cliphist
     pavucontrol
-    quickshell # bar menus and app launcher (config/quickshell/menus)
+    quickshell # bar, menus, launcher, notifications, OSD (config/quickshell/menus)
 
     my-pkgs.hyprshot
     my-pkgs.recorder

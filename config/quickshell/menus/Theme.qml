@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Catppuccin Macchiato, same palette as waybar/macchiato.css.
+// Catppuccin Macchiato (also in config/hypr/colors.lua and the rofi theme).
 Singleton {
     readonly property color rosewater: "#f4dbd6"
     readonly property color mauve: "#c6a0f6"

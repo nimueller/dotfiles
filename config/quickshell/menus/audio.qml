@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Pipewire
 
-// Sound menu for the waybar pulseaudio module
+// Sound menu for the bar's sound module
 Popup {
     name: "audio"
 

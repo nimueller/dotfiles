@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
-// Network menu for the waybar network module, on top of nmcli: wired
+// Network menu for the bar's network module, on top of nmcli: wired
 // devices, Wi-Fi and VPN connections (OpenVPN etc. and WireGuard).
 Popup {
     id: popup

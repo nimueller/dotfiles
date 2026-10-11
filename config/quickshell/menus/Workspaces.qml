@@ -45,7 +45,7 @@ Rectangle {
                 readonly property bool isSpecial: modelData.id < 0
                 readonly property bool active: isSpecial || root.monitor?.activeWorkspace === modelData
 
-                implicitWidth: Math.max(30, label.implicitWidth + 22) // as wide as waybar's buttons
+                implicitWidth: Math.max(30, label.implicitWidth + 22)
                 implicitHeight: 15
                 radius: 6
                 color: active ? (isSpecial ? Theme.mauve : Theme.lavender) : modelData.urgent ? Theme.peach : mouse.containsMouse ? Theme.surface1 : "transparent"

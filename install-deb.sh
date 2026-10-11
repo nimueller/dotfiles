@@ -17,7 +17,6 @@ sudo apt update
 
 sudo apt install -y \
   hyprland \
-  waybar \
   flatpak \
   hyprpicker \
   hyprpaper \

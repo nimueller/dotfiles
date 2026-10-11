@@ -26,7 +26,7 @@ PanelWindow {
             closedAt = Date.now();
             return;
         }
-        // Clicking the bar icon clears the grab before waybar runs toggle.sh;
+        // Clicking the bar icon clears the grab before the bar runs toggle.sh;
         // the stamp tells toggle.sh not to reopen the menu right away.
         Quickshell.execDetached(["touch", `${Quickshell.env("XDG_RUNTIME_DIR")}/qs-${name}-closed`]);
         Qt.quit();

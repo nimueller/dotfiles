@@ -6,7 +6,7 @@ import Quickshell.Wayland
 
 // The notification daemon's state (replaces dunst): receives notifications,
 // keeps a history for the notification center (saved across restarts),
-// decides what pops up, and tells waybar's bell about it.
+// and decides what pops up. The bar's bell reads it directly.
 //
 // Entries: { key, id, n (live Notification, or null after a restart), app,
 // summary, body, icon, urgency (0 low, 1 normal, 2 critical), time (ms) }
@@ -15,7 +15,6 @@ Scope {
 
     readonly property int historyLength: 50
     readonly property string historyPath: `${Quickshell.env("HOME")}/.cache/quickshell-notifications.json`
-    readonly property string statusPath: `${Quickshell.env("XDG_RUNTIME_DIR")}/quickshell-notifications.json`
 
     property var entries: [] // newest first
     property var popups: [] // keys of entries popping up right now
@@ -143,28 +142,10 @@ Scope {
         window?.activate();
     }
 
-    // History file and waybar status -------------------------------------------
+    // History file ----------------------------------------------------------------
 
     function changed() {
         saveTimer.restart();
-        writeStatus();
-    }
-
-    function writeStatus() {
-        const count = entries.length;
-        const bell = Theme.glyph(0xf009a), off = Theme.glyph(0xf009b);
-        // Red dot over the bell's top-right corner (Catppuccin Latte red)
-        const dot = `<span letter_spacing='-4800'>${bell}</span><span foreground='#e64553' size='75%' rise='5pt'>●</span>`;
-        const status = dnd ? { text: off, class: "dnd", tooltip: "Do not disturb is on" } : count ? { text: `${dot} ${count}`, class: "unread", tooltip: `${count} notification${count === 1 ? "" : "s"}` } : { text: bell, class: "empty", tooltip: "No notifications" };
-        status.tooltip += "\nLeft: open · Right: do not disturb · Middle: clear";
-        statusFile.setText(JSON.stringify(status));
-    }
-
-    FileView {
-        id: statusFile
-        path: root.statusPath
-        printErrors: false
-        onSaved: Quickshell.execDetached(["pkill", "-RTMIN+8", "waybar"])
     }
 
     FileView {
@@ -178,9 +159,7 @@ Scope {
                 root.dnd = saved.dnd ?? false;
                 root.entries = (saved.entries ?? []).map(e => Object.assign({}, e, { key: root.nextKey++, n: null }));
             } catch (e) {}
-            root.writeStatus();
         }
-        onLoadFailed: root.writeStatus()
     }
 
     Timer {

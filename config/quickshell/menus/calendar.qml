@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
-// Calendar for the waybar clock: a month of day boxes with their
+// Calendar for the bar's clock: a month of day boxes with their
 // appointments and forecast, the selected day in a sidebar with the current
 // weather and an hourly forecast, and a form to add or edit appointments
 // (with reminders) on Nextcloud. Events come from Nextcloud (CalDAV) and

@@ -1,4 +1,4 @@
-/* Catppuccin Macchiato rofi theme, matching waybar and the quickshell menus:
+/* Catppuccin Macchiato rofi theme, matching the quickshell bar and menus:
    solid crust window, rounded surfaces, lavender accent on soft tints. */
 
 @import "catppuccin-macchiato"
@@ -11,7 +11,7 @@
     padding:          0;
     spacing:          0;
 
-    /* 18% tints of the accents, like the waybar chips */
+    /* 18% tints of the accents, like the bar's chips */
     lavender-tint:    #b7bdf82e;
     mauve-tint:       #c6a0f62e;
     red-tint:         #ed87962e;

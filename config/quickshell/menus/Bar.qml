@@ -8,7 +8,7 @@ import Quickshell.Services.UPower
 import Quickshell.Wayland
 import Quickshell.Widgets
 
-// The bar at the bottom of a monitor (replaces waybar), part of daemon.qml:
+// The bar at the bottom of a monitor, part of daemon.qml:
 // workspaces and window title on the left, the clock in the middle, tray,
 // privacy, sound, battery, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.

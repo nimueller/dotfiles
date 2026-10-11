@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 
-// Notification center for the waybar bell, part of daemon.qml: the history
+// Notification center for the bar's bell, part of daemon.qml: the history
 // of the notification store, with do not disturb and clear all.
 Popup {
     id: popup
