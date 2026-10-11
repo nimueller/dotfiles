@@ -75,11 +75,11 @@ Rectangle {
         cursorShape: Qt.PointingHandCursor
         onClicked: event => {
             if (event.button === Qt.RightButton)
-                root.leave(root.closed);
+                root.leave(() => root.closed());
             else if (event.button === Qt.MiddleButton)
                 root.closeAll();
             else
-                root.leave(root.activated);
+                root.leave(() => root.activated());
         }
     }
 
@@ -157,7 +157,7 @@ Rectangle {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.leave(root.closed)
+                        onClicked: root.leave(() => root.closed())
                     }
                 }
             }
@@ -247,6 +247,6 @@ Rectangle {
         duration: root.timeout * 1000
         running: root.timeout > 0
         paused: running && root.hovered
-        onFinished: root.leave(root.closed)
+        onFinished: root.leave(() => root.closed())
     }
 }
