@@ -109,8 +109,6 @@ in
     file-roller
     seahorse # Manage keyring
     geary
-    # Gnome Circle GUI apps
-    apostrophe # Markdown viewer
     # Other GUI apps
     keepassxc
     wl-clipboard
