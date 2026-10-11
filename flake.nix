@@ -16,61 +16,52 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, ... } @ inputs:
+  outputs =
+    { nixpkgs, home-manager, ... }:
     let
-      username = "nico";
-      system = "x86_64-linux";
+      # Unfree packages (Steam, Discord, ...) are allowed everywhere; setting
+      # it here instead of in a module spares home-manager a second nixpkgs
+      # import
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
+
+      mkHome =
+        {
+          system ? "x86_64-linux",
+          username ? "nico",
+          modules,
+        }:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = pkgsFor system;
+          extraSpecialArgs = { inherit username; };
+          modules = [ ./options ] ++ modules;
+        };
     in
     {
       homeConfigurations = {
-        headless = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.${system};
+        headless = mkHome { modules = [ ./home-manager/headless ]; };
 
-          extraSpecialArgs = { inherit inputs username; };
-
-          modules = [
-            ./options
-            ./home-manager/headless
-          ];
+        headless_aarch64 = mkHome {
+          system = "aarch64-linux";
+          modules = [ ./home-manager/headless ];
         };
 
-        headless_aarch64 = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages."aarch64-linux";
-
-          extraSpecialArgs = { inherit inputs username; };
-
+        desktop = mkHome {
           modules = [
-            ./options
-            ./home-manager/headless
-          ];
-        };
-
-        desktop = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.${system};
-
-          extraSpecialArgs = { inherit inputs username; };
-
-          modules = [
-            ./options
             ./home-manager/headless
             ./home-manager/desktop
           ];
         };
 
-        runner = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.${system};
-
-          extraSpecialArgs = {
-            inherit inputs;
-            username = "runner";
-          };
-
-          modules = [
-            ./options
-            ./home-manager/headless
-          ];
+        # GitHub Actions runner (CI)
+        runner = mkHome {
+          username = "runner";
+          modules = [ ./home-manager/headless ];
         };
-
       };
     };
 }

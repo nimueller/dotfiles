@@ -3,7 +3,6 @@ let
   my-pkgs = import ../../pkgs { inherit pkgs lib; };
 in
 {
-  nixpkgs.config.allowUnfree = true;
   targets.genericLinux.enable = true;
 
   imports = [
