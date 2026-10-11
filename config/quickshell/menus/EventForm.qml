@@ -74,9 +74,9 @@ ColumnLayout {
         if (!title.text.trim())
             problem = "Give it a title";
         else if (!from || !to)
-            problem = "Dates as 2026-10-11 or 11.10.2026";
+            problem = "Write dates as 2026-10-11 or 11.10.2026";
         else if (!allDay && (!t1 || !t2))
-            problem = "Times as 9:00 or 14:30";
+            problem = "Write times as 9:00 or 14:30";
         else if (!calendar)
             problem = "No writable Nextcloud calendar";
         else {
@@ -261,7 +261,7 @@ ColumnLayout {
             onClicked: {
                 const m = Reminders.parse(customAlarm.text);
                 if (m === null) {
-                    root.problem = "Reminders like 45m, 2h or 3d";
+                    root.problem = "Write reminders like 45m, 2h or 3d";
                     return;
                 }
                 root.problem = "";

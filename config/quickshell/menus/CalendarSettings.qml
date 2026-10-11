@@ -332,7 +332,7 @@ RowLayout {
         }
         Label {
             Layout.fillWidth: true
-            text: "For example public holidays: most calendar sites offer an ICS link."
+            text: "For example, public holidays: most calendar sites offer an ICS link."
             font.pixelSize: 10
             color: Theme.overlay1
             wrapMode: Text.Wrap

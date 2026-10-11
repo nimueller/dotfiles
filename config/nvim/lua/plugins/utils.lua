@@ -1,5 +1,5 @@
 return {
-  -- Measure VIM startup time
+  -- Measure Vim startup time
   {
     "dstein64/vim-startuptime",
     cmd = "StartupTime",

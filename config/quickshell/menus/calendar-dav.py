@@ -85,7 +85,7 @@ def keyring_attrs(url, user):
 def stored_password(url, user):
     r = subprocess.run(["secret-tool", "lookup", *keyring_attrs(url, user)], capture_output=True, text=True)
     if r.returncode or not r.stdout:
-        raise Fail("No app password stored, sign in again in the settings")
+        raise Fail("No app password stored. Sign in again in the settings.")
     return r.stdout.rstrip("\n")
 
 
@@ -105,7 +105,7 @@ def http(method, url, auth=None, body=b"", headers=None):
         if e.code == 401:
             raise Fail("Wrong username or app password") from None
         if e.code == 412:
-            raise Fail("The event changed on the server, reload and try again") from None
+            raise Fail("The event changed on the server. Reload and try again.") from None
         raise Fail(f"Server answered {e.code} {e.reason}") from None
     except urllib.error.URLError as e:
         raise Fail(f"Can't reach the server ({e.reason})") from None
@@ -119,7 +119,7 @@ def dav(method, url, auth, body, depth):
     try:
         return ET.fromstring(data)
     except ET.ParseError:
-        raise Fail("The server's answer isn't CalDAV, check the address") from None
+        raise Fail("The server's answer isn't CalDAV. Check the address.") from None
 
 
 def found(response, path):
@@ -290,7 +290,7 @@ def update(url, auth, event):
         raise Fail("Recurring events can only be changed in Nextcloud")
     etag = event.get("etag") or headers.get("ETag", "")
     if headers.get("ETag") and etag and headers.get("ETag") != etag:
-        raise Fail("The event changed on the server, reload and try again")
+        raise Fail("The event changed on the server. Reload and try again.")
     ev = vevents[0]
     apply_fields(ev, event)
     for key in ("dtstamp", "last-modified"):

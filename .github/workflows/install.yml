@@ -24,7 +24,7 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - name: 🛠️ Check flake
         run: nix flake check --no-build
-      - name: 🏠 Evaluate Home-Manager configurations
+      - name: 🏠 Evaluate Home Manager configurations
         run: |
           for config in headless headless_aarch64 desktop runner; do
             echo "Evaluating $config"

@@ -28,7 +28,7 @@ local function nmap(key, keymap, description) map("n", key, keymap, description)
 local function imap(keys, func, desc) map("i", keys, func, desc) end
 
 
--- Non VIM-ish keymaps because I'm used to them...
+-- Non-Vim keymaps, because I'm used to them...
 vim.keymap.set({ 'n', 'v' }, '<leader>a', '<ESC>gg0vG$', {silent = true})
 vim.keymap.set('v', '<C-c>', '"+y', {silent = true})
 vim.keymap.set({ 'n', 'v', 'i' }, '<C-v>', '<ESC>"+p', {silent = true})

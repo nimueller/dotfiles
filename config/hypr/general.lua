@@ -81,7 +81,7 @@ hl.animation({ leaf = "workspaces",  enabled = true, speed = 6,  bezier = "defau
 
 hl.env("XCURSOR_SIZE", "24")
 
--- Session variables for Nvidia
+-- Session variables for NVIDIA
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("VDPAU_DRIVER", "nvidia")
 hl.env("XDG_SESSION_TYPE", "wayland")

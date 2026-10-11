@@ -20,7 +20,7 @@ vim.opt.rtp:prepend(lazypath)
 --  You can configure plugins using the `config` key.
 --
 --  You can also configure plugins after the setup call,
---    as they will be available in your neovim runtime.
+--    as they will be available in your Neovim runtime.
 require("lazy").setup({
   -- NOTE: First, some plugins that don't require any configuration
   {

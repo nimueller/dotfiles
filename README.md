@@ -3,11 +3,11 @@
 > [!WARNING]  
 > *Still heavily WIP*
 
-<b>OS</b>: Arch Linux (packages via Nix + Home-Manager)
+<b>OS</b>: Arch Linux (packages via Nix + Home Manager)
 
 <b>Desktop Environment</b>: Hyprland
 
-<b>Shell</b>: ZSH
+<b>Shell</b>: Zsh
 
 <b>Editor</b>: Neovim
 
@@ -17,7 +17,7 @@
 
 <b>Terminal</b>: kitty
 
-<b>Application Launcher / menus / clipboard</b>: Quickshell
+<b>Application launcher / menus / clipboard</b>: Quickshell
 
 <b>Browser</b>: Zen
 
@@ -28,14 +28,14 @@
 
 ## Installation
 
-### Home-Manager configuration (any OS)
-Prerequisites before running the install.sh script
+### Home Manager configuration (any OS)
+Prerequisites for the install.sh script:
 * `curl`
 * `git`
 
 <details open>
   <summary><b>Headless mode</b></summary>
-  For command line only (useful on servers or TTY)
+  Command line only (useful on servers or in a TTY)
   
   ```sh 
   curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | bash -s headless
@@ -44,7 +44,7 @@ Prerequisites before running the install.sh script
 
 <details open>
   <summary><b>Desktop mode</b></summary>
-  Activating my desktop environment, applications, and stuff, in addition to headless mode
+  Headless mode plus my desktop environment and applications
   
   ```sh
   curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | bash -s desktop

@@ -56,7 +56,7 @@ Popup {
             anchors.fill: parent
             anchors.leftMargin: 12
             anchors.rightMargin: 12
-            text: "Do not disturb is on, notifications don't pop up"
+            text: "Do not disturb is on: notifications don't pop up"
             font.pixelSize: 11
             color: Theme.peach
         }

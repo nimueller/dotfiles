@@ -12,7 +12,7 @@ date=$(date +"%d.%m.%Y")
 texfile="${fileName:-main}.tex"
 
 if [ -f "$texfile" ]; then
-    read -r -p "⚠️ The file $texfile already exists. Do you want to replace it? [n] " replace
+    read -r -p "⚠️ The file $texfile already exists. Replace it? [y/N] " replace
 
     if [ "$replace" != "y" ] && [ "$replace" != "yes" ]; then
         echo "Not replacing $texfile"
@@ -74,5 +74,5 @@ EOF
 
 mkdir -p '.build'
 
-echo "✅ File '$texfile' was created"
+echo "✅ Created $texfile"
 

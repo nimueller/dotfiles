@@ -1,5 +1,5 @@
 return {
-	-- Make VIM look nice (entire UI reworked)
+	-- Make Vim look nice (entire UI reworked)
 	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
@@ -171,7 +171,7 @@ return {
 			{
 				"<leader>si",
 				"<cmd>Telescope lsp_implementations theme=cursor<cr>",
-				desc = "[S]earch [I]implentations",
+				desc = "[S]earch [I]mplementations",
 				silent = true
 			},
 			{
@@ -260,7 +260,7 @@ return {
 			{
 				"<C-z>",
 				"<cmd>ZenMode<cr>",
-				desc = "Toogle Zen Mode",
+				desc = "Toggle Zen mode",
 				silent = true
 			},
 		},

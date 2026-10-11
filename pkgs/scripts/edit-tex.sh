@@ -18,5 +18,5 @@ pid=$!
 
 nvim "$texfile"
 
-kill "$pid" 2>/dev/null && echo "🛑 latexmk PID $pid killed"
+kill "$pid" 2>/dev/null && echo "🛑 Stopped latexmk (PID $pid)"
 

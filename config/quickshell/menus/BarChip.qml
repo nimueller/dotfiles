@@ -1,8 +1,8 @@
 import QtQuick
 
 // A module of the bar: a rounded chip with its own accent colour on a soft
-// tint of it. `solid` fills it with the accent,
-// `plain` uses the neutral surface instead of a tint.
+// tint of it. `solid` fills it with the accent, `plain` uses the neutral
+// surface instead of a tint.
 Rectangle {
     id: root
 

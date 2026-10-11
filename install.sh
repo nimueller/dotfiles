@@ -7,21 +7,21 @@ case "$INSTALL_OPTION" in
   headless) ;;
   desktop) ;;
   runner) ;;
-  *) >&2 echo "Installation option '$INSTALL_OPTION' is not valid. Please provide one of [headless|desktop|runner]"; exit 1 ;;
+  *) >&2 echo "Installation option '$INSTALL_OPTION' is not valid. Use one of [headless|desktop|runner]"; exit 1 ;;
 esac
 
 if ! command -v git >/dev/null 2>&1; then
-  echo 'Before running this script, you must install git using your favourite package manager'
+  echo 'Before running this script, install git with your package manager'
   exit 1
 fi
 
 if ! command -v curl >/dev/null 2>&1; then
-  echo 'Before running this script, you must install curl using your favourite package manager'
+  echo 'Before running this script, install curl with your package manager'
   exit 1
 fi
 
 if ! command -v xz >/dev/null 2>&1; then
-  echo 'Before running this script, you must install xz using your favourite package manager'
+  echo 'Before running this script, install xz with your package manager'
   exit 1
 fi
 
@@ -61,15 +61,14 @@ set_default_shell() {
   echo -n '
 -----------------------------------------------------------------------------------------------------------------------
 
-Trying to set your default shell to ZSH (assuming your default login shell is Bash and was not changed using the chsh command).
+Setting your default shell to Zsh (assuming your login shell is Bash and was not changed with chsh).
 
-This process will use a little hack to automatically start ZSH every time you want to start Bash.
-Changing the default shell using chsh is not possible with Home-Manager, as NixOS is required to automatically set the default login shell.
-Thus, the generated .profile file should not be deleted, although using ZSH.
+Home Manager cannot change the login shell with chsh; only NixOS can set it. Instead, a small hack in
+.profile starts Zsh whenever Bash starts, so do not delete the generated .profile even though you use Zsh.
 
-This step will copy your existing '\$HOME/.profile' file to '\$HOME/.profile.backup' and bootstrap ZSH from .profile in the future.
-If '\$HOME/.profile.backup' already exists, this step will be automatically skipped.
-You may run this script again if you want to set ZSH as your default shell or in case the .bashrc.backup already exists. 
+This step moves your existing '\$HOME/.profile' to '\$HOME/.profile.backup' and starts Zsh from .profile from now on.
+If '\$HOME/.profile.backup' already exists, this step is skipped. Move that file away and run this script again
+to set Zsh as your default shell later.
 
 '
   while [ -z "$SET_DEFAULT_SHELL" ]; do
@@ -85,7 +84,7 @@ You may run this script again if you want to set ZSH as your default shell or in
   done
 
   if [ -f "$HOME/.profile.backup" ]; then
-    echo "$HOME/.profile.backup already exists. Please move this file to a safe place and restart this installation script."
+    echo "$HOME/.profile.backup already exists. Move it to a safe place and run this script again."
     return
   fi
 
@@ -102,7 +101,7 @@ if [ -n "$BASH_VERSION" ]; then
     fi
 fi
 ' >> "$HOME/.profile"
-  echo 'Made ZSH the default shell. Please restart your terminal session.'
+  echo 'Zsh is now the default shell. Restart your terminal session.'
 }
 
 if ! command -v nix >/dev/null 2>&1; then
@@ -114,7 +113,7 @@ fi
 if ! command -v home-manager >/dev/null 2>&1; then
   install_home_manager
 else 
-  echo 'Home-Manager is already installed, skipping'
+  echo 'Home Manager is already installed, skipping'
 fi
 
 install_repo
