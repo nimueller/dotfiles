@@ -1,7 +1,7 @@
 # Personal dotfiles
 
 > [!WARNING]  
-> *Heavily vibecoded with Claude Code Opus 5.5, because I am lazy*
+> *Heavily vibecoded with Claude Code Opus 5.5, because I am lazy and it is way more effective*
 
 <b>OS</b>: Arch Linux (packages via Nix + Home Manager)
 
