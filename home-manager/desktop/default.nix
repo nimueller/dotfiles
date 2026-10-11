@@ -83,7 +83,7 @@ in
     xdg-terminal-exec
     playerctl
     hyprpicker
-    grim
+    hyprshot # screenshots; brings grim, slurp, jq etc. along
     slurp
     libnotify
     libsecret
@@ -92,7 +92,6 @@ in
     pavucontrol
     quickshell # bar, menus, launcher, notifications, OSD (config/quickshell/menus)
 
-    my-pkgs.hyprshot
     my-pkgs.recorder
     my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
