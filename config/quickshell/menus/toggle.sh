@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
-#   toggle.sh audio|calendar|network|notifications|power|launcher
+#   toggle.sh audio|calendar|network|notifications|power|launcher|clipboard
 #   toggle.sh daemon --start|--restart   start the resident daemon (Hyprland),
 #                                        or restart it to apply changes
 # Each bar menu is its own short-lived quickshell instance (<menu>.qml), so
-# nothing runs while they're closed. The launcher and the notification
-# center are part of the resident daemon.qml instead, so they open instantly.
+# nothing runs while they're closed. The launcher, the clipboard history and
+# the notification center are part of the resident daemon.qml instead, so
+# they open instantly.
 dir=$(dirname "$(readlink -f "$0")")
 menu=${1:?usage: toggle.sh <menu> [--start]}
 
@@ -24,7 +25,7 @@ case $menu in
         [[ $2 == --start || $2 == --restart ]] && exec qs -p "$dir/daemon.qml" -n -d >/dev/null 2>&1
         exit 1
         ;;
-    launcher | notifications)
+    launcher | clipboard | notifications)
         exec "$dir/ipc.sh" "$menu" toggle
         ;;
 esac

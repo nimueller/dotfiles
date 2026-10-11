@@ -17,7 +17,7 @@
 
 <b>Terminal</b>: kitty
 
-<b>Application Launcher / menus</b>: Quickshell
+<b>Application Launcher / menus / clipboard</b>: Quickshell
 
 <b>Browser</b>: Zen
 

@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Catppuccin Macchiato (also in config/hypr/colors.lua and the rofi theme).
+// Catppuccin Macchiato (also in config/hypr/colors.lua).
 Singleton {
     readonly property color rosewater: "#f4dbd6"
     readonly property color mauve: "#c6a0f6"

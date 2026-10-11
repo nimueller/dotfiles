@@ -81,7 +81,7 @@ hl.bind(mainMod .. " + apostrophe",          exec("wtype 'ä'"))
 hl.bind(mainMod .. " + SHIFT + apostrophe",  exec("wtype 'Ä'"))
 hl.bind(mainMod .. " + minus",               exec("wtype 'ß'"))
 
-hl.bind(mainMod .. " + V", exec("cliphist list | rofi -dmenu | cliphist decode | tee >(wtype -) | wl-copy"))
+hl.bind(mainMod .. " + V", hl.dsp.event("quickshell-clipboard")) -- clipboard history (quickshell/menus/Clipboard.qml)
 
 -- Program shortcuts
 hl.bind(mainMod .. " + T",         exec("kitty"))

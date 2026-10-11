@@ -96,8 +96,6 @@ in
     noto-fonts-color-emoji
     noto-fonts-monochrome-emoji
 
-    rofi
-
     xdg-terminal-exec
     playerctl
     hyprpicker

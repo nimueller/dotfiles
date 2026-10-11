@@ -23,7 +23,7 @@
   Check it with `Hyprland --verify-config -c ~/.config/hypr/hyprland.lua`.
 - **Bar / wallpaper / lock:** Quickshell bar in the resident daemon (`quickshell/menus/Bar.qml`), hyprpaper (rotates through `hypr/wallpapers/`), hyprlock
 - **Launcher / bar menus:** Quickshell (`quickshell/menus`: launcher, sound, network with VPN, notifications, power, calendar with METAR + Open-Meteo weather, Nextcloud CalDAV (create/edit/delete, reminders) and ICS subscriptions), opened by `toggle.sh <menu>`; a resident `daemon.qml` replaces dunst and SwayOSD (notification popups/center, volume and brightness OSD); the launcher lives in the resident daemon and SUPER+D sends it the Hyprland event `quickshell-launcher`
-- **Clipboard:** cliphist in rofi
+- **Clipboard:** cliphist with a quickshell picker (SUPER+V, `quickshell/menus/Clipboard.qml`)
 - **Terminal / shell:** kitty, zsh with p10k, tmux (prefix `C-a`, tpm, catppuccin)
 - **Editor:** Neovim with lazy.nvim, treesitter, telescope, neo-tree, blink.cmp, none-ls. All LSPs come from Nix.
 - **Theme:** Catppuccin Macchiato throughout

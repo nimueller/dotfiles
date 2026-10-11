@@ -9,11 +9,12 @@ import Quickshell.Io
 
 // Resident part of the desktop shell (started with Hyprland, see
 // autostart.lua; also D-Bus activated for notifications): the bar on every
-// monitor, the app launcher, the notification daemon with
+// monitor, the app launcher, the clipboard history, the notification daemon with
 // its popups and center (replaces dunst) and the OSD for the volume and
 // brightness keys (replaces SwayOSD).
 //
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
+//   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
 //   toggle.sh notifications            open/close the notification center
 //   ipc.sh notifications dnd|clear     do not disturb / clear all from scripts
 //   hl.dsp.event("quickshell-osd volume +5")    keybinds.lua: volume +/-N,
@@ -43,6 +44,8 @@ ShellRoot {
     }
 
     Launcher {}
+
+    Clipboard {}
 
     NetworkStatus {
         id: networkStatus
