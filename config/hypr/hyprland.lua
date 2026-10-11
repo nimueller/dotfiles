@@ -8,3 +8,11 @@ require("autostart")
 require("keybinds")
 require("windowrules")
 require("workspacerules")
+
+-- This machine's own settings (monitors, drivers, private autostarts), kept
+-- out of git; see local.example.lua. Loaded last, so it can override.
+local localConfig = io.open(dir .. "local.lua")
+if localConfig then
+    localConfig:close()
+    require("local")
+end

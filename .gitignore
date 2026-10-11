@@ -5,3 +5,6 @@
 # Nix build outputs
 result
 result-*
+
+# This machine's own Hyprland settings (see config/hypr/local.example.lua)
+config/hypr/local.lua

@@ -103,7 +103,9 @@ Good to know:
   agent, the keyring) come from pacman. On Arch, the script offers to install them, and to let the power button open the
   power menu instead of shutting down.
 - Start the desktop by running `Hyprland` after logging in on a TTY.
-- The monitor layout in `config/hypr/general.lua` is specific to my machine; adjust it to yours.
+- Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
+  `config/hypr/local.lua`, which git ignores. `config/hypr/local.example.lua` shows how; without it, every monitor runs
+  at its preferred mode.
 - Zsh becomes the login shell through a small hook in `~/.profile`, since Home Manager can't run `chsh`. The script asks
   before doing that.
 
