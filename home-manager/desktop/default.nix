@@ -8,6 +8,7 @@ in
   imports = [
     ./gaming.nix
     ./symlinks.nix
+    ../dev
     ../theme/desktop.nix
   ];
 

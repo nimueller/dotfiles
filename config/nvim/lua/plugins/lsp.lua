@@ -50,17 +50,21 @@ return {
 			local null_ls = require("null-ls")
 			local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
-			null_ls.setup({
-				sources = {
-					null_ls.builtins.diagnostics.deadnix,
-					null_ls.builtins.diagnostics.editorconfig_checker,
-					null_ls.builtins.diagnostics.tidy,
-					null_ls.builtins.diagnostics.ktlint,
-					null_ls.builtins.formatting.stylua,
-					null_ls.builtins.formatting.ktlint,
-					null_ls.builtins.formatting.tidy,
-				},
+			-- Only the tools that are installed (see home-manager/dev)
+			local sources = vim.tbl_filter(function(source)
+				local command = source._opts and source._opts.command
+				return type(command) ~= "string" or vim.fn.executable(command) == 1
+			end, {
+				null_ls.builtins.diagnostics.deadnix,
+				null_ls.builtins.diagnostics.editorconfig_checker,
+				null_ls.builtins.diagnostics.tidy,
+				null_ls.builtins.diagnostics.ktlint,
+				null_ls.builtins.formatting.stylua,
+				null_ls.builtins.formatting.ktlint,
+				null_ls.builtins.formatting.tidy,
 			})
+
+			null_ls.setup({ sources = sources })
 		end,
 	},
 }

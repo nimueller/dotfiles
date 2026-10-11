@@ -1,15 +1,25 @@
+-- Enable a language server only when it's installed: the dev module
+-- (home-manager/dev) installs them on the desktop, headless machines run
+-- Neovim without them.
+local function enable(name)
+	local cmd = (vim.lsp.config[name] or {}).cmd
+	if type(cmd) == "function" or (type(cmd) == "table" and vim.fn.executable(cmd[1]) == 1) then
+		vim.lsp.enable(name)
+	end
+end
+
 -- General
-vim.lsp.enable("codebook")
+enable("codebook")
 
 -- LaTeX and Markdown
-vim.lsp.enable("ltex")
-vim.lsp.enable("marksman")
+enable("ltex")
+enable("marksman")
 
 -- Lua
-vim.lsp.enable("lua_ls")
+enable("lua_ls")
 
 -- Nix
-vim.lsp.enable("nil_ls")
+enable("nil_ls")
 vim.lsp.config("nil_ls", {
 	settings = {
 		nix = {
@@ -25,19 +35,19 @@ vim.lsp.config("nil_ls", {
 		},
 	},
 })
-vim.lsp.enable("statix")
+enable("statix")
 
 -- Hyprland
-vim.lsp.enable("hyprls")
+enable("hyprls")
 
 -- C++
-vim.lsp.enable("clangd")
+enable("clangd")
 
 -- Python
-vim.lsp.enable("pyright")
+enable("pyright")
 
 -- Go
-vim.lsp.enable("gopls")
+enable("gopls")
 
 -- Enable diagnostic virtual_text
 vim.diagnostic.config({ virtual_text = true })
