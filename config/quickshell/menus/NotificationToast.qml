@@ -18,6 +18,8 @@ Rectangle {
 
     readonly property var n: entry.n
     readonly property bool critical: entry.urgency === 2
+    // The window that sent it (Windows.qml): by the sender's process, else by app
+    readonly property var window: (entry.pid ? Windows.forPid(entry.pid) : null) ?? Windows.forApp(entry.desktop)
     readonly property color accent: critical ? Theme.red : entry.urgency === 0 ? Theme.overlay2 : Theme.lavender
     // Seconds, from the app or by urgency
     readonly property real timeout: critical ? 0 : n && n.expireTimeout > 0 ? n.expireTimeout : [5, 8, 0][entry.urgency]
@@ -130,11 +132,12 @@ Rectangle {
 
                 Label {
                     Layout.fillWidth: true
-                    text: root.entry.app || "Notification"
+                    // The sending window's title, else the app's name (in capitals)
+                    text: root.window?.title || root.entry.app || "Notification"
                     font.pixelSize: 10
                     font.bold: true
-                    font.capitalization: Font.AllUppercase
-                    font.letterSpacing: 0.8
+                    font.capitalization: root.window?.title ? Font.MixedCase : Font.AllUppercase
+                    font.letterSpacing: root.window?.title ? 0 : 0.8
                     color: root.critical ? Theme.red : Theme.overlay1
                 }
                 Rectangle {

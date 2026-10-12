@@ -9,7 +9,9 @@ import Quickshell.Wayland
 // and decides what pops up. The bar's bell reads it directly.
 //
 // Entries: { key, id, n (live Notification, or null after a restart), app,
-// summary, body, icon, urgency (0 low, 1 normal, 2 critical), time (ms) }
+// summary, body, icon, urgency (0 low, 1 normal, 2 critical), time (ms),
+// pid (the sender's process, from the sender-pid hint libnotify sets),
+// desktop (desktop entry id) }
 Scope {
     id: root
 
@@ -63,9 +65,16 @@ Scope {
             icon: iconFor(n),
             urgency: n.urgency === NotificationUrgency.Critical ? 2 : n.urgency === NotificationUrgency.Low ? 0 : 1,
             time: Date.now(),
-            transient: n.transient
+            transient: n.transient,
+            pid: Number(n.hints["sender-pid"] ?? 0),
+            desktop: n.desktopEntry
         };
         entries = [e, ...entries.filter(x => x.key !== e.key)].slice(0, historyLength);
+        // The sender's window, for the popup: it may be new, and short-lived
+        // senders (notify-send) are gone in a moment
+        Windows.refresh();
+        if (e.pid)
+            Windows.readAncestors(e.pid);
         if (!silenced && !popups.includes(e.key))
             popups = [e.key, ...popups];
         n.closed.connect(() => {
@@ -137,9 +146,14 @@ Scope {
         remove(key);
     }
 
-    // Window whose app id loosely matches the app ("Thunderbird" matches
-    // "org.mozilla.Thunderbird")
+    // The window that sent it (Windows.qml), else one whose app id loosely
+    // matches the app ("Thunderbird" matches "org.mozilla.Thunderbird")
     function focusApp(e) {
+        const sender = (e.pid ? Windows.forPid(e.pid) : null) ?? Windows.forApp(e.desktop);
+        if (sender?.wayland) {
+            sender.wayland.activate();
+            return;
+        }
         const norm = s => (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
         const app = norm(e.app), desktop = norm(e.n?.desktopEntry);
         const window = ToplevelManager.toplevels.values.find(t => {
