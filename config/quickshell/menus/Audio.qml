@@ -53,9 +53,17 @@ Singleton {
         return !audio || audio.muted ? Theme.glyph(0xf036d) : Theme.glyph(0xf036c); // 󰍭 / 󰍬
     }
 
+    // The app that owns the stream's process, through its window (Windows.qml):
+    // Electron and Chromium apps play from a helper process and all call
+    // themselves "Chromium" here. Otherwise what the stream says.
+    function owner(node) {
+        const pid = parseInt(node.properties["application.process.id"]);
+        return pid > 0 ? Windows.entry(Windows.forPid(pid)) : null;
+    }
+
     function appName(node) {
         const p = node.properties;
-        return p["application.name"] || node.description || node.name;
+        return owner(node)?.name || p["application.name"] || node.description || node.name;
     }
 
     // Media title, unless it's one of the generic names apps like to send.
@@ -68,7 +76,7 @@ Singleton {
     function appIcon(node) {
         const p = node.properties;
         const name = appName(node).toLowerCase();
-        const candidates = [p["application.icon-name"], p["application.process.binary"], name, `${name}-browser`, name.replace(/\s+/g, "-")];
+        const candidates = [owner(node)?.icon, p["application.icon-name"], p["application.process.binary"], name, `${name}-browser`, name.replace(/\s+/g, "-")];
         for (const c of candidates) {
             const path = c ? Quickshell.iconPath(c, true) : "";
             if (path)
