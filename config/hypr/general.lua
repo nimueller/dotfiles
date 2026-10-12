@@ -53,6 +53,9 @@ hl.config({
     misc = {
         enable_swallow             = true,
         allow_session_lock_restore = true,
+        -- No splash text or logo where no wallpaper covers the background
+        disable_splash_rendering   = true,
+        disable_hyprland_logo      = true,
     },
 })
 
