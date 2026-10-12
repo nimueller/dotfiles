@@ -71,16 +71,26 @@ in
     };
   };
 
-  # Same file name as dunst's, so it takes precedence over /usr/share
-  xdg.dataFile."dbus-1/services/org.knopwob.dunst.service".text = ''
-    [D-BUS Service]
-    Name=org.freedesktop.Notifications
-    Exec=/bin/false
-    SystemdService=quickshell-daemon.service
-  '';
-  # Mask dunst's own unit in case anything asks for it directly
-  xdg.configFile."systemd/user/dunst.service".source =
-    config.lib.file.mkOutOfStoreSymlink "/dev/null";
+  xdg = {
+    # The settings app for this machine's own settings (config/hypr/local.lua)
+    desktopEntries.machine-settings = {
+      name = "Machine Settings";
+      comment = "Displays, environment variables and autostart programs of this machine";
+      exec = "${config.dotfiles}/config/quickshell/menus/toggle.sh settings";
+      icon = "preferences-desktop-display";
+      categories = [ "Settings" ];
+    };
+
+    # Same file name as dunst's, so it takes precedence over /usr/share
+    dataFile."dbus-1/services/org.knopwob.dunst.service".text = ''
+      [D-BUS Service]
+      Name=org.freedesktop.Notifications
+      Exec=/bin/false
+      SystemdService=quickshell-daemon.service
+    '';
+    # Mask dunst's own unit in case anything asks for it directly
+    configFile."systemd/user/dunst.service".source = config.lib.file.mkOutOfStoreSymlink "/dev/null";
+  };
 
   fonts.fontconfig.enable = true;
 

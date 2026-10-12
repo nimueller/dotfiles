@@ -35,3 +35,6 @@ hl.window_rule({
     move  = "0 670",
     pin   = true,
 })
+
+-- Machine Settings (config/quickshell/menus/settings.qml)
+hl.window_rule({ match = { title = "^Machine Settings$" }, float = true, size = "860 600", center = true })
