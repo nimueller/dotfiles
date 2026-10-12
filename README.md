@@ -169,7 +169,6 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [ ] tmux plugins from Home Manager instead of a `git clone` of tpm
 
 **Cleanup**
-- [ ] Remove `brave-flags.conf` (Brave isn't used any more)
 - [ ] Trim `kitty.conf` to the settings that differ from the defaults
 - [ ] Shrink the wallpapers (about 30 MB of the repository) or move them out of git
 

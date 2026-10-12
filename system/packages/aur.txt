@@ -1,6 +1,7 @@
 # Packages from the AUR (installed with yay); refresh with
 # system/update-package-lists.sh
 ausweisapp2
+brave-bin
 claude-code
 epsonscan2
 grimblast-git
