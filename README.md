@@ -118,8 +118,7 @@ Good to know:
 - Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
   `config/hypr/local.lua`, which git ignores. The **Machine Settings** app (in the launcher) edits it;
   `config/hypr/local.example.lua` shows the format. Without it, every monitor runs at its preferred mode.
-- PAM only unlocks the keyring called `login`, with your login password. `system/merge-keyrings.sh` moves secrets from
-  other keyrings into it.
+- PAM only unlocks the keyring called `login`, with your login password, so keep every secret in that one keyring.
 - Zsh becomes the login shell through a small hook in `~/.profile`, since Home Manager can't run `chsh`. The script asks
   before doing that.
 
@@ -133,7 +132,7 @@ Good to know:
 | `home-manager/dev` | Language servers, formatters and toolchains (desktop only; several GB) |
 | `home-manager/theme` | Catppuccin for btop and bat, GTK and the cursor |
 | `options` | The `dotfiles` option: where this repository is checked out (`~/dotfiles`) |
-| `system` | The root side: pacman package lists, `setup.sh` (packages, PAM, logind) and `merge-keyrings.sh` |
+| `system` | The root side: pacman package lists and `setup.sh` (packages, PAM, logind, firewall, Docker) |
 | `pkgs` | Small scripts (`recorder`, `init-tex`, `edit-tex`) and the Python for the calendar helper |
 | `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, Zsh, Sunshine |
 
@@ -158,7 +157,7 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 
 **Security and setup**
 - [x] Unlock the keyring at login: `pam_gnome_keyring` for TTY logins (`system/setup.sh`), and a single `login` keyring
-      instead of two (`system/merge-keyrings.sh`)
+      instead of two
 - [x] A settings app in Quickshell for the machine's own settings (monitor layout and scale, driver variables,
       private autostarts) that writes `config/hypr/local.lua`
 - [x] Make the system half reproducible: tracked pacman package lists and a setup script for PAM and logind

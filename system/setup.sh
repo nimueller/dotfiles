@@ -71,7 +71,7 @@ elif ask "Unlock the keyring with your password when logging in on a TTY (PAM)?"
     pam_line /etc/pam.d/login "session    optional     pam_gnome_keyring.so auto_start"
     pam_line /etc/pam.d/passwd "password   optional     pam_gnome_keyring.so"
     echo "Done. The \`login\` keyring needs your login password as its password; it then"
-    echo "unlocks at the next login (system/merge-keyrings.sh moves other keyrings into it)."
+    echo "unlocks at the next login."
 fi
 
 echo ''
