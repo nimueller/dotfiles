@@ -77,8 +77,15 @@ Scope {
         show("mic", audio.volume, audio.muted);
     }
 
-    // step in percent; keeps at least 5 % so the screen never goes dark
+    // step in percent. The focused monitor over DDC/CI (Ddc.qml) when it
+    // answers, otherwise the backlight, which keeps at least 5 % so the screen
+    // never goes dark.
     function brightness(step) {
+        const monitor = window.screen?.name ?? "";
+        if (ddc.has(monitor)) {
+            show("brightness", ddc.step(monitor, step), false);
+            return;
+        }
         brightnessProc.command = ["brightnessctl", "-m", "-n5%", "-e4", "set", `${Math.abs(step)}%${step < 0 ? "-" : "+"}`];
         brightnessProc.running = true;
     }
@@ -138,6 +145,10 @@ Scope {
 
     PwObjectTracker {
         objects: [root.sink, root.source]
+    }
+
+    Ddc {
+        id: ddc
     }
 
     // brightnessctl -m: device,class,current,percent,max

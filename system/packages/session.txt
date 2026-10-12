@@ -1,5 +1,6 @@
 # The desktop session: compositor, lock screen, idle, shell, portals and the
-# services it talks to. Everything else comes from Nix (home-manager/).
+# services it talks to (ddcutil: brightness of external monitors). Everything
+# else comes from Nix (home-manager/).
 hyprland
 hyprpaper
 hyprlock
@@ -13,6 +14,7 @@ wireplumber
 networkmanager
 upower
 brightnessctl
+ddcutil
 polkit-gnome
 gnome-keyring
 
