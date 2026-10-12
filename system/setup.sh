@@ -8,6 +8,9 @@
 # 2. PAM: unlock the `login` keyring with the login password on TTY logins,
 #    and keep its password in step with `passwd`
 # 3. logind: the power button opens the power menu instead of shutting down
+# 4. firewall: the network connection in firewalld's `home` zone, which
+#    lets in only SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6
+# 5. Docker: container ports published on this machine only, by default
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -80,4 +83,68 @@ elif ask "Let the power button open the power menu instead of shutting down?"; t
     sudo mkdir -p "$(dirname "$conf")"
     printf '[Login]\nHandlePowerKey=ignore\n' | sudo tee "$conf" >/dev/null
     echo "Takes effect after the next reboot."
+fi
+
+echo ''
+echo "== Firewall"
+if ! command -v firewall-cmd >/dev/null 2>&1 || ! command -v nmcli >/dev/null 2>&1; then
+    echo "firewalld or NetworkManager isn't installed, skipping"
+else
+    # Active wired and Wi-Fi connections as "name:device" (nmcli escapes ':' in names)
+    while IFS= read -r line; do
+        type=${line##*:}
+        rest=${line%:*}
+        device=${rest##*:}
+        name=${rest%:*}
+        name=${name//\\:/:}
+        case $type in *ethernet | *wireless) ;; *) continue ;; esac
+
+        zone=$(nmcli -g connection.zone connection show "$name")
+        if [ "$zone" = home ]; then
+            echo "$name ($device) is already in the home zone"
+            continue
+        fi
+        echo "$name ($device) is in the ${zone:-default} zone."
+        if ask "Move it to the home zone (only SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6 get in)?"; then
+            if ! sudo firewall-cmd --permanent --get-services | tr ' ' '\n' | grep -qx sunshine; then
+                sudo firewall-cmd --permanent --new-service=sunshine >/dev/null
+                sudo firewall-cmd --permanent --service=sunshine --set-short=Sunshine >/dev/null
+                for port in 47984/tcp 47989/tcp 47990/tcp 48010/tcp 47998/udp 47999/udp 48000/udp 48002/udp 48010/udp; do
+                    sudo firewall-cmd --permanent --service=sunshine --add-port="$port" >/dev/null
+                done
+            fi
+            for service in ssh samba kdeconnect sunshine mdns dhcpv6-client; do
+                sudo firewall-cmd --permanent --zone=home --add-service="$service" >/dev/null
+            done
+            sudo firewall-cmd --reload >/dev/null
+            # The connection keeps its zone; the running firewall takes it now
+            sudo nmcli connection modify "$name" connection.zone home
+            sudo firewall-cmd --zone=home --change-interface="$device" >/dev/null
+            echo "Done. To undo:"
+            echo "  sudo nmcli connection modify '$name' connection.zone '${zone:-trusted}' && sudo firewall-cmd --zone='${zone:-trusted}' --change-interface=$device"
+        fi
+    done < <(nmcli -t -f NAME,DEVICE,TYPE connection show --active)
+fi
+
+echo ''
+echo "== Docker"
+conf=/etc/docker/daemon.json
+if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker isn't installed, skipping"
+elif [ -f "$conf" ] && grep -q '"ip"' "$conf"; then
+    echo "Docker already publishes container ports at $(grep -o '"ip"[^,}]*' "$conf")"
+else
+    echo "Ports published by containers bypass the firewall and are open to the network."
+    if ask "Publish them on this machine only (127.0.0.1) by default?"; then
+        if [ -f "$conf" ]; then
+            sudo cp "$conf" "$conf.bak"
+            jq '. + {"ip": "127.0.0.1"}' "$conf.bak" | sudo tee "$conf" >/dev/null
+        else
+            sudo mkdir -p "$(dirname "$conf")"
+            echo '{ "ip": "127.0.0.1" }' | sudo tee "$conf" >/dev/null
+        fi
+        sudo systemctl restart docker
+        echo "Done; running containers keep their ports until they're recreated (docker compose up after down)."
+        echo "A container that should be reachable from the network publishes with 0.0.0.0:<port>:<port>."
+    fi
 fi

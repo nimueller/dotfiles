@@ -111,7 +111,9 @@ Good to know:
   can't use reliably outside NixOS. Everything else comes from Nix.
 - For the desktop, the script runs `system/setup.sh`, which needs root and asks before every step: the session packages
   (and optionally this machine's other packages and AUR packages), PAM so that logging in on a TTY unlocks the keyring,
-  and logind so the power button opens the power menu instead of shutting down.
+  logind so the power button opens the power menu instead of shutting down, the firewall (the network connection in the
+  `home` zone, open only for SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6) and Docker (container ports published
+  on this machine only, since they would bypass the firewall).
 - Start the desktop by running `start-hyprland` after logging in on a TTY.
 - Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
   `config/hypr/local.lua`, which git ignores. The **Machine Settings** app (in the launcher) edits it;
@@ -159,7 +161,7 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
       private autostarts) that writes `config/hypr/local.lua`
 - [x] Make the system half reproducible: tracked pacman package lists and a setup script for PAM and logind
 - [x] Keep Hyprland and Quickshell in step: the whole session comes from pacman
-- [ ] A firewall setup in `system/setup.sh` that keeps Sunshine, KDE Connect and Samba reachable
+- [x] A firewall setup in `system/setup.sh` that keeps Sunshine, KDE Connect and Samba reachable
 
 **Portability**
 - [x] Move the remaining machine-specific bits (workspaces bound to monitor ports, the notifications' monitor,
