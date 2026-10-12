@@ -1,0 +1,30 @@
+# Packages from the AUR (installed with yay); refresh with
+# system/update-package-lists.sh
+ausweisapp2
+claude-code
+epsonscan2
+grimblast-git
+icon-explorer
+intellij-idea-ultimate-edition
+jdk21-jetbrains-bin
+libastal-4-git
+matugen-bin
+migrate
+naps2-bin
+nautilus-checksums
+nautilus-launch
+nautilus-open-any-terminal
+pear-desktop
+protonplus
+pycharm-professional
+python-gpustat
+reboot-arch-btw
+remmina-plugin-rdesktop
+streamlink-twitch-gui-bin
+sunshine
+thunderbird-gnome-theme-git
+tinymediamanager-bin
+vk-hdr-layer-kwin6-git
+yay
+yubico-authenticator-bin
+zen-browser-bin

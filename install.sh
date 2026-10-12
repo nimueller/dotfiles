@@ -85,38 +85,11 @@ post_install_steps() {
   fi
 }
 
-# What the desktop needs from the system rather than from Nix: the
-# compositor and its portal, session services and the polkit agent
-ARCH_PACKAGES=(
-  hyprland hyprpaper hyprlock xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-  pipewire pipewire-pulse wireplumber networkmanager upower brightnessctl
-  polkit-gnome gnome-keyring
-)
-
+# Packages, PAM and logind for the desktop, from system/setup.sh (needs root;
+# every step asks first)
 install_desktop_system() {
-  if ! command -v pacman >/dev/null 2>&1; then
-    echo "Not on Arch Linux: install Hyprland and these (or your distribution's equivalents) yourself:"
-    echo "  ${ARCH_PACKAGES[*]}"
-    return
-  fi
-
   echo ''
-  echo "The desktop needs these packages from pacman: ${ARCH_PACKAGES[*]}"
-  if ask 'Install the missing ones now (sudo)?'; then
-    # shellcheck disable=SC2024 # only pacman's confirmation reads the terminal
-    sudo pacman -S --needed "${ARCH_PACKAGES[@]}" </dev/tty
-  fi
-
-  local conf=/etc/systemd/logind.conf.d/power-key.conf
-  if [ ! -f "$conf" ]; then
-    echo ''
-    echo "The power button can open the power menu instead of shutting down right away ($conf)."
-    if ask 'Set that up now (sudo)?'; then
-      sudo mkdir -p "$(dirname "$conf")"
-      printf '[Login]\nHandlePowerKey=ignore\n' | sudo tee "$conf" >/dev/null
-      echo 'Takes effect after the next reboot.'
-    fi
-  fi
+  "$DOTFILES_CLONE_DIRECTORY/system/setup.sh"
 }
 
 set_default_shell() {

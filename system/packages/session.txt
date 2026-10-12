@@ -1,0 +1,17 @@
+# The desktop session: compositor, lock screen, idle, shell, portals and the
+# services it talks to. Everything else comes from Nix (home-manager/).
+hyprland
+hyprpaper
+hyprlock
+hypridle
+quickshell
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+pipewire
+pipewire-pulse
+wireplumber
+networkmanager
+upower
+brightnessctl
+polkit-gnome
+gnome-keyring

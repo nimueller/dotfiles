@@ -14,7 +14,7 @@ jobs:
           git ls-files -z "*.nix" | xargs -0 nixfmt --check
           statix check .
           deadnix --fail .
-          shellcheck install.sh pkgs/scripts/*.sh config/quickshell/menus/*.sh
+          shellcheck install.sh pkgs/scripts/*.sh config/quickshell/menus/*.sh system/*.sh
 
   check:
     runs-on: ubuntu-latest
