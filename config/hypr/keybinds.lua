@@ -96,4 +96,4 @@ hl.bind(mainMod .. " + V", hl.dsp.event("quickshell-clipboard")) -- clipboard hi
 hl.bind(mainMod .. " + T",         exec("kitty"))
 hl.bind(mainMod .. " + E",         exec("nautilus", { float = true }))
 hl.bind(mainMod .. " + SHIFT + E", exec("nautilus"))
-hl.bind(mainMod .. " + B",         exec("zen-browser"))
+hl.bind(mainMod .. " + B",         exec("brave"))

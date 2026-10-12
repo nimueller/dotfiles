@@ -22,7 +22,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **Wallpaper / lock** | hyprpaper (rotating through `config/hypr/wallpapers`) / hyprlock, started by hypridle when idle and before suspend |
 | **Terminal** | kitty, Zsh with Powerlevel10k, tmux |
 | **Editor** | Neovim with lazy.nvim, Treesitter, Telescope, Neo-tree and blink.cmp; language servers come from Nix |
-| **Browser** | Zen |
+| **Browser** | Brave (Zen stays installed as a backup) |
 | **Markdown** | MarkText, the default for `.md` files (GitHub tables and task lists, KaTeX, Mermaid, GitLab mode) |
 | **Theme** | Catppuccin Macchiato for everything, including GTK, the cursor, btop and bat |
 
@@ -63,7 +63,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 
 | Keys | Action |
 |---|---|
-| `SUPER + T` / `B` | kitty / Zen |
+| `SUPER + T` / `B` | kitty / Brave |
 | `SUPER + E` | Files, floating (`SHIFT`: tiled) |
 | `SUPER + D` | App launcher |
 | `SUPER + V` | Clipboard history |
