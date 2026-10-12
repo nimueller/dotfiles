@@ -2,52 +2,87 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Brightness of external monitors over DDC/CI (ddcutil), for the OSD's
-// brightness keys on machines without a backlight. The monitor's own menu
-// must have DDC/CI switched on. ddcutil is slow (a few hundred ms per call),
-// so key presses update the value at once and only the latest one is sent.
+// Brightness of external monitors over DDC/CI (ddcutil): the OSD's
+// brightness keys on machines without a backlight, and the system menu's
+// sliders. The monitor's own menu must have DDC/CI switched on. ddcutil is
+// slow (a few hundred ms per call), so changes show at once and only the
+// latest value is sent. Another process (the menu or the keys) may have
+// changed it meanwhile, so a value older than a few seconds is read again
+// before a step.
 Scope {
     id: root
 
-    // Connector name (DP-1) → { bus, value, max }
+    // Connector name (DP-1) → { bus, model, value, max, time }
     property var displays: ({})
+    readonly property var names: Object.keys(displays).sort()
     property var pending: ({}) // connector → value still to send
+    property var steps: ({}) // connector → percent to add once read again
+
+    signal changed(string name, real value) // value 0..1
 
     function has(name) {
         return !!displays[name];
     }
 
-    // step in percent; returns the new brightness (0..1)
-    function step(name, percent) {
+    function value(name) {
         const d = displays[name];
-        d.value = Math.max(0, Math.min(d.max, Math.round(d.value + percent * d.max / 100)));
-        pending[name] = d.value;
-        flush();
-        return d.value / d.max;
+        return d ? d.value / d.max : 0;
     }
 
-    function flush() {
-        if (setter.running)
+    function set(name, fraction) {
+        const d = displays[name];
+        d.value = Math.round(Math.max(0, Math.min(1, fraction)) * d.max);
+        d.time = Date.now();
+        pending[name] = d.value;
+        displaysChanged();
+        changed(name, d.value / d.max);
+        flush();
+    }
+
+    // step in percent
+    function step(name, percent) {
+        const d = displays[name];
+        if (Date.now() - d.time < 5000) {
+            set(name, (d.value + percent * d.max / 100) / d.max);
             return;
+        }
+        steps[name] = (steps[name] ?? 0) + percent;
+        flush();
+    }
+
+    // One ddcutil at a time: re-reads first, then the latest values
+    function flush() {
+        if (ddc.running)
+            return;
+        const read = Object.keys(steps)[0];
+        if (read !== undefined) {
+            ddc.reading = read;
+            ddc.command = ["ddcutil", "--bus", displays[read].bus, "-t", "getvcp", "10"];
+            ddc.running = true;
+            return;
+        }
         const name = Object.keys(pending)[0];
         if (name === undefined)
             return;
-        setter.command = ["ddcutil", "--bus", displays[name].bus, "--noverify", "setvcp", "10", String(pending[name])];
+        ddc.reading = "";
+        ddc.command = ["ddcutil", "--bus", displays[name].bus, "--noverify", "setvcp", "10", String(pending[name])];
         delete pending[name];
-        setter.running = true;
+        ddc.running = true;
     }
 
-    // "<bus> <connector> VCP 10 C <current> <max>" for each monitor that
-    // answers on DDC/CI
+    // "<bus> <connector> VCP 10 C <current> <max> <model>" for each monitor
+    // that answers on DDC/CI
     Process {
         id: detect
         running: true
         command: ["sh", "-c", `
             ddcutil detect --brief 2>/dev/null |
-                awk '/^Display/ { d = 1 } /^Invalid/ { d = 0 } d && /I2C bus/ { bus = $3 } d && /DRM connector/ { print bus, $3 }' |
-                while read -r bus conn; do
+                awk '/^Display/ { d = 1 } /^Invalid/ { d = 0 }
+                     d && /I2C bus/ { bus = $3 } d && /DRM connector/ { conn = $3 }
+                     d && /Monitor:/ { sub(/^ *Monitor: */, ""); split($0, m, ":"); print bus, conn, m[2] }' |
+                while read -r bus conn model; do
                     n=\${bus#/dev/i2c-}
-                    echo "$n \${conn#card*-} $(ddcutil --bus "$n" -t getvcp 10 2>/dev/null)"
+                    echo "$n \${conn#card*-} $(ddcutil --bus "$n" -t getvcp 10 2>/dev/null) $model"
                 done`]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -55,7 +90,7 @@ Scope {
                 for (const line of text.split("\n")) {
                     const f = line.trim().split(/\s+/);
                     if (f.length >= 7 && f[2] === "VCP" && parseInt(f[6]) > 0)
-                        found[f[1]] = { bus: f[0], value: parseInt(f[5]), max: parseInt(f[6]) };
+                        found[f[1]] = { bus: f[0], model: f.slice(7).join(" "), value: parseInt(f[5]), max: parseInt(f[6]), time: Date.now() };
                 }
                 root.displays = found;
             }
@@ -63,7 +98,27 @@ Scope {
     }
 
     Process {
-        id: setter
+        id: ddc
+
+        property string reading: "" // connector whose value is read again
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const name = ddc.reading;
+                if (!name)
+                    return;
+                const d = root.displays[name];
+                const f = text.trim().split(/\s+/); // VCP 10 C <current> <max>
+                if (f[0] === "VCP" && parseInt(f[4]) > 0) {
+                    d.value = parseInt(f[3]);
+                    d.max = parseInt(f[4]);
+                }
+                d.time = Date.now();
+                const percent = root.steps[name] ?? 0;
+                delete root.steps[name];
+                root.set(name, (d.value + percent * d.max / 100) / d.max);
+            }
+        }
         onExited: root.flush()
     }
 

@@ -7,7 +7,8 @@ import Quickshell.Io
 
 // System menu for the bar's distro logo: the system at a glance (host,
 // kernel, uptime, packages, pending updates) and the live use of CPU,
-// memory, swap, disk and GPU, read every 2 seconds while it's open. The gear
+// memory, swap, disk and GPU, read every 2 seconds while it's open, and the
+// brightness of the screens (the backlight, or monitors over DDC/CI). The gear
 // opens Machine Settings.
 Popup {
     id: root
@@ -25,6 +26,7 @@ Popup {
     property var swap: ({ used: 0, total: 0 })
     property var disk: ({ used: 0, total: 1 })
     property var gpu: null // { name, load, memUsed, memTotal, temp }
+    property var backlight: null // { value, max } of the built-in screen, null without one
 
     readonly property string toggle: Quickshell.shellPath("toggle.sh")
 
@@ -159,6 +161,53 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         }
     }
 
+    // Brightness: a laptop's own screen and external monitors with DDC/CI
+    // switched on (Ddc.qml; found a moment after the menu opens)
+    SectionTitle {
+        visible: !!root.backlight || ddc.names.length > 0
+        Layout.topMargin: 6
+        text: "Brightness"
+    }
+    Brightness {
+        visible: !!root.backlight
+        title: "Built-in screen"
+        value: root.backlight ? root.backlight.value / root.backlight.max : 0
+        onMoved: v => {
+            // At least 5 % so the screen never goes dark, like the keys
+            const value = Math.max(0.05, v);
+            root.backlight = { value: Math.round(value * root.backlight.max), max: root.backlight.max };
+            Quickshell.execDetached(["brightnessctl", "-q", "-c", "backlight", "set", `${Math.round(value * 100)}%`]);
+        }
+    }
+    Repeater {
+        model: ddc.names
+
+        delegate: Brightness {
+            required property string modelData
+
+            title: [modelData, ddc.displays[modelData]?.model].filter(s => s).join(" · ")
+            value: ddc.displays[modelData] ? ddc.value(modelData) : 0
+            onMoved: v => ddc.set(modelData, v)
+        }
+    }
+
+    Ddc {
+        id: ddc
+    }
+
+    // brightnessctl -m: device,class,current,percent,max
+    Process {
+        running: true
+        command: ["brightnessctl", "-m", "-c", "backlight", "info"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const f = text.trim().split(",");
+                if (f.length >= 5 && parseInt(f[4]) > 0)
+                    root.backlight = { value: parseInt(f[2]), max: parseInt(f[4]) };
+            }
+        }
+    }
+
     SectionTitle {
         Layout.topMargin: 6
         text: "Usage"
@@ -228,6 +277,44 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 Quickshell.execDetached(["kitty", "btop"]);
                 root.close();
             }
+        }
+    }
+
+    // One screen: name and percentage above a slider
+    component Brightness: ColumnLayout {
+        id: brightness
+
+        property string title
+        property real value
+        signal moved(real value)
+
+        Layout.fillWidth: true
+        spacing: 4
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Label {
+                text: Theme.glyph(0xf00e0) // 󰃠
+                color: Theme.yellow
+            }
+            Label {
+                Layout.fillWidth: true
+                text: brightness.title
+                font.bold: true
+            }
+            Label {
+                text: `${Math.round(brightness.value * 100)} %`
+                color: Theme.subtext0
+            }
+        }
+
+        Slider {
+            Layout.fillWidth: true
+            value: brightness.value
+            accent: Theme.yellow
+            onMoved: v => brightness.moved(v)
         }
     }
 

@@ -83,7 +83,7 @@ Scope {
     function brightness(step) {
         const monitor = window.screen?.name ?? "";
         if (ddc.has(monitor)) {
-            show("brightness", ddc.step(monitor, step), false);
+            ddc.step(monitor, step);
             return;
         }
         brightnessProc.command = ["brightnessctl", "-m", "-n5%", "-e4", "set", `${Math.abs(step)}%${step < 0 ? "-" : "+"}`];
@@ -149,6 +149,7 @@ Scope {
 
     Ddc {
         id: ddc
+        onChanged: (name, value) => root.show("brightness", value, false)
     }
 
     // brightnessctl -m: device,class,current,percent,max

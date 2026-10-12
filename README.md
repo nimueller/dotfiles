@@ -40,6 +40,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 
 - **Bar:** workspaces, window title, clock, tray (with themed menus), camera, microphone and screen-sharing indicators, volume,
   battery, network and a notification bell. Clicking a module opens its menu.
+- **System:** host, kernel, uptime, pending updates, the use of CPU, memory, disk and GPU, and a brightness slider
+  for each screen (the backlight, or monitors with DDC/CI).
 - **Sound:** output and input devices and their volumes, per-app volume.
 - **Network:** wired and Wi-Fi connections, plus VPNs (import OpenVPN or WireGuard files).
 - **Calendar:** a month view with Nextcloud calendars (CalDAV: create, edit and delete appointments, with reminders) and
