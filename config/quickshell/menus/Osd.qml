@@ -10,17 +10,19 @@ import Quickshell.Wayland
 // Caps Lock / Num Lock (replaces SwayOSD), part of daemon.qml. The keys send
 // Hyprland events (see keybinds.lua) that daemon.qml passes to volume(),
 // toggleMute(), toggleMic(), brightness() and lockKey(); StayAwake.qml calls
-// awake(). Shown above the bar on the focused monitor.
+// awake(), Privacy.qml privacy(). Shown above the bar on the focused monitor.
 Scope {
     id: root
 
-    property string kind: "volume" // volume | mic | brightness | caps | num | awake
+    property string kind: "volume" // volume | mic | brightness | caps | num | awake | privacy
     property real value: 0 // 0..1
     property bool muted: false
-    property string detail: "" // awake: why
+    property string title: "" // privacy: what is in use
+    property string detail: "" // awake: why; privacy: by which apps
+    property string device: "" // privacy: camera | microphone | screen
     property bool shown: false
 
-    readonly property bool toggle: kind === "caps" || kind === "num" || kind === "awake"
+    readonly property bool toggle: kind === "caps" || kind === "num" || kind === "awake" || kind === "privacy"
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
@@ -30,7 +32,7 @@ Scope {
         root.value = value;
         root.muted = muted;
         shown = true;
-        hideTimer.interval = kind === "awake" ? 3000 : 1500;
+        hideTimer.interval = kind === "awake" || kind === "privacy" ? 3000 : 1500;
         hideTimer.restart();
     }
 
@@ -38,6 +40,14 @@ Scope {
     function awake(on, why) {
         detail = why;
         show("awake", on ? 1 : 0, !on);
+    }
+
+    // A camera, the microphone or the screen started being used
+    function privacy(what, text, apps) {
+        device = what;
+        title = text;
+        detail = apps;
+        show("privacy", 1, false);
     }
 
     // step in percent; never above 100 %, unmutes like the old binding did
@@ -170,7 +180,7 @@ Scope {
         Rectangle {
             id: pill
 
-            readonly property color accent: root.muted ? Theme.overlay0 : Theme.lavender
+            readonly property color accent: root.kind === "privacy" ? Theme.peach : root.muted ? Theme.overlay0 : Theme.lavender
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
@@ -206,6 +216,8 @@ Scope {
                         font.pixelSize: 18
                         color: pill.accent
                         text: {
+                            if (root.kind === "privacy")
+                                return Theme.glyph({ camera: 0xf05a0, microphone: 0xf036c, screen: 0xf0379 }[root.device]); // 󰖠 󰍬 󰍹
                             if (root.kind === "awake")
                                 return Theme.glyph(root.muted ? 0xf04b2 : 0xf0176); // 󰒲 / 󰅶
                             if (root.kind === "caps")
@@ -221,20 +233,21 @@ Scope {
                     }
                 }
 
-                // Caps Lock / Num Lock / Stay awake: name (and why) and an On/Off pill
+                // Caps Lock / Num Lock / Stay awake / privacy: name (and why or
+                // by whom) and an On/Off pill (not for privacy)
                 Column {
                     visible: root.toggle
-                    Layout.preferredWidth: root.kind === "awake" ? 240 : 150
+                    Layout.preferredWidth: root.kind === "privacy" ? 300 : root.kind === "awake" ? 240 : 150
                     spacing: 2
 
                     Label {
                         width: parent.width
-                        text: root.kind === "caps" ? "Caps Lock" : root.kind === "num" ? "Num Lock" : "Stay awake"
+                        text: root.kind === "caps" ? "Caps Lock" : root.kind === "num" ? "Num Lock" : root.kind === "privacy" ? root.title : "Stay awake"
                         font.pixelSize: 13
                         font.bold: true
                     }
                     Label {
-                        visible: root.kind === "awake" && !!root.detail
+                        visible: (root.kind === "awake" || root.kind === "privacy") && !!root.detail
                         width: parent.width
                         text: root.detail
                         font.pixelSize: 11
@@ -242,7 +255,7 @@ Scope {
                     }
                 }
                 Rectangle {
-                    visible: root.toggle
+                    visible: root.toggle && root.kind !== "privacy"
                     Layout.preferredWidth: 52
                     Layout.preferredHeight: 22
                     radius: 11

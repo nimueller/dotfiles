@@ -11,7 +11,8 @@ import Quickshell.Io
 // autostart.lua; also D-Bus activated for notifications): the bar on every
 // monitor, the app launcher, the clipboard history, the notification daemon with
 // its popups and center (replaces dunst), the OSD for the volume and
-// brightness keys (replaces SwayOSD) and the stay-awake inhibitor.
+// brightness keys (replaces SwayOSD), the stay-awake inhibitor and the
+// camera/microphone/screen-sharing watch.
 //
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
@@ -61,6 +62,7 @@ ShellRoot {
     // Microphone, camera and screen sharing in use
     Privacy {
         id: privacyStatus
+        osd: osd
     }
 
     // The bar on every monitor
