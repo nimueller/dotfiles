@@ -2,6 +2,7 @@
 //@ pragma Env QT_QUICK_BACKEND=software
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 
@@ -164,7 +165,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
     // Brightness: a laptop's own screen and external monitors with DDC/CI
     // switched on (Ddc.qml; found a moment after the menu opens)
     SectionTitle {
-        visible: !!root.backlight || ddc.names.length > 0
+        visible: !!root.backlight || ddc.names.length > 0 || ddc.loading
         Layout.topMargin: 6
         text: "Brightness"
     }
@@ -188,6 +189,49 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             title: [modelData, ddc.displays[modelData]?.model].filter(s => s).join(" · ")
             value: ddc.displays[modelData] ? ddc.value(modelData) : 0
             onMoved: v => ddc.set(modelData, v)
+        }
+    }
+
+    // Placeholder while ddcutil looks for monitors (about a second)
+    RowLayout {
+        visible: ddc.loading
+        Layout.fillWidth: true
+        spacing: 8
+
+        // A quarter-open ring, turning
+        Shape {
+            implicitWidth: 14
+            implicitHeight: 14
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeColor: Theme.yellow
+                strokeWidth: 2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+
+                PathAngleArc {
+                    centerX: 7
+                    centerY: 7
+                    radiusX: 6
+                    radiusY: 6
+                    startAngle: 0
+                    sweepAngle: 270
+                }
+            }
+
+            RotationAnimation on rotation {
+                from: 0
+                to: 360
+                duration: 900
+                loops: Animation.Infinite
+                running: ddc.loading
+            }
+        }
+        Label {
+            Layout.fillWidth: true
+            text: "Looking for monitors…"
+            color: Theme.subtext0
         }
     }
 

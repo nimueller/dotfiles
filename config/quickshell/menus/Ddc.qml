@@ -15,6 +15,7 @@ Scope {
     // Connector name (DP-1) → { bus, model, value, max, time }
     property var displays: ({})
     readonly property var names: Object.keys(displays).sort()
+    readonly property bool loading: detect.running // looking for monitors
     property var pending: ({}) // connector → value still to send
     property var steps: ({}) // connector → percent to add once read again
 
