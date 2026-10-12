@@ -63,7 +63,7 @@ PanelWindow {
             monitor: bar.monitor
         }
 
-        Label {
+        BarLabel {
             Layout.maximumWidth: 700
             Layout.leftMargin: 4
             // Off unless switched on in Machine Settings (LocalSettings.qml)
@@ -148,19 +148,19 @@ PanelWindow {
             accent: Theme.peach
             interactive: false
 
-            Label {
+            BarLabel {
                 visible: bar.privacy.camera
                 anchors.verticalCenter: parent.verticalCenter
                 text: Theme.glyph(0xf05a0) // 󰖠
                 color: privacy.foreground
             }
-            Label {
+            BarLabel {
                 visible: bar.privacy.microphone
                 anchors.verticalCenter: parent.verticalCenter
                 text: Theme.glyph(0xf036c) // 󰍬
                 color: privacy.foreground
             }
-            Label {
+            BarLabel {
                 visible: bar.privacy.screen
                 anchors.verticalCenter: parent.verticalCenter
                 text: Theme.glyph(0xf0379) // 󰍹
@@ -251,7 +251,7 @@ PanelWindow {
                 width: 14
                 height: 14
 
-                Label {
+                BarLabel {
                     anchors.centerIn: parent
                     text: Theme.glyph(bell.dnd ? 0xf009b : 0xf009a) // 󰂛 / 󰂚
                     color: bell.foreground
@@ -268,7 +268,7 @@ PanelWindow {
                     color: "#e64553" // Catppuccin Latte red: Macchiato's is too pale on lavender
                 }
             }
-            Label {
+            BarLabel {
                 visible: bell.solid
                 anchors.verticalCenter: parent.verticalCenter
                 text: bell.count

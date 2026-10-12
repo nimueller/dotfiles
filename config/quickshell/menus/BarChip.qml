@@ -33,7 +33,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: 6
 
-        Label {
+        BarLabel {
             visible: !!root.text
             anchors.verticalCenter: parent.verticalCenter
             text: root.text

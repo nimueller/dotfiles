@@ -96,8 +96,8 @@ in
 
   # Packages needed on Hyprland specifically, in addition to a standard desktop
   home.packages = with pkgs; [
-    nerd-fonts.noto
-    nerd-fonts.caskaydia-cove # the quickshell UI's font
+    nerd-fonts.noto # the quickshell menus' font
+    nerd-fonts.caskaydia-cove # the quickshell bar's font
     noto-fonts
     noto-fonts-lgc-plus
     noto-fonts-cjk-sans

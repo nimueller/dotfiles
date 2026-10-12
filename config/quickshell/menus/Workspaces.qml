@@ -52,7 +52,7 @@ Rectangle {
 
                 Behavior on color { ColorAnimation { duration: 200 } }
 
-                Label {
+                BarLabel {
                     id: label
                     anchors.centerIn: parent
                     text: button.isSpecial ? button.modelData.name.replace("special:", "") : button.modelData.name

@@ -28,7 +28,10 @@ Singleton {
     readonly property color mantle: "#1e2030"
     readonly property color crust: "#181926"
 
-    readonly property string font: "CaskaydiaCove Nerd Font"
+    // Menus, popups and the OSD: a proportional sans, easier to read; the bar
+    // keeps the monospaced coding font (BarLabel.qml)
+    readonly property string font: "NotoSans Nerd Font"
+    readonly property string barFont: "CaskaydiaCove Nerd Font"
 
     // Colour `c` (a color or a "#rrggbb"/name string) with opacity `a`
     function alpha(c, a) {
