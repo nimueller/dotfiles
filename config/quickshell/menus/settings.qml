@@ -5,7 +5,8 @@ import Quickshell
 import Quickshell.Io
 
 // Machine Settings: this machine's own settings, which stay out of git.
-// Displays (arrangement, mode, scale, rotation, VRR, HDR), environment
+// Displays (arrangement, mode, scale, rotation, VRR, HDR, workspaces, the
+// main monitor for notifications), environment
 // variables (e.g. drivers), autostart programs and the bar (read by the
 // shell through LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
@@ -20,7 +21,7 @@ ShellRoot {
     readonly property string path: Quickshell.env("MACHINE_SETTINGS_FILE") || `${home}/.config/hypr/local.lua`
 
     property string page: "displays"
-    property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, modes }
+    property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({ windowTitle: false })
@@ -59,9 +60,21 @@ ShellRoot {
         return `hl.monitor({ ${f.join(", ")} })`;
     }
 
+    // "1-9, 12" -> [1, 2, ..., 9, 12]
+    function workspaceList(text) {
+        const list = [];
+        for (const part of (text || "").split(",")) {
+            const [a, b] = part.split("-").map(s => parseInt(s.trim()));
+            if (!isNaN(a))
+                for (let w = a; w <= (isNaN(b) ? a : b) && w - a < 100; w++)
+                    list.push(w);
+        }
+        return list;
+    }
+
     function saved() {
         return {
-            monitors: monitors.map(m => ({ desc: m.desc, name: m.name, enabled: m.enabled, mode: m.mode, x: m.x, y: m.y, scale: m.scale, transform: m.transform, vrr: m.vrr, wideColor: m.wideColor, hdr: m.hdr })),
+            monitors: monitors.map(m => ({ desc: m.desc, name: m.name, enabled: m.enabled, mode: m.mode, x: m.x, y: m.y, scale: m.scale, transform: m.transform, vrr: m.vrr, wideColor: m.wideColor, hdr: m.hdr, workspaces: m.workspaces, main: m.main })),
             env: env.filter(e => e[0].trim()),
             autostart: autostart.filter(c => c.trim()),
             bar: bar
@@ -73,6 +86,12 @@ ShellRoot {
         const lines = ["-- BEGIN settings: written by Machine Settings, change them there", `-- settings: ${JSON.stringify(s)}`];
         if (s.monitors.length)
             lines.push("", "-- Displays", ...s.monitors.map(monitorLua));
+        // Workspaces on their monitor; the first opens there by default
+        const rules = [];
+        for (const m of s.monitors.filter(m => m.enabled))
+            workspaceList(m.workspaces).forEach((w, i) => rules.push(`hl.workspace_rule({ workspace = "${w}", monitor = ${luaString("desc:" + m.desc)}${i === 0 ? ", default = true" : ""} })`));
+        if (rules.length)
+            lines.push("", "-- Workspaces", ...rules);
         if (s.env.length)
             lines.push("", "-- Environment", ...s.env.map(([k, v]) => `hl.env(${luaString(k.trim())}, ${luaString(v)})`));
         if (s.autostart.length)
@@ -115,6 +134,8 @@ ShellRoot {
                 vrr: m?.vrr ?? !!l.vrr,
                 wideColor: m?.wideColor ?? false,
                 hdr: m?.hdr ?? false,
+                workspaces: m?.workspaces ?? "",
+                main: m?.main ?? false,
                 modes: l.availableModes.map(a => a.replace(/Hz$/, ""))
             });
         }
@@ -447,6 +468,30 @@ ShellRoot {
                             model: root.scales.map(s => ({ text: `${Math.round(s * 100)} %`, value: s }))
                             current: root.scales.find(s => Math.abs(s - (parent.m?.scale ?? 1)) < 0.01) ?? null
                             onPicked: value => root.change(root.selected, { scale: value })
+                        }
+
+                        Label {
+                            text: "Workspaces"
+                        }
+                        InputField {
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 100
+                            text: parent.m?.workspaces ?? ""
+                            placeholder: "e.g. 1-9"
+                            onTextChanged: if (parent.m && text !== parent.m.workspaces)
+                                root.change(root.selected, { workspaces: text })
+                        }
+                        Label {
+                            text: "Main monitor"
+                        }
+                        Switch {
+                            checked: parent.m?.main ?? false
+                            onToggled: {
+                                // Only one is the main monitor
+                                const on = !parent.m.main;
+                                root.monitors = root.monitors.map((m, i) => Object.assign({}, m, { main: on && i === root.selected }));
+                                root.dirty = true;
+                            }
                         }
 
                         Label {

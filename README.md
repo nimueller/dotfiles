@@ -50,8 +50,9 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 - **Stay awake:** no idle lock while a browser or video player is playing, a game runs or Sunshine streams; the
   on-screen display says when that starts and ends.
 - **Clipboard history:** cliphist with image thumbnails; the chosen entry is pasted right away, in Wayland and X11 apps.
-- **Machine Settings:** this machine's displays (drag to arrange, mode, scale, rotation, HDR), environment variables and
-  autostart programs, saved to the untracked `config/hypr/local.lua`.
+- **Machine Settings:** this machine's displays (drag to arrange, mode, scale, rotation, HDR, which workspaces live
+  where, the main monitor for notifications), environment variables, autostart programs and bar options, saved to the
+  untracked `config/hypr/local.lua`.
 - **Screenshots:** the screen freezes, you pick a region or window (or the whole monitor) and can still resize the box,
   draw on it (pen, line, arrow, boxes, highlighter, text, pixelate), scale it to 75, 50 or 25 %, then copy it or save
   it to `~/Pictures/Screenshots`.
@@ -161,7 +162,8 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [ ] A firewall setup in `system/setup.sh` that keeps Sunshine, KDE Connect and Samba reachable
 
 **Portability**
-- [ ] Move the remaining machine-specific bits (workspaces bound to monitor ports, `JAVA_HOME`) into `local.lua`
+- [x] Move the remaining machine-specific bits (workspaces bound to monitor ports, the notifications' monitor,
+      `JAVA_HOME`) into `local.lua`
 - [ ] tmux plugins from Home Manager instead of a `git clone` of tpm
 
 **Cleanup**

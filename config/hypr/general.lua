@@ -68,5 +68,4 @@ hl.animation({ leaf = "workspaces",  enabled = true, speed = 6,  bezier = "defau
 hl.env("XCURSOR_SIZE", "24")
 hl.env("XDG_SESSION_TYPE", "wayland")
 
-hl.env("JAVA_HOME", "/usr/lib/jvm/default/")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")

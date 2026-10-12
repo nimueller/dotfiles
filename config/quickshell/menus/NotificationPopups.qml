@@ -3,15 +3,15 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 
-// Notifications popping up at the top right of the main monitor (DP-1,
-// falling back to the first screen), newest on top.
+// Notifications popping up at the top right of the main monitor (set in
+// Machine Settings, else the first screen), newest on top.
 PanelWindow {
     id: root
 
     required property var store
     readonly property var shown: store.popups.slice(0, 6).map(key => store.entry(key)).filter(e => e)
 
-    screen: Quickshell.screens.find(s => s.name === "DP-1") ?? Quickshell.screens[0]
+    screen: LocalSettings.mainScreen
     anchors {
         top: true
         right: true

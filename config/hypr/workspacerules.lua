@@ -1,8 +1,5 @@
-hl.workspace_rule({ workspace = "1", monitor = "DP-1", default = true, decorate = true })
-for i = 2, 9 do
-    hl.workspace_rule({ workspace = tostring(i), monitor = "DP-1" })
-end
-hl.workspace_rule({ workspace = "10", monitor = "DP-2", default = true })
+-- Which workspaces belong to which monitor is set per machine in Machine
+-- Settings (config/hypr/local.lua)
 
 local appWorkspaces = {
     { class = "^(jetbrains-idea)$",     workspace = "3 silent" },
