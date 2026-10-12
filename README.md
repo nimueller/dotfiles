@@ -50,6 +50,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 - **Stay awake:** no idle lock while a browser or video player is playing, a game runs or Sunshine streams; the
   on-screen display says when that starts and ends.
 - **Clipboard history:** cliphist with image thumbnails; the chosen entry is pasted right away, in Wayland and X11 apps.
+- **Machine Settings:** this machine's displays (drag to arrange, mode, scale, rotation, HDR), environment variables and
+  autostart programs, saved to the untracked `config/hypr/local.lua`.
 - **Screenshots:** the screen freezes, you pick a region or window (or the whole monitor) and can still resize the box,
   draw on it (pen, line, arrow, boxes, highlighter, text, pixelate), scale it to 75, 50 or 25 %, then copy it or save
   it to `~/Pictures/Screenshots`.
@@ -103,13 +105,18 @@ Good to know:
 
 - The configurations are made for my user name. To use them yourself, fork the repository and change `username` in
   `flake.nix` (and the clone URL in `install.sh`).
-- Hyprland and the system services the desktop relies on (PipeWire, NetworkManager, UPower, the portals, the polkit
-  agent, the keyring) come from pacman. On Arch, the script offers to install them, and to let the power button open the
-  power menu instead of shutting down.
+- The desktop session comes from pacman: Hyprland, hyprlock, hypridle, Quickshell, the portals and the services they
+  talk to (`system/packages/session.txt`). Graphics drivers and login (PAM) belong to the system, which Nix packages
+  can't use reliably outside NixOS. Everything else comes from Nix.
+- For the desktop, the script runs `system/setup.sh`, which needs root and asks before every step: the session packages
+  (and optionally this machine's other packages and AUR packages), PAM so that logging in on a TTY unlocks the keyring,
+  and logind so the power button opens the power menu instead of shutting down.
 - Start the desktop by running `start-hyprland` after logging in on a TTY.
 - Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
-  `config/hypr/local.lua`, which git ignores. `config/hypr/local.example.lua` shows how; without it, every monitor runs
-  at its preferred mode.
+  `config/hypr/local.lua`, which git ignores. The **Machine Settings** app (in the launcher) edits it;
+  `config/hypr/local.example.lua` shows the format. Without it, every monitor runs at its preferred mode.
+- PAM only unlocks the keyring called `login`, with your login password. `system/merge-keyrings.sh` moves secrets from
+  other keyrings into it.
 - Zsh becomes the login shell through a small hook in `~/.profile`, since Home Manager can't run `chsh`. The script asks
   before doing that.
 
@@ -123,6 +130,7 @@ Good to know:
 | `home-manager/dev` | Language servers, formatters and toolchains (desktop only; several GB) |
 | `home-manager/theme` | Catppuccin for btop and bat, GTK and the cursor |
 | `options` | The `dotfiles` option: where this repository is checked out (`~/dotfiles`) |
+| `system` | The root side: pacman package lists, `setup.sh` (packages, PAM, logind) and `merge-keyrings.sh` |
 | `pkgs` | Small scripts (`recorder`, `init-tex`, `edit-tex`) and the Python for the calendar helper |
 | `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, tmux, Zsh, Sunshine |
 
@@ -144,12 +152,13 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 ## TODO
 
 **Security and setup**
-- [ ] Unlock the keyring at login: `pam_gnome_keyring` for TTY logins, and a single `login` keyring instead of two
-- [ ] A settings app in Quickshell for the machine's own settings (monitor layout and scale, driver variables,
+- [x] Unlock the keyring at login: `pam_gnome_keyring` for TTY logins (`system/setup.sh`), and a single `login` keyring
+      instead of two (`system/merge-keyrings.sh`)
+- [x] A settings app in Quickshell for the machine's own settings (monitor layout and scale, driver variables,
       private autostarts) that writes `config/hypr/local.lua`
-- [ ] Make the system half reproducible: a tracked pacman package list and a setup script for PAM, logind and a firewall
-- [ ] Keep Hyprland (from Arch) and Quickshell (from Nix) in step, or take both from the same source, since the Lua config
-      API still changes
+- [x] Make the system half reproducible: tracked pacman package lists and a setup script for PAM and logind
+- [x] Keep Hyprland and Quickshell in step: the whole session comes from pacman
+- [ ] A firewall setup in `system/setup.sh` that keeps Sunshine, KDE Connect and Samba reachable
 
 **Portability**
 - [ ] Move the remaining machine-specific bits (workspaces bound to monitor ports, `JAVA_HOME`) into `local.lua`

@@ -39,7 +39,7 @@ in
       Service = {
         Type = "dbus";
         BusName = "org.freedesktop.Notifications";
-        ExecStart = "${pkgs.quickshell}/bin/qs -n -p ${config.dotfiles}/config/quickshell/menus/daemon.qml";
+        ExecStart = "/usr/bin/qs -n -p ${config.dotfiles}/config/quickshell/menus/daemon.qml"; # from pacman (system/packages/session.txt)
         Restart = "on-failure";
       };
     };
@@ -109,7 +109,6 @@ in
     xdg-terminal-exec
     playerctl
     hyprpicker
-    hypridle # lock when idle and before suspend (config/hypr/hypridle.conf)
     grim # screenshots (config/quickshell/menus/screenshot.sh)
     imagemagick
     slurp
@@ -117,7 +116,6 @@ in
     libsecret
     cliphist
     pavucontrol
-    quickshell # bar, menus, launcher, notifications, OSD (config/quickshell/menus)
 
     my-pkgs.recorder
     my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
