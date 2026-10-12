@@ -56,7 +56,6 @@ gparted
 gradle
 gvfs-dnssd
 gvfs-goa
-gvfs-mtp
 gvfs-smb
 handbrake
 helix
@@ -147,7 +146,6 @@ thunderbird
 traceroute
 ttf-dejavu
 ttf-lato
-udisks2
 unzip
 vdpauinfo
 vim

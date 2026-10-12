@@ -49,6 +49,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
   up while the screen is shared. They replace dunst.
 - **On-screen display:** volume, microphone, brightness (the backlight, or external monitors over DDC/CI), Caps Lock and
   Num Lock, and when the camera, microphone or screen sharing starts. It replaces SwayOSD.
+- **Drives:** a notification with Open and Eject when a USB drive, memory card, disc or phone is plugged in.
 - **Stay awake:** no idle lock while a browser or video player is playing, a game runs or Sunshine streams; the
   on-screen display says when that starts and ends.
 - **Clipboard history:** cliphist with image thumbnails; the chosen entry is pasted right away, in Wayland and X11 apps.
@@ -187,6 +188,6 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [ ] A window switcher or overview (Alt+Tab)
 - [ ] Waiting updates at a glance: a dot on the bar's logo chip, and AUR updates too (the system menu only counts
       pacman updates, while it is open)
-- [ ] A notification for USB drives and phones when plugged in, with Open and Eject
+- [x] A notification for USB drives and phones when plugged in, with Open and Eject
 - [ ] Calculator and emoji search in the launcher
 - [ ] A shortcut that shows the focused window's details (title, class, PID, ...)

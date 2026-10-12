@@ -20,7 +20,8 @@ gnome-keyring
 
 # Programs the desktop config calls: terminal, file manager, calculator key,
 # the network menu's editor and VPN file picker, the system menu's update
-# count, and xdg-open
+# count, xdg-open, and the drive notifications (quickshell/menus/drives.py:
+# GVfs for drives and phones, used from the system's Python)
 kitty
 nautilus
 gnome-calculator
@@ -28,3 +29,6 @@ nm-connection-editor
 zenity
 pacman-contrib
 xdg-utils
+udisks2
+gvfs-mtp
+python-gobject

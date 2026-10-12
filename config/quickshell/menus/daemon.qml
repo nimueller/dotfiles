@@ -66,6 +66,20 @@ ShellRoot {
         osd: osd
     }
 
+    // Notifications with Open and Eject for USB drives, discs and phones
+    // (drives.py, with the system's Python for GVfs)
+    Process {
+        id: drives
+        running: true
+        command: ["/usr/bin/python3", Quickshell.shellPath("drives.py")]
+        onExited: drivesRestart.start()
+    }
+    Timer {
+        id: drivesRestart
+        interval: 5000
+        onTriggered: drives.running = true
+    }
+
     // The bar on every monitor
     Variants {
         model: Quickshell.screens
