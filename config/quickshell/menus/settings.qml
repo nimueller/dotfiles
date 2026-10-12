@@ -319,6 +319,8 @@ ShellRoot {
             }
 
             ColumnLayout {
+                // The space next to the sidebar, not the width of the content
+                Layout.preferredWidth: 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.margins: 20
@@ -392,7 +394,8 @@ ShellRoot {
                             text: "Rotation"
                         }
                         Dropdown {
-                            Layout.preferredWidth: 160
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 100
                             model: root.rotations
                             current: parent.m?.transform ?? 0
                             onPicked: value => root.change(root.selected, { transform: value })
@@ -402,7 +405,8 @@ ShellRoot {
                             text: "Mode"
                         }
                         Dropdown {
-                            Layout.preferredWidth: 220
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 100
                             model: parent.m?.modes ?? []
                             current: (parent.m?.modes ?? []).find(a => root.sameMode(a, parent.m.mode)) ?? null
                             onPicked: value => root.change(root.selected, { mode: value })
@@ -411,7 +415,8 @@ ShellRoot {
                             text: "Scale"
                         }
                         Dropdown {
-                            Layout.preferredWidth: 160
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 100
                             model: root.scales.map(s => ({ text: `${Math.round(s * 100)} %`, value: s }))
                             current: root.scales.find(s => Math.abs(s - (parent.m?.scale ?? 1)) < 0.01) ?? null
                             onPicked: value => root.change(root.selected, { scale: value })

@@ -279,6 +279,16 @@ PanelWindow {
             }
         }
 
+        // Machine Settings (settings.qml)
+        BarChip {
+            id: settingsButton
+
+            accent: hovered ? Theme.lavender : Theme.overlay1
+            plain: !hovered
+            text: Theme.glyph(0xf0493) // 󰒓
+            onClicked: bar.menu("settings")
+        }
+
         // Power menu
         BarChip {
             id: power
