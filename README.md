@@ -146,8 +146,10 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 ## Maintenance
 
 - Apply changes to the Nix side with `home-manager switch --flake ~/dotfiles#desktop` (or `#headless`).
-- On every push, CI formats and lints the Nix files (nixfmt, statix, deadnix), checks the shell scripts (shellcheck) and
-  evaluates every configuration.
+- `./check.sh` runs all checks with the tool versions from `flake.lock`: nixfmt, statix and deadnix for Nix, shellcheck
+  for the shell scripts, ruff for the Python (`ruff.toml`), and qmllint for syntax errors in the Quickshell code.
+  `nix fmt` formats the Nix files. CI runs `check.sh` on every push and evaluates every configuration.
+- Optional: `git config core.hooksPath .githooks` runs `check.sh` before every commit (`--no-verify` skips it).
 - Every week, CI updates `flake.lock` in a pull request, builds the configurations with it and merges it when they
   build; otherwise it closes the pull request.
 - Home Manager removes generations older than a week by itself.
@@ -172,8 +174,8 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [x] Shrink the wallpapers (30 MB → 4 MB; older commits still hold the old files)
 
 **Checks**
-- [ ] Lint the Quickshell code (`qmllint`) and the calendar helper (`ruff`) in CI
-- [ ] A `formatter` in the flake, so `nix fmt` works locally, and an optional pre-commit hook
+- [x] Lint the Quickshell code (`qmllint`) and the calendar helper (`ruff`) in CI
+- [x] A `formatter` in the flake, so `nix fmt` works locally, and an optional pre-commit hook
 
 **Desktop features**
 - [ ] Bluetooth menu

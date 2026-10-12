@@ -42,7 +42,9 @@ def main():
             secret = item.get_secret()
             copy = existing.get(k)
             if copy is None:
-                copy = login.create_item(item.get_label(), item.get_attributes(), secret, content_type=item.get_secret_content_type())
+                copy = login.create_item(
+                    item.get_label(), item.get_attributes(), secret, content_type=item.get_secret_content_type()
+                )
                 existing[k] = copy
             if copy.get_secret() != secret:
                 ok = False
@@ -54,7 +56,9 @@ def main():
     # New secrets go into `login` from now on
     from jeepney import DBusAddress, new_method_call
 
-    service = DBusAddress("/org/freedesktop/secrets", bus_name="org.freedesktop.secrets", interface="org.freedesktop.Secret.Service")
+    service = DBusAddress(
+        "/org/freedesktop/secrets", bus_name="org.freedesktop.secrets", interface="org.freedesktop.Secret.Service"
+    )
     bus.send_and_get_reply(new_method_call(service, "SetAlias", "so", ("default", LOGIN)))
     print("`login` is the default keyring" + ("" if ok else "; some items differ, nothing deleted"))
     if not delete_old and ok:

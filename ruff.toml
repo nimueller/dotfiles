@@ -1,0 +1,7 @@
+# Python in this repository: the calendar helper and the keyring merge
+line-length = 120
+
+[lint]
+# pycodestyle, pyflakes, import order, bugbear, pyupgrade, comprehensions,
+# pylint warnings, refurb. Not DTZ: the calendar works in local time on purpose.
+select = ["E", "F", "W", "I", "B", "UP", "C4", "PLW", "FURB"]

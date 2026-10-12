@@ -42,6 +42,11 @@
         };
     in
     {
+      # `nix fmt`: nixfmt over every .nix file
+      formatter = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
+        system: nixpkgs.legacyPackages.${system}.nixfmt-tree
+      );
+
       homeConfigurations = {
         headless = mkHome { modules = [ ./home-manager/headless ]; };
 

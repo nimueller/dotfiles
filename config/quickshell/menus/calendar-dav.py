@@ -83,7 +83,9 @@ def keyring_attrs(url, user):
 
 
 def stored_password(url, user):
-    r = subprocess.run(["secret-tool", "lookup", *keyring_attrs(url, user)], capture_output=True, text=True)
+    r = subprocess.run(
+        ["secret-tool", "lookup", *keyring_attrs(url, user)], capture_output=True, text=True, check=False
+    )
     if r.returncode or not r.stdout:
         raise Fail("No app password stored. Sign in again in the settings.")
     return r.stdout.rstrip("\n")
@@ -150,9 +152,16 @@ def follow(base, tree, path, what):
 
 def calendars(url, auth):
     root = dav_root(url)
-    principal = follow(root, propfind(root, auth, "<d:current-user-principal/>"), "d:current-user-principal/d:href", "user")
-    home = follow(root, propfind(principal, auth, "<c:calendar-home-set/>"), "c:calendar-home-set/d:href", "calendar home")
-    props = "<d:resourcetype/><d:displayname/><a:calendar-color/><c:supported-calendar-component-set/><d:current-user-privilege-set/>"
+    principal = follow(
+        root, propfind(root, auth, "<d:current-user-principal/>"), "d:current-user-principal/d:href", "user"
+    )
+    home = follow(
+        root, propfind(principal, auth, "<c:calendar-home-set/>"), "c:calendar-home-set/d:href", "calendar home"
+    )
+    props = (
+        "<d:resourcetype/><d:displayname/><a:calendar-color/>"
+        "<c:supported-calendar-component-set/><d:current-user-privilege-set/>"
+    )
     return parse_calendars(root, propfind(home, auth, props, 1))
 
 
@@ -170,12 +179,15 @@ def parse_calendars(root, tree):
         color = found(response, "a:calendar-color")
         privileges = found(response, "d:current-user-privilege-set")
         granted = {el.tag.split("}")[-1] for el in privileges.iter()} if privileges is not None else {"write"}
-        out.append({
-            "href": href,
-            "name": (name.text if name is not None else None) or urllib.parse.unquote(href.rstrip("/").rsplit("/", 1)[-1]),
-            "color": ((color.text or "") if color is not None else "")[:7] or "#8aadf4",
-            "writable": bool(granted & {"write", "write-content", "all", "bind"}),
-        })
+        out.append(
+            {
+                "href": href,
+                "name": (name.text if name is not None else None)
+                or urllib.parse.unquote(href.rstrip("/").rsplit("/", 1)[-1]),
+                "color": ((color.text or "") if color is not None else "")[:7] or "#8aadf4",
+                "writable": bool(granted & {"write", "write-content", "all", "bind"}),
+            }
+        )
     return out
 
 
@@ -187,7 +199,8 @@ def caldav_events(auth, start, end, href):
     """Events of one Nextcloud calendar. Fetches the event objects that touch
     the range and expands recurrences locally, like the ICS feeds."""
     body = (
-        '<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"><d:prop><d:getetag/><c:calendar-data/>'
+        '<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">'
+        "<d:prop><d:getetag/><c:calendar-data/>"
         '</d:prop><c:filter><c:comp-filter name="VCALENDAR"><c:comp-filter name="VEVENT">'
         f'<c:time-range start="{utc_stamp(start)}" end="{utc_stamp(end)}"/></c:comp-filter></c:comp-filter>'
         "</c:filter></c:calendar-query>"
@@ -246,7 +259,7 @@ def set_alarms(ev, minutes, title):
     alarms relative to the end, ...) stay as they are."""
     for alarm, _ in start_alarms(ev):
         ev.subcomponents.remove(alarm)
-    for m in sorted(set(int(m) for m in minutes)):
+    for m in sorted({int(m) for m in minutes}):
         alarm = icalendar.Alarm()
         alarm.add("action", "DISPLAY")
         alarm.add("description", title)
@@ -328,7 +341,7 @@ def local_zone():
 
 def ics_text(url):
     """The feed, cached for ICS_MAX_AGE; a stale copy if it can't be fetched."""
-    url = re.sub(r"^webcal://", "https://", url.strip(), flags=re.I)
+    url = re.sub(r"^webcal://", "https://", url.strip(), flags=re.IGNORECASE)
     ICS_CACHE.mkdir(parents=True, exist_ok=True)
     cached = ICS_CACHE / (hashlib.sha1(url.encode()).hexdigest() + ".ics")
     if cached.exists() and time.time() - cached.stat().st_mtime < ICS_MAX_AGE:
@@ -364,7 +377,8 @@ def expand(text, start, end, source):
         raise Fail(f"Couldn't read the calendar data ({e})") from None
     # Expanded occurrences all carry a RECURRENCE-ID, so look at the source
     recurring = {
-        str(c.get("uid")) for c in cal.walk("VEVENT")
+        str(c.get("uid"))
+        for c in cal.walk("VEVENT")
         if c.get("rrule") is not None or c.get("rdate") is not None or c.get("recurrence-id") is not None
     }
     out = []
@@ -379,18 +393,20 @@ def expand(text, start, end, source):
             finish = begin + ev.get("duration").dt
         else:
             finish = begin + (dt.timedelta(days=1) if all_day else dt.timedelta())
-        out.append({
-            **source,
-            "uid": str(ev.get("uid", "")),
-            "title": str(ev.get("summary", "")) or "(No title)",
-            "location": str(ev.get("location", "")),
-            "allDay": all_day,
-            "start": as_local(begin, all_day),
-            "end": as_local(finish, all_day),
-            "recurring": str(ev.get("uid", "")) in recurring,
-            "color": str(ev.get("color", "")),
-            "alarms": sorted(m for _, m in start_alarms(ev)),
-        })
+        out.append(
+            {
+                **source,
+                "uid": str(ev.get("uid", "")),
+                "title": str(ev.get("summary", "")) or "(No title)",
+                "location": str(ev.get("location", "")),
+                "allDay": all_day,
+                "start": as_local(begin, all_day),
+                "end": as_local(finish, all_day),
+                "recurring": str(ev.get("uid", "")) in recurring,
+                "color": str(ev.get("color", "")),
+                "alarms": sorted(m for _, m in start_alarms(ev)),
+            }
+        )
     return out
 
 
@@ -425,7 +441,13 @@ def sources(settings):
     """The events spec for the calendars enabled in the menu's settings."""
     nc = settings.get("nextcloud")
     return {
-        "nextcloud": {"url": nc["url"], "user": nc["user"], "calendars": [c["href"] for c in nc.get("calendars", []) if c.get("enabled")]} if nc else None,
+        "nextcloud": {
+            "url": nc["url"],
+            "user": nc["user"],
+            "calendars": [c["href"] for c in nc.get("calendars", []) if c.get("enabled")],
+        }
+        if nc
+        else None,
         "ics": [{"id": s["id"], "url": s["url"]} for s in settings.get("ics", []) if s.get("enabled")],
     }
 
@@ -453,7 +475,11 @@ def remind():
     now = time.time()
     if now - state.get("fetched", 0) > 600:
         today = dt.date.today()
-        spec = {**sources(settings), "start": str(today - dt.timedelta(days=1)), "end": str(today + dt.timedelta(days=4))}
+        spec = {
+            **sources(settings),
+            "start": str(today - dt.timedelta(days=1)),
+            "end": str(today + dt.timedelta(days=4)),
+        }
         result = events(spec)
         state["events"] = [e for e in result["events"] if e.get("alarms")]
         state["fetched"] = now
@@ -484,7 +510,9 @@ def notify(e, start, minutes):
         when = "now" if minutes <= 0 else f"in {minutes} min" if minutes < 60 else f"at {start:%H:%M}"
         when += f" · {start:%H:%M}–{dt.datetime.fromisoformat(e['end']):%H:%M}"
     body = " · ".join(x for x in (when, e.get("location")) if x)
-    subprocess.run(["notify-send", "-a", "Calendar", "-i", "x-office-calendar", "-u", "normal", e["title"], body], check=False)
+    subprocess.run(
+        ["notify-send", "-a", "Calendar", "-i", "x-office-calendar", "-u", "normal", e["title"], body], check=False
+    )
 
 
 def main(argv):
@@ -500,11 +528,11 @@ def main(argv):
         password = sys.stdin.read().rstrip("\n")
         result = {"calendars": calendars(url, (user, password))}
         store = ["secret-tool", "store", "--label=Nextcloud calendar (quickshell)", *keyring_attrs(url, user)]
-        if subprocess.run(store, input=password, text=True).returncode:
+        if subprocess.run(store, input=password, text=True, check=False).returncode:
             raise Fail("Signed in, but the keyring refused to store the password")
         return result
     if command == "logout":
-        subprocess.run(["secret-tool", "clear", *keyring_attrs(url, user)])
+        subprocess.run(["secret-tool", "clear", *keyring_attrs(url, user)], check=False)
         return {}
     auth = (user, stored_password(url, user))
     if command == "calendars":

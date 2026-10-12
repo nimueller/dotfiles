@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Runs the repository's checks before each commit (git commit --no-verify
+# skips them). Enable with: git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/check.sh"
