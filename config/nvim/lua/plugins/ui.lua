@@ -250,6 +250,10 @@ return {
 		ft = { "markdown" },
 		opts = {
 			completions = { lsp = { enabled = true }, blink = { enabled = true } },
+			-- Keep the cursor line rendered too; only the line being edited in
+			-- insert mode shows its source
+			anti_conceal = { enabled = false },
+			win_options = { concealcursor = { rendered = "nc" } },
 		},
 	},
 
