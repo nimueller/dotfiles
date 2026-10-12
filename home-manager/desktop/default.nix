@@ -111,13 +111,11 @@ in
     hyprpicker
     grim # screenshots (config/quickshell/menus/screenshot.sh)
     imagemagick
-    slurp
     libnotify
     libsecret
     cliphist
     pavucontrol
 
-    my-pkgs.recorder
     my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
     my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
@@ -136,6 +134,5 @@ in
     # Other GUI apps
     keepassxc
     wl-clipboard
-    wf-recorder
   ];
 }

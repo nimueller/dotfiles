@@ -133,7 +133,7 @@ Good to know:
 | `home-manager/theme` | Catppuccin for btop and bat, GTK and the cursor |
 | `options` | The `dotfiles` option: where this repository is checked out (`~/dotfiles`) |
 | `system` | The root side: pacman package lists and `setup.sh` (packages, PAM, logind, firewall, Docker) |
-| `pkgs` | Small scripts (`recorder`, `init-tex`, `edit-tex`) and the Python for the calendar helper |
+| `pkgs` | Small scripts (`stay-awake`, `init-tex`, `edit-tex`) and the Python for the calendar helper |
 | `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, Zsh, Sunshine |
 
 The files in `config` are linked into `~/.config` with `mkOutOfStoreSymlink`, so `~/.config/<app>` points straight at
@@ -178,7 +178,5 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 
 **Desktop features**
 - [ ] Bluetooth menu
-- [ ] Media controls (MPRIS) in the bar or the calendar
 - [ ] Power profiles in the power menu, and a toggle that keeps the screen awake
-- [ ] Screen recording from the UI (the `recorder` script, with an indicator in the bar)
 - [ ] Night light with `hyprsunset`

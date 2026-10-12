@@ -13,16 +13,6 @@
   # Shell scripts: shellcheck runs at build time and the tools they need are
   # on their PATH. TeX Live and Neovim (init-tex, edit-tex) come from the dev
   # module rather than being pulled in here.
-  recorder = pkgs.writeShellApplication {
-    name = "recorder";
-    runtimeInputs = with pkgs; [
-      wf-recorder
-      slurp
-      libnotify
-      procps
-    ];
-    text = builtins.readFile ./scripts/recorder.sh;
-  };
   # systemd-inhibit and hyprctl come from the system, like the session they serve
   stay-awake = pkgs.writeShellApplication {
     name = "stay-awake";
