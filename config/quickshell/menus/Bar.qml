@@ -18,6 +18,7 @@ PanelWindow {
     required property var store // NotificationStore
     required property var center // NotificationCenter
     required property var network // NetworkStatus
+    required property var privacy // Privacy
 
     readonly property string toggle: Quickshell.shellPath("toggle.sh")
     readonly property var monitor: Hyprland.monitorFor(screen)
@@ -137,22 +138,33 @@ PanelWindow {
             }
         }
 
-        // Privacy: something records the microphone or the screen
-        Row {
-            readonly property var inputs: Pipewire.nodes.values.filter(n => n.isStream && !n.isSink).map(n => n.properties["media.class"] ?? "")
+        // Privacy: something records the microphone, uses a camera or shares
+        // the screen
+        BarChip {
+            id: privacy
 
-            visible: inputs.length > 0
-            spacing: 6
+            visible: bar.privacy?.active ?? false
+            solid: true
+            accent: Theme.peach
+            interactive: false
 
             Label {
-                visible: parent.inputs.some(c => c.includes("Video"))
-                text: Theme.glyph(0xf0379) // 󰍹
-                color: Theme.peach
+                visible: bar.privacy.camera
+                anchors.verticalCenter: parent.verticalCenter
+                text: Theme.glyph(0xf05a0) // 󰖠
+                color: privacy.foreground
             }
             Label {
-                visible: parent.inputs.some(c => c.includes("Audio"))
+                visible: bar.privacy.microphone
+                anchors.verticalCenter: parent.verticalCenter
                 text: Theme.glyph(0xf036c) // 󰍬
-                color: Theme.peach
+                color: privacy.foreground
+            }
+            Label {
+                visible: bar.privacy.screen
+                anchors.verticalCenter: parent.verticalCenter
+                text: Theme.glyph(0xf0379) // 󰍹
+                color: privacy.foreground
             }
         }
 

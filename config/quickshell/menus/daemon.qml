@@ -58,6 +58,11 @@ ShellRoot {
         id: networkStatus
     }
 
+    // Microphone, camera and screen sharing in use
+    Privacy {
+        id: privacyStatus
+    }
+
     // The bar on every monitor
     Variants {
         model: Quickshell.screens
@@ -69,6 +74,7 @@ ShellRoot {
             store: notificationStore
             center: notificationCenter
             network: networkStatus
+            privacy: privacyStatus
         }
     }
 

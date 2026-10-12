@@ -38,7 +38,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | ![Power menu](resources/power-menu.webp) | |
 | **Power menu:** lock, log out, suspend, reboot or shut down, by mouse or key | |
 
-- **Bar:** workspaces, window title, clock, tray (with themed menus), microphone and screen-sharing indicators, volume,
+- **Bar:** workspaces, window title, clock, tray (with themed menus), camera, microphone and screen-sharing indicators, volume,
   battery, network and a notification bell. Clicking a module opens its menu.
 - **Sound:** output and input devices and their volumes, per-app volume.
 - **Network:** wired and Wi-Fi connections, plus VPNs (import OpenVPN or WireGuard files).
