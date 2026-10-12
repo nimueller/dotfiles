@@ -6,7 +6,9 @@ on:
 
 # Updates flake.lock in a pull request, builds the configurations from it
 # and merges it when they all build; otherwise the pull request is closed
-# and main keeps the previous lock.
+# and main keeps the previous lock. A vulnerability scan comments which known
+# vulnerabilities the update fixes and which it brings in; it never blocks
+# the merge.
 #
 # Needs in the repository settings (Actions > General > Workflow
 # permissions): "Read and write permissions" and "Allow GitHub Actions to
@@ -40,7 +42,8 @@ jobs:
             Weekly `flake.lock` update. The workflow that opened this pull
             request builds the configurations from it and merges it when all
             of them build; otherwise it closes it and `main` keeps the
-            current lock.
+            current lock. A comment lists the known vulnerabilities the update
+            fixes and brings in (information only).
 
             ```
             {{ env.GIT_COMMIT_MESSAGE }}
@@ -74,8 +77,53 @@ jobs:
       - name: 🏗️ Build ${{ matrix.config }}
         run: nix build --print-build-logs ".#homeConfigurations.${{ matrix.config }}.activationPackage"
 
+  # vulnix scans the desktop configuration (a superset of headless) before
+  # and after the update, with the same vulnerability data, and comments the
+  # difference. One 15 GB closure at a time: the old one is collected before
+  # the new one is built.
+  scan:
+    needs: update
+    if: needs.update.outputs.pr != ''
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR: ${{ needs.update.outputs.pr }}
+      CONFIG: desktop
+    steps:
+      - name: 🧹 Free disk space (the desktop closure is large)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+      - name: 🔍 Checkout the current lock
+        uses: actions/checkout@v5
+        with:
+          path: old
+      - name: 🔍 Checkout the updated lock
+        uses: actions/checkout@v5
+        with:
+          ref: update-flake-lock
+          path: new
+      - name: 🔡 Install Nix
+        uses: cachix/install-nix-action@v31
+      # vulnix exits with 2 when it finds something
+      - name: 🛡️ Scan before and after the update
+        run: |
+          scan() {
+            nix build "./$1#homeConfigurations.$CONFIG.activationPackage" -o "$1-result"
+            nix run --inputs-from ./new nixpkgs#vulnix -- -C --json "$1-result" > "$1.json" || [ $? -eq 2 ]
+          }
+          scan old
+          rm old-result
+          nix store gc
+          scan new
+      - name: 💬 Comment on the pull request
+        run: |
+          python3 new/.github/vulnix-diff.py old.json new.json "$CONFIG" > comment.md
+          gh pr comment "$PR" --body-file comment.md
+
   merge:
-    needs: [update, build]
+    needs: [update, build, scan]
     if: always() && needs.update.outputs.pr != ''
     runs-on: ubuntu-latest
     env:
