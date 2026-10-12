@@ -27,7 +27,7 @@ Popup {
         glyph: Theme.glyph(popup.store.dnd ? 0xf009b : 0xf009a) // 󰂛 / 󰂚
         accent: popup.store.dnd ? Theme.overlay1 : Theme.lavender
         title: "Notifications"
-        badge: popup.store.entries.length || ""
+        badge: popup.store.history.length || ""
 
         IconButton {
             glyph: Theme.glyph(0xf009b) // 󰂛
@@ -37,7 +37,7 @@ Popup {
             onClicked: popup.store.setDnd(!popup.store.dnd)
         }
         IconButton {
-            visible: popup.store.entries.length > 0
+            visible: popup.store.history.length > 0
             glyph: Theme.glyph(0xf05e9) // 󰗩
             text: "Clear"
             onClicked: popup.store.clear()
@@ -67,7 +67,7 @@ Popup {
         Layout.fillWidth: true
         Layout.topMargin: 12
         Layout.bottomMargin: 12
-        visible: popup.store.entries.length === 0
+        visible: popup.store.history.length === 0
         spacing: 6
 
         Label {
@@ -88,11 +88,11 @@ Popup {
 
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(contentHeight, 480)
-        visible: popup.store.entries.length > 0
+        visible: popup.store.history.length > 0
         clip: true
         spacing: 8
         boundsBehavior: Flickable.StopAtBounds
-        model: popup.store.entries
+        model: popup.store.history
 
         delegate: NotificationCard {
             required property var modelData

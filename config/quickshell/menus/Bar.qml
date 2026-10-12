@@ -223,7 +223,7 @@ PanelWindow {
         BarChip {
             id: bell
 
-            readonly property int count: bar.store?.entries.length ?? 0
+            readonly property int count: bar.store?.history.length ?? 0
             readonly property bool dnd: bar.store?.silenced ?? false // or the screen is shared
             property int seen: count
 

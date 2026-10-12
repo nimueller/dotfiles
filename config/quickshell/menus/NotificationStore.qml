@@ -24,6 +24,9 @@ Scope {
     readonly property string historyPath: `${Quickshell.env("HOME")}/.cache/quickshell-notifications.json`
 
     property var entries: [] // newest first
+    // What the notification center and the bell show: transient ones (the
+    // transient hint, track announcements) only ever pop up
+    readonly property var history: entries.filter(e => !e.transient)
     property var popups: [] // keys of entries popping up right now
     property bool dnd: false
     // The screen is shared (Privacy.qml): nothing pops up, like with do not
@@ -74,6 +77,8 @@ Scope {
             pid: Number(n.hints["sender-pid"] ?? 0),
             desktop: n.desktopEntry
         };
+        if (!e.transient && isTrack(e))
+            e.transient = true;
         entries = [e, ...entries.filter(x => x.key !== e.key)].slice(0, historyLength);
         // The sender's window, for the popup: it may be new, and short-lived
         // senders (notify-send) are gone in a moment
@@ -155,9 +160,9 @@ Scope {
         return Mpris.players.values.some(p => p.trackTitle && chain.includes(playerPids[p.dbusName]) && [e.summary, e.body].some(t => (t ?? "").includes(p.trackTitle)));
     }
 
-    // Players update their track a moment after (or before) they notify, so
-    // check new entries shortly after they arrive. Popping up ones leave the
-    // history when they close.
+    // Players may update their track a moment after they notify, so new
+    // entries are checked again shortly after they arrive. Popping up ones
+    // stay until they close.
     Timer {
         id: trackCheck
         interval: 2000
@@ -167,6 +172,7 @@ Scope {
                 if (!root.popups.includes(e.key))
                     root.remove(e.key);
             }
+            root.entries = root.entries.slice(); // history follows
         }
     }
 
