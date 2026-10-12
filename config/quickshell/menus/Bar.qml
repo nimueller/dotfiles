@@ -9,7 +9,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 
 // The bar at the bottom of a monitor, part of daemon.qml:
-// workspaces and window title on the left, the clock in the middle, tray,
+// the distro logo (system menu), workspaces and window title on the left, the clock in the middle, tray,
 // privacy, sound, battery, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 PanelWindow {
@@ -50,6 +50,13 @@ PanelWindow {
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 1
         spacing: 6
+
+        // System menu (system.qml): the system at a glance, Machine Settings
+        BarChip {
+            accent: Theme.blue
+            text: Theme.glyph(0xf303) // 
+            onClicked: bar.menu("system")
+        }
 
         Workspaces {
             monitor: bar.monitor

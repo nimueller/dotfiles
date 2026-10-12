@@ -4,7 +4,8 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 
-// Card above the right end of the bar (or its centre, for the clock), shared
+// Card above the right end of the bar (its centre for the clock, its left end
+// for the system menu), shared
 // by the bar menus. Closes on Escape or a click outside; `toggle.sh <name>`
 // opens and closes it. Menus are short-lived instances that quit on close,
 // unless `resident` (inside daemon.qml): then they only hide, and toggle()
@@ -15,6 +16,7 @@ PanelWindow {
     required property string name
     property int cardWidth: 380
     property bool centered: false
+    property bool atLeft: false
     property bool resident: false
     property bool shown: !resident
     property real closedAt: 0
@@ -53,11 +55,13 @@ PanelWindow {
 
     anchors {
         bottom: true
-        right: !centered
+        right: !centered && !atLeft
+        left: atLeft
     }
     margins {
         bottom: 6
-        right: centered ? 0 : 6
+        right: centered || atLeft ? 0 : 6
+        left: atLeft ? 6 : 0
     }
 
     implicitWidth: cardWidth
