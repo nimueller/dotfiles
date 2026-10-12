@@ -121,6 +121,7 @@ in
     eog # Image viewer
     gnome-characters # Emoji picker
     gnome-font-viewer
+    marktext # Markdown, rendered: GFM, KaTeX, Mermaid, GitLab mode; opens .md files
     dconf-editor
     file-roller
     seahorse # Manage keyring

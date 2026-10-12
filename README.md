@@ -23,6 +23,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **Terminal** | kitty, Zsh with Powerlevel10k, tmux |
 | **Editor** | Neovim with lazy.nvim, Treesitter, Telescope, Neo-tree and blink.cmp; language servers come from Nix |
 | **Browser** | Zen |
+| **Markdown** | MarkText, the default for `.md` files (GitHub tables and task lists, KaTeX, Mermaid, GitLab mode) |
 | **Theme** | Catppuccin Macchiato for everything, including GTK, the cursor, btop and bat |
 
 ## The Quickshell desktop
