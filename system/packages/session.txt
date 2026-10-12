@@ -15,3 +15,14 @@ upower
 brightnessctl
 polkit-gnome
 gnome-keyring
+
+# Programs the desktop config calls: terminal, file manager, calculator key,
+# the network menu's editor and VPN file picker, the system menu's update
+# count, and xdg-open
+kitty
+nautilus
+gnome-calculator
+nm-connection-editor
+zenity
+pacman-contrib
+xdg-utils

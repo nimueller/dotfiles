@@ -48,7 +48,6 @@ gitleaks
 glad
 glfw
 gnome-bluetooth-3.0
-gnome-calculator
 gnome-disk-utility
 gnome-maps
 gnome-software
@@ -74,7 +73,6 @@ iptables
 jdk21-openjdk
 jpegoptim
 kdenlive
-kitty
 less
 lib32-nvidia-utils
 lib32-pipewire
@@ -96,7 +94,6 @@ moonlight-qt
 mtools
 mtpfs
 nano
-nautilus
 ncdu
 nemo
 neovim
@@ -114,9 +111,7 @@ nvidia-open-dkms
 nvtop
 nwg-look
 obs-studio
-ollama
 openresolv
-pacman-contrib
 pdfarranger
 pdftk
 pipewire-alsa
