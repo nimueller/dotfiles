@@ -237,6 +237,14 @@ ShellRoot {
         onVisibleChanged: if (!visible)
             Qt.quit()
 
+        WindowClose {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: 10
+            z: 1
+            onClicked: Qt.quit()
+        }
+
         RowLayout {
             anchors.fill: parent
             spacing: 0
@@ -314,6 +322,20 @@ ShellRoot {
                         text: "Stored in config/hypr/local.lua, which stays out of git."
                         font.pixelSize: 10
                         color: Theme.overlay0
+                    }
+
+                    // The file and its folder in their default apps
+                    IconButton {
+                        Layout.fillWidth: true
+                        glyph: Theme.glyph(0xf024b) // 󰉋
+                        text: "Hyprland folder"
+                        onClicked: Quickshell.execDetached(["gio", "open", root.path.replace(/\/[^/]*$/, "")])
+                    }
+                    IconButton {
+                        Layout.fillWidth: true
+                        glyph: Theme.glyph(0xf03eb) // 󰏫
+                        text: "Edit local.lua"
+                        onClicked: Quickshell.execDetached(["gio", "open", root.path])
                     }
                 }
             }
