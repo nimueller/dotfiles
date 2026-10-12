@@ -74,6 +74,7 @@ hl.bind(mainMod .. " + CONTROL + SHIFT + S", exec("~/.config/quickshell/menus/sc
 hl.bind("Print",                             exec("~/.config/quickshell/menus/screenshot.sh screen"))
 hl.bind(mainMod .. " + SHIFT + C",           exec("hyprpicker -a")) -- Colour picker
 hl.bind(mainMod .. " + Escape",              exec("pidof hyprlock || hyprlock")) -- Lock the screen
+hl.bind(mainMod .. " + I",                   exec("~/.config/quickshell/menus/toggle.sh window")) -- Details of the focused window
 
 -- German letters on a US layout, at their German key positions. The letters
 -- sit on F13-F16 of the keymap (keymap.xkb); Hyprland sends those keys to the
