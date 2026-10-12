@@ -81,6 +81,19 @@ in
       categories = [ "Settings" ];
     };
 
+    # Pear Desktop (pacman) as "YouTube Music", like its window title: the
+    # launcher, the sound menu and the window details take the name from
+    # here. Same id as the package's entry; ~/.nix-profile comes before /usr
+    # in XDG_DATA_DIRS, so this one wins.
+    desktopEntries."com.github.th-ch.youtube-music" = {
+      name = "YouTube Music";
+      comment = "YouTube Music Desktop App - including custom plugins";
+      exec = "pear-desktop";
+      icon = "com.github.th-ch.youtube-music";
+      categories = [ "AudioVideo" ];
+      settings.StartupWMClass = "com.github.th-ch.youtube-music";
+    };
+
     # Same file name as dunst's, so it takes precedence over /usr/share
     dataFile."dbus-1/services/org.knopwob.dunst.service".text = ''
       [D-BUS Service]
