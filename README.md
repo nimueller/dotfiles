@@ -6,7 +6,7 @@
 > Why vibecoding? Because I am lazy and it is way more effective: I can just tell Claude what I want from my desktop and dotfiles.
 
 My Arch Linux setup: a [Hyprland](https://hyprland.org) desktop whose bar, menus, launcher, notifications and
-screenshot tool are all written in [Quickshell](https://quickshell.org), plus Zsh, tmux and Neovim for the terminal.
+screenshot tool are all written in [Quickshell](https://quickshell.org), plus Zsh and Neovim for the terminal.
 Packages and configuration come from Nix with [Home Manager](https://github.com/nix-community/home-manager), and
 everything wears [Catppuccin Macchiato](https://catppuccin.com).
 
@@ -20,7 +20,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **Compositor** | Hyprland, configured in Lua |
 | **Shell UI** | Quickshell: bar, menus, launcher, clipboard history, notifications, on-screen display, screenshot editor |
 | **Wallpaper / lock** | hyprpaper (rotating through `config/hypr/wallpapers`) / hyprlock, started by hypridle when idle and before suspend |
-| **Terminal** | kitty, Zsh with Powerlevel10k, tmux |
+| **Terminal** | kitty, Zsh with Powerlevel10k |
 | **Editor** | Neovim with lazy.nvim, Treesitter, Telescope, Neo-tree and blink.cmp; language servers come from Nix |
 | **Browser** | Brave (Zen stays installed as a backup) |
 | **Markdown** | MarkText, the default for `.md` files (GitHub tables and task lists, KaTeX, Mermaid, GitLab mode) |
@@ -135,7 +135,7 @@ Good to know:
 | `options` | The `dotfiles` option: where this repository is checked out (`~/dotfiles`) |
 | `system` | The root side: pacman package lists, `setup.sh` (packages, PAM, logind) and `merge-keyrings.sh` |
 | `pkgs` | Small scripts (`recorder`, `init-tex`, `edit-tex`) and the Python for the calendar helper |
-| `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, tmux, Zsh, Sunshine |
+| `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, Zsh, Sunshine |
 
 The files in `config` are linked into `~/.config` with `mkOutOfStoreSymlink`, so `~/.config/<app>` points straight at
 `~/dotfiles/config/<app>`: edits take effect without rebuilding. The Quickshell daemon is the one exception; restart it
@@ -166,7 +166,6 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 **Portability**
 - [x] Move the remaining machine-specific bits (workspaces bound to monitor ports, the notifications' monitor,
       `JAVA_HOME`) into `local.lua`
-- [ ] tmux plugins from Home Manager instead of a `git clone` of tpm
 
 **Cleanup**
 - [ ] Trim `kitty.conf` to the settings that differ from the defaults

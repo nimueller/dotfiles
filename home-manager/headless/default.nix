@@ -30,7 +30,6 @@
 
     packages = with pkgs; [
       # Terminal programs
-      tmux # GOAT
       fzf # Lifesaver!
       autojump # Lifesaver #2!
       tldr
@@ -62,7 +61,6 @@
           "fzf"
           "git"
           "sudo"
-          "tmux"
           "autojump"
           "colorize"
         ];

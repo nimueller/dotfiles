@@ -1,6 +1,6 @@
 #!/bin/bash
 # Installs Nix and these dotfiles with Home Manager.
-#   install.sh headless   command line tools, Zsh, Neovim, tmux
+#   install.sh headless   command line tools, Zsh, Neovim
 #   install.sh desktop    headless plus Hyprland desktop (Arch Linux)
 #   install.sh runner     headless for the CI runner
 # Works when piped from curl (questions are read from the terminal).
@@ -79,12 +79,6 @@ install_repo() {
   fi
 }
 
-post_install_steps() {
-  if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
-    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-  fi
-}
-
 # Packages, PAM and logind for the desktop, from system/setup.sh (needs root;
 # every step asks first)
 install_desktop_system() {
@@ -138,7 +132,6 @@ else
 fi
 
 install_repo
-post_install_steps
 [ "$INSTALL_OPTION" = desktop ] && install_desktop_system
 [ "$INSTALL_OPTION" = runner ] || set_default_shell
 

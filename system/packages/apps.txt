@@ -149,7 +149,6 @@ swtpm
 system-config-printer
 tcpdump
 thunderbird
-tmux
 traceroute
 ttf-dejavu
 ttf-lato
