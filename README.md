@@ -45,7 +45,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 - **Calendar:** a month view with Nextcloud calendars (CalDAV: create, edit and delete appointments, with reminders) and
   read-only ICS subscriptions, a weather forecast per day and by the hour, and the current weather from the nearest
   airport's METAR report.
-- **Notifications:** popups with a countdown bar, a notification centre with history and do not disturb. They replace dunst.
+- **Notifications:** popups with a countdown bar, a notification centre with history and do not disturb. Nothing pops
+  up while the screen is shared. They replace dunst.
 - **On-screen display:** volume, microphone, brightness, Caps Lock and Num Lock, and when the camera, microphone or
   screen sharing starts. It replaces SwayOSD.
 - **Stay awake:** no idle lock while a browser or video player is playing, a game runs or Sunshine streams; the
@@ -181,7 +182,7 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [ ] Bluetooth menu
 - [ ] Power profiles in the power menu, and a toggle that keeps the screen awake
 - [ ] Night light with `hyprsunset`
-- [ ] Do not disturb while the screen is shared (the privacy module knows when)
+- [x] Do not disturb while the screen is shared (the privacy module knows when)
 - [ ] Brightness keys for external monitors over DDC/CI (`ddcutil`); there is no backlight on the desktop
 - [ ] A window switcher or overview (Alt+Tab)
 - [ ] Waiting updates at a glance: a dot on the bar's logo chip, and AUR updates too (the system menu only counts

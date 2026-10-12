@@ -224,7 +224,7 @@ PanelWindow {
             id: bell
 
             readonly property int count: bar.store?.entries.length ?? 0
-            readonly property bool dnd: bar.store?.dnd ?? false
+            readonly property bool dnd: bar.store?.silenced ?? false // or the screen is shared
             property int seen: count
 
             solid: !dnd && count > 0
@@ -232,7 +232,7 @@ PanelWindow {
             accent: dnd ? Theme.overlay0 : count > 0 ? Theme.lavender : Theme.overlay2
             onClicked: button => {
                 if (button === Qt.RightButton)
-                    bar.store.setDnd(!dnd);
+                    bar.store.setDnd(!bar.store.dnd);
                 else if (button === Qt.MiddleButton)
                     bar.store.clear();
                 else

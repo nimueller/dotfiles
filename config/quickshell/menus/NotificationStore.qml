@@ -19,6 +19,10 @@ Scope {
     property var entries: [] // newest first
     property var popups: [] // keys of entries popping up right now
     property bool dnd: false
+    // The screen is shared (Privacy.qml): nothing pops up, like with do not
+    // disturb, but without touching (and saving) the user's own setting
+    property bool sharing: false
+    readonly property bool silenced: dnd || sharing
     property int nextKey: 1
 
     // Icon for a notification: its image, the app icon (name or path), or
@@ -62,7 +66,7 @@ Scope {
             transient: n.transient
         };
         entries = [e, ...entries.filter(x => x.key !== e.key)].slice(0, historyLength);
-        if (!dnd && !popups.includes(e.key))
+        if (!silenced && !popups.includes(e.key))
             popups = [e.key, ...popups];
         n.closed.connect(() => {
             // The app withdrew it (or it was dismissed): drop the live object
@@ -105,9 +109,12 @@ Scope {
 
     function setDnd(on) {
         dnd = on;
-        if (dnd)
-            popups = [];
         changed();
+    }
+
+    onSilencedChanged: {
+        if (silenced)
+            popups = [];
     }
 
     // Click on a notification: run its default action if the app still

@@ -48,7 +48,7 @@ Popup {
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredHeight: 32
-        visible: popup.store.dnd
+        visible: popup.store.silenced
         radius: 8
         color: Theme.alpha(Theme.peach, 0.12)
 
@@ -56,7 +56,7 @@ Popup {
             anchors.fill: parent
             anchors.leftMargin: 12
             anchors.rightMargin: 12
-            text: "Do not disturb is on: notifications don't pop up"
+            text: popup.store.dnd ? "Do not disturb is on: notifications don't pop up" : "The screen is shared: notifications don't pop up"
             font.pixelSize: 11
             color: Theme.peach
         }

@@ -30,6 +30,7 @@ ShellRoot {
 
     NotificationStore {
         id: notificationStore
+        sharing: privacyStatus.screen // no popups on a shared screen
     }
 
     NotificationPopups {
