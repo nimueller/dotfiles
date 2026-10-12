@@ -2,8 +2,9 @@
 # The system half of the desktop on Arch Linux: what Home Manager can't set
 # up because it needs root. Every step asks first and can be repeated.
 #   system/setup.sh
-# 1. the session packages (packages/session.txt), then optionally this
-#    machine's other packages (packages/apps.txt, packages/aur.txt)
+# 1. the session packages (packages/session.txt), together with a full
+#    system upgrade: Arch doesn't support updating only some packages; then,
+#    for a new machine, this machine's other packages (apps.txt, aur.txt)
 # 2. PAM: unlock the `login` keyring with the login password on TTY logins,
 #    and keep its password in step with `passwd`
 # 3. logind: the power button opens the power menu instead of shutting down
@@ -40,17 +41,19 @@ fi
 
 echo "== Packages"
 mapfile -t session < <(packages session.txt)
-if ask "Install the session packages (${#session[@]}: Hyprland, Quickshell, portals, PipeWire...)?"; then
-    sudo pacman -S --needed "${session[@]}" </dev/tty
+if ask "Upgrade the system and install the session packages (${#session[@]}: Hyprland, Quickshell, portals...)?"; then
+    sudo pacman -Syu --needed "${session[@]}" </dev/tty
 fi
+echo "The next two steps are for setting up a new machine like this one; on a machine"
+echo "that already has its packages, answer n."
 mapfile -t apps < <(packages apps.txt)
-if ask "Install this machine's other ${#apps[@]} packages from the repositories?"; then
-    sudo pacman -S --needed "${apps[@]}" </dev/tty
+if ask "Install the ${#apps[@]} other packages from the repositories (packages/apps.txt)?"; then
+    sudo pacman -Syu --needed "${apps[@]}" </dev/tty
 fi
 mapfile -t aur < <(packages aur.txt)
 if command -v yay >/dev/null 2>&1; then
-    if ask "Install the ${#aur[@]} AUR packages with yay?"; then
-        yay -S --needed "${aur[@]}" </dev/tty
+    if ask "Install the ${#aur[@]} AUR packages with yay (packages/aur.txt)?"; then
+        yay -Syu --needed "${aur[@]}" </dev/tty
     fi
 else
     echo "yay isn't installed, skipping the ${#aur[@]} AUR packages (packages/aur.txt)"
