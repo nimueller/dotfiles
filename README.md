@@ -48,7 +48,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
   read-only ICS subscriptions, a weather forecast per day and by the hour, and the current weather from the nearest
   airport's METAR report.
 - **Notifications:** popups with a countdown bar, a notification centre with history and do not disturb. Nothing pops
-  up while the screen is shared. They replace dunst.
+  up while the screen is shared, and a music player's notification about its current track leaves no trace in the
+  history. They replace dunst.
 - **On-screen display:** volume, microphone, brightness (the backlight, or external monitors over DDC/CI), Caps Lock and
   Num Lock, and when the camera, microphone or screen sharing starts. It replaces SwayOSD.
 - **Drives:** a notification with Open and Eject when a USB drive, memory card, disc or phone is plugged in.

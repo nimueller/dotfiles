@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Mpris
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
 
@@ -12,6 +13,10 @@ import Quickshell.Wayland
 // summary, body, icon, urgency (0 low, 1 normal, 2 critical), time (ms),
 // pid (the sender's process, from the sender-pid hint libnotify sets),
 // desktop (desktop entry id) }
+//
+// A media player's notification about the track it plays pops up like any
+// other but stays out of the history: its sender is the process behind an
+// MPRIS player, and it names that player's current track.
 Scope {
     id: root
 
@@ -75,6 +80,7 @@ Scope {
         Windows.refresh();
         if (e.pid)
             Windows.readAncestors(e.pid);
+        trackCheck.restart();
         if (!silenced && !popups.includes(e.key))
             popups = [e.key, ...popups];
         n.closed.connect(() => {
@@ -114,6 +120,54 @@ Scope {
         entries = [];
         popups = [];
         changed();
+    }
+
+    // Track announcements -----------------------------------------------------
+
+    // The process behind each MPRIS player: the owner of its D-Bus name
+    property var playerPids: ({}) // dbusName → pid
+    readonly property var playerNames: Mpris.players.values.map(p => p.dbusName)
+
+    onPlayerNamesChanged: {
+        playerPidsProc.command = ["sh", "-c", 'for n; do echo "$n $(busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetConnectionUnixProcessID s "$n" | cut -d" " -f2)"; done', "sh", ...playerNames];
+        playerPidsProc.running = true;
+    }
+
+    Process {
+        id: playerPidsProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const pids = {};
+                for (const line of text.split("\n")) {
+                    const [name, pid] = line.split(" ");
+                    if (name && parseInt(pid) > 0)
+                        pids[name] = parseInt(pid);
+                }
+                root.playerPids = pids;
+            }
+        }
+    }
+
+    function isTrack(e) {
+        if (!e.pid)
+            return false;
+        const chain = Windows.readAncestors(e.pid);
+        return Mpris.players.values.some(p => p.trackTitle && chain.includes(playerPids[p.dbusName]) && [e.summary, e.body].some(t => (t ?? "").includes(p.trackTitle)));
+    }
+
+    // Players update their track a moment after (or before) they notify, so
+    // check new entries shortly after they arrive. Popping up ones leave the
+    // history when they close.
+    Timer {
+        id: trackCheck
+        interval: 2000
+        onTriggered: {
+            for (const e of root.entries.filter(e => !e.transient && Date.now() - e.time < 10000 && root.isTrack(e))) {
+                e.transient = true;
+                if (!root.popups.includes(e.key))
+                    root.remove(e.key);
+            }
+        }
     }
 
     function setDnd(on) {
