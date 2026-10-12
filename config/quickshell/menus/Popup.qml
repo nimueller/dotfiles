@@ -31,7 +31,12 @@ PanelWindow {
         // Clicking the bar icon clears the grab before the bar runs toggle.sh;
         // the stamp tells toggle.sh not to reopen the menu right away.
         Quickshell.execDetached(["touch", `${Quickshell.env("XDG_RUNTIME_DIR")}/qs-${name}-closed`]);
-        Qt.quit();
+        // Let go of the keyboard focus and the window before quitting: tearing
+        // down a still focused item crashed in Qt's input method now and then
+        // (QInputMethod::commit while the items were deleted)
+        card.focus = false;
+        shown = false;
+        Qt.callLater(Qt.quit);
     }
 
     // Resident menus: a click on the bar icon first closes the menu through
