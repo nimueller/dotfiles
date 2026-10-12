@@ -94,7 +94,15 @@ Popup {
     Header {
         glyph: Theme.glyph(0xf05b6) // 󰖶
         accent: Theme.sapphire
-        title: root.win === null ? "Window" : root.win.address ? (root.entry?.name ?? root.win.class) : "No focused window"
+        // Long titles shortened to leave room for the button; the Title row has all of it
+        title: {
+            if (root.win === null)
+                return "Window";
+            if (!root.win.address)
+                return "No focused window";
+            const t = root.win.title || root.win.class;
+            return t.length > 48 ? `${t.slice(0, 47)}…` : t;
+        }
 
         IconButton {
             visible: !!root.win?.address
