@@ -21,8 +21,8 @@ Rectangle {
     // The window that sent it (Windows.qml): by the sender's process, else by app
     readonly property var window: (entry.pid ? Windows.forPid(entry.pid) : null) ?? Windows.forApp(entry.desktop)
     readonly property color accent: critical ? Theme.red : entry.urgency === 0 ? Theme.overlay2 : Theme.lavender
-    // Seconds, from the app or by urgency
-    readonly property real timeout: critical ? 0 : n && n.expireTimeout > 0 ? n.expireTimeout : [5, 8, 0][entry.urgency]
+    // Seconds, from the app (it gives milliseconds) or by urgency
+    readonly property real timeout: critical ? 0 : n && n.expireTimeout > 0 ? n.expireTimeout / 1000 : [5, 8, 0][entry.urgency]
     readonly property var progress: n?.hints?.value ?? null
     readonly property var actions: (n?.actions ?? []).filter(a => a.identifier !== "default")
     readonly property bool hovered: hover.hovered
