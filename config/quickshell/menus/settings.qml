@@ -6,7 +6,8 @@ import Quickshell.Io
 
 // Machine Settings: this machine's own settings, which stay out of git.
 // Displays (arrangement, mode, scale, rotation, VRR, HDR), environment
-// variables (e.g. drivers) and autostart programs, written to
+// variables (e.g. drivers), autostart programs and the bar (read by the
+// shell through LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
 // "-- BEGIN settings" and "-- END settings"; anything else in that file is
 // kept. Apply tries the displays right away and goes back unless kept
@@ -22,6 +23,7 @@ ShellRoot {
     property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, modes }
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
+    property var bar: ({ windowTitle: false })
     property int selected: 0
     property bool dirty: false
     property string status: ""
@@ -61,7 +63,8 @@ ShellRoot {
         return {
             monitors: monitors.map(m => ({ desc: m.desc, name: m.name, enabled: m.enabled, mode: m.mode, x: m.x, y: m.y, scale: m.scale, transform: m.transform, vrr: m.vrr, wideColor: m.wideColor, hdr: m.hdr })),
             env: env.filter(e => e[0].trim()),
-            autostart: autostart.filter(c => c.trim())
+            autostart: autostart.filter(c => c.trim()),
+            bar: bar
         };
     }
 
@@ -120,6 +123,7 @@ ShellRoot {
                 list.push(Object.assign({ connected: false, modes: [] }, m));
         monitors = list;
         env = s.env;
+        bar = Object.assign({ windowTitle: false }, s.bar);
         autostart = s.autostart;
         selected = Math.max(0, list.findIndex(m => m.connected));
     }
@@ -271,7 +275,8 @@ ShellRoot {
                         model: [
                             { id: "displays", text: "Displays", glyph: 0xf0379 },
                             { id: "env", text: "Environment", glyph: 0xf0169 },
-                            { id: "autostart", text: "Autostart", glyph: 0xf040a }
+                            { id: "autostart", text: "Autostart", glyph: 0xf040a },
+                            { id: "bar", text: "Bar", glyph: 0xf10a9 }
                         ]
 
                         delegate: Rectangle {
@@ -577,6 +582,39 @@ ShellRoot {
                         glyph: Theme.glyph(0xf0415) // 󰐕
                         text: "Add program"
                         onClicked: root.autostart = [...root.autostart, ""]
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Bar --------------------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "bar"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: "Bar"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        Switch {
+                            checked: root.bar.windowTitle
+                            onToggled: {
+                                root.bar = Object.assign({}, root.bar, { windowTitle: !root.bar.windowTitle });
+                                root.dirty = true;
+                            }
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: "Show the focused window's title next to the workspaces"
+                        }
                     }
 
                     Item {

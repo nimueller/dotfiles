@@ -65,7 +65,8 @@ PanelWindow {
         Label {
             Layout.maximumWidth: 700
             Layout.leftMargin: 4
-            visible: !!text
+            // Off unless switched on in Machine Settings (LocalSettings.qml)
+            visible: LocalSettings.windowTitle && !!text
             text: Hyprland.activeToplevel?.title ?? ""
             color: Theme.subtext0
         }
