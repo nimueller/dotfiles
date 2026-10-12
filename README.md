@@ -168,8 +168,8 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
       `JAVA_HOME`) into `local.lua`
 
 **Cleanup**
-- [ ] Trim `kitty.conf` to the settings that differ from the defaults
-- [ ] Shrink the wallpapers (about 30 MB of the repository) or move them out of git
+- [x] Trim `kitty.conf` to the settings that differ from the defaults
+- [x] Shrink the wallpapers (30 MB → 4 MB; older commits still hold the old files)
 
 **Checks**
 - [ ] Lint the Quickshell code (`qmllint`) and the calendar helper (`ruff`) in CI
