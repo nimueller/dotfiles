@@ -59,7 +59,7 @@
     name = "stay-awake";
     text = builtins.readFile ./scripts/stay-awake.sh;
   };
-  # busctl comes from the system too
+  # pgrep comes from the system too
   after-unlock = pkgs.writeShellApplication {
     name = "after-unlock";
     text = builtins.readFile ./scripts/after-unlock.sh;
