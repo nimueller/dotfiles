@@ -14,7 +14,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle") -- lock and screens off when idle, lock before suspend (hypridle.conf)
 
     -- Utilities
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE")
+    -- then the systemd services of the graphical session (home-manager/desktop)
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user start hyprland-session.target")
 
     -- User programs, once unlocked: most keep secrets in the keyring and would
     -- otherwise wait for its own password prompt (Brave doesn't load any page)

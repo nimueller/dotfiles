@@ -26,6 +26,17 @@ in
   services.kdeconnect.enable = true;
 
   systemd.user = {
+    # Hyprland isn't started by a session manager, so nothing brought up
+    # graphical-session.target and the services that need it (the GNOME
+    # portal's file chooser, kdeconnect) didn't start. Hyprland starts this
+    # target once the environment is imported (config/hypr/autostart.lua).
+    targets.hyprland-session.Unit = {
+      Description = "Hyprland session";
+      BindsTo = [ "graphical-session.target" ];
+      Wants = [ "graphical-session-pre.target" ];
+      After = [ "graphical-session-pre.target" ];
+    };
+
     # The bar, launcher, notifications and the volume/brightness OSD come
     # from the resident quickshell daemon (config/quickshell/menus/daemon.qml).
     # Hyprland starts it; D-Bus activation also starts it (instead of dunst)
