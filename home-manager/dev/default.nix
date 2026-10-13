@@ -63,5 +63,6 @@
     # Go
     go
     gopls
+    go-migrate # database migrations
   ];
 }

@@ -11,6 +11,7 @@ in
   targets.genericLinux.enable = true;
 
   imports = [
+    ./flatpak.nix
     ./gaming.nix
     ./symlinks.nix
     ../dev
@@ -113,7 +114,7 @@ in
       categories = [ "Settings" ];
     };
 
-    # Pear Desktop (pacman) as "YouTube Music", like its window title: the
+    # Pear Desktop (Nix) as "YouTube Music", like its window title: the
     # launcher, the sound menu and the window details take the name from
     # here. Same id as the package's entry; ~/.nix-profile comes before /usr
     # in XDG_DATA_DIRS, so this one wins.
@@ -121,7 +122,7 @@ in
       name = "YouTube Music";
       comment = "YouTube Music Desktop App - including custom plugins";
       exec = "pear-desktop";
-      icon = "com.github.th-ch.youtube-music";
+      icon = "pear-desktop";
       categories = [ "AudioVideo" ];
       settings.StartupWMClass = "com.github.th-ch.youtube-music";
     };
@@ -176,6 +177,14 @@ in
     my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
     my-pkgs.edit-tex
+    my-pkgs.pkg-sync # installed software against the lists and flatpak.nix
+
+    # Apps that aren't on Flathub, instead of the AUR; none needs the GPU
+    # much (Nix apps on Arch don't get the NVIDIA driver)
+    claude-code
+    naps2 # scanning
+    tinymediamanager
+    pear-desktop # YouTube Music (Electron: software rendering)
     my-pkgs.phones-in-files # the phones in Files' sidebar (config/quickshell/menus/kdeconnect.py)
 
     # Gnome GUI apps

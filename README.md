@@ -22,7 +22,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **Wallpaper / lock** | hyprpaper (rotating through `config/hypr/wallpapers`) / hyprlock, at login, when idle and before suspend |
 | **Terminal** | kitty, Zsh with Powerlevel10k |
 | **Editor** | Neovim with lazy.nvim, Treesitter, Telescope, Neo-tree and blink.cmp; language servers come from Nix |
-| **Browser** | Brave (Zen stays installed as a backup) |
+| **Browser** | Brave from Flathub (Zen stays installed as a backup), with KeePassXC through a small proxy |
 | **Markdown** | MarkText, the default for `.md` files (GitHub tables and task lists, KaTeX, Mermaid, GitLab mode) |
 | **Theme** | Catppuccin Macchiato for everything, including GTK, the cursor, btop and bat |
 
@@ -125,7 +125,8 @@ Good to know:
   `flake.nix` (and the clone URL in `install.sh`).
 - The desktop session comes from pacman: Hyprland, hyprlock, hypridle, Quickshell, the portals and the services they
   talk to (`system/packages/session.txt`). Graphics drivers and login (PAM) belong to the system, which Nix packages
-  can't use reliably outside NixOS. Everything else comes from Nix.
+  can't use reliably outside NixOS. Everything else comes from Nix, GUI apps from Flathub
+  (`home-manager/desktop/flatpak.nix`, installed by Home Manager), and the AUR only for what has no other source.
 - For the desktop, the script runs `system/setup.sh`, which needs root and asks before every step: the session packages
   (and optionally this machine's other packages and AUR packages), PAM so that logging in on a TTY or unlocking the
   lock screen unlocks the keyring, LightDM's automatic login, logind so the power button opens the power menu instead
@@ -164,7 +165,12 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 
 ## Maintenance
 
-- Apply changes to the Nix side with `home-manager switch --flake ~/dotfiles#desktop` (or `#headless`).
+- Apply changes to the Nix side with `home-manager switch --flake ~/dotfiles#desktop` (or `#headless`); this also
+  installs and removes the declared Flatpaks.
+- `pkg-sync` compares the installed packages and Flatpaks with the lists: what's installed but not declared, and the
+  other way round. `pkg-sync adopt` adds packages to the lists, `pkg-sync prune` uninstalls them, `pkg-sync install`
+  installs what's missing, and `pkg-sync aur PKG` checks an AUR package (maintainer, votes, age, download hosts, install
+  scripts, its PKGBUILD) before it goes in.
 - `./check.sh` runs all checks with the tool versions from `flake.lock`: nixfmt, statix and deadnix for Nix, shellcheck
   for the shell scripts, ruff for the Python (`ruff.toml`), and qmllint for syntax errors in the Quickshell code.
   `nix fmt` formats the Nix files. CI runs `check.sh` on every push and evaluates every configuration.

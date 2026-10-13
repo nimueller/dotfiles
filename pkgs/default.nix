@@ -44,6 +44,12 @@
     ObjectPath=/io/github/nimueller/dotfiles/Phones
   '';
 
+  # Installed software against system/packages/*.txt and the Flatpaks in
+  # home-manager/desktop/flatpak.nix (ruff in check.sh checks it)
+  pkg-sync = pkgs.writers.writePython3Bin "pkg-sync" { doCheck = false; } (
+    builtins.readFile ./scripts/pkg-sync.py
+  );
+
   # Shell scripts: shellcheck runs at build time and the tools they need are
   # on their PATH. TeX Live and Neovim (init-tex, edit-tex) come from the dev
   # module rather than being pulled in here.

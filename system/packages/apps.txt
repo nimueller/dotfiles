@@ -1,5 +1,5 @@
-# Other packages from the Arch repositories on this machine; refresh with
-# system/update-package-lists.sh
+# Other packages from the Arch repositories; `pkg-sync` compares with what's
+# installed and adds or removes them (pkg-sync adopt / prune)
 alacritty
 android-file-transfer
 android-tools

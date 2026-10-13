@@ -19,7 +19,7 @@ hl.on("hyprland.start", function()
 
     -- User programs, once unlocked: most keep secrets in the keyring and would
     -- otherwise wait for its own password prompt (Brave doesn't load any page)
-    hl.exec_cmd("after-unlock brave", { workspace = "1 silent" })
+    hl.exec_cmd("after-unlock flatpak run com.brave.Browser", { workspace = "1 silent" })
     hl.exec_cmd("after-unlock kitty", { workspace = "2 silent" })
     hl.exec_cmd("after-unlock pear-desktop")
     hl.exec_cmd("after-unlock thunderbird")

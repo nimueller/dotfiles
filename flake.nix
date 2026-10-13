@@ -14,10 +14,17 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Declared Flatpaks (home-manager/desktop/flatpak.nix)
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
   };
 
   outputs =
-    { nixpkgs, home-manager, ... }:
+    {
+      nixpkgs,
+      home-manager,
+      nix-flatpak,
+      ...
+    }:
     let
       # Unfree packages (Steam, Discord, ...) are allowed everywhere; setting
       # it here instead of in a module spares home-manager a second nixpkgs
@@ -59,6 +66,7 @@
           modules = [
             ./home-manager/headless
             ./home-manager/desktop
+            nix-flatpak.homeManagerModules.nix-flatpak
           ];
         };
 
