@@ -37,58 +37,60 @@ in
       After = [ "graphical-session-pre.target" ];
     };
 
-    # The bar, launcher, notifications and the volume/brightness OSD come
-    # from the resident quickshell daemon (config/quickshell/menus/daemon.qml).
-    # Hyprland starts it; D-Bus activation also starts it (instead of dunst)
-    # when a notification arrives while it isn't running.
-    services.quickshell-daemon = {
-      Unit = {
-        Description = "Quickshell bar, launcher, notifications and OSD";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-      };
-      Service = {
-        Type = "dbus";
-        BusName = "org.freedesktop.Notifications";
-        ExecStart = "/usr/bin/qs -n -p ${config.dotfiles}/config/quickshell/menus/daemon.qml"; # from pacman (system/packages/session.txt)
-        Restart = "on-failure";
-      };
-    };
-
-    # Nautilus, started with the session and kept running: a cold start
-    # delayed the file chooser (config/xdg-desktop-portal) and SUPER + E.
-    # Same bus name as its D-Bus activation, which this replaces.
-    services.nautilus = {
-      Unit = {
-        Description = "Nautilus, kept running";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-      };
-      Service = {
-        Type = "dbus";
-        BusName = "org.gnome.Nautilus";
-        ExecStart = "/usr/bin/nautilus --gapplication-service"; # from pacman (system/packages/session.txt)
-        Environment = "LD_PRELOAD=${my-pkgs.nautilus-hold}/lib/nautilus-hold.so";
-        Restart = "on-failure";
-      };
-      Install.WantedBy = [ "graphical-session.target" ];
-    };
-
-    # Desktop notifications for calendar reminders (VALARMs of the calendars
-    # enabled in the quickshell calendar menu), checked every minute
-    services.quickshell-calendar-reminders = {
-      Unit.Description = "Calendar reminders for the quickshell calendar menu";
-      Service = {
-        Type = "oneshot";
-        ExecStart = "${my-pkgs.quickshell-calendar-python}/bin/quickshell-calendar-python %h/.config/quickshell/menus/calendar-dav.py remind";
-        Environment = "PATH=${
-          lib.makeBinPath [
-            pkgs.libsecret
-            pkgs.libnotify
-          ]
-        }:/usr/bin";
+    services = {
+      # The bar, launcher, notifications and the volume/brightness OSD come
+      # from the resident quickshell daemon (config/quickshell/menus/daemon.qml).
+      # Hyprland starts it; D-Bus activation also starts it (instead of dunst)
+      # when a notification arrives while it isn't running.
+      quickshell-daemon = {
+        Unit = {
+          Description = "Quickshell bar, launcher, notifications and OSD";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "dbus";
+          BusName = "org.freedesktop.Notifications";
+          ExecStart = "/usr/bin/qs -n -p ${config.dotfiles}/config/quickshell/menus/daemon.qml"; # from pacman (system/packages/session.txt)
+          Restart = "on-failure";
+        };
       };
 
+      # Nautilus, started with the session and kept running: a cold start
+      # delayed the file chooser (config/xdg-desktop-portal) and SUPER + E.
+      # Same bus name as its D-Bus activation, which this replaces.
+      nautilus = {
+        Unit = {
+          Description = "Nautilus, kept running";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "dbus";
+          BusName = "org.gnome.Nautilus";
+          ExecStart = "/usr/bin/nautilus --gapplication-service"; # from pacman (system/packages/session.txt)
+          Environment = "LD_PRELOAD=${my-pkgs.nautilus-hold}/lib/nautilus-hold.so";
+          Restart = "on-failure";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
+      # Desktop notifications for calendar reminders (VALARMs of the calendars
+      # enabled in the quickshell calendar menu), checked every minute
+      quickshell-calendar-reminders = {
+        Unit.Description = "Calendar reminders for the quickshell calendar menu";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${my-pkgs.quickshell-calendar-python}/bin/quickshell-calendar-python %h/.config/quickshell/menus/calendar-dav.py remind";
+          Environment = "PATH=${
+            lib.makeBinPath [
+              pkgs.libsecret
+              pkgs.libnotify
+            ]
+          }:/usr/bin";
+        };
+
+      };
     };
     timers.quickshell-calendar-reminders = {
       Unit.Description = "Check calendar reminders every minute";
