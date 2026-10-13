@@ -55,6 +55,25 @@ in
       };
     };
 
+    # Nautilus, started with the session and kept running: a cold start
+    # delayed the file chooser (config/xdg-desktop-portal) and SUPER + E.
+    # Same bus name as its D-Bus activation, which this replaces.
+    services.nautilus = {
+      Unit = {
+        Description = "Nautilus, kept running";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        Type = "dbus";
+        BusName = "org.gnome.Nautilus";
+        ExecStart = "/usr/bin/nautilus --gapplication-service"; # from pacman (system/packages/session.txt)
+        Environment = "LD_PRELOAD=${my-pkgs.nautilus-hold}/lib/nautilus-hold.so";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
     # Desktop notifications for calendar reminders (VALARMs of the calendars
     # enabled in the quickshell calendar menu), checked every minute
     services.quickshell-calendar-reminders = {

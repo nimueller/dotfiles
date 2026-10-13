@@ -20,6 +20,12 @@
           $cldr/annotations/{en,de}.xml $cldr/annotationsDerived/{en,de}.xml
       '';
 
+  # Preloaded into Nautilus to keep it running (nautilus-hold.c)
+  nautilus-hold = pkgs.runCommandCC "nautilus-hold" { } ''
+    mkdir -p $out/lib
+    $CC -shared -fPIC -O2 -o $out/lib/nautilus-hold.so ${./nautilus-hold.c}
+  '';
+
   # Shell scripts: shellcheck runs at build time and the tools they need are
   # on their PATH. TeX Live and Neovim (init-tex, edit-tex) come from the dev
   # module rather than being pulled in here.
