@@ -25,6 +25,7 @@ hl.config({
         active_opacity     = 1.0,
         inactive_opacity   = 1.0,
         fullscreen_opacity = 1.0,
+        dim_modal          = false, -- the app behind a file chooser stays as it is
     },
 
     animations = {

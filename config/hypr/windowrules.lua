@@ -38,3 +38,20 @@ hl.window_rule({
 
 -- Machine Settings (config/quickshell/menus/settings.qml)
 hl.window_rule({ match = { title = "^Machine Settings$" }, float = true, size = "860 600", center = true })
+
+-- File chooser (Nautilus, config/xdg-desktop-portal): floating and centred,
+-- also for apps that don't name their window to the portal (Hyprland floats
+-- the others by itself). To Hyprland it's a Nautilus window like the others,
+-- told apart only by its title: what the app asked for, or "Files" without
+-- one; Nautilus' own windows are titled after their folder.
+hl.window_rule({
+    name  = "file-chooser",
+    match = {
+        class         = "^org\\.gnome\\.Nautilus$",
+        initial_title = "^(Files|(Open|Save|Select|Choose|Export|Import|Upload|Attach|Add|Browse|Pick)\\b.*|File Upload|Enter name of file.*)$",
+    },
+
+    float  = true,
+    size   = "890 550", -- like with a parent app; without one it opens at its tiled size
+    center = true,
+})
