@@ -176,6 +176,7 @@ in
     my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
     my-pkgs.edit-tex
+    my-pkgs.phones-in-files # the phones in Files' sidebar (config/quickshell/menus/kdeconnect.py)
 
     # Gnome GUI apps
     adwaita-icon-theme

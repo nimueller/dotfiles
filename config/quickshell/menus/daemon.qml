@@ -12,7 +12,8 @@ import Quickshell.Io
 // monitor, the app launcher, the clipboard history, the notification daemon with
 // its popups and center (replaces dunst), the OSD for the volume and
 // brightness keys (replaces SwayOSD), the stay-awake inhibitor, the
-// camera/microphone/screen-sharing watch and the KDE Connect phones.
+// camera/microphone/screen-sharing watch, the KDE Connect phones and the
+// fixed folders in Files' sidebar.
 //
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
@@ -83,6 +84,19 @@ ShellRoot {
         id: drivesRestart
         interval: 5000
         onTriggered: drives.running = true
+    }
+
+    // Downloads, Documents etc. stay in Files' sidebar (bookmarks.py)
+    Process {
+        id: bookmarks
+        running: true
+        command: ["/usr/bin/python3", Quickshell.shellPath("bookmarks.py")]
+        onExited: bookmarksRestart.start()
+    }
+    Timer {
+        id: bookmarksRestart
+        interval: 5000
+        onTriggered: bookmarks.running = true
     }
 
     // The bar on every monitor

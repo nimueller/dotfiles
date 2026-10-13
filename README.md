@@ -54,7 +54,10 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 - **On-screen display:** volume, microphone, brightness (the backlight, or external monitors over DDC/CI), Caps Lock and
   Num Lock, and when the camera, microphone or screen sharing starts. It replaces SwayOSD.
 - **Phone:** KDE Connect: the phone's battery in the bar; ring it, send files or the clipboard, ping it, and browse its
-  files, which also show up in Files' sidebar while it's connected. Files' context menu sends files to it.
+  files, which also show up in Files' sidebar while it's connected (next to Nextcloud, not as a bookmark). Files'
+  context menu sends files to it.
+- **Files' sidebar:** Downloads, Documents, Pictures and the other standard folders stay its first bookmarks; removing
+  one puts it back.
 - **Drives:** a notification with Open and Eject when a USB drive, memory card, disc or phone is plugged in.
 - **Window details:** `SUPER + I` shows the focused window's title, class, PID, command, workspace, geometry and state;
   click a row to copy it.

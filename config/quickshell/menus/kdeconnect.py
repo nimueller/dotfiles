@@ -3,8 +3,9 @@ over kdeconnectd's D-Bus interface, with the system's Python like drives.py.
 
   kdeconnect.py watch           print the paired devices as a JSON line on
                                 every change; also mounts reachable phones
-                                (SFTP) and keeps a Files sidebar bookmark
-                                for their storage while it's mounted
+                                (SFTP) and shows their storage in Files'
+                                sidebar while it's mounted, next to
+                                Nextcloud (as a cloud provider)
   kdeconnect.py ring ID         make the phone ring
   kdeconnect.py ping ID         send a ping
   kdeconnect.py clipboard ID    send the clipboard
@@ -14,7 +15,6 @@ over kdeconnectd's D-Bus interface, with the system's Python like drives.py.
 
 import json
 import os
-import re
 import sys
 
 import gi
@@ -25,8 +25,31 @@ from gi.repository import Gio, GLib  # noqa: E402
 SERVICE = "org.kde.kdeconnect"
 ROOT = "/modules/kdeconnect"
 IFACE = "org.kde.kdeconnect.device"
-BOOKMARKS = os.path.join(GLib.get_user_config_dir(), "gtk-3.0", "bookmarks")
-RUNTIME_URI = GLib.filename_to_uri(GLib.get_user_runtime_dir(), None)
+# Files' sidebar finds this through a desktop entry (pkgs: phones-in-files)
+SIDEBAR_NAME = "io.github.nimueller.dotfiles.Phones"
+SIDEBAR_PATH = "/io/github/nimueller/dotfiles/Phones"
+SIDEBAR_XML = """
+<node>
+  <interface name="org.freedesktop.DBus.ObjectManager">
+    <method name="GetManagedObjects"><arg type="a{oa{sa{sv}}}" direction="out"/></method>
+    <signal name="InterfacesAdded"><arg type="o"/><arg type="a{sa{sv}}"/></signal>
+    <signal name="InterfacesRemoved"><arg type="o"/><arg type="as"/></signal>
+  </interface>
+  <interface name="org.freedesktop.CloudProviders.Provider">
+    <property name="Name" type="s" access="read"/>
+  </interface>
+  <interface name="org.freedesktop.CloudProviders.Account">
+    <property name="Name" type="s" access="read"/>
+    <property name="Path" type="s" access="read"/>
+    <property name="Icon" type="s" access="read"/>
+    <property name="Status" type="i" access="read"/>
+    <property name="StatusDetails" type="s" access="read"/>
+  </interface>
+</node>
+"""
+PROVIDER = "org.freedesktop.CloudProviders.Provider"
+ACCOUNT = "org.freedesktop.CloudProviders.Account"
+MANAGER = "org.freedesktop.DBus.ObjectManager"
 
 bus = Gio.bus_get_sync(Gio.BusType.SESSION)
 
@@ -113,24 +136,61 @@ def devices():
     return result
 
 
-def sync_bookmarks(wanted):
-    """Files sidebar bookmarks for the phones' storage folders ({id: [(path,
-    label)]}), none for the others. Only touches bookmarks inside KDE
-    Connect's mount points."""
-    try:
-        with open(BOOKMARKS) as f:
-            lines = f.read().splitlines()
-    except FileNotFoundError:
-        lines = []
-    ours = re.compile(re.escape(RUNTIME_URI) + r"/[0-9A-Za-z_]{16,}(?:/|\s|$)")
-    want = [f"{GLib.filename_to_uri(path, None)} {label}" for folders in wanted.values() for path, label in folders]
-    kept = [line for line in lines if not ours.match(line) or line in want]
-    kept += [line for line in want if line not in kept]
-    if kept != lines:
-        os.makedirs(os.path.dirname(BOOKMARKS), exist_ok=True)
-        with open(BOOKMARKS + ".tmp", "w") as f:
-            f.write("".join(f"{line}\n" for line in kept))
-        os.replace(BOOKMARKS + ".tmp", BOOKMARKS)
+class Sidebar:
+    """The phones' storage folders as accounts of a cloud provider, the way
+    the Nextcloud client shows up in Files' sidebar: in its own section, and
+    unlike a bookmark it can't be removed there."""
+
+    def __init__(self):
+        node = Gio.DBusNodeInfo.new_for_xml(SIDEBAR_XML)
+        self.interfaces = {i.name: i for i in node.interfaces}
+        self.objects = {f"{SIDEBAR_PATH}/Provider": {PROVIDER: {"Name": GLib.Variant("s", "KDE Connect")}}}
+        self.registrations = {}
+        self.register(SIDEBAR_PATH, MANAGER)
+        self.register(f"{SIDEBAR_PATH}/Provider", PROVIDER)
+        Gio.bus_own_name_on_connection(bus, SIDEBAR_NAME, Gio.BusNameOwnerFlags.NONE, None, None)
+
+    def register(self, path, interface):
+        self.registrations[path] = bus.register_object(
+            path, self.interfaces[interface], self.method_call, self.get_property, None
+        )
+
+    def method_call(self, _bus, _sender, _path, _iface, method, _params, invocation):
+        if method == "GetManagedObjects":
+            invocation.return_value(GLib.Variant("(a{oa{sa{sv}}})", (self.objects,)))
+
+    def get_property(self, _bus, _sender, path, iface, name):
+        return self.objects[path][iface][name]
+
+    def show(self, folders):
+        """Show these folders, {object name: (label, path)}, and no others."""
+        wanted = {
+            f"{SIDEBAR_PATH}/Account/{key}": {
+                ACCOUNT: {
+                    "Name": GLib.Variant("s", label),
+                    "Path": GLib.Variant("s", path),
+                    "Icon": GLib.Variant("s", "phone-symbolic"),
+                    "Status": GLib.Variant("i", 1),  # idle
+                    "StatusDetails": GLib.Variant("s", "Connected"),
+                }
+            }
+            for key, (label, path) in folders.items()
+        }
+        accounts = {p: o for p, o in self.objects.items() if ACCOUNT in o}
+        for path, interfaces in accounts.items():
+            if wanted.get(path) != interfaces:
+                bus.unregister_object(self.registrations.pop(path))
+                del self.objects[path]
+                self.emit("InterfacesRemoved", GLib.Variant("(oas)", (path, [ACCOUNT])))
+        for path, interfaces in wanted.items():
+            if path not in self.objects:
+                self.objects[path] = interfaces
+                self.register(path, ACCOUNT)
+                self.emit("InterfacesAdded", GLib.Variant("(oa{sa{sv}})", (path, interfaces)))
+
+    @staticmethod
+    def emit(signal, params):
+        bus.emit_signal(None, SIDEBAR_PATH, MANAGER, signal, params)
 
 
 class Watch:
@@ -138,6 +198,7 @@ class Watch:
         self.last = None
         self.mount_tried = set()  # reachable devices that were asked to mount once
         self.pending = 0
+        self.sidebar = Sidebar()
         # Any change of kdeconnectd: devices, reachability, battery, mounts
         bus.signal_subscribe(SERVICE, None, None, None, None, Gio.DBusSignalFlags.NONE, self.changed)
         Gio.bus_watch_name_on_connection(
@@ -146,13 +207,14 @@ class Watch:
         self.update()
 
     @staticmethod
-    def labels(device):
-        """The bookmarks of a phone's folders: its name, plus the folder's
-        when it has more than one (an SD card)."""
+    def folders(device):
+        """A phone's folders for the sidebar, {object name: (label, path)}:
+        its name, plus the folder's when it has more than one (an SD card)."""
         folders = device["storage"]
-        if len(folders) == 1:
-            return [(folders[0][0], device["name"])]
-        return [(path, f"{device['name']}: {name}") for path, name in folders]
+        return {
+            f"{device['id']}_{i}": (device["name"] if len(folders) == 1 else f"{device['name']}: {name}", path)
+            for i, (path, name) in enumerate(folders)
+        }
 
     def changed(self, *_):
         if not self.pending:
@@ -172,7 +234,7 @@ class Watch:
                 if device["mounted"]:
                     call(path, iface, "unmount")
                 bus.call(SERVICE, path, iface, "mount", None, None, Gio.DBusCallFlags.NONE, -1, None, None)
-        sync_bookmarks({d["id"]: self.labels(d) for d in state})
+        self.sidebar.show({k: v for d in state for k, v in self.folders(d).items()})
         line = json.dumps(state)
         if line != self.last:
             self.last = line

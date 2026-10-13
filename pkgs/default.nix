@@ -26,6 +26,24 @@
     $CC -shared -fPIC -O2 -o $out/lib/nautilus-hold.so ${./nautilus-hold.c}
   '';
 
+  # Files' sidebar shows the connected phones' storage in the section of
+  # cloud providers, like Nextcloud's: kdeconnect.py in the bar
+  # (config/quickshell/menus) provides it, and libcloudproviders finds it
+  # through this entry. A package, as it only looks in XDG_DATA_DIRS, which
+  # has ~/.nix-profile/share but not ~/.local/share.
+  phones-in-files = pkgs.writeTextDir "share/applications/dotfiles-phones.desktop" ''
+    [Desktop Entry]
+    Type=Application
+    Name=Phones in Files
+    Exec=true
+    NoDisplay=true
+    Implements=org.freedesktop.CloudProviders
+
+    [org.freedesktop.CloudProviders]
+    BusName=io.github.nimueller.dotfiles.Phones
+    ObjectPath=/io/github/nimueller/dotfiles/Phones
+  '';
+
   # Shell scripts: shellcheck runs at build time and the tools they need are
   # on their PATH. TeX Live and Neovim (init-tex, edit-tex) come from the dev
   # module rather than being pulled in here.
