@@ -42,6 +42,10 @@ ShellRoot {
         return `"${String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`;
     }
 
+    function shellQuote(s) {
+        return `'${String(s).replace(/'/g, "'\\''")}'`;
+    }
+
     function monitorLua(m) {
         const f = [`output = ${luaString("desc:" + m.desc)}`];
         if (!m.enabled) {
@@ -95,7 +99,7 @@ ShellRoot {
         if (s.env.length)
             lines.push("", "-- Environment", ...s.env.map(([k, v]) => `hl.env(${luaString(k.trim())}, ${luaString(v)})`));
         if (s.autostart.length)
-            lines.push("", "-- Autostart", 'hl.on("hyprland.start", function()', ...s.autostart.map(c => `    hl.exec_cmd(${luaString(c.trim())})`), "end)");
+            lines.push("", "-- Autostart", 'hl.on("hyprland.start", function()', ...s.autostart.map(c => `    hl.exec_cmd(${luaString("after-unlock " + shellQuote(c.trim()))})`), "end)");
         lines.push("-- END settings");
         return lines.join("\n");
     }
@@ -591,7 +595,7 @@ ShellRoot {
                     spacing: 8
 
                     SectionTitle {
-                        text: "Programs started with Hyprland on this machine — $HOME works"
+                        text: "Programs started on this machine once you've unlocked — $HOME works"
                     }
 
                     Repeater {

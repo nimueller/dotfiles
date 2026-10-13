@@ -133,6 +133,7 @@ in
     pavucontrol
 
     my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
+    my-pkgs.after-unlock # autostarts that need the keyring (config/hypr/autostart.lua)
     my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
     my-pkgs.edit-tex

@@ -5,12 +5,14 @@
 # 1. the session packages (packages/session.txt), together with a full
 #    system upgrade: Arch doesn't support updating only some packages; then,
 #    for a new machine, this machine's other packages (apps.txt, aur.txt)
-# 2. PAM: unlock the `login` keyring with the login password on TTY logins,
-#    and keep its password in step with `passwd`
-# 3. logind: the power button opens the power menu instead of shutting down
-# 4. firewall: the network connection in firewalld's `home` zone, which
+# 2. PAM: unlock the `login` keyring with the login password on TTY logins
+#    and at the lock screen, and keep its password in step with `passwd`
+# 3. login: LightDM logs in by itself and the session locks right away
+#    (config/hypr/autostart.lua), so a Wake-on-LAN boot reaches Sunshine
+# 4. logind: the power button opens the power menu instead of shutting down
+# 5. firewall: the network connection in firewalld's `home` zone, which
 #    lets in only SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6
-# 5. Docker: container ports published on this machine only, by default
+# 6. Docker: container ports published on this machine only, by default
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -65,13 +67,29 @@ fi
 echo ''
 echo "== Keyring"
 if grep -q pam_gnome_keyring /etc/pam.d/login; then
-    echo "TTY logins already unlock the keyring"
-elif ask "Unlock the keyring with your password when logging in on a TTY (PAM)?"; then
+    echo "Logins on a TTY and the lock screen already unlock the keyring"
+elif ask "Unlock the keyring with your password when logging in on a TTY or unlocking the lock screen (PAM)?"; then
     pam_line /etc/pam.d/login "auth       optional     pam_gnome_keyring.so"
     pam_line /etc/pam.d/login "session    optional     pam_gnome_keyring.so auto_start"
     pam_line /etc/pam.d/passwd "password   optional     pam_gnome_keyring.so"
     echo "Done. The \`login\` keyring needs your login password as its password; it then"
     echo "unlocks at the next login."
+fi
+
+echo ''
+echo "== Login"
+if ! command -v lightdm >/dev/null 2>&1; then
+    echo "LightDM isn't installed (packages/apps.txt), skipping; log in on a TTY and run start-hyprland"
+elif lightdm --show-config 2>&1 | grep -q 'autologin-user='; then
+    echo "LightDM already logs in by itself"
+elif ask "Log in by itself with LightDM? The session locks right away; its password unlocks the keyring."; then
+    conf=/etc/lightdm/lightdm.conf.d/autologin.conf
+    sudo mkdir -p "$(dirname "$conf")"
+    printf '[Seat:*]\nautologin-user=%s\nautologin-session=hyprland\n' "$USER" | sudo tee "$conf" >/dev/null
+    getent group autologin >/dev/null || sudo groupadd -r autologin
+    sudo gpasswd -a "$USER" autologin >/dev/null
+    sudo systemctl enable lightdm.service
+    echo "Done. Takes effect after the next reboot."
 fi
 
 echo ''

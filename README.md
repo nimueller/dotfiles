@@ -19,7 +19,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **OS** | Arch Linux, packages via Nix + Home Manager |
 | **Compositor** | Hyprland, configured in Lua |
 | **Shell UI** | Quickshell: bar, menus, launcher, clipboard history, notifications, on-screen display, screenshot editor |
-| **Wallpaper / lock** | hyprpaper (rotating through `config/hypr/wallpapers`) / hyprlock, started by hypridle when idle and before suspend |
+| **Wallpaper / lock** | hyprpaper (rotating through `config/hypr/wallpapers`) / hyprlock, at login, when idle and before suspend |
 | **Terminal** | kitty, Zsh with Powerlevel10k |
 | **Editor** | Neovim with lazy.nvim, Treesitter, Telescope, Neo-tree and blink.cmp; language servers come from Nix |
 | **Browser** | Brave (Zen stays installed as a backup) |
@@ -119,11 +119,14 @@ Good to know:
   talk to (`system/packages/session.txt`). Graphics drivers and login (PAM) belong to the system, which Nix packages
   can't use reliably outside NixOS. Everything else comes from Nix.
 - For the desktop, the script runs `system/setup.sh`, which needs root and asks before every step: the session packages
-  (and optionally this machine's other packages and AUR packages), PAM so that logging in on a TTY unlocks the keyring,
-  logind so the power button opens the power menu instead of shutting down, the firewall (the network connection in the
-  `home` zone, open only for SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6) and Docker (container ports published
-  on this machine only, since they would bypass the firewall).
-- Start the desktop by running `start-hyprland` after logging in on a TTY.
+  (and optionally this machine's other packages and AUR packages), PAM so that logging in on a TTY or unlocking the
+  lock screen unlocks the keyring, LightDM's automatic login, logind so the power button opens the power menu instead
+  of shutting down, the firewall (the network connection in the `home` zone, open only for SSH, Samba, KDE Connect,
+  Sunshine, mDNS and DHCPv6) and Docker (container ports published on this machine only, since they would bypass the
+  firewall).
+- LightDM logs in by itself and the session locks right away, so the lock screen is the login screen: its password
+  also unlocks the keyring, and the programs that need the keyring start after that. A machine woken by Wake-on-LAN
+  can be unlocked over Sunshine. Without LightDM, run `start-hyprland` after logging in on a TTY.
 - Settings that belong to one machine (monitors, driver variables, programs with private paths) go into
   `config/hypr/local.lua`, which git ignores. The **Machine Settings** app (in the launcher) edits it;
   `config/hypr/local.example.lua` shows the format. Without it, every monitor runs at its preferred mode.

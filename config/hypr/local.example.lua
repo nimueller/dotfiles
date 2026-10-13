@@ -17,7 +17,8 @@ hl.monitor({
 -- hl.env("GBM_BACKEND", "nvidia-drm")
 -- hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 
--- Programs only this machine starts, or that need private paths
+-- Programs only this machine starts, or that need private paths; after-unlock
+-- starts them once the lock screen at login is unlocked (and the keyring with it)
 -- hl.on("hyprland.start", function()
---     hl.exec_cmd("keepassxc " .. os.getenv("HOME") .. "/path/to/database.kdbx")
+--     hl.exec_cmd("after-unlock 'keepassxc " .. os.getenv("HOME") .. "/path/to/database.kdbx'")
 -- end)

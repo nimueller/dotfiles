@@ -28,6 +28,11 @@
     name = "stay-awake";
     text = builtins.readFile ./scripts/stay-awake.sh;
   };
+  # busctl comes from the system too
+  after-unlock = pkgs.writeShellApplication {
+    name = "after-unlock";
+    text = builtins.readFile ./scripts/after-unlock.sh;
+  };
   init-tex = pkgs.writeShellApplication {
     name = "init-tex";
     text = builtins.readFile ./scripts/init-tex.sh;
