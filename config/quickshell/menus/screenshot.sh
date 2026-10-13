@@ -61,7 +61,7 @@ if [[ $1 == --export ]]; then
 fi
 
 entry=$dir/screenshot.qml
-pgrep -f "quickshell.* -p $entry" >/dev/null && exit 0
+qs list -p "$entry" 2>/dev/null | grep -q "Process ID:" && exit 0
 
 # Leftovers of cancelled or crashed editors
 mkdir -p "$runtime"

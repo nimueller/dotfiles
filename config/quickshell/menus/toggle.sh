@@ -13,14 +13,20 @@ menu=${1:?usage: toggle.sh <menu> [--start]}
 case $menu in
     daemon)
         if [[ $2 == --restart ]]; then
-            pid=$(pgrep -f "quickshell.* -p $dir/daemon.qml" | head -1)
+            # From qs: an instance's command line is just /usr/bin/quickshell
+            pids=($(qs list -p "$dir/daemon.qml" 2>/dev/null | awk '/Process ID:/ { print $3 }'))
+            alive() { for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && return 0; done; return 1; }
             qs kill -p "$dir/daemon.qml" >/dev/null 2>&1
-            # Don't let a stuck instance block the new one (-n)
+            # The new instance (-n) won't start while the old one is still
+            # there, and a stuck one mustn't block it
             for _ in {1..20}; do
-                if [[ -z $pid ]] || ! kill -0 "$pid" 2>/dev/null; then break; fi
+                alive || break
                 sleep 0.1
             done
-            [[ -n $pid ]] && kill -9 "$pid" 2>/dev/null
+            if alive; then
+                kill -9 "${pids[@]}" 2>/dev/null
+                sleep 0.2
+            fi
         fi
         [[ $2 == --start || $2 == --restart ]] && exec qs -p "$dir/daemon.qml" -n -d >/dev/null 2>&1
         exit 1
