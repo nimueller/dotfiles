@@ -91,6 +91,26 @@ def stored_password(url, user):
     return r.stdout.rstrip("\n")
 
 
+def keyring_locked():
+    """Whether the `login` keyring is locked; a lookup would then open its
+    password prompt. False when there is no Secret Service to ask."""
+    r = subprocess.run(
+        [
+            "busctl",
+            "--user",
+            "get-property",
+            "org.freedesktop.secrets",
+            "/org/freedesktop/secrets/collection/login",
+            "org.freedesktop.Secret.Collection",
+            "Locked",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return r.stdout.strip() == "b true"
+
+
 def http(method, url, auth=None, body=b"", headers=None):
     """(status, response headers, body); raises Fail for errors."""
     req = urllib.request.Request(url, data=body or None, method=method)
@@ -473,7 +493,10 @@ def remind():
     except (OSError, ValueError):
         state = {}
     now = time.time()
-    if now - state.get("fetched", 0) > 600:
+    # Not while the keyring is locked: the session logs in by itself and the
+    # lock screen unlocks the keyring, so the app password's lookup would
+    # open a prompt behind the lock screen. The fetch waits for the next run.
+    if now - state.get("fetched", 0) > 600 and not (settings.get("nextcloud") and keyring_locked()):
         today = dt.date.today()
         spec = {
             **sources(settings),
