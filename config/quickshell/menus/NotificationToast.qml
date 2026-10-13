@@ -24,7 +24,11 @@ Rectangle {
     // Seconds, from the app (it gives milliseconds) or by urgency
     readonly property real timeout: critical ? 0 : n && n.expireTimeout > 0 ? n.expireTimeout / 1000 : [5, 8, 0][entry.urgency]
     readonly property var progress: n?.hints?.value ?? null
-    readonly property var actions: (n?.actions ?? []).filter(a => a.identifier !== "default")
+    // Plain data: the action objects die with their notification
+    readonly property var actions: (n?.actions ?? []).filter(a => a.identifier !== "default").map(a => ({
+                identifier: a.identifier,
+                text: a.text
+            }))
     readonly property bool hovered: hover.hovered
     property real remaining: 1 // share of the timeout left
 

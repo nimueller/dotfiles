@@ -92,19 +92,21 @@ Popup {
         clip: true
         spacing: 8
         boundsBehavior: Flickable.StopAtBounds
-        model: popup.store.history
+        // Keys only: a model copies its rows, and a copied entry would keep a
+        // dangling pointer to its notification once that is gone
+        model: popup.store.history.map(e => e.key)
 
         delegate: NotificationCard {
-            required property var modelData
+            required property int modelData
 
             width: list.width
-            entry: modelData
+            entry: popup.store.entry(modelData) ?? {}
             now: popup.now
             onActivated: {
-                popup.store.activate(modelData.key);
+                popup.store.activate(modelData);
                 popup.close();
             }
-            onDismissed: popup.store.remove(modelData.key)
+            onDismissed: popup.store.remove(modelData)
         }
     }
 }

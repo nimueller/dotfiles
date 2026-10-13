@@ -9,7 +9,9 @@ PanelWindow {
     id: root
 
     required property var store
-    readonly property var shown: store.popups.slice(0, 6).map(key => store.entry(key)).filter(e => e)
+    // Keys only, as in NotificationCenter.qml: a copied entry would keep a
+    // dangling pointer to its notification once that is gone
+    readonly property var shown: store.popups.slice(0, 6).filter(key => store.entry(key))
 
     screen: LocalSettings.mainScreen
     anchors {
@@ -40,14 +42,14 @@ PanelWindow {
             model: root.shown
 
             delegate: NotificationToast {
-                required property var modelData
+                required property int modelData
 
                 Layout.fillWidth: true
-                entry: modelData
-                onActivated: root.store.activate(modelData.key)
-                onClosed: root.store.closePopup(modelData.key)
+                entry: root.store.entry(modelData) ?? {}
+                onActivated: root.store.activate(modelData)
+                onClosed: root.store.closePopup(modelData)
                 onCloseAll: root.store.closeAllPopups()
-                onAction: identifier => root.store.invoke(modelData.key, identifier)
+                onAction: identifier => root.store.invoke(modelData, identifier)
             }
         }
     }
