@@ -14,7 +14,7 @@ case $menu in
     daemon)
         if [[ $2 == --restart ]]; then
             # From qs: an instance's command line is just /usr/bin/quickshell
-            pids=($(qs list -p "$dir/daemon.qml" 2>/dev/null | awk '/Process ID:/ { print $3 }'))
+            mapfile -t pids < <(qs list -p "$dir/daemon.qml" 2>/dev/null | awk '/Process ID:/ { print $3 }')
             alive() { for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && return 0; done; return 1; }
             qs kill -p "$dir/daemon.qml" >/dev/null 2>&1
             # The new instance (-n) won't start while the old one is still
