@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
-#   toggle.sh audio|calendar|network|notifications|power|launcher|clipboard
+#   toggle.sh audio|calendar|kdeconnect|network|notifications|power|launcher|clipboard
 #   toggle.sh daemon --start|--restart   start the resident daemon (Hyprland),
 #                                        or restart it to apply changes
 # Each bar menu is its own short-lived quickshell instance (<menu>.qml), so

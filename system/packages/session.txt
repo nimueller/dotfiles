@@ -18,12 +18,14 @@ ddcutil
 polkit-gnome
 gnome-keyring
 
-# Programs the desktop config calls: terminal, file manager, calculator key,
+# Programs the desktop config calls: terminal, file manager (with Python
+# extensions: KDE Connect's "Send to"), calculator key,
 # the network menu's editor and VPN file picker, the system menu's update
 # count, xdg-open, and the drive notifications (quickshell/menus/drives.py:
 # GVfs for drives and phones, used from the system's Python)
 kitty
 nautilus
+nautilus-python
 gnome-calculator
 nm-connection-editor
 zenity

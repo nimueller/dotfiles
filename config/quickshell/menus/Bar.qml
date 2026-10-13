@@ -10,7 +10,7 @@ import Quickshell.Widgets
 
 // The bar at the bottom of a monitor, part of daemon.qml:
 // the distro logo (system menu), workspaces and window title on the left, the clock in the middle, tray,
-// privacy, sound, battery, network, notifications and power on the right.
+// privacy, sound, battery, phone, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 PanelWindow {
     id: bar
@@ -19,6 +19,7 @@ PanelWindow {
     required property var center // NotificationCenter
     required property var network // NetworkStatus
     required property var privacy // Privacy
+    required property var phones // PhoneStatus
 
     readonly property string toggle: Quickshell.shellPath("toggle.sh")
     readonly property var monitor: Hyprland.monitorFor(screen)
@@ -207,6 +208,23 @@ PanelWindow {
             visible: !!battery && battery.isLaptopBattery
             accent: charging ? Theme.teal : percent <= 15 ? Theme.red : percent <= 30 ? Theme.yellow : Theme.green
             text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%`
+        }
+
+        // Phone (KDE Connect): its battery while it's connected; click for the
+        // menu (kdeconnect.qml), right click to send files
+        BarChip {
+            readonly property var phone: bar.phones?.reachable[0] ?? null
+            readonly property int charge: phone?.battery ?? -1
+
+            visible: !!phone
+            accent: phone?.charging ? Theme.teal : charge >= 0 && charge <= 15 ? Theme.red : Theme.green
+            text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c) // 󰄜 
+            onClicked: button => {
+                if (button === Qt.RightButton)
+                    bar.phones.run("send", phone);
+                else
+                    bar.menu("kdeconnect");
+            }
         }
 
         // Network

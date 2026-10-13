@@ -39,7 +39,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | **Power menu:** lock, log out, suspend, reboot or shut down, by mouse or key | |
 
 - **Bar:** workspaces, window title, clock, tray (with themed menus), camera, microphone and screen-sharing indicators, volume,
-  battery, network and a notification bell. Clicking a module opens its menu.
+  battery, phone, network and a notification bell. Clicking a module opens its menu.
 - **System:** host, kernel, uptime, pending updates, the use of CPU, memory, disk and GPU, and a brightness slider
   for each screen (the backlight, or monitors with DDC/CI).
 - **Sound:** output and input devices and their volumes, per-app volume.
@@ -53,6 +53,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
   history. They replace dunst.
 - **On-screen display:** volume, microphone, brightness (the backlight, or external monitors over DDC/CI), Caps Lock and
   Num Lock, and when the camera, microphone or screen sharing starts. It replaces SwayOSD.
+- **Phone:** KDE Connect: the phone's battery in the bar; ring it, send files or the clipboard, ping it, and browse its
+  files, which also show up in Files' sidebar while it's connected. Files' context menu sends files to it.
 - **Drives:** a notification with Open and Eject when a USB drive, memory card, disc or phone is plugged in.
 - **Window details:** `SUPER + I` shows the focused window's title, class, PID, command, workspace, geometry and state;
   click a row to copy it.

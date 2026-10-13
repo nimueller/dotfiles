@@ -11,8 +11,8 @@ import Quickshell.Io
 // autostart.lua; also D-Bus activated for notifications): the bar on every
 // monitor, the app launcher, the clipboard history, the notification daemon with
 // its popups and center (replaces dunst), the OSD for the volume and
-// brightness keys (replaces SwayOSD), the stay-awake inhibitor and the
-// camera/microphone/screen-sharing watch.
+// brightness keys (replaces SwayOSD), the stay-awake inhibitor, the
+// camera/microphone/screen-sharing watch and the KDE Connect phones.
 //
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
@@ -66,6 +66,11 @@ ShellRoot {
         osd: osd
     }
 
+    // KDE Connect phones for the bar (kdeconnect.py)
+    PhoneStatus {
+        id: phoneStatus
+    }
+
     // Notifications with Open and Eject for USB drives, discs and phones
     // (drives.py, with the system's Python for GVfs)
     Process {
@@ -92,6 +97,7 @@ ShellRoot {
             center: notificationCenter
             network: networkStatus
             privacy: privacyStatus
+            phones: phoneStatus
         }
     }
 

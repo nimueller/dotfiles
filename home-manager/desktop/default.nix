@@ -126,16 +126,23 @@ in
       settings.StartupWMClass = "com.github.th-ch.youtube-music";
     };
 
-    # For the launcher's emoji search (config/quickshell/menus/Launcher.qml)
-    dataFile."quickshell-launcher/emoji.json".source = my-pkgs.quickshell-emoji;
+    dataFile = {
+      # "Send to <phone> via KDE Connect" in Nautilus' context menu, from the
+      # KDE Connect package (Nautilus runs it with nautilus-python from pacman)
+      "nautilus-python/extensions/kdeconnect-share.py".source =
+        "${config.services.kdeconnect.package}/share/nautilus-python/extensions/kdeconnect-share.py";
 
-    # Same file name as dunst's, so it takes precedence over /usr/share
-    dataFile."dbus-1/services/org.knopwob.dunst.service".text = ''
-      [D-BUS Service]
-      Name=org.freedesktop.Notifications
-      Exec=/bin/false
-      SystemdService=quickshell-daemon.service
-    '';
+      # For the launcher's emoji search (config/quickshell/menus/Launcher.qml)
+      "quickshell-launcher/emoji.json".source = my-pkgs.quickshell-emoji;
+
+      # Same file name as dunst's, so it takes precedence over /usr/share
+      "dbus-1/services/org.knopwob.dunst.service".text = ''
+        [D-BUS Service]
+        Name=org.freedesktop.Notifications
+        Exec=/bin/false
+        SystemdService=quickshell-daemon.service
+      '';
+    };
     # Mask dunst's own unit in case anything asks for it directly
     configFile."systemd/user/dunst.service".source = config.lib.file.mkOutOfStoreSymlink "/dev/null";
   };
