@@ -50,6 +50,31 @@ hl.config({
         preserve_split = true,
     },
 
+    -- Window groups (tabs, SUPER + G): new windows on the workspace join the
+    -- focused group, SUPER + H/L go through its tabs before leaving it
+    binds = {
+        movefocus_cycles_groupfirst = true,
+    },
+    group = {
+        col = {
+            border_active   = colors.lavender,
+            border_inactive = colors.overlay0,
+        },
+        groupbar = {
+            font_family          = "NotoSans Nerd Font",
+            font_size            = 11,
+            height               = 18,
+            gradients            = true,
+            indicator_height     = 0,
+            text_color           = colors.base,
+            text_color_inactive  = colors.text,
+            col = {
+                active   = colors.lavender,
+                inactive = colors.surface0,
+            },
+        },
+    },
+
     misc = {
         enable_swallow             = true,
         allow_session_lock_restore = true,

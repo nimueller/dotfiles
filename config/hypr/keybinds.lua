@@ -55,6 +55,13 @@ hl.bind(mainMod .. " + M",         hl.dsp.window.fullscreen({ mode = "maximized"
 hl.bind(mainMod .. " + SHIFT + M", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind("F11",                     hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 
+-- Window groups: tabs in one tile (group settings in general.lua). New
+-- windows join the focused group; SUPER + H/L switch tabs.
+hl.bind(mainMod .. " + G",         hl.dsp.group.toggle())
+hl.bind(mainMod .. " + SHIFT + G", hl.dsp.window.move({ out_of_group = true }))
+hl.bind(mainMod .. " + Tab",       hl.dsp.group.next())
+hl.bind(mainMod .. " + SHIFT + Tab", hl.dsp.group.prev())
+
 -- Move/resize windows with keyboard and mouse
 hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + L", hl.dsp.focus({ direction = "right" }))

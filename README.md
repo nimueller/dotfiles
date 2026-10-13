@@ -34,7 +34,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | | |
 |:---:|:---:|
 | ![App launcher](resources/launcher.webp) | ![Screenshot editor](resources/screenshot-editor.webp) |
-| **Launcher:** type to filter, apps you use often come first, or run the text as a command; it also does sums, and `:` searches emoji | **Screenshot editor:** select, adjust, draw, scale, then copy or save |
+| **Launcher:** type to filter, apps you use often come first, open windows that match come before them, or run the text as a command; it also does sums, and `:` searches emoji | **Screenshot editor:** select, adjust, draw, scale, then copy or save |
 | ![Power menu](resources/power-menu.webp) | |
 | **Power menu:** lock, log out, suspend, reboot or shut down, by mouse or key | |
 
@@ -47,7 +47,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 - **Calendar:** a month view with Nextcloud calendars (CalDAV: create, edit and delete appointments, with reminders) and
   read-only ICS subscriptions, a weather forecast per day and by the hour, and the current weather from the nearest
   airport's METAR report.
-- **Notifications:** popups with a countdown bar, a notification centre with history and do not disturb. Nothing pops
+- **Notifications:** popups with a countdown bar, a notification centre with history and do not disturb. Clicking one
+  goes to the window that sent it and removes it from the history. Nothing pops
   up while the screen is shared, and a music player's notification about its current track leaves no trace in the
   history. They replace dunst.
 - **On-screen display:** volume, microphone, brightness (the backlight, or external monitors over DDC/CI), Caps Lock and
@@ -86,6 +87,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | `SUPER + arrows` / `SUPER + right mouse` | Resize the window |
 | `SUPER + left mouse` | Move the window |
 | `SUPER + F` / `M` / `SHIFT + M` | Float / maximise / fullscreen |
+| `SUPER + G` / `SHIFT + G` | Group the window into tabs (new windows join the group) / take it out |
+| `SUPER + Tab` / `SHIFT + Tab` | Next / previous tab of a group (`SUPER + H`/`L` too) |
 | `SUPER + SHIFT + Q`, `ALT + F4` | Close the window |
 | `SUPER + ;` `'` `[` `-` | ö ä ü ß on a US layout (`SHIFT` for capitals), in Wayland and X11 apps |
 | Power button | Power menu |
@@ -194,7 +197,8 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [ ] Night light with `hyprsunset`
 - [x] Do not disturb while the screen is shared (the privacy module knows when)
 - [x] Brightness keys for external monitors over DDC/CI (`ddcutil`); there is no backlight on the desktop
-- [ ] A window switcher or overview (Alt+Tab)
+- [x] Open windows in the launcher, instead of a window switcher (Alt+Tab)
+- [x] Window groups (tabs), for workspaces with many terminals
 - [ ] Waiting updates at a glance: a dot on the bar's logo chip, and AUR updates too (the system menu only counts
       pacman updates, while it is open)
 - [x] A notification for USB drives and phones when plugged in, with Open and Eject

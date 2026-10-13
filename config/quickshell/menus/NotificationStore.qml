@@ -186,17 +186,16 @@ Scope {
             popups = [];
     }
 
-    // Click on a notification: run its default action if the app still
-    // listens, otherwise bring the app's window up. Then it's done.
+    // Click on a notification: bring the app's window up and run its default
+    // action if the app still listens (the app can't raise its own window:
+    // Hyprland's focus_on_activate is off). Then it's done: it leaves the
+    // history too.
     function activate(key) {
         const e = entry(key);
         if (!e)
             return;
-        const action = e.n?.actions.find(a => a.identifier === "default");
-        if (action)
-            action.invoke();
-        else
-            focusApp(e);
+        focusApp(e);
+        e.n?.actions.find(a => a.identifier === "default")?.invoke();
         remove(key);
     }
 
@@ -215,7 +214,7 @@ Scope {
             return;
         }
         const norm = s => (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        const app = norm(e.app), desktop = norm(e.n?.desktopEntry);
+        const app = norm(e.app), desktop = norm(e.desktop);
         const window = ToplevelManager.toplevels.values.find(t => {
             const id = norm(t.appId), short = norm(t.appId.split(".").pop());
             return (desktop && (id === desktop || id.includes(desktop))) || (app && (id.includes(app) || (short.length > 2 && app.includes(short))));
@@ -256,7 +255,8 @@ Scope {
                         // Image data doesn't survive a restart; theme icons and files do
                         icon: e.icon.startsWith("image://") && !e.icon.startsWith("image://icon/") ? "" : e.icon,
                         urgency: e.urgency,
-                        time: e.time
+                        time: e.time,
+                        desktop: e.desktop
                     }))
         }))
     }

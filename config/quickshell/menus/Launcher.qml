@@ -10,6 +10,10 @@ import Quickshell.Widgets
 // launch. Apps you launch often float to the top. The last row runs the text
 // as a command ("ssh host" opens in a terminal).
 //
+// Open windows whose title or app match the text come before the apps
+// (the most recently used first); Enter goes to the window, also on a
+// scratchpad.
+//
 // Arithmetic ("2^10/3", "sqrt(2)*pi", "=e") shows its result in the first
 // row; Enter copies it. ":" searches emoji instead (":heart", in English or
 // German); Enter pastes the emoji into the window you came from. The emoji
@@ -28,6 +32,7 @@ PanelWindow {
     property bool shown: false
 
     function show() {
+        Windows.refresh(); // workspaces and focus order of the windows
         search.text = "";
         list.positionViewAtBeginning();
         shown = true;
@@ -88,7 +93,7 @@ PanelWindow {
         const q = query.trim().toLowerCase();
         const ranked = apps.map(app => ({ app, score: score(app, q) })).filter(r => r.score >= 0);
         ranked.sort((a, b) => b.score - a.score || a.app.name.localeCompare(b.app.name));
-        const list = ranked.map(r => r.app);
+        const list = [...windowResults(q), ...ranked.map(r => r.app)];
         const result = calculate(query);
         if (result !== null)
             list.unshift({ result });
@@ -119,6 +124,36 @@ PanelWindow {
         else if (extra.includes(q))
             s = 100;
         return s < 0 ? -1 : s + used;
+    }
+
+    // Open windows matching the text: { window, name, app, icon }
+    function windowResults(q) {
+        if (!q)
+            return [];
+        const ranked = [];
+        for (const w of Hyprland.toplevels.values) {
+            const entry = Windows.entry(w);
+            const app = entry?.name ?? w.lastIpcObject?.class ?? "";
+            const title = (w.title ?? "").toLowerCase();
+            let s = -1;
+            if (app.toLowerCase().startsWith(q))
+                s = 800;
+            else if (title.split(/[\s\-_.:|\/]+/).some(x => x.startsWith(q)))
+                s = 600;
+            else if (title.includes(q) || app.toLowerCase().includes(q) || (w.lastIpcObject?.class ?? "").toLowerCase().includes(q))
+                s = 400;
+            if (s >= 0)
+                ranked.push({ w, entry, app, score: s, recent: w.lastIpcObject?.focusHistoryID ?? 1e9 });
+        }
+        ranked.sort((a, b) => b.score - a.score || a.recent - b.recent);
+        return ranked.map(r => ({ window: r.w, name: r.w.title || r.app || "Window", app: r.app, icon: r.entry?.icon ?? "" }));
+    }
+
+    // "Brave · workspace 1", "KeePassXC · passwords scratchpad"
+    function windowPlace(item) {
+        const ws = item.window.workspace?.name ?? "";
+        const place = ws.startsWith("special:") ? `${ws.slice(8)} scratchpad` : ws ? `workspace ${ws}` : "";
+        return [item.app, place].filter(x => x).join(" · ");
     }
 
     // "visual studio code" -> "vsc"
@@ -262,6 +297,12 @@ PanelWindow {
     function launch(item) {
         if (!item)
             return;
+        if (item.window !== undefined) {
+            hide();
+            const address = item.window.address.startsWith("0x") ? item.window.address : `0x${item.window.address}`;
+            Hyprland.dispatch(`hl.dsp.focus({ window = "address:${address}" })`);
+            return;
+        }
         if (item.result !== undefined) {
             Quickshell.execDetached(["wl-copy", "--", item.result]);
             hide();
@@ -413,9 +454,10 @@ PanelWindow {
                 }
 
                 Label {
-                    readonly property int count: root.results.filter(r => r.run === undefined && r.result === undefined).length
+                    readonly property int count: root.results.filter(r => r.run === undefined && r.result === undefined && r.window === undefined).length
+                    readonly property int windows: root.results.filter(r => r.window !== undefined).length
 
-                    text: root.emojiMode ? `${count} emoji` : `${count} ${count === 1 ? "app" : "apps"}`
+                    text: root.emojiMode ? `${count} emoji` : `${windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : ""}${count} ${count === 1 ? "app" : "apps"}`
                     font.pixelSize: 11
                     color: Theme.overlay0
                 }
@@ -461,8 +503,9 @@ PanelWindow {
                     readonly property bool isCommand: modelData.run !== undefined
                     readonly property bool isResult: modelData.result !== undefined
                     readonly property bool isEmoji: modelData.emoji !== undefined
-                    readonly property bool isApp: !isCommand && !isResult && !isEmoji
-                    readonly property string icon: isApp ? Quickshell.iconPath(modelData.icon, true) : ""
+                    readonly property bool isWindow: modelData.window !== undefined
+                    readonly property bool isApp: !isCommand && !isResult && !isEmoji && !isWindow
+                    readonly property string icon: isApp || isWindow ? Quickshell.iconPath(modelData.icon, true) : ""
                     readonly property bool current: ListView.isCurrentItem
                     readonly property color accent: isCommand ? Theme.green : isResult ? Theme.peach : Theme.lavender
 
@@ -501,7 +544,7 @@ PanelWindow {
                                 Label {
                                     anchors.centerIn: parent
                                     text: row.isCommand ? Theme.glyph(0xf018d) : row.isResult ? Theme.glyph(0xf00ec) : row.modelData.name[0].toUpperCase() // 󰆍 󰃬
-                                    font.pixelSize: row.isApp ? 14 : 16
+                                    font.pixelSize: row.isApp || row.isWindow ? 14 : 16
                                     font.bold: true
                                     color: row.accent
                                 }
@@ -515,6 +558,7 @@ PanelWindow {
                             Label {
                                 Layout.fillWidth: true
                                 text: row.isCommand ? `Run “${row.modelData.run}”` : row.isResult ? `= ${row.modelData.result}` : row.modelData.name
+                                elide: Text.ElideRight
                                 font.pixelSize: 13
                                 font.bold: row.current
                                 color: row.current ? Theme.lavender : Theme.text
@@ -522,7 +566,7 @@ PanelWindow {
                             Label {
                                 Layout.fillWidth: true
                                 visible: !!text
-                                text: row.isCommand ? (row.modelData.run.startsWith("ssh ") ? "Open in terminal" : "Run as a command") : row.isResult ? "Copy the result" : row.isEmoji ? row.modelData.keywords : row.modelData.comment || row.modelData.genericName
+                                text: row.isCommand ? (row.modelData.run.startsWith("ssh ") ? "Open in terminal" : "Run as a command") : row.isResult ? "Copy the result" : row.isEmoji ? row.modelData.keywords : row.isWindow ? root.windowPlace(row.modelData) : row.modelData.comment || row.modelData.genericName
                                 font.pixelSize: 11
                                 color: Theme.overlay1
                             }
@@ -549,7 +593,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 34
                 horizontalAlignment: Text.AlignHCenter
-                text: `↑↓  select     ⏎  ${root.emojiMode ? "paste" : root.results[list.currentIndex]?.result !== undefined ? "copy" : "launch"}     esc  close`
+                text: `↑↓  select     ⏎  ${root.emojiMode ? "paste" : root.results[list.currentIndex]?.result !== undefined ? "copy" : root.results[list.currentIndex]?.window !== undefined ? "go to window" : "launch"}     esc  close`
                 font.pixelSize: 10
                 color: Theme.overlay0
             }
