@@ -20,10 +20,11 @@
           $cldr/annotations/{en,de}.xml $cldr/annotationsDerived/{en,de}.xml
       '';
 
-  # Preloaded into Nautilus to keep it running (nautilus-hold.c)
-  nautilus-hold = pkgs.runCommandCC "nautilus-hold" { } ''
+  # Preloaded into Nautilus: keeps it running, and its start from waiting
+  # for the portal (nautilus-preload.c)
+  nautilus-preload = pkgs.runCommandCC "nautilus-preload" { } ''
     mkdir -p $out/lib
-    $CC -shared -fPIC -O2 -o $out/lib/nautilus-hold.so ${./nautilus-hold.c}
+    $CC -shared -fPIC -O2 -o $out/lib/nautilus-preload.so ${./nautilus-preload.c}
   '';
 
   # Files' sidebar shows the connected phones' storage in the section of

@@ -59,7 +59,9 @@ in
 
       # Nautilus, started with the session and kept running: a cold start
       # delayed the file chooser (config/xdg-desktop-portal) and SUPER + E.
-      # Same bus name as its D-Bus activation, which this replaces.
+      # Same bus name as its D-Bus activation, which starts this instead
+      # (dataFile below). The preload also keeps the portal from waiting for
+      # it while both start (nautilus-preload.c).
       nautilus = {
         Unit = {
           Description = "Nautilus, kept running";
@@ -70,7 +72,7 @@ in
           Type = "dbus";
           BusName = "org.gnome.Nautilus";
           ExecStart = "/usr/bin/nautilus --gapplication-service"; # from pacman (system/packages/session.txt)
-          Environment = "LD_PRELOAD=${my-pkgs.nautilus-hold}/lib/nautilus-hold.so";
+          Environment = "LD_PRELOAD=${my-pkgs.nautilus-preload}/lib/nautilus-preload.so";
           Restart = "on-failure";
         };
         Install.WantedBy = [ "graphical-session.target" ];
@@ -142,6 +144,15 @@ in
         Name=org.freedesktop.Notifications
         Exec=/bin/false
         SystemdService=quickshell-daemon.service
+      '';
+
+      # Nautilus started over D-Bus (by the portal, when a Flatpak starts it
+      # first) is the nautilus service, with its preload
+      "dbus-1/services/org.gnome.Nautilus.service".text = ''
+        [D-BUS Service]
+        Name=org.gnome.Nautilus
+        Exec=/bin/false
+        SystemdService=nautilus.service
       '';
     };
     # Mask dunst's own unit in case anything asks for it directly
