@@ -34,7 +34,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | | |
 |:---:|:---:|
 | ![App launcher](resources/launcher.webp) | ![Screenshot editor](resources/screenshot-editor.webp) |
-| **Launcher:** type to filter, apps you use often come first, or run the text as a command | **Screenshot editor:** select, adjust, draw, scale, then copy or save |
+| **Launcher:** type to filter, apps you use often come first, or run the text as a command; it also does sums, and `:` searches emoji | **Screenshot editor:** select, adjust, draw, scale, then copy or save |
 | ![Power menu](resources/power-menu.webp) | |
 | **Power menu:** lock, log out, suspend, reboot or shut down, by mouse or key | |
 
@@ -142,7 +142,7 @@ Good to know:
 | `home-manager/theme` | Catppuccin for btop and bat, GTK and the cursor |
 | `options` | The `dotfiles` option: where this repository is checked out (`~/dotfiles`) |
 | `system` | The root side: pacman package lists and `setup.sh` (packages, PAM, logind, firewall, Docker) |
-| `pkgs` | Small scripts (`stay-awake`, `init-tex`, `edit-tex`) and the Python for the calendar helper |
+| `pkgs` | Small scripts (`stay-awake`, `init-tex`, `edit-tex`), the Python for the calendar helper and the launcher's emoji list |
 | `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, Zsh, Sunshine |
 
 The files in `config` are linked into `~/.config` with `mkOutOfStoreSymlink`, so `~/.config/<app>` points straight at
@@ -195,5 +195,5 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [ ] Waiting updates at a glance: a dot on the bar's logo chip, and AUR updates too (the system menu only counts
       pacman updates, while it is open)
 - [x] A notification for USB drives and phones when plugged in, with Open and Eject
-- [ ] Calculator and emoji search in the launcher
+- [x] Calculator and emoji search in the launcher
 - [x] A shortcut that shows the focused window's details (title, class, PID, ...)

@@ -94,6 +94,9 @@ in
       settings.StartupWMClass = "com.github.th-ch.youtube-music";
     };
 
+    # For the launcher's emoji search (config/quickshell/menus/Launcher.qml)
+    dataFile."quickshell-launcher/emoji.json".source = my-pkgs.quickshell-emoji;
+
     # Same file name as dunst's, so it takes precedence over /usr/share
     dataFile."dbus-1/services/org.knopwob.dunst.service".text = ''
       [D-BUS Service]

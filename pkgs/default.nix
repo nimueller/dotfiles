@@ -10,6 +10,16 @@
     }/bin/python3 "$@"
   '';
 
+  # The launcher's emoji search: names from Unicode, English and German
+  # keywords from CLDR (config/quickshell/menus/Launcher.qml)
+  quickshell-emoji =
+    pkgs.runCommand "quickshell-emoji.json" { nativeBuildInputs = [ pkgs.python3 ]; }
+      ''
+        cldr=${pkgs.cldr-annotations}/share/unicode/cldr/common
+        python3 ${./emoji.py} ${pkgs.unicode-emoji}/share/unicode/emoji/emoji-test.txt $out \
+          $cldr/annotations/{en,de}.xml $cldr/annotationsDerived/{en,de}.xml
+      '';
+
   # Shell scripts: shellcheck runs at build time and the tools they need are
   # on their PATH. TeX Live and Neovim (init-tex, edit-tex) come from the dev
   # module rather than being pulled in here.

@@ -52,23 +52,12 @@ PanelWindow {
     }
 
     // Copy the entry, then paste it into the window that gets the focus back
-    // once the picker is gone: Ctrl+V, or Ctrl+Shift+V in terminals. Works
-    // for images too.
+    // once the picker is gone (paste.sh). Works for images too.
     function pick(entry) {
         if (!entry)
             return;
         hide();
-        // Hyprland sends the shortcut (send_shortcut), which also reaches
-        // XWayland apps; wtype's virtual keyboard doesn't
-        const paste = `printf "%s\\n" "$1" | cliphist decode | wl-copy || exit 1
-            sleep 0.15
-            case "$(hyprctl activewindow -j | jq -r .class)" in
-                kitty | Alacritty | foot | footclient | org.wezfurlong.wezterm | com.mitchellh.ghostty | xterm*)
-                    mods="CTRL SHIFT" ;;
-                *) mods="CTRL" ;;
-            esac
-            hyprctl dispatch "hl.dsp.send_shortcut({ mods = \\"$mods\\", key = \\"v\\" })"`;
-        Quickshell.execDetached(["sh", "-c", paste, "sh", entry.line]);
+        Quickshell.execDetached(["sh", "-c", 'printf "%s\\n" "$1" | cliphist decode | "$2"', "sh", entry.line, Quickshell.shellPath("paste.sh")]);
     }
 
     function remove(entry) {
