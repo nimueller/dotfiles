@@ -773,7 +773,7 @@ ShellRoot {
                         }
                         Label {
                             Layout.fillWidth: true
-                            text: "Disk with /: when less is free than (the smaller of the two)"
+                            text: "Disks (/ and the home folder's): when less is free than (the smaller of the two)"
                         }
                     }
 

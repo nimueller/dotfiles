@@ -16,8 +16,9 @@ Singleton {
     readonly property bool windowTitle: settings.bar?.windowTitle ?? false
 
     // When SystemWatch.qml warns: memory below percent free, the CPU's
-    // pressure above percent for minutes, and the disk with / below percent
-    // or gb free (whichever is less) at each level, the last one critical
+    // pressure above percent for minutes, and the disks with / and the home
+    // folder below percent or gb free (whichever is less) at each level, the
+    // last one critical
     readonly property var warningDefaults: ({
             memory: { on: true, percent: 8 },
             cpu: { on: true, percent: 80, minutes: 1 },

@@ -8,7 +8,8 @@ import Quickshell.Io
 
 // System menu for the bar's distro logo: the system at a glance (host,
 // kernel, uptime, packages, pending updates) and the live use of CPU,
-// memory, swap, disk and GPU, read every 2 seconds while it's open, and the
+// memory, swap, the disks (/ and the home folder's, if that's another
+// partition) and GPU, read every 2 seconds while it's open, and the
 // brightness of the screens (the backlight, or monitors over DDC/CI). The gear
 // opens Machine Settings.
 Popup {
@@ -25,7 +26,7 @@ Popup {
     property var lastCpu: null // [busy, total] of the previous reading
     property var mem: ({ used: 0, total: 1 })
     property var swap: ({ used: 0, total: 0 })
-    property var disk: ({ used: 0, total: 1 })
+    property var disks: [] // { target, used, total }
     property var gpu: null // { name, load, memUsed, memTotal, temp }
     property var backlight: null // { value, max } of the built-in screen, null without one
 
@@ -65,19 +66,20 @@ Popup {
         }
     }
 
-    // Every 2 seconds: CPU, memory, swap, disk, temperatures, GPU
+    // Every 2 seconds: CPU, memory, swap, disks, temperatures, GPU
     Process {
         id: reading
 
         running: true
         command: ["sh", "-c", `head -1 /proc/stat
 grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo
-df -B1 --output=size,used / | tail -1 | sed 's/^/disk /'
+df -B1 --output=source,size,used,target / "$HOME" | tail -n +2 | awk '!seen[$1]++ {$1 = "disk"; print}'
 for h in /sys/class/hwmon/hwmon*; do case $(cat "$h/name") in coretemp|k10temp|zenpower) echo "cputemp $(cat "$h/temp1_input")"; break ;; esac; done
 command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits | head -1)"`]
         stdout: StdioCollector {
             onStreamFinished: {
                 const kb = {};
+                const disks = [];
                 for (const line of text.trim().split("\n")) {
                     const f = line.trim().split(/\s+/);
                     if (f[0] === "cpu") {
@@ -89,7 +91,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     } else if (f[0].endsWith(":")) {
                         kb[f[0].slice(0, -1)] = Number(f[1]) * 1024;
                     } else if (f[0] === "disk") {
-                        root.disk = { total: Number(f[1]), used: Number(f[2]) };
+                        disks.push({ total: Number(f[1]), used: Number(f[2]), target: f.slice(3).join(" ") });
                     } else if (f[0] === "cputemp") {
                         root.cpuTemp = Math.round(Number(f[1]) / 1000);
                     } else if (f[0] === "gpu") {
@@ -99,6 +101,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 }
                 root.mem = { total: kb.MemTotal, used: kb.MemTotal - kb.MemAvailable };
                 root.swap = { total: kb.SwapTotal, used: kb.SwapTotal - kb.SwapFree };
+                root.disks = disks;
             }
         }
     }
@@ -279,12 +282,18 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         value: root.swap.total ? root.swap.used / root.swap.total : 0
         accent: Theme.lavender
     }
-    Usage {
-        glyph: 0xf02ca // 󰋊
-        title: "Disk /"
-        detail: `${root.gib(root.disk.used)} of ${root.gib(root.disk.total)}`
-        value: root.disk.used / root.disk.total
-        accent: Theme.teal
+    Repeater {
+        model: root.disks
+
+        delegate: Usage {
+            required property var modelData
+
+            glyph: 0xf02ca // 󰋊
+            title: `Disk ${modelData.target}`
+            detail: `${root.gib(modelData.used)} of ${root.gib(modelData.total)}`
+            value: modelData.used / modelData.total
+            accent: Theme.teal
+        }
     }
     Usage {
         visible: !!root.gpu

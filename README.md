@@ -40,8 +40,8 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 
 - **Bar:** workspaces, window title, clock, tray (with themed menus), camera, microphone and screen-sharing indicators, volume,
   battery, phone, network and a notification bell. Clicking a module opens its menu.
-- **System:** host, kernel, uptime, pending updates, the use of CPU, memory, disk and GPU, and a brightness slider
-  for each screen (the backlight, or monitors with DDC/CI).
+- **System:** host, kernel, uptime, pending updates, the use of CPU, memory, the disks (`/` and the home folder's)
+  and GPU, and a brightness slider for each screen (the backlight, or monitors with DDC/CI).
 - **Sound:** output and input devices and their volumes, per-app volume.
 - **Network:** wired and Wi-Fi connections, plus VPNs (import OpenVPN or WireGuard files).
 - **Calendar:** a month view with Nextcloud calendars (CalDAV: create, edit and delete appointments, with reminders) and
@@ -60,9 +60,10 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
   one puts it back.
 - **Drives:** a notification with Open and Eject when a USB drive, memory card, disc or phone is plugged in.
 - **Warnings:** a notification when memory runs out, the CPU is overloaded for a minute (programs wait for it,
-  not just a busy CPU) or the disk with `/` fills up (warnings below 10 % or 20 GB and 5 % or 10 GB free, critical
-  below 3 % or 5 GB), naming the program behind it; Show opens btop, or gdu/ncdu for the disk. Nothing shows while the
-  screen is locked, and what's still wrong shows again after every unlock. The limits are in Machine Settings.
+  not just a busy CPU) or the disk with `/` or the one with the home folder fills up (warnings below 10 % or 20 GB
+  and 5 % or 10 GB free, critical below 3 % or 5 GB), naming the program behind it; Show opens btop, or gdu/ncdu for
+  the disk. Nothing shows while the screen is locked, and what's still wrong shows again after every unlock. The
+  limits are in Machine Settings.
 - **Window details:** `SUPER + I` shows the focused window's title, class, PID, command, workspace, geometry and state;
   click a row to copy it.
 - **Stay awake:** no idle lock while a browser or video player is playing, a game runs or Sunshine streams; the

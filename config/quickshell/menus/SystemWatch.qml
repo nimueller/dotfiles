@@ -10,12 +10,13 @@ import Quickshell.Io
 //  - CPU: tasks have waited for a CPU most of the last minute (CPU pressure,
 //    /proc/pressure/cpu), for a while; a busy CPU alone doesn't count.
 //    Names the busiest program.
-//  - Disk: little space left on /, two warnings and then a critical one.
+//  - Disks: little space left on / or on the one with the home folder (if
+//    that's another partition), two warnings and then a critical one each.
 // The limits come from Machine Settings (LocalSettings.qml). Each warns
 // once, then again only after it has been fine for a while, or after the
 // screen is unlocked (at login too): nothing shows while it's locked, and
 // what's still wrong then shows again, replacing its earlier notification.
-// "Show" opens btop, or gdu/ncdu (Files without them) for the disk.
+// "Show" opens btop, or gdu/ncdu (Files without them) on the disk.
 Scope {
     id: root
 
@@ -27,7 +28,8 @@ Scope {
     property bool memoryAlert: false
     property real cpuSince: 0 // since when the CPU's pressure is high (ms)
     property bool cpuAlert: false
-    property int diskLevel: 0 // 0 fine, else the level (1..) warned about
+    property var diskLevels: ({}) // mount point → 0 fine, else the level (1..) warned about
+    property var diskNotes: ({}) // mount point → Alert
 
     // New limits count from scratch
     property string limitsText: ""
@@ -42,13 +44,17 @@ Scope {
     function reset() {
         memoryAlert = false;
         cpuAlert = false;
-        diskLevel = 0;
+        diskLevels = {};
     }
 
     // Free bytes below which a disk this size is at a level (1..)
     function diskLimit(level, size) {
         const l = limits.disk.levels[level - 1];
         return Math.min(l.percent / 100 * size, l.gb * gib);
+    }
+
+    function shellQuote(s) {
+        return `'${String(s).replace(/'/g, "'\\''")}'`;
     }
 
     function size(bytes) {
@@ -102,15 +108,21 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
     Alert {
         id: cpuNote
     }
-    Alert {
+    Component {
         id: diskNote
+
+        Alert {}
     }
 
     function check(text) {
         const v = {};
+        const disks = [];
         for (const line of text.trim().split("\n")) {
             const f = line.trim().split(/\s+/);
-            v[f[0].replace(/:$/, "")] = f.slice(1).map(Number);
+            if (f[0] === "disk")
+                disks.push({ free: Number(f[1]), total: Number(f[2]), target: f.slice(3).join(" ") });
+            else
+                v[f[0].replace(/:$/, "")] = f.slice(1).map(Number);
         }
         // Wait for the unlock, and then tell again what's still wrong
         const wasLocked = locked;
@@ -119,7 +131,7 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             return;
         if (wasLocked)
             reset();
-        if (!v.MemTotal || !v.disk)
+        if (!v.MemTotal)
             return;
 
         const available = v.MemAvailable[0] / v.MemTotal[0];
@@ -147,35 +159,45 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             cpuAlert = false;
         }
 
-        const [free, total] = v.disk;
+        for (const d of disks)
+            checkDisk(d.target, d.free, d.total);
+    }
+
+    function checkDisk(target, free, total) {
         const levels = limits.disk.levels.length;
+        const warned = diskLevels[target] ?? 0;
         let level = 0;
         for (let i = levels; i > 0 && !level; i--)
             if (free < diskLimit(i, total))
                 level = i;
         if (!limits.disk.on) {
-            diskLevel = 0;
-        } else if (level > diskLevel) {
+            level = 0;
+        } else if (level > warned) {
             const critical = level === levels;
-            const summary = critical ? "The disk is full" : level > 1 ? "The disk is almost full" : "The disk is filling up";
-            diskNote.send(critical ? "critical" : "normal", "drive-harddisk", summary, `${size(free)} (${Math.round(100 * free / total)} %) free on /.`, "", 'for t in gdu ncdu; do command -v $t >/dev/null && exec kitty --class disk-usage -e $t -x ~; done; exec nautilus ~');
-            diskLevel = level;
-        } else if (level < diskLevel && free > diskLimit(diskLevel, total) + 2 * gib) {
-            // Fine again with a margin, so a disk at the limit warns only once
-            diskLevel = level;
+            const name = target === "/" ? "The system disk" : "The home disk";
+            const summary = critical ? `${name} is full` : level > 1 ? `${name} is almost full` : `${name} is filling up`;
+            const dir = shellQuote(target);
+            if (!diskNotes[target])
+                diskNotes[target] = diskNote.createObject(root);
+            diskNotes[target].send(critical ? "critical" : "normal", "drive-harddisk", summary, `${size(free)} (${Math.round(100 * free / total)} %) free on ${target}.`, "", `for t in gdu ncdu; do command -v $t >/dev/null && exec kitty --class disk-usage -e $t -x ${dir}; done; exec nautilus ${dir}`);
+        } else if (level < warned && free <= diskLimit(warned, total) + 2 * gib) {
+            // Fine again only with a margin, so a disk at the limit warns once
+            level = warned;
         }
+        diskLevels = Object.assign({}, diskLevels, { [target]: level });
     }
 
     // MemTotal/MemAvailable in kB, the pressures' avg10 (memory, full) and
-    // avg60 (cpu, some) in %, the free and total bytes on /, and whether the
-    // lock screen is up
+    // avg60 (cpu, some) in %, the free and total bytes and mount point of /
+    // and of the home folder's partition (once if it's the same), and
+    // whether the lock screen is up
     Process {
         id: probe
 
         command: ["sh", "-c", `grep -E '^(MemTotal|MemAvailable):' /proc/meminfo
 sed -n 's/^full avg10=\\([0-9.]*\\).*/memory \\1/p' /proc/pressure/memory 2>/dev/null
 sed -n 's/^some avg10=[0-9.]* avg60=\\([0-9.]*\\).*/cpu \\1/p' /proc/pressure/cpu 2>/dev/null
-df -B1 --output=avail,size / | tail -1 | sed 's/^/disk /'
+df -B1 --output=source,avail,size,target / "$HOME" | tail -n +2 | awk '!seen[$1]++ {$1 = "disk"; print}'
 pgrep -xu "$(id -u)" hyprlock >/dev/null && echo locked`]
         stdout: StdioCollector {
             onStreamFinished: root.check(text)
