@@ -1,6 +1,8 @@
 // Preloaded into Nautilus (home-manager/desktop: the nautilus service).
 #define _GNU_SOURCE
 #include <dlfcn.h>
+#include <errno.h>
+#include <link.h>
 #include <string.h>
 
 // Keeps Nautilus running once it has started, so the file chooser and new
@@ -44,4 +46,23 @@ void *g_dbus_connection_call_sync(void *connection, const char *bus_name, const 
         flags |= G_DBUS_CALL_FLAGS_NO_AUTO_START;
     return real(connection, bus_name, path, iface, method, parameters, reply_type, flags, timeout,
                 cancellable, error);
+}
+
+// Apps that name their window "x11:<id>" to the portal (Qt 5 always does,
+// even on Wayland) crashed Nautilus 51: it makes its dialog the child of that
+// X11 window through Mutter's own protocol, which Hyprland doesn't offer, and
+// calls it anyway. strtol(…, 16) in Nautilus itself only reads such ids;
+// failing that, Nautilus opens the dialog without a parent instead.
+long __isoc23_strtol(const char *s, char **end, int base) {
+    long (*real)(const char *, char **, int) = dlsym(RTLD_NEXT, "__isoc23_strtol");
+    static struct link_map *nautilus;
+    Dl_info caller;
+    if (!nautilus)
+        dlinfo(dlopen(NULL, RTLD_LAZY), RTLD_DI_LINKMAP, &nautilus);
+    if (base == 16 && dladdr(__builtin_return_address(0), &caller) &&
+        (ElfW(Addr))caller.dli_fbase == nautilus->l_addr) {
+        errno = EINVAL;
+        return 0;
+    }
+    return real(s, end, base);
 }
