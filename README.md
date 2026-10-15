@@ -203,6 +203,9 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 **Cleanup**
 - [x] Trim `kitty.conf` to the settings that differ from the defaults
 - [x] Shrink the wallpapers (30 MB → 4 MB; older commits still hold the old files)
+- [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it:
+      without it, YouTube at 2160p crashes the tab on Wayland with NVIDIA (Brave 1.97.56, October 2026). After a
+      Brave update, remove the flag, restart Brave and play a video at 2160p; the file says why
 
 **Checks**
 - [x] Lint the Quickshell code (`qmllint`) and the calendar helper (`ruff`) in CI
