@@ -59,13 +59,18 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 - **Files' sidebar:** Downloads, Documents, Pictures and the other standard folders stay its first bookmarks; removing
   one puts it back.
 - **Drives:** a notification with Open and Eject when a USB drive, memory card, disc or phone is plugged in.
+- **Warnings:** a notification when memory runs out, the CPU is overloaded for a minute (programs wait for it,
+  not just a busy CPU) or the disk with `/` fills up (warnings below 10 % or 20 GB and 5 % or 10 GB free, critical
+  below 3 % or 5 GB), naming the program behind it; Show opens btop, or gdu/ncdu for the disk. Nothing shows while the
+  screen is locked, and what's still wrong shows again after every unlock. The limits are in Machine Settings.
 - **Window details:** `SUPER + I` shows the focused window's title, class, PID, command, workspace, geometry and state;
   click a row to copy it.
 - **Stay awake:** no idle lock while a browser or video player is playing, a game runs or Sunshine streams; the
   on-screen display says when that starts and ends.
 - **Clipboard history:** cliphist with image thumbnails; the chosen entry is pasted right away, in Wayland and X11 apps.
 - **Machine Settings:** this machine's displays (drag to arrange, mode, scale, rotation, HDR, which workspaces live
-  where, the main monitor for notifications), environment variables, autostart programs and bar options, saved to the
+  where, the main monitor for notifications), environment variables, autostart programs, bar options and the limits
+  for the warnings, saved to the
   untracked `config/hypr/local.lua`.
 - **Screenshots:** the screen freezes, you pick a region or window (or the whole monitor) and can still resize the box,
   draw on it (pen, line, arrow, boxes, highlighter, text, pixelate), scale it to 75, 50 or 25 %, then copy it or save

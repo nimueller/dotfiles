@@ -15,6 +15,24 @@ Singleton {
     // The focused window's title in the bar
     readonly property bool windowTitle: settings.bar?.windowTitle ?? false
 
+    // When SystemWatch.qml warns: memory below percent free, the CPU's
+    // pressure above percent for minutes, and the disk with / below percent
+    // or gb free (whichever is less) at each level, the last one critical
+    readonly property var warningDefaults: ({
+            memory: { on: true, percent: 8 },
+            cpu: { on: true, percent: 80, minutes: 1 },
+            disk: { on: true, levels: [{ percent: 10, gb: 20 }, { percent: 5, gb: 10 }, { percent: 3, gb: 5 }] }
+        })
+    readonly property var warnings: withDefaults(settings.warnings)
+
+    function withDefaults(w) {
+        const d = warningDefaults;
+        const disk = Object.assign({}, d.disk, w?.disk);
+        if (!Array.isArray(disk.levels) || disk.levels.length !== d.disk.levels.length)
+            disk.levels = d.disk.levels;
+        return { memory: Object.assign({}, d.memory, w?.memory), cpu: Object.assign({}, d.cpu, w?.cpu), disk };
+    }
+
     // The main monitor (notifications): the screen whose model and serial
     // number are in its description, else the one on its port, else the first
     readonly property var mainMonitor: (settings.monitors ?? []).find(m => m.main) ?? null

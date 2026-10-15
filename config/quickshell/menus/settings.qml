@@ -7,8 +7,9 @@ import Quickshell.Io
 // Machine Settings: this machine's own settings, which stay out of git.
 // Displays (arrangement, mode, scale, rotation, VRR, HDR, workspaces, the
 // main monitor for notifications), environment
-// variables (e.g. drivers), autostart programs and the bar (read by the
-// shell through LocalSettings.qml), written to
+// variables (e.g. drivers), autostart programs, the bar and when to warn
+// about memory, the CPU and the disk (read by the shell through
+// LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
 // "-- BEGIN settings" and "-- END settings"; anything else in that file is
 // kept. Apply tries the displays right away and goes back unless kept
@@ -25,6 +26,7 @@ ShellRoot {
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({ windowTitle: false })
+    property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
     property int selected: 0
     property bool dirty: false
     property string status: ""
@@ -81,7 +83,8 @@ ShellRoot {
             monitors: monitors.map(m => ({ desc: m.desc, name: m.name, enabled: m.enabled, mode: m.mode, x: m.x, y: m.y, scale: m.scale, transform: m.transform, vrr: m.vrr, wideColor: m.wideColor, hdr: m.hdr, workspaces: m.workspaces, main: m.main })),
             env: env.filter(e => e[0].trim()),
             autostart: autostart.filter(c => c.trim()),
-            bar: bar
+            bar: bar,
+            warnings: warnings
         };
     }
 
@@ -149,8 +152,36 @@ ShellRoot {
         monitors = list;
         env = s.env;
         bar = Object.assign({ windowTitle: false }, s.bar);
+        warnings = LocalSettings.withDefaults(s.warnings);
         autostart = s.autostart;
         selected = Math.max(0, list.findIndex(m => m.connected));
+    }
+
+    // warn("cpu", { percent: 90 }); a disk level by its index
+    function warn(group, props) {
+        warnings = Object.assign({}, warnings, { [group]: Object.assign({}, warnings[group], props) });
+        dirty = true;
+    }
+
+    function warnDisk(index, props) {
+        warn("disk", { levels: warnings.disk.levels.map((l, i) => i === index ? Object.assign({}, l, props) : l) });
+    }
+
+    // A number of the warnings' limits
+    component NumberField: InputField {
+        required property real value
+        signal edited(real value)
+
+        Layout.preferredWidth: 56
+        text: String(value)
+        // Typing ends the binding: follow loads and Defaults by hand
+        onValueChanged: if (parseFloat(text.replace(",", ".")) !== value)
+            text = String(value)
+        onTextChanged: {
+            const v = parseFloat(text.replace(",", "."));
+            if (!isNaN(v) && v >= 0 && v !== value)
+                edited(v);
+        }
     }
 
     function change(index, props) {
@@ -301,7 +332,8 @@ ShellRoot {
                             { id: "displays", text: "Displays", glyph: 0xf0379 },
                             { id: "env", text: "Environment", glyph: 0xf0169 },
                             { id: "autostart", text: "Autostart", glyph: 0xf040a },
-                            { id: "bar", text: "Bar", glyph: 0xf10a9 }
+                            { id: "bar", text: "Bar", glyph: 0xf10a9 },
+                            { id: "warnings", text: "Warnings", glyph: 0xf0026 }
                         ]
 
                         delegate: Rectangle {
@@ -663,6 +695,137 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             text: "Show the focused window's title next to the workspaces"
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Warnings ---------------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "warnings"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: "Notifications when the system runs out of something — again after every unlock"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Switch {
+                            checked: root.warnings.memory.on
+                            onToggled: root.warn("memory", { on: !root.warnings.memory.on })
+                        }
+                        Label {
+                            text: "Memory: when less than"
+                        }
+                        NumberField {
+                            value: root.warnings.memory.percent
+                            onEdited: v => root.warn("memory", { percent: v })
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: "% is free, or the system stalls reclaiming it"
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Switch {
+                            checked: root.warnings.cpu.on
+                            onToggled: root.warn("cpu", { on: !root.warnings.cpu.on })
+                        }
+                        Label {
+                            text: "CPU: when programs wait for it more than"
+                        }
+                        NumberField {
+                            value: root.warnings.cpu.percent
+                            onEdited: v => root.warn("cpu", { percent: v })
+                        }
+                        Label {
+                            text: "% of the time, for"
+                        }
+                        NumberField {
+                            value: root.warnings.cpu.minutes
+                            onEdited: v => root.warn("cpu", { minutes: v })
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: "min"
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Switch {
+                            checked: root.warnings.disk.on
+                            onToggled: root.warn("disk", { on: !root.warnings.disk.on })
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: "Disk with /: when less is free than (the smaller of the two)"
+                        }
+                    }
+
+                    Repeater {
+                        model: root.warnings.disk.levels
+
+                        delegate: RowLayout {
+                            required property var modelData
+                            required property int index
+
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 46
+                            spacing: 8
+
+                            Label {
+                                Layout.preferredWidth: 110
+                                text: ["Warning", "Second warning", "Critical"][index] ?? ""
+                                color: index === root.warnings.disk.levels.length - 1 ? Theme.red : Theme.text
+                            }
+                            NumberField {
+                                value: modelData.percent
+                                onEdited: v => root.warnDisk(index, { percent: v })
+                            }
+                            Label {
+                                text: "% or"
+                            }
+                            NumberField {
+                                value: modelData.gb
+                                onEdited: v => root.warnDisk(index, { gb: v })
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: "GB"
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 6
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: "Each warns once and again when it was fine for a while, or after the screen is unlocked. Saving applies right away."
+                        color: Theme.subtext0
+                    }
+
+                    IconButton {
+                        glyph: Theme.glyph(0xf0450) // 󰑐
+                        text: "Defaults"
+                        onClicked: {
+                            root.warnings = LocalSettings.withDefaults({});
+                            root.dirty = true;
                         }
                     }
 
