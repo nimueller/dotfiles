@@ -92,6 +92,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | `SUPER + SHIFT + C` | Colour picker |
 | `SUPER + Escape` | Lock the screen |
 | `SUPER + I` | Details of the focused window |
+| `SUPER + A` | Sound menu (`SHIFT`: pavucontrol) |
 | `SUPER + 1`…`0` | Go to workspace 1–10 (`SHIFT`: move the window there) |
 | `SUPER + S` / `C` / `P` | Scratchpads for music, chat and passwords |
 | `SUPER + H J K L` | Move the focus |
