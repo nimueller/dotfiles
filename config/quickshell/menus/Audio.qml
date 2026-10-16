@@ -55,10 +55,14 @@ Singleton {
 
     // The app that owns the stream's process, through its window (Windows.qml):
     // Electron and Chromium apps play from a helper process and all call
-    // themselves "Chromium" here. Otherwise what the stream says.
+    // themselves "Chromium" here. Flatpaks send their PID inside the sandbox,
+    // which matches no window; their icon name is usually the window class
+    // (Brave: "brave-browser"). Otherwise what the stream says.
     function owner(node) {
-        const pid = parseInt(node.properties["application.process.id"]);
-        return pid > 0 ? Windows.entry(Windows.forPid(pid)) : null;
+        const p = node.properties;
+        const pid = parseInt(p["application.process.id"]);
+        const window = (pid > 0 ? Windows.forPid(pid) : null) ?? Windows.forApp(p["application.icon-name"]);
+        return Windows.entry(window);
     }
 
     function appName(node) {
