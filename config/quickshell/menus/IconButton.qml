@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 
 // Small chip button with a glyph and optional text. `active` tints it with
-// the accent, for toggles like do-not-disturb.
+// the accent, for toggles like do-not-disturb. Bigger in touch mode.
 Rectangle {
     id: root
 
@@ -14,8 +14,8 @@ Rectangle {
 
     signal clicked
 
-    implicitWidth: text ? row.implicitWidth + 20 : 28
-    implicitHeight: 28
+    implicitWidth: text ? row.implicitWidth + 20 : implicitHeight
+    implicitHeight: Modes.touch ? 36 : 28
     radius: 8
     color: active ? Theme.alpha(accent, hovered ? 0.3 : 0.18) : hovered ? Theme.surface1 : Theme.surface0
 

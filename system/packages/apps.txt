@@ -9,8 +9,6 @@ base
 base-devel
 bind
 blueman
-bluez
-bluez-utils
 btop
 chromium
 ckb-next
@@ -118,7 +116,6 @@ pipewire-audio
 pipewire-jack
 plocate
 postgresql
-power-profiles-daemon
 prismlauncher
 protontricks
 python-build

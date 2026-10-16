@@ -2,21 +2,25 @@ import QtQuick
 import QtQuick.Layouts
 
 // One Wi-Fi network. Click to connect (open or saved networks) or to expand
-// it for a password / disconnect / forget.
+// it for a password / disconnect / forget. Enterprise networks (802.1X) need
+// a user name too: Set up opens the connection editor.
 Rectangle {
     id: root
 
-    required property var network // { ssid, signal, secure, active, known }
+    required property var network // { ssid, signal, secure, enterprise, active, known }
     property bool expanded: false
     property bool busy: false
+    property bool askPassword: false // the saved password didn't work
     property string error: ""
 
     signal clicked
     signal connectRequested(string password)
+    signal setupRequested
     signal disconnectRequested
     signal forgetRequested
 
-    readonly property bool needsPassword: network.secure && !network.known && !network.active
+    readonly property bool setup: network.enterprise && !network.known && !network.active
+    readonly property bool needsPassword: network.secure && !setup && !network.active && (!network.known || askPassword)
 
     implicitHeight: column.implicitHeight + 12
     radius: 8
@@ -119,7 +123,7 @@ Rectangle {
             }
             Item {
                 Layout.fillWidth: true
-                visible: !root.needsPassword
+                visible: !root.needsPassword && !root.setup
             }
             IconButton {
                 visible: root.network.active
@@ -127,8 +131,23 @@ Rectangle {
                 text: "Disconnect"
                 onClicked: root.disconnectRequested()
             }
+            Label {
+                Layout.fillWidth: true
+                visible: root.setup
+                text: "Needs a user name and password"
+                font.pixelSize: 10
+                color: Theme.overlay1
+            }
             IconButton {
-                visible: !root.network.active
+                visible: root.setup
+                glyph: Theme.glyph(0xf0493) // 󰒓
+                text: "Set up"
+                accent: Theme.sapphire
+                active: true
+                onClicked: root.setupRequested()
+            }
+            IconButton {
+                visible: !root.network.active && !root.setup
                 glyph: Theme.glyph(0xf0317) // 󰌗
                 text: "Connect"
                 accent: Theme.sapphire

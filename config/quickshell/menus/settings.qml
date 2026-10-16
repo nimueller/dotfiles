@@ -7,7 +7,8 @@ import Quickshell.Io
 // Machine Settings: this machine's own settings, which stay out of git.
 // Displays (arrangement, mode, scale, rotation, VRR, HDR, workspaces, the
 // main monitor for notifications), environment
-// variables (e.g. drivers), autostart programs, the bar and when to warn
+// variables (e.g. drivers), autostart programs, the laptop and touch mode
+// (config/hypr/modes.lua: detected, or forced on or off), the bar and when to warn
 // about memory, the CPU and the disk (read by the shell through
 // LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
@@ -26,6 +27,7 @@ ShellRoot {
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({ windowTitle: false })
+    property var modes: ({}) // laptop, touch: true | false when forced, missing when detected
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
     property int selected: 0
     property bool dirty: false
@@ -83,6 +85,7 @@ ShellRoot {
             monitors: monitors.map(m => ({ desc: m.desc, name: m.name, enabled: m.enabled, mode: m.mode, x: m.x, y: m.y, scale: m.scale, transform: m.transform, vrr: m.vrr, wideColor: m.wideColor, hdr: m.hdr, workspaces: m.workspaces, main: m.main })),
             env: env.filter(e => e[0].trim()),
             autostart: autostart.filter(c => c.trim()),
+            modes: modes,
             bar: bar,
             warnings: warnings
         };
@@ -101,6 +104,9 @@ ShellRoot {
             lines.push("", "-- Workspaces", ...rules);
         if (s.env.length)
             lines.push("", "-- Environment", ...s.env.map(([k, v]) => `hl.env(${luaString(k.trim())}, ${luaString(v)})`));
+        const forced = Object.entries(s.modes).map(([k, v]) => `${k} = ${v}`);
+        if (forced.length)
+            lines.push("", "-- Laptop and touch mode, forced (modes.lua)", `require("modes").set({ ${forced.join(", ")} })`);
         if (s.autostart.length)
             lines.push("", "-- Autostart", 'hl.on("hyprland.start", function()', ...s.autostart.map(c => `    hl.exec_cmd(${luaString("after-unlock " + shellQuote(c.trim()))})`), "end)");
         lines.push("-- END settings");
@@ -152,6 +158,7 @@ ShellRoot {
         monitors = list;
         env = s.env;
         bar = Object.assign({ windowTitle: false }, s.bar);
+        modes = s.modes ?? {};
         warnings = LocalSettings.withDefaults(s.warnings);
         autostart = s.autostart;
         selected = Math.max(0, list.findIndex(m => m.connected));
@@ -332,6 +339,7 @@ ShellRoot {
                             { id: "displays", text: "Displays", glyph: 0xf0379 },
                             { id: "env", text: "Environment", glyph: 0xf0169 },
                             { id: "autostart", text: "Autostart", glyph: 0xf040a },
+                            { id: "modes", text: "Laptop & touch", glyph: 0xf0322 },
                             { id: "bar", text: "Bar", glyph: 0xf10a9 },
                             { id: "warnings", text: "Warnings", glyph: 0xf0026 }
                         ]
@@ -663,6 +671,85 @@ ShellRoot {
                         glyph: Theme.glyph(0xf0415) // 󰐕
                         text: "Add program"
                         onClicked: root.autostart = [...root.autostart, ""]
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Laptop & touch --------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "modes"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: "Modes — on by themselves where the hardware is there"
+                    }
+
+                    Repeater {
+                        model: [
+                            { id: "laptop", text: "Laptop", about: "Tap to click, swipe with three fingers between workspaces, keyboard backlight keys, the screen off with the lid closed while another monitor is connected, dimming when idle and suspending after 15 minutes on battery, the battery menu with power profiles and low battery warnings" },
+                            { id: "touch", text: "Touch", about: "A taller bar with bigger buttons, buttons for the launcher, closing the window and the on-screen keyboard (which also shows by itself for text fields), swiping from the screen's edge between workspaces" }
+                        ]
+
+                        delegate: RowLayout {
+                            id: modeRow
+
+                            required property var modelData
+                            readonly property bool detected: Modes.detected[modelData.id] ?? false
+
+                            Layout.fillWidth: true
+                            spacing: 14
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Label {
+                                    text: modeRow.modelData.text
+                                    font.bold: true
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    wrapMode: Text.WordWrap
+                                    elide: Text.ElideNone
+                                    text: modeRow.modelData.about
+                                    font.pixelSize: 11
+                                    color: Theme.subtext0
+                                }
+                            }
+                            Dropdown {
+                                Layout.preferredWidth: 190
+                                Layout.alignment: Qt.AlignTop
+                                model: [
+                                    { text: `Auto (${modeRow.detected ? "on" : "off"} here)`, value: "auto" },
+                                    { text: "On", value: true },
+                                    { text: "Off", value: false }
+                                ]
+                                current: root.modes[modeRow.modelData.id] ?? "auto"
+                                onPicked: value => {
+                                    const m = Object.assign({}, root.modes);
+                                    if (value === "auto")
+                                        delete m[modeRow.modelData.id];
+                                    else
+                                        m[modeRow.modelData.id] = value;
+                                    root.modes = m;
+                                    root.dirty = true;
+                                }
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 6
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: `In effect now: laptop ${Modes.laptop ? "on" : "off"}, touch ${Modes.touch ? "on" : "off"}. Saving applies them right away; the on-screen keyboard starts at the next login, or with its button in the bar.`
+                        color: Theme.subtext0
                     }
 
                     Item {

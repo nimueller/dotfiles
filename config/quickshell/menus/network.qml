@@ -6,7 +6,11 @@ import Quickshell
 import Quickshell.Io
 
 // Network menu for the bar's network module, on top of nmcli: wired
-// devices, Wi-Fi and VPN connections (OpenVPN etc. and WireGuard).
+// devices, Wi-Fi and VPN connections (OpenVPN etc. and WireGuard). Saved
+// Wi-Fi networks are matched by their SSID, not the profile's name; a
+// saved one whose password stopped working asks for the new one, and
+// enterprise networks (802.1X: user name and password) are set up in the
+// connection editor.
 Popup {
     id: popup
 
@@ -14,9 +18,11 @@ Popup {
 
     property string connectivity: ""
     property bool wifiEnabled: false
+    property bool wifiHardware: true // false: switched off by a key or switch
     property var wired: [] // { device, state, connection, address, speed }
     property var wifi: null // { device, state, connection }
-    property var networks: [] // { ssid, signal, secure, active, known }
+    property var networks: [] // { ssid, signal, secure, enterprise, active, known, uuid }
+    property var wifiProfiles: ({}) // SSID -> uuid of its saved profile
     property var vpns: [] // { name, uuid, kind, state, address, needsPassword, hasChallenge }
     property var vpnInfo: ({}) // uuid -> { service, data } for type "vpn"
     property bool loaded: false
@@ -24,6 +30,7 @@ Popup {
     property string expanded: "" // SSID or VPN uuid with its details open
     property string busy: "" // SSID or VPN uuid being (dis)connected
     property string error: "" // shown on the expanded row
+    property string retry: "" // SSID whose saved password didn't work
 
     readonly property var connectivityInfo: ({
             full: ["Online", Theme.green],
@@ -72,7 +79,9 @@ Popup {
         }
 
         connectivity = (sections.conn ?? [""])[0];
-        wifiEnabled = (sections.radio ?? [""])[0] === "enabled";
+        const radio = fields((sections.radio ?? [""])[0]); // WIFI-HW:WIFI
+        wifiHardware = radio[0] !== "disabled";
+        wifiEnabled = radio[1] === "enabled";
 
         const addresses = {};
         try {
@@ -97,7 +106,10 @@ Popup {
         wifi = devices.find(d => d.type === "wifi") ?? null;
 
         const connections = (sections.connections ?? []).map(fields); // NAME,UUID,TYPE,STATE,DEVICE
-        const known = new Set(connections.filter(f => f[2].includes("wireless")).map(f => f[0]));
+        // Profiles by SSID; by name for those saved since the menu opened
+        const byName = {};
+        for (const f of connections.filter(f => f[2].includes("wireless")))
+            byName[f[0]] = f[1];
         const bySsid = {};
         for (const f of (sections.wifi ?? []).map(fields)) {
             const [inUse, signal, security, ssid] = f;
@@ -107,9 +119,11 @@ Popup {
                 ssid,
                 signal: parseInt(signal) || 0,
                 secure: !!security && security !== "--",
+                enterprise: security.includes("802.1X"),
                 active: inUse === "*",
-                known: known.has(ssid)
+                uuid: wifiProfiles[ssid] ?? byName[ssid] ?? ""
             };
+            n.known = !!n.uuid;
             const prev = bySsid[ssid];
             if (!prev || n.active || (!prev.active && n.signal > prev.signal))
                 bySsid[ssid] = n;
@@ -139,7 +153,7 @@ Popup {
         running: true
         command: ["sh", "-c", `
             echo @conn; nmcli networking connectivity
-            echo @radio; nmcli radio wifi
+            echo @radio; nmcli -t -f WIFI-HW,WIFI radio
             echo @dev; nmcli -t -f DEVICE,TYPE,STATE,CONNECTION device
             echo @wifi; nmcli -t -f IN-USE,SIGNAL,SECURITY,SSID device wifi list --rescan no
             echo @connections; nmcli -t -f NAME,UUID,TYPE,STATE,DEVICE connection show
@@ -152,24 +166,34 @@ Popup {
     }
 
     // Service type and (non-secret) settings of each VPN, to know whether it
-    // needs a password. Only once: these don't change while the menu is open.
+    // needs a password, and the SSID of each Wi-Fi profile. At the start and
+    // after each change made here: these don't change by themselves.
     Process {
+        id: profiles
         running: true
         command: ["sh", "-c", `
             nmcli -t -f UUID,TYPE connection show | while IFS=: read -r uuid type; do
-                [ "$type" = vpn ] || continue
-                printf '%s\\t%s\\t%s\\n' "$uuid" "$(nmcli -g vpn.service-type connection show uuid "$uuid")" \\
-                    "$(nmcli -g vpn.data connection show uuid "$uuid" | tr '\\n' ' ')"
+                case $type in
+                    vpn)
+                        printf 'vpn\\t%s\\t%s\\t%s\\n' "$uuid" "$(nmcli -g vpn.service-type connection show uuid "$uuid")" \\
+                            "$(nmcli -g vpn.data connection show uuid "$uuid" | tr '\\n' ' ')" ;;
+                    802-11-wireless)
+                        printf 'wifi\\t%s\\t%s\\n' "$uuid" "$(nmcli -g 802-11-wireless.ssid connection show uuid "$uuid")" ;;
+                esac
             done
         `]
         stdout: StdioCollector {
             onStreamFinished: {
-                const info = {};
+                const info = {}, ssids = {};
                 for (const line of text.split("\n").filter(l => l)) {
-                    const [uuid, service, data] = line.split("\t");
-                    info[uuid] = { service, data };
+                    const [kind, uuid, a, b] = line.split("\t");
+                    if (kind === "vpn")
+                        info[uuid] = { service: a, data: b };
+                    else if (a)
+                        ssids[a.replace(/\\(.)/g, "$1")] = uuid; // -g escapes colons
                 }
                 popup.vpnInfo = info;
+                popup.wifiProfiles = ssids;
                 popup.refresh();
             }
         }
@@ -195,11 +219,17 @@ Popup {
                 popup.error = actionErr.text.replace(/^Error:\s*/, "").trim() || "Something went wrong";
                 if (popup.busy)
                     popup.expanded = popup.busy;
+                // A saved Wi-Fi network that didn't connect: ask for its password
+                const n = popup.networks.find(n => n.ssid === popup.busy);
+                if (n?.secure && !n.enterprise)
+                    popup.retry = n.ssid;
             } else if (popup.busy) {
+                if (popup.busy === popup.retry)
+                    popup.retry = "";
                 popup.expanded = "";
             }
             popup.busy = "";
-            popup.refresh();
+            profiles.running = true; // and refresh
         }
     }
 
@@ -324,20 +354,27 @@ Popup {
                 text: "Wi-Fi"
             }
             Switch {
-                checked: popup.wifiEnabled
+                checked: popup.wifiEnabled && popup.wifiHardware
+                enabled: popup.wifiHardware
                 accent: Theme.sapphire
                 onToggled: popup.nmcli(["radio", "wifi", popup.wifiEnabled ? "off" : "on"])
             }
         }
 
         Label {
-            visible: !popup.wifiEnabled
+            visible: !popup.wifiHardware
+            text: "Switched off by a key or switch (airplane mode)"
+            color: Theme.overlay0
+            font.italic: true
+        }
+        Label {
+            visible: popup.wifiHardware && !popup.wifiEnabled
             text: "Wi-Fi is off"
             color: Theme.overlay0
             font.italic: true
         }
         Label {
-            visible: popup.wifiEnabled && popup.networks.length === 0
+            visible: popup.wifiEnabled && popup.wifiHardware && popup.networks.length === 0
             text: "Looking for networks…"
             color: Theme.overlay0
             font.italic: true
@@ -348,7 +385,7 @@ Popup {
 
             Layout.fillWidth: true
             Layout.preferredHeight: Math.min(contentHeight, 320)
-            visible: popup.wifiEnabled && popup.networks.length > 0
+            visible: popup.wifiEnabled && popup.wifiHardware && popup.networks.length > 0
             clip: true
             spacing: 2
             boundsBehavior: Flickable.StopAtBounds
@@ -361,6 +398,7 @@ Popup {
                 network: modelData
                 expanded: popup.expanded === modelData.ssid
                 busy: popup.busy === modelData.ssid
+                askPassword: popup.retry === modelData.ssid
                 error: popup.expanded === modelData.ssid ? popup.error : ""
 
                 onClicked: {
@@ -371,15 +409,23 @@ Popup {
                         popup.expanded = popup.expanded === modelData.ssid ? "" : modelData.ssid;
                 }
                 onConnectRequested: password => {
-                    if (modelData.known)
-                        popup.nmcli(["connection", "up", "id", modelData.ssid], modelData.ssid);
+                    // A new password for a saved network goes in through stdin
+                    // (passwd-file), and NetworkManager keeps it
+                    if (modelData.known && password)
+                        popup.nmcli(["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"], modelData.ssid, `802-11-wireless-security.psk:${password}\n`);
+                    else if (modelData.known)
+                        popup.nmcli(["connection", "up", "uuid", modelData.uuid], modelData.ssid);
                     else if (password)
                         popup.nmcli(["device", "wifi", "connect", modelData.ssid, "password", password], modelData.ssid);
                     else
                         popup.nmcli(["device", "wifi", "connect", modelData.ssid], modelData.ssid);
                 }
+                onSetupRequested: {
+                    Quickshell.execDetached(["nm-connection-editor", "--create", "--type=802-11-wireless"]);
+                    popup.close();
+                }
                 onDisconnectRequested: popup.nmcli(["device", "disconnect", popup.wifi.device])
-                onForgetRequested: popup.nmcli(["connection", "delete", "id", modelData.ssid])
+                onForgetRequested: popup.nmcli(["connection", "delete", "uuid", modelData.uuid])
             }
         }
     }

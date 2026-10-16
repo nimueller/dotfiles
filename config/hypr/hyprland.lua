@@ -16,3 +16,6 @@ if localConfig then
     localConfig:close()
     require("local")
 end
+
+-- Laptop and touch mode, detected or forced in local.lua (modes.lua)
+require("modes").apply()

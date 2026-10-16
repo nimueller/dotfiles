@@ -14,7 +14,7 @@ import Quickshell.Io
 // brightness keys (replaces SwayOSD), the stay-awake inhibitor, the
 // camera/microphone/screen-sharing watch, the KDE Connect phones, the
 // fixed folders in Files' sidebar and the warnings about a full memory, an
-// overloaded CPU or a full disk.
+// overloaded CPU, a full disk or a low battery.
 //
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
@@ -89,6 +89,9 @@ ShellRoot {
 
     // Notifications when memory, the CPU or the disk run out
     SystemWatch {}
+
+    // Laptops: notifications when the battery runs low
+    BatteryWatch {}
 
     // Downloads, Documents etc. stay in Files' sidebar (bookmarks.py)
     Process {

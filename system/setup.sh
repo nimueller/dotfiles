@@ -13,6 +13,8 @@
 # 5. firewall: the network connection in firewalld's `home` zone, which
 #    lets in only SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6
 # 6. Docker: container ports published on this machine only, by default
+# 7. Bluetooth: bluetoothd for the Bluetooth menu, where there's an adapter
+# 8. power profiles: power-profiles-daemon for the battery menu, on laptops
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -165,4 +167,33 @@ else
         echo "Done; running containers keep their ports until they're recreated (docker compose up after down)."
         echo "A container that should be reachable from the network publishes with 0.0.0.0:<port>:<port>."
     fi
+fi
+
+echo ''
+echo "== Bluetooth"
+if [ -z "$(ls -A /sys/class/bluetooth 2>/dev/null)" ]; then
+    echo "No Bluetooth adapter, skipping"
+elif systemctl is-enabled --quiet bluetooth.service 2>/dev/null; then
+    echo "Bluetooth already starts at boot"
+elif ask "Start Bluetooth now and at every boot (bluetooth.service, for the Bluetooth menu)?"; then
+    sudo systemctl enable --now bluetooth.service
+fi
+
+echo ''
+echo "== Power profiles"
+# A battery of the machine's own; a mouse's or a headset's has the scope Device
+laptop=
+for d in /sys/class/power_supply/*; do
+    if [ "$(cat "$d/type" 2>/dev/null)" = Battery ] && [ "$(cat "$d/scope" 2>/dev/null)" != Device ]; then
+        laptop=1
+    fi
+done
+if [ -z "$laptop" ]; then
+    echo "No battery, skipping"
+elif systemctl is-enabled --quiet power-profiles-daemon.service 2>/dev/null; then
+    echo "power-profiles-daemon already starts at boot"
+elif systemctl is-enabled --quiet tlp.service 2>/dev/null; then
+    echo "TLP manages the power here, which conflicts with power-profiles-daemon; skipping"
+elif ask "Power saver, balanced and performance in the battery menu: start power-profiles-daemon?"; then
+    sudo systemctl enable --now power-profiles-daemon.service
 fi

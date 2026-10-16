@@ -25,6 +25,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **Browser** | Brave from Flathub (Zen stays installed as a backup), with KeePassXC through a small proxy |
 | **Markdown** | MarkText, the default for `.md` files (GitHub tables and task lists, KaTeX, Mermaid, GitLab mode) |
 | **Theme** | Catppuccin Macchiato for everything, including GTK, the cursor, btop and bat |
+| **Laptop / touch** | Modes that turn on by themselves on laptops and with touch screens (`config/hypr/modes.lua`) |
 
 ## The Quickshell desktop
 
@@ -39,11 +40,17 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | **Power menu:** lock, log out, suspend, reboot or shut down, by mouse or key | |
 
 - **Bar:** workspaces, window title, clock, tray (with themed menus), camera, microphone and screen-sharing indicators, volume,
-  battery, phone, network and a notification bell. Clicking a module opens its menu.
+  battery, Bluetooth, phone, network (with the Wi-Fi signal) and a notification bell. Clicking a module opens its menu.
 - **System:** host, kernel, uptime, pending updates, the use of CPU, memory, the disks (`/` and the home folder's)
   and GPU, and a brightness slider for each screen (the backlight, or monitors with DDC/CI).
 - **Sound:** output and input devices and their volumes, per-app volume.
-- **Network:** wired and Wi-Fi connections, plus VPNs (import OpenVPN or WireGuard files).
+- **Network:** wired and Wi-Fi connections, plus VPNs (import OpenVPN or WireGuard files). Saved Wi-Fi networks are
+  recognised by their SSID, a saved one whose password changed asks for the new one, and enterprise networks (eduroam)
+  open the connection editor.
+- **Bluetooth:** on and off, the paired devices with their battery (click to connect or disconnect, forget them), and
+  while the menu is open the devices nearby to pair. Devices that pair with a code (keyboards) pair in Blueman.
+- **Battery (laptops):** the charge, the time left or until full, the power drawn, the battery's health, the power
+  profile (power saver, balanced, performance) and the batteries of mice and headsets; warnings at 15 and 5 %.
 - **Calendar:** a month view with Nextcloud calendars (CalDAV: create, edit and delete appointments, with reminders) and
   read-only ICS subscriptions, a weather forecast per day and by the hour, and the current weather from the nearest
   airport's METAR report.
@@ -70,12 +77,25 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
   on-screen display says when that starts and ends.
 - **Clipboard history:** cliphist with image thumbnails; the chosen entry is pasted right away, in Wayland and X11 apps.
 - **Machine Settings:** this machine's displays (drag to arrange, mode, scale, rotation, HDR, which workspaces live
-  where, the main monitor for notifications), environment variables, autostart programs, bar options and the limits
-  for the warnings, saved to the
+  where, the main monitor for notifications), environment variables, autostart programs, the laptop and touch mode,
+  bar options and the limits for the warnings, saved to the
   untracked `config/hypr/local.lua`.
 - **Screenshots:** the screen freezes, you pick a region or window (or the whole monitor) and can still resize the box,
   draw on it (pen, line, arrow, boxes, highlighter, text, pixelate), scale it to 75, 50 or 25 %, then copy it or save
   it to `~/Pictures/Screenshots`.
+
+## Laptop and touch mode
+
+Two modes on top of the desktop, each on by itself where the hardware is there and forced on or off in Machine
+Settings (`config/hypr/modes.lua`):
+
+- **Laptop** (a lid switch or a battery of the machine's own): tap to click, three-finger swipes between workspaces,
+  the keyboard backlight keys, and with the lid closed while another monitor is connected, the built-in screen goes off
+  (the laptop keeps running). Idle, the backlight dims along with the lock notice, and on battery it suspends after
+  15 minutes (`laptop-idle`, from `hypridle.conf`). The battery menu and its warnings.
+- **Touch** (a touch screen; Sunshine's virtual one doesn't count): a taller bar with bigger buttons, and buttons for
+  the launcher, closing the window and the on-screen keyboard (squeekboard, which also shows by itself for text
+  fields), and swiping from the screen's edge between workspaces.
 
 ## Keybindings
 
@@ -138,8 +158,9 @@ Good to know:
   (and optionally this machine's other packages and AUR packages), PAM so that logging in on a TTY or unlocking the
   lock screen unlocks the keyring, LightDM's automatic login, logind so the power button opens the power menu instead
   of shutting down, the firewall (the network connection in the `home` zone, open only for SSH, Samba, KDE Connect,
-  Sunshine, mDNS and DHCPv6) and Docker (container ports published on this machine only, since they would bypass the
-  firewall).
+  Sunshine, mDNS and DHCPv6), Docker (container ports published on this machine only, since they would bypass the
+  firewall), Bluetooth where there's an adapter and power-profiles-daemon on laptops. Wi-Fi networks joined later stay
+  in the default zone; move a trusted one to `home` the same way.
 - LightDM logs in by itself and the session locks right away, so the lock screen is the login screen: its password
   also unlocks the keyring, and the programs that need the keyring start after that. A machine woken by Wake-on-LAN
   can be unlocked over Sunshine. Without LightDM, run `start-hyprland` after logging in on a TTY.
@@ -213,8 +234,13 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 - [x] A `formatter` in the flake, so `nix fmt` works locally, and an optional pre-commit hook
 
 **Desktop features**
-- [ ] Bluetooth menu
-- [ ] Power profiles in the power menu, and a toggle that keeps the screen awake
+- [x] Bluetooth menu
+- [x] Power profiles (in the battery menu)
+- [ ] A toggle that keeps the screen awake
+- [ ] Laptop and touch mode on real hardware: lid switch with a monitor docked, squeekboard in Brave (may need
+      `--enable-wayland-ime`), Wi-Fi (only tried against a simulated `nmcli` so far)
+- [ ] Turning the screen with the device (convertibles: iio-sensor-proxy)
+- [ ] A Bluetooth pairing agent, for keyboards that show a code
 - [ ] Night light with `hyprsunset`
 - [x] Do not disturb while the screen is shared (the privacy module knows when)
 - [x] Brightness keys for external monitors over DDC/CI (`ddcutil`); there is no backlight on the desktop

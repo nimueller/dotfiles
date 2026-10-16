@@ -1,6 +1,7 @@
 import QtQuick
 
 // On/off switch; emits toggled() and leaves updating `checked` to the owner.
+// Bigger in touch mode.
 Rectangle {
     id: root
 
@@ -10,8 +11,8 @@ Rectangle {
 
     signal toggled
 
-    implicitWidth: 34
-    implicitHeight: 18
+    implicitWidth: Modes.touch ? 46 : 34
+    implicitHeight: Modes.touch ? 26 : 18
     radius: height / 2
     opacity: enabled ? 1 : 0.4
     color: checked ? accent : Theme.surface1
@@ -19,9 +20,9 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: 150 } }
 
     Rectangle {
-        width: 12
-        height: 12
-        radius: 6
+        width: root.height - 6
+        height: width
+        radius: width / 2
         anchors.verticalCenter: parent.verticalCenter
         x: root.checked ? parent.width - width - 3 : 3
         color: root.checked ? Theme.base : Theme.overlay1

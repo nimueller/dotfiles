@@ -1,0 +1,229 @@
+// Software rendering: as fast to open, a fraction of the memory (see daemon.qml)
+//@ pragma Env QT_QUICK_BACKEND=software
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+import Quickshell.Services.UPower
+
+// Battery menu for the bar's battery module (laptops): the charge, how long
+// it lasts or until it's full, the power it draws and its health, the
+// power profile (power-profiles-daemon, which system/setup.sh starts) and
+// the batteries of other devices (mouse, headset, ...).
+Popup {
+    id: popup
+
+    name: "battery"
+    cardWidth: 340
+
+    readonly property var battery: UPower.displayDevice
+    readonly property real percent: battery ? (battery.percentage <= 1 ? battery.percentage * 100 : battery.percentage) : 0
+    readonly property int batteryState: battery?.state ?? UPowerDeviceState.Unknown
+    readonly property bool charging: batteryState === UPowerDeviceState.Charging
+    readonly property bool full: batteryState === UPowerDeviceState.FullyCharged || (batteryState === UPowerDeviceState.PendingCharge && percent >= 95)
+    readonly property var others: UPower.devices.values.filter(d => !d.isLaptopBattery && d.isPresent && d.type !== UPowerDeviceType.LinePower && d.type !== UPowerDeviceType.Battery && d.percentage > 0)
+    property bool profiles: false // power-profiles-daemon runs
+
+    readonly property var profileList: [
+        { profile: PowerProfile.PowerSaver, text: "Power saver", glyph: 0xf032a, accent: Theme.green }, // 󰌪
+        { profile: PowerProfile.Balanced, text: "Balanced", glyph: 0xf05d1, accent: Theme.blue }, // 󰗑
+        { profile: PowerProfile.Performance, text: "Performance", glyph: 0xf04c5, accent: Theme.peach } // 󰓅
+    ]
+
+    function duration(seconds) {
+        const h = Math.floor(seconds / 3600), m = Math.round(seconds % 3600 / 60);
+        return h ? `${h} h ${m} min` : `${m} min`;
+    }
+
+    readonly property string summary: {
+        if (full)
+            return "Fully charged";
+        if (charging)
+            return battery.timeToFull > 0 ? `Full in ${duration(battery.timeToFull)}` : "Charging";
+        if (batteryState === UPowerDeviceState.Discharging)
+            return battery.timeToEmpty > 0 ? `${duration(battery.timeToEmpty)} left` : "On battery";
+        return UPower.onBattery ? "On battery" : "Plugged in, not charging";
+    }
+
+    Process {
+        running: true
+        command: ["systemctl", "is-active", "--quiet", "power-profiles-daemon"]
+        onExited: code => popup.profiles = code === 0
+    }
+
+    Header {
+        glyph: Theme.glyph(popup.charging ? 0xf0084 : 0xf0079) // 󰂄 / 󰁹
+        accent: popup.charging || popup.full ? Theme.teal : popup.percent <= 15 ? Theme.red : Theme.green
+        title: "Battery"
+        badge: UPower.onBattery ? "On battery" : "Plugged in"
+        badgeColor: UPower.onBattery ? Theme.yellow : Theme.teal
+    }
+
+    // Charge
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            Label {
+                text: `${Math.round(popup.percent)}%`
+                font.pixelSize: 26
+                font.bold: true
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 1
+
+                Label {
+                    Layout.fillWidth: true
+                    text: popup.summary
+                    color: Theme.subtext1
+                }
+                Label {
+                    Layout.fillWidth: true
+                    visible: Math.abs(popup.battery?.changeRate ?? 0) > 0.1
+                    text: `${Math.abs(popup.battery?.changeRate ?? 0).toFixed(1)} W ${popup.charging ? "in" : "drawn"}`
+                    font.pixelSize: 10
+                    color: Theme.overlay1
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 8
+            radius: 4
+            color: Theme.surface0
+
+            Rectangle {
+                width: parent.width * Math.min(1, popup.percent / 100)
+                height: parent.height
+                radius: 4
+                color: popup.charging || popup.full ? Theme.teal : popup.percent <= 15 ? Theme.red : popup.percent <= 30 ? Theme.yellow : Theme.green
+
+                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+            }
+        }
+
+        Label {
+            Layout.fillWidth: true
+            // The display device has no health; the laptop's own battery does
+            readonly property var cell: UPower.devices.values.find(d => d.isLaptopBattery && d.healthSupported) ?? null
+
+            visible: !!cell
+            text: cell ? `Health ${Math.round(cell.healthPercentage)}%${cell.model ? ` · ${cell.model}` : ""}` : ""
+            font.pixelSize: 10
+            color: Theme.overlay1
+        }
+    }
+
+    // Power profile
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: popup.profiles
+        spacing: 8
+
+        SectionTitle {
+            text: "Power profile"
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+
+            Repeater {
+                model: popup.profileList.filter(p => p.profile !== PowerProfile.Performance || PowerProfiles.hasPerformanceProfile)
+
+                delegate: Rectangle {
+                    id: tile
+
+                    required property var modelData
+                    readonly property bool current: PowerProfiles.profile === modelData.profile
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Modes.touch ? 64 : 54
+                    radius: 8
+                    color: current ? Theme.alpha(modelData.accent, 0.2) : tileMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                    border.width: current ? 1 : 0
+                    border.color: modelData.accent
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 3
+
+                        Label {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: Theme.glyph(tile.modelData.glyph)
+                            font.pixelSize: 16
+                            color: tile.current ? tile.modelData.accent : Theme.overlay2
+                        }
+                        Label {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: tile.modelData.text
+                            font.pixelSize: 11
+                            color: tile.current ? Theme.text : Theme.subtext0
+                        }
+                    }
+
+                    MouseArea {
+                        id: tileMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: PowerProfiles.profile = tile.modelData.profile
+                    }
+                }
+            }
+        }
+
+        Label {
+            Layout.fillWidth: true
+            visible: PowerProfiles.degradationReason !== PerformanceDegradationReason.None
+            text: PowerProfiles.degradationReason === PerformanceDegradationReason.HighTemperature ? "Performance is held back: the laptop is too hot" : "Performance is held back: the laptop is on a lap"
+            wrapMode: Text.WordWrap
+            elide: Text.ElideNone
+            font.pixelSize: 10
+            color: Theme.yellow
+        }
+    }
+
+    // Other devices' batteries
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: popup.others.length > 0
+        spacing: 6
+
+        SectionTitle {
+            text: "Devices"
+        }
+
+        Repeater {
+            model: popup.others
+
+            delegate: RowLayout {
+                id: other
+
+                required property var modelData
+                readonly property real charge: modelData.percentage <= 1 ? modelData.percentage * 100 : modelData.percentage
+
+                Layout.fillWidth: true
+                spacing: 8
+
+                Label {
+                    Layout.fillWidth: true
+                    text: modelData.model || UPowerDeviceType.toString(modelData.type)
+                    color: Theme.subtext1
+                }
+                Label {
+                    text: `${Math.round(other.charge)}%`
+                    color: other.charge <= 15 ? Theme.red : other.charge <= 30 ? Theme.yellow : Theme.green
+                }
+            }
+        }
+    }
+}

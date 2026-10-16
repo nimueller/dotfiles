@@ -64,6 +64,12 @@
     name = "after-unlock";
     text = builtins.readFile ./scripts/after-unlock.sh;
   };
+  # Dims and suspends laptops when idle (config/hypr/hypridle.conf);
+  # brightnessctl, busctl and systemctl come from the system
+  laptop-idle = pkgs.writeShellApplication {
+    name = "laptop-idle";
+    text = builtins.readFile ./scripts/laptop-idle.sh;
+  };
   init-tex = pkgs.writeShellApplication {
     name = "init-tex";
     text = builtins.readFile ./scripts/init-tex.sh;

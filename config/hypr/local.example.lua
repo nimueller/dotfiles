@@ -17,6 +17,10 @@ hl.monitor({
 -- hl.env("GBM_BACKEND", "nvidia-drm")
 -- hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 
+-- Laptop and touch mode turn on by themselves where the hardware is there
+-- (modes.lua); to force one on or off:
+-- require("modes").set({ laptop = true, touch = false })
+
 -- Programs only this machine starts, or that need private paths; after-unlock
 -- starts them once the lock screen at login is unlocked (and the keyring with it)
 -- hl.on("hyprland.start", function()

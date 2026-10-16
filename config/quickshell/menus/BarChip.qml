@@ -11,7 +11,7 @@ Rectangle {
     property bool plain: false
     property string text: ""
     property bool bold: false
-    property int padding: 10
+    property int padding: Modes.touch ? 14 : 10
     property bool interactive: true // false: the content handles the mouse (tray)
     readonly property bool hovered: mouse.containsMouse
     readonly property color foreground: solid ? Theme.crust : accent
@@ -21,7 +21,7 @@ Rectangle {
     signal scrolled(int steps) // + up, - down
 
     implicitWidth: row.implicitWidth + 2 * padding
-    implicitHeight: 19
+    implicitHeight: Modes.touch ? 30 : 19
     radius: 8
     color: solid ? (hovered ? Qt.lighter(accent, 1.08) : accent) : plain ? (hovered ? Theme.surface1 : Theme.surface0) : Theme.alpha(accent, hovered ? 0.25 : 0.15)
 

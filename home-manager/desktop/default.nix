@@ -22,6 +22,11 @@ in
     "com/github/stunkymonkey/nautilus-open-any-terminal" = {
       terminal = "kitty";
     };
+    # The on-screen keyboard (squeekboard, touch mode: config/hypr/modes.lua)
+    # shows by itself for text fields; without the touch mode it doesn't run
+    "org/gnome/desktop/a11y/applications" = {
+      screen-keyboard-enabled = true;
+    };
   };
 
   services.kdeconnect.enable = true;
@@ -185,6 +190,7 @@ in
 
     my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
     my-pkgs.after-unlock # autostarts that need the keyring (config/hypr/autostart.lua)
+    my-pkgs.laptop-idle # dims and suspends laptops when idle (config/hypr/hypridle.conf)
     my-pkgs.quickshell-calendar-python
     my-pkgs.init-tex
     my-pkgs.edit-tex

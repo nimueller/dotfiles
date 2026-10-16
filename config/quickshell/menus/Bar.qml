@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Bluetooth
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
@@ -10,8 +11,11 @@ import Quickshell.Widgets
 
 // The bar at the bottom of a monitor, part of daemon.qml:
 // the distro logo (system menu), workspaces and window title on the left, the clock in the middle, tray,
-// privacy, sound, battery, phone, network, notifications and power on the right.
+// privacy, sound, battery, Bluetooth, phone, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
+// In touch mode (Modes.qml) it's taller, and has buttons for what's
+// otherwise a key: the launcher, closing the window and the on-screen
+// keyboard.
 PanelWindow {
     id: bar
 
@@ -33,7 +37,7 @@ PanelWindow {
         left: true
         right: true
     }
-    implicitHeight: 27
+    implicitHeight: Modes.touch ? 40 : 27
     color: Theme.crust
 
     WlrLayershell.namespace: "quickshell-bar"
@@ -60,6 +64,14 @@ PanelWindow {
             onClicked: bar.menu("system")
         }
 
+        // Touch: the launcher, which is SUPER + D otherwise
+        BarChip {
+            visible: Modes.touch
+            accent: Theme.mauve
+            text: Theme.glyph(0xf003b) // 󰀻
+            onClicked: bar.menu("launcher")
+        }
+
         Workspaces {
             monitor: bar.monitor
         }
@@ -71,6 +83,15 @@ PanelWindow {
             visible: LocalSettings.windowTitle && !!text
             text: Hyprland.activeToplevel?.title ?? ""
             color: Theme.subtext0
+        }
+
+        // Touch: close the focused window
+        BarChip {
+            visible: Modes.touch && !!Hyprland.activeToplevel
+            plain: true
+            accent: Theme.red
+            text: Theme.glyph(0xf0156) // 󰅖
+            onClicked: Hyprland.dispatch("hl.dsp.window.close()")
         }
     }
 
@@ -117,7 +138,7 @@ PanelWindow {
                     required property var modelData
 
                     anchors.verticalCenter: parent.verticalCenter
-                    implicitSize: 15
+                    implicitSize: Modes.touch ? 20 : 15
                     source: modelData.icon
 
                     MouseArea {
@@ -199,7 +220,8 @@ PanelWindow {
             }
         }
 
-        // Battery (laptops)
+        // Battery (laptops): click for the battery menu (battery.qml) with
+        // the power profiles
         BarChip {
             readonly property var battery: UPower.displayDevice
             readonly property real percent: battery ? (battery.percentage <= 1 ? battery.percentage * 100 : battery.percentage) : 0
@@ -207,7 +229,37 @@ PanelWindow {
 
             visible: !!battery && battery.isLaptopBattery
             accent: charging ? Theme.teal : percent <= 15 ? Theme.red : percent <= 30 ? Theme.yellow : Theme.green
-            text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%`
+            text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%${charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` // 
+            onClicked: bar.menu("battery")
+        }
+
+        // Bluetooth, where there's an adapter: the connected device (its
+        // battery) or how many; click for the menu (bluetooth.qml), right
+        // click to switch it on or off
+        BarChip {
+            id: bluetooth
+
+            readonly property var adapter: Bluetooth.defaultAdapter
+            readonly property bool on: adapter?.enabled ?? false
+            readonly property var connected: (adapter?.devices.values ?? []).filter(d => d.connected)
+            readonly property var device: connected.length === 1 ? connected[0] : null
+
+            visible: !!adapter
+            accent: on ? Theme.blue : Theme.overlay0
+            plain: !on
+            text: {
+                if (!on)
+                    return Theme.glyph(0xf00b2); // 󰂲
+                if (device)
+                    return `${Theme.glyph(0xf00b1)}  ${device.name.length > 14 ? device.name.slice(0, 13) + "…" : device.name}${device.batteryAvailable ? ` ${Math.round(device.battery * 100)}%` : ""}`; // 󰂱
+                return connected.length ? `${Theme.glyph(0xf00b1)}  ${connected.length}` : Theme.glyph(0xf00af); // 󰂯
+            }
+            onClicked: button => {
+                if (button === Qt.RightButton)
+                    adapter.enabled = !on;
+                else
+                    bar.menu("bluetooth");
+            }
         }
 
         // Phone (KDE Connect): its battery while it's connected; click for the
@@ -227,12 +279,14 @@ PanelWindow {
             }
         }
 
-        // Network
+        // Network: Wi-Fi with its signal and the network's name (shortened)
         BarChip {
             readonly property string kind: bar.network?.kind ?? ""
+            readonly property string name: bar.network?.name ?? ""
+            readonly property int signal: bar.network?.signal ?? 100
 
             accent: kind ? Theme.sapphire : Theme.red
-            text: kind === "wifi" ? `${Theme.glyph(0xf1eb)}  ${bar.network.name}` : kind === "ethernet" ? `${Theme.glyph(0xf0e8)}  Connected` : "⚠ Disconnected"
+            text: kind === "wifi" ? `${Theme.glyph(signal > 75 ? 0xf0928 : signal > 50 ? 0xf0925 : signal > 25 ? 0xf0922 : 0xf091f)}  ${name.length > 18 ? name.slice(0, 17) + "…" : name}` : kind === "ethernet" ? `${Theme.glyph(0xf0e8)}  Connected` : "⚠ Disconnected" // 󰤨 󰤥 󰤢 󰤟
             onClicked: bar.menu("network")
         }
 
@@ -315,6 +369,21 @@ PanelWindow {
                     NumberAnimation { target: ring; property: "scale"; from: 1; to: 1.3; duration: 1200; easing.type: Easing.OutCubic }
                 }
             }
+        }
+
+        // Touch: the on-screen keyboard (squeekboard, started by modes.lua),
+        // which otherwise only shows for a focused text field
+        BarChip {
+            visible: Modes.touch
+            plain: true
+            accent: Theme.text
+            text: Theme.glyph(0xf030c) // 󰌌
+            onClicked: Quickshell.execDetached(["sh", "-c", `
+                pidof squeekboard >/dev/null || { squeekboard >/dev/null 2>&1 & sleep 1; }
+                osk="sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0"
+                if [ "$(busctl --user get-property $osk Visible)" = "b true" ]; then show=false; else show=true; fi
+                busctl --user call $osk SetVisible b $show
+            `])
         }
 
         // Power menu
