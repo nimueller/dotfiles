@@ -132,7 +132,7 @@ Popup {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         elide: Text.ElideNone
-        text: "No Bluetooth adapter, or the Bluetooth service isn't running (system/setup.sh starts it)."
+        text: "BlueZ doesn't see a Bluetooth adapter: the Bluetooth service isn't running, or the controller has no address of its own (Surface Pro X). system/setup.sh sets up both."
         color: Theme.subtext0
     }
     Label {

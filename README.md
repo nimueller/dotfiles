@@ -162,7 +162,8 @@ Good to know:
   lock screen unlocks the keyring, LightDM's automatic login, logind so the power button opens the power menu instead
   of shutting down, the firewall (the network connection in the `home` zone, open only for SSH, Samba, KDE Connect,
   Sunshine, mDNS and DHCPv6), Docker (container ports published on this machine only, since they would bypass the
-  firewall), Bluetooth where there's an adapter and power-profiles-daemon on laptops. Wi-Fi networks joined later stay
+  firewall), Bluetooth where there's an adapter (with an address for controllers that come without one, like the
+  Surface Pro X's) and power-profiles-daemon on laptops. Wi-Fi networks joined later stay
   in the default zone; move a trusted one to `home` the same way.
 - LightDM logs in by itself and the session locks right away, so the lock screen is the login screen: its password
   also unlocks the keyring, and the programs that need the keyring start after that. A machine woken by Wake-on-LAN

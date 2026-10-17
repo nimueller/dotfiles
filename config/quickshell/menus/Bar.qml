@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
 import Quickshell.Services.UPower
@@ -235,7 +236,9 @@ PanelWindow {
 
         // Bluetooth, where there's an adapter: the connected device (its
         // battery) or how many; click for the menu (bluetooth.qml), right
-        // click to switch it on or off
+        // click to switch it on or off. Also where BlueZ doesn't list the
+        // controller (bluetoothd not running, no address of its own), with
+        // the menu saying why.
         BarChip {
             id: bluetooth
 
@@ -243,8 +246,9 @@ PanelWindow {
             readonly property bool on: adapter?.enabled ?? false
             readonly property var connected: (adapter?.devices.values ?? []).filter(d => d.connected)
             readonly property var device: connected.length === 1 ? connected[0] : null
+            property bool hardware: false
 
-            visible: !!adapter
+            visible: !!adapter || hardware
             accent: on ? Theme.blue : Theme.overlay0
             plain: !on
             text: {
@@ -255,10 +259,18 @@ PanelWindow {
                 return connected.length ? `${Theme.glyph(0xf00b1)}  ${connected.length}` : Theme.glyph(0xf00af); // 󰂯
             }
             onClicked: button => {
-                if (button === Qt.RightButton)
+                if (button === Qt.RightButton && adapter)
                     adapter.enabled = !on;
                 else
                     bar.menu("bluetooth");
+            }
+
+            Process {
+                running: true
+                command: ["sh", "-c", "ls -A /sys/class/bluetooth"]
+                stdout: StdioCollector {
+                    onStreamFinished: bluetooth.hardware = !!text.trim()
+                }
             }
         }
 

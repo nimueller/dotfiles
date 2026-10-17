@@ -13,7 +13,8 @@
 # 5. firewall: the network connection in firewalld's `home` zone, which
 #    lets in only SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6
 # 6. Docker: container ports published on this machine only, by default
-# 7. Bluetooth: bluetoothd for the Bluetooth menu, where there's an adapter
+# 7. Bluetooth: bluetoothd for the Bluetooth menu, where there's an adapter,
+#    and an address for controllers that come without one (Surface Pro X)
 # 8. power profiles: power-profiles-daemon for the battery menu, on laptops
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
@@ -177,6 +178,32 @@ elif systemctl is-enabled --quiet bluetooth.service 2>/dev/null; then
     echo "Bluetooth already starts at boot"
 elif ask "Start Bluetooth now and at every boot (bluetooth.service, for the Bluetooth menu)?"; then
     sudo systemctl enable --now bluetooth.service
+fi
+# A controller without an address of its own (Qualcomm WCN399x on Snapdragon
+# laptops like the Surface Pro X) stays unconfigured, and BlueZ doesn't
+# list it: give it one at every boot
+if [ -n "$(ls -A /sys/class/bluetooth 2>/dev/null)" ]; then
+    if systemctl is-enabled --quiet bluetooth-address.service 2>/dev/null; then
+        sudo install -m 755 "$dir/bluetooth-address.sh" /usr/local/lib/bluetooth-address
+        echo "The Bluetooth address is already set at boot"
+    elif ! sudo btmgmt info 2>/dev/null | grep -q '^hci[0-9]*:' &&
+        ask "The Bluetooth controller has no address of its own, so BlueZ ignores it. Give it one from the machine id at every boot?"; then
+        sudo install -m 755 "$dir/bluetooth-address.sh" /usr/local/lib/bluetooth-address
+        sudo tee /etc/systemd/system/bluetooth-address.service >/dev/null <<'UNIT'
+[Unit]
+Description=Bluetooth address for controllers without one
+After=bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/bluetooth-address
+
+[Install]
+WantedBy=bluetooth.target
+UNIT
+        sudo systemctl daemon-reload
+        sudo systemctl enable --now bluetooth-address.service
+    fi
 fi
 
 echo ''
