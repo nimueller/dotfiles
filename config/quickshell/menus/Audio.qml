@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 
 // Node lists and display helpers shared by the sections.
@@ -53,20 +54,54 @@ Singleton {
         return !audio || audio.muted ? Theme.glyph(0xf036d) : Theme.glyph(0xf036c); // 󰍭 / 󰍬
     }
 
+    // A stream's properties, over those of its PipeWire client: some streams
+    // don't say which app they're from, only their client does (OpenAL Soft).
+    // Quickshell has no clients, so pw-dump reads them
+    // when such a stream from a client not read yet turns up.
+    property var clients: ({}) // client id → properties
+    function props(node) {
+        return Object.assign({}, clients[node.properties["client.id"]], node.properties);
+    }
+
+    readonly property bool clientsMissing: streams.concat(recordings).some(n => {
+        const id = n.properties["client.id"];
+        return id && !n.properties["application.process.id"] && !(id in clients);
+    })
+    onClientsMissingChanged: if (clientsMissing)
+        clientDump.running = true
+
+    Process {
+        id: clientDump
+        command: ["pw-dump"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let objects = [];
+                try {
+                    objects = JSON.parse(text);
+                } catch (e) {}
+                const map = {};
+                for (const o of objects)
+                    if (o.type === "PipeWire:Interface:Client")
+                        map[o.id] = o.info?.props ?? {};
+                clients = map;
+            }
+        }
+    }
+
     // The app that owns the stream's process, through its window (Windows.qml):
     // Electron and Chromium apps play from a helper process and all call
     // themselves "Chromium" here. Flatpaks send their PID inside the sandbox,
     // which matches no window; their icon name is usually the window class
     // (Brave: "brave-browser"). Otherwise what the stream says.
     function owner(node) {
-        const p = node.properties;
+        const p = props(node);
         const pid = parseInt(p["application.process.id"]);
         const window = (pid > 0 ? Windows.forPid(pid) : null) ?? Windows.forApp(p["application.icon-name"]);
         return Windows.entry(window);
     }
 
     function appName(node) {
-        const p = node.properties;
+        const p = props(node);
         return owner(node)?.name || p["application.name"] || node.description || node.name;
     }
 
@@ -77,10 +112,12 @@ Singleton {
         return generic.includes(media.toLowerCase()) || media === appName(node) ? "" : media;
     }
 
+    // The app's icon, or else that of the program that started it
     function appIcon(node) {
-        const p = node.properties;
+        const p = props(node);
         const name = appName(node).toLowerCase();
-        const candidates = [owner(node)?.icon, p["application.icon-name"], p["application.process.binary"], name, `${name}-browser`, name.replace(/\s+/g, "-")];
+        const pid = parseInt(p["application.process.id"]);
+        const candidates = [owner(node)?.icon, p["application.icon-name"], p["application.process.binary"], name, `${name}-browser`, name.replace(/\s+/g, "-"), pid > 0 ? Windows.launcherEntry(pid)?.icon : ""];
         for (const c of candidates) {
             const path = c ? Quickshell.iconPath(c, true) : "";
             if (path)

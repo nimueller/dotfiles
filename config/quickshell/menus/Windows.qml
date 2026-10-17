@@ -43,9 +43,11 @@ Singleton {
     function readAncestors(pid) {
         const chain = [];
         const comm = stat(pid)?.comm;
-        for (let p = pid, s = stat(p); s && s.comm === comm && chain.length < 32; p = s.ppid, s = p > 1 ? stat(p) : null)
+        let p = pid, s = stat(p);
+        for (; s && s.comm === comm && chain.length < 32; p = s.ppid, s = p > 1 ? stat(p) : null)
             chain.push(p);
         chains = Object.assign({}, chains, { [pid]: chain });
+        launchers = Object.assign({}, launchers, { [pid]: s && s.comm !== comm ? { pid: p, comm: s.comm } : null });
         return chain;
     }
 
@@ -56,6 +58,15 @@ Singleton {
         if (!chains[pid])
             Qt.callLater(readAncestors, pid);
         return chains[pid] ?? [];
+    }
+
+    // The program that started a process: { pid, comm } of the first ancestor
+    // running a different one, null if none (cached like ancestors())
+    property var launchers: ({}) // pid → launcher
+    function launcher(pid) {
+        if (!chains[pid])
+            Qt.callLater(readAncestors, pid);
+        return launchers[pid] ?? null;
     }
 
     function forPid(pid) {
@@ -77,6 +88,16 @@ Singleton {
     function entry(window) {
         const id = window?.lastIpcObject?.class ?? "";
         return id && DesktopEntries.applications.values.length >= 0 ? DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) : null;
+    }
+
+    // The desktop entry of the program that started a process, for programs
+    // that have none of their own (a game a launcher started): through the
+    // launcher's window, or else its program name. A shell has neither, so nothing for what a terminal starts.
+    function launcherEntry(pid) {
+        const l = launcher(pid);
+        if (!l || DesktopEntries.applications.values.length < 0)
+            return null;
+        return entry(forPid(l.pid)) ?? DesktopEntries.heuristicLookup(l.comm);
     }
 
     FileView {
