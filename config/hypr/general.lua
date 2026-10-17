@@ -39,7 +39,7 @@ hl.config({
         numlock_by_default = true,
         follow_mouse       = 1,
         touchpad = {
-            natural_scroll = false,
+            natural_scroll = true, -- content follows the fingers, like on a phone
         },
     },
 
