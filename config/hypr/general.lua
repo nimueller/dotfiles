@@ -82,6 +82,9 @@ hl.config({
         -- No splash text or logo where no wallpaper covers the background
         disable_splash_rendering   = true,
         disable_hyprland_logo      = true,
+        -- A window that asks for focus gets it: a link clicked in kitty
+        -- shows Brave on its workspace instead of a tab opening out of sight
+        focus_on_activate          = true,
     },
 })
 
