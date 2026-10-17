@@ -1,12 +1,14 @@
 import QtQuick
 
-// Text field with a placeholder; `masked` for passwords and one-time codes.
+// Text field with a placeholder; `masked` for passwords and one-time codes,
+// with an eye to show what's typed.
 Rectangle {
     id: root
 
     property alias text: input.text
     property string placeholder: ""
     property bool masked: false
+    property bool revealed: false
     property color accent: Theme.sapphire
 
     signal accepted
@@ -26,9 +28,9 @@ Rectangle {
 
         anchors.fill: parent
         anchors.leftMargin: 10
-        anchors.rightMargin: 10
+        anchors.rightMargin: root.masked ? 30 : 10
         verticalAlignment: TextInput.AlignVCenter
-        echoMode: root.masked ? TextInput.Password : TextInput.Normal
+        echoMode: root.masked && !root.revealed ? TextInput.Password : TextInput.Normal
         color: Theme.text
         font.family: Theme.font
         font.pixelSize: 12
@@ -40,6 +42,30 @@ Rectangle {
             visible: !input.text
             text: root.placeholder
             color: Theme.overlay0
+        }
+    }
+
+    // Show or hide the password
+    Label {
+        visible: root.masked
+        anchors.right: parent.right
+        anchors.rightMargin: 10
+        anchors.verticalCenter: parent.verticalCenter
+        text: Theme.glyph(root.revealed ? 0xf0209 : 0xf0208) // 󰈉 / 󰈈
+        font.pixelSize: 14
+        color: eye.containsMouse || root.revealed ? root.accent : Theme.overlay1
+
+        MouseArea {
+            id: eye
+
+            anchors.fill: parent
+            anchors.margins: -6
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                root.revealed = !root.revealed;
+                input.forceActiveFocus();
+            }
         }
     }
 }

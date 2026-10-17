@@ -90,36 +90,14 @@ Rectangle {
             visible: root.expanded
             spacing: 6
 
-            Rectangle {
+            InputField {
+                id: password
+
                 Layout.fillWidth: true
-                Layout.preferredHeight: 28
                 visible: root.needsPassword
-                radius: 8
-                color: Theme.mantle
-                border.width: 1
-                border.color: password.activeFocus ? Theme.sapphire : Theme.surface1
-
-                TextInput {
-                    id: password
-
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    verticalAlignment: TextInput.AlignVCenter
-                    echoMode: TextInput.Password
-                    color: Theme.text
-                    font.family: Theme.font
-                    font.pixelSize: 12
-                    clip: true
-                    onAccepted: if (text) root.connectRequested(text)
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: !password.text
-                        text: "Password"
-                        color: Theme.overlay0
-                    }
-                }
+                masked: true
+                placeholder: "Password"
+                onAccepted: if (text) root.connectRequested(text)
             }
             Item {
                 Layout.fillWidth: true
@@ -175,8 +153,8 @@ Rectangle {
             wrapMode: Text.Wrap
         }
 
-        onVisibleChanged: if (root.expanded && root.needsPassword) password.forceActiveFocus()
+        onVisibleChanged: if (root.expanded && root.needsPassword) password.focusField()
     }
 
-    onExpandedChanged: if (expanded && needsPassword) password.forceActiveFocus()
+    onExpandedChanged: if (expanded && needsPassword) password.focusField()
 }
