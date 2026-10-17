@@ -47,6 +47,11 @@
           extraSpecialArgs = { inherit username; };
           modules = [ ./options ] ++ modules;
         };
+      desktopModules = [
+        ./home-manager/headless
+        ./home-manager/desktop
+        nix-flatpak.homeManagerModules.nix-flatpak
+      ];
     in
     {
       # `nix fmt`: nixfmt over every .nix file
@@ -62,12 +67,14 @@
           modules = [ ./home-manager/headless ];
         };
 
-        desktop = mkHome {
-          modules = [
-            ./home-manager/headless
-            ./home-manager/desktop
-            nix-flatpak.homeManagerModules.nix-flatpak
-          ];
+        desktop = mkHome { modules = desktopModules; };
+
+        # ARM laptops (Surface Pro X); what has no aarch64 build is left out
+        # in the modules themselves (stdenv.hostPlatform.isx86_64). Without
+        # the dev tools: TeX Live and the toolchains are most of 16 GB.
+        desktop_aarch64 = mkHome {
+          system = "aarch64-linux";
+          modules = desktopModules ++ [ { devTools = false; } ];
         };
 
         # GitHub Actions runner (CI)

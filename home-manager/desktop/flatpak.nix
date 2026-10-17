@@ -46,11 +46,15 @@ in
     packages = [
       "app.zen_browser.zen" # Zen browser
       "com.brave.Browser"
+      "de.bund.ausweisapp.ausweisapp2" # AusweisApp (eID)
+      "org.libreoffice.LibreOffice"
+    ]
+    # No aarch64 build on Flathub (Yubico, Epson), or no use without Steam,
+    # which is x86 only (ProtonPlus)
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
       "com.vysp3r.ProtonPlus" # Proton versions for Steam and Lutris
       "com.yubico.yubioath" # Yubico Authenticator
-      "de.bund.ausweisapp.ausweisapp2" # AusweisApp (eID)
       "net.epson.epsonscan2" # Epson Scan 2
-      "org.libreoffice.LibreOffice"
     ];
     overrides = {
       # Its flags (config/brave-flags.conf: Wayland) and KeePassXC

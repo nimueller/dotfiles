@@ -1,68 +1,77 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   # Language servers, formatters and toolchains for Neovim. Only the desktop
   # imports this: TeX Live, the JVM and Go servers etc. are several GB that
-  # servers and the CI runner don't need.
-  home.packages = with pkgs; [
-    # Language servers
-    # General
-    codebook
-    editorconfig-checker
+  # servers and the CI runner don't need. `devTools = false` leaves them out
+  # (desktop_aarch64 in flake.nix).
+  home.packages = lib.mkIf config.devTools (
+    with pkgs;
+    [
+      # Language servers
+      # General
+      codebook
+      editorconfig-checker
 
-    # LaTeX
-    texliveFull
-    texlab
-    ltex-ls
+      # LaTeX
+      texliveFull
+      texlab
+      ltex-ls
 
-    # Markdown
-    marksman
-    markdownlint-cli2
+      # Markdown
+      marksman
+      markdownlint-cli2
 
-    # Lua
-    luaPackages.luacheck
-    lua-language-server
-    stylua
+      # Lua
+      luaPackages.luacheck
+      lua-language-server
+      stylua
 
-    # Nix
-    nixfmt
-    nil
-    statix
-    deadnix
+      # Nix
+      nixfmt
+      nil
+      statix
+      deadnix
 
-    # XML/HTML
-    lemminx
-    html-tidy
+      # XML/HTML
+      lemminx
+      html-tidy
 
-    # C/C++
-    clang-tools
+      # C/C++
+      clang-tools
 
-    # Kotlin/Java
-    jdt-language-server
-    kotlin-language-server
-    ktlint
+      # Kotlin/Java
+      jdt-language-server
+      kotlin-language-server
+      ktlint
 
-    # JavaScript/TypeScript
-    biome
-    vscode-langservers-extracted
-    eslint
-    prisma
-    typescript-language-server
+      # JavaScript/TypeScript
+      biome
+      vscode-langservers-extracted
+      eslint
+      prisma
+      typescript-language-server
 
-    # Hyprland
-    hyprls
+      # Hyprland
+      hyprls
 
-    # Docker
-    docker-compose-language-service
+      # Docker
+      docker-compose-language-service
 
-    # Bash
-    bash-language-server
+      # Bash
+      bash-language-server
 
-    # Python
-    pyright
+      # Python
+      pyright
 
-    # Go
-    go
-    gopls
-    go-migrate # database migrations
-  ];
+      # Go
+      go
+      gopls
+      go-migrate # database migrations
+    ]
+  );
 }

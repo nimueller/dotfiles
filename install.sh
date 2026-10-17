@@ -15,8 +15,8 @@ case "$INSTALL_OPTION" in
   *) >&2 echo "Installation option '$INSTALL_OPTION' is not valid. Use one of [headless|desktop|runner]"; exit 1 ;;
 esac
 
-if [ "$INSTALL_OPTION" = headless ] && [ "$(uname -m)" = aarch64 ]; then
-  FLAKE_OUTPUT=headless_aarch64
+if [ "$INSTALL_OPTION" != runner ] && [ "$(uname -m)" = aarch64 ]; then
+  FLAKE_OUTPUT=${INSTALL_OPTION}_aarch64
 else
   FLAKE_OUTPUT=$INSTALL_OPTION
 fi

@@ -21,7 +21,7 @@ jobs:
         run: nix flake check --no-build
       - name: 🏠 Evaluate Home Manager configurations
         run: |
-          for config in headless headless_aarch64 desktop runner; do
+          for config in headless headless_aarch64 desktop desktop_aarch64 runner; do
             echo "Evaluating $config"
             nix eval --raw ".#homeConfigurations.$config.activationPackage.drvPath"
             echo

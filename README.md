@@ -148,6 +148,9 @@ configuration. It needs `git`, `curl` and `xz`.
 
 Good to know:
 
+- On ARM (`aarch64`, e.g. a Surface Pro X) the script picks `headless_aarch64` or `desktop_aarch64`. The ARM desktop
+  leaves out the dev tools (`devTools = false`: TeX Live and the toolchains are most of its size) and the Flatpaks
+  without an ARM build (Yubico Authenticator, Epson Scan 2) or use there (ProtonPlus).
 - The configurations are made for my user name. To use them yourself, fork the repository and change `username` in
   `flake.nix` (and the clone URL in `install.sh`).
 - The desktop session comes from pacman: Hyprland, hyprlock, hypridle, Quickshell, the portals and the services they
@@ -175,7 +178,7 @@ Good to know:
 
 | Path | What it holds |
 |---|---|
-| `flake.nix` | The Home Manager configurations: `headless`, `headless_aarch64`, `desktop` and `runner` (CI) |
+| `flake.nix` | The Home Manager configurations: `headless`, `desktop`, their ARM versions `headless_aarch64` and `desktop_aarch64`, and `runner` (CI) |
 | `home-manager/headless` | Command line tools, Zsh, git, btop, and what Neovim's plugins need |
 | `home-manager/desktop` | Fonts, Wayland tools, desktop apps, the Quickshell services and MangoHud |
 | `home-manager/dev` | Language servers, formatters and toolchains (desktop only; several GB) |
