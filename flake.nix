@@ -69,7 +69,7 @@
 
         desktop = mkHome { modules = desktopModules; };
 
-        # ARM laptops (Surface Pro X); what has no aarch64 build is left out
+        # ARM laptops; what has no aarch64 build is left out
         # in the modules themselves (stdenv.hostPlatform.isx86_64). Without
         # the dev tools: TeX Live and the toolchains are most of 16 GB.
         desktop_aarch64 = mkHome {

@@ -12,7 +12,7 @@
 -- Touch: swipe from the screen's edge between workspaces, no cursor while
 --   touching, and the on-screen keyboard (squeekboard), which shows when a
 --   text field is focused and from the bar's keyboard button. On convertibles
---   with a tablet mode switch (Surface: the Type Cover folded back or
+--   with a tablet mode switch (e.g. a keyboard cover folded back or
 --   detached) it shows by itself only in tablet mode; the button always works.
 local M = { forced = {}, laptop = false, touch = false, detected = {} }
 

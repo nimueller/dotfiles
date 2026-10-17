@@ -14,7 +14,7 @@
 #    lets in only SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6
 # 6. Docker: container ports published on this machine only, by default
 # 7. Bluetooth: bluetoothd for the Bluetooth menu, where there's an adapter,
-#    and an address for controllers that come without one (Surface Pro X)
+#    and an address for controllers that come without one
 # 8. power profiles: power-profiles-daemon for the battery menu, on laptops
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
@@ -180,7 +180,7 @@ elif ask "Start Bluetooth now and at every boot (bluetooth.service, for the Blue
     sudo systemctl enable --now bluetooth.service
 fi
 # A controller without an address of its own (Qualcomm WCN399x on Snapdragon
-# laptops like the Surface Pro X) stays unconfigured, and BlueZ doesn't
+# laptops) stays unconfigured, and BlueZ doesn't
 # list it: give it one at every boot
 if [ -n "$(ls -A /sys/class/bluetooth 2>/dev/null)" ]; then
     if systemctl is-enabled --quiet bluetooth-address.service 2>/dev/null; then

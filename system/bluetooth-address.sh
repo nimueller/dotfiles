@@ -1,7 +1,6 @@
 #!/bin/sh
 # Give Bluetooth controllers that come without an address of their own one,
-# so that BlueZ can use them: Qualcomm's WCN399x (Surface Pro X and other
-# Snapdragon laptops) whose device tree has none stays "unconfigured" and
+# so that BlueZ can use them: Qualcomm's WCN399x (Snapdragon laptops) whose device tree has none stays "unconfigured" and
 # bluetoothd doesn't list it. The address comes from the machine id, so it
 # stays the same and paired devices keep knowing this machine.
 # Installed by system/setup.sh as /usr/local/lib/bluetooth-address and run at
