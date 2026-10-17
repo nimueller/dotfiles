@@ -11,7 +11,9 @@
 --   The idle dimming and suspend on battery are in hypridle.conf.
 -- Touch: swipe from the screen's edge between workspaces, no cursor while
 --   touching, and the on-screen keyboard (squeekboard), which shows when a
---   text field is focused and from the bar's keyboard button.
+--   text field is focused and from the bar's keyboard button. On convertibles
+--   with a tablet mode switch (Surface: the Type Cover folded back or
+--   detached) it shows by itself only in tablet mode; the button always works.
 local M = { forced = {}, laptop = false, touch = false, detected = {} }
 
 -- Forced modes, from local.lua: { laptop = true|false, touch = true|false };
@@ -50,6 +52,7 @@ end
 
 local INPUT_PROP_DIRECT = 1
 local SW_LID = 0
+local SW_TABLET_MODE = 1
 local ABS_MT_POSITION_X = 0x35
 
 -- The kernel's input devices. Virtual ones (Sunshine's mouse and touch
@@ -61,6 +64,9 @@ local function hardware()
             if bit(block:match("B: SW=([%x ]+)"), SW_LID) then
                 found.laptop = true
                 M.lid = block:match('N: Name="(.-)"\n')
+            end
+            if bit(block:match("B: SW=([%x ]+)"), SW_TABLET_MODE) then
+                M.tabletSwitch = block:match('N: Name="(.-)"\n')
             end
             if bit(block:match("B: PROP=([%x ]+)"), INPUT_PROP_DIRECT) and bit(block:match("B: ABS=([%x ]+)"), ABS_MT_POSITION_X) then
                 found.touch = true
@@ -135,6 +141,21 @@ local function touch()
     hl.on("hyprland.start", function()
         hl.exec_cmd("squeekboard")
     end)
+
+    -- With a tablet mode switch, text fields bring up the keyboard only in
+    -- tablet mode (squeekboard follows this setting; the bar's button calls
+    -- SetVisible and works either way). It starts off, with the keyboard
+    -- attached; libinput reports a switch that's already on when Hyprland
+    -- starts, which turns it on.
+    if M.tabletSwitch then
+        local auto = "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled "
+        local hide = "busctl --user call sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0 SetVisible b false"
+        hl.bind("switch:on:" .. M.tabletSwitch,  hl.dsp.exec_cmd(auto .. "true"),                    { locked = true })
+        hl.bind("switch:off:" .. M.tabletSwitch, hl.dsp.exec_cmd(auto .. "false; " .. hide), { locked = true })
+        hl.on("hyprland.start", function()
+            hl.exec_cmd(auto .. "false")
+        end)
+    end
 end
 
 local function json(on)
