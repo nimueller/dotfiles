@@ -44,7 +44,9 @@ qs kill -p "$entry" >/dev/null 2>&1 && exit 0
 # Clicking the bar icon while the menu is open closes it through the focus
 # grab first, so don't reopen if it closed a moment ago.
 stamp=$XDG_RUNTIME_DIR/qs-$menu-closed
-if [[ -e $stamp ]] && (($(date +%s%3N) - $(stat -c %.3Y "$stamp" | tr -d .) < 500)); then
+# (date -r, not stat -c %.3Y: that one writes a decimal comma in some locales,
+# which (( )) takes for the comma operator, so the menu never opened again)
+if [[ -e $stamp ]] && (($(date +%s%3N) - $(date -r "$stamp" +%s%3N) < 500)); then
     exit 0
 fi
 
