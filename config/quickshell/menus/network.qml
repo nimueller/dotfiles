@@ -399,6 +399,7 @@ Popup {
                 expanded: popup.expanded === modelData.ssid
                 busy: popup.busy === modelData.ssid
                 askPassword: popup.retry === modelData.ssid
+                address: modelData.active && popup.wifi?.address ? `${popup.wifi.device} · ${popup.wifi.address}` : ""
                 error: popup.expanded === modelData.ssid ? popup.error : ""
 
                 onClicked: {

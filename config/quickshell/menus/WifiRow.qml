@@ -11,6 +11,7 @@ Rectangle {
     property bool expanded: false
     property bool busy: false
     property bool askPassword: false // the saved password didn't work
+    property string address: "" // device and IP address while connected
     property string error: ""
 
     signal clicked
@@ -55,7 +56,7 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 22
+            Layout.minimumHeight: 22
             spacing: 10
 
             Label {
@@ -63,11 +64,23 @@ Rectangle {
                 text: root.signalGlyph(root.network.signal)
                 color: root.network.active ? Theme.sapphire : Theme.overlay2
             }
-            Label {
+            ColumnLayout {
                 Layout.fillWidth: true
-                text: root.network.ssid
-                color: root.network.active ? Theme.text : Theme.subtext1
-                font.bold: root.network.active
+                spacing: 1
+
+                Label {
+                    Layout.fillWidth: true
+                    text: root.network.ssid
+                    color: root.network.active ? Theme.text : Theme.subtext1
+                    font.bold: root.network.active
+                }
+                Label {
+                    Layout.fillWidth: true
+                    visible: root.network.active && !!root.address
+                    text: root.address
+                    font.pixelSize: 10
+                    color: Theme.overlay1
+                }
             }
             Label {
                 visible: root.busy || root.network.active || root.network.known
