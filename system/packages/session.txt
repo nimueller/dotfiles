@@ -1,12 +1,13 @@
 # The desktop session: compositor, lock screen, idle, shell, portals and the
 # services it talks to (ddcutil: brightness of external monitors; BlueZ for
 # the Bluetooth menu, power-profiles-daemon for the battery menu, squeekboard
-# as the touch mode's on-screen keyboard). Everything else comes from Nix
-# (home-manager/).
+# as the touch mode's on-screen keyboard, hyprshutdown for the power menu).
+# Everything else comes from Nix (home-manager/).
 hyprland
 hyprpaper
 hyprlock
 hypridle
+hyprshutdown
 quickshell
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk

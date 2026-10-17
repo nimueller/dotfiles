@@ -60,7 +60,6 @@ helix
 htop
 hugo
 hyprpicker
-hyprshutdown
 hyprsunset
 iftop
 imagemagick

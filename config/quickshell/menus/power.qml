@@ -13,9 +13,15 @@ PanelWindow {
         { text: "Lock", key: "L", glyph: 0xf033e, accent: Theme.lavender, command: "pidof hyprlock || hyprlock" },
         { text: "Log out", key: "E", glyph: 0xf0343, accent: Theme.blue, command: "hyprctl dispatch 'hl.dsp.exit()'" },
         { text: "Suspend", key: "U", glyph: 0xf0904, accent: Theme.mauve, command: "systemctl suspend" },
-        { text: "Reboot", key: "R", glyph: 0xf0709, accent: Theme.peach, command: "systemctl reboot" },
-        { text: "Shut down", key: "S", glyph: 0xf0425, accent: Theme.red, command: "systemctl poweroff" }
+        { text: "Reboot", key: "R", glyph: 0xf0709, accent: Theme.peach, command: root.gracefully("Rebooting…", "systemctl reboot") },
+        { text: "Shut down", key: "S", glyph: 0xf0425, accent: Theme.red, command: root.gracefully("Shutting down…", "systemctl poweroff") }
     ]
+
+    // Close the apps and Hyprland with hyprshutdown first, which shows the
+    // apps that hold it up, then `command`
+    function gracefully(label, command) {
+        return `if command -v hyprshutdown >/dev/null; then hyprshutdown -t '${label}' -p '${command}'; else ${command}; fi`;
+    }
     property int selected: 0
     property string uptime: ""
 
