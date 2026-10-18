@@ -16,6 +16,14 @@ Singleton {
     property bool touch: false
     property var detected: ({ laptop: false, touch: false })
 
+    // A compact bar on narrow screens (below 1700 logical pixels, like a
+    // 13" laptop at scale 2): Bluetooth, the on-screen keyboard and power
+    // move from the bar into the system menu, so the tray keeps clear of
+    // the clock
+    function compactBar(screen) {
+        return (screen?.width ?? 0) > 0 && screen.width < 1700;
+    }
+
     FileView {
         path: `${Quickshell.env("XDG_RUNTIME_DIR")}/dotfiles-modes.json`
         watchChanges: true

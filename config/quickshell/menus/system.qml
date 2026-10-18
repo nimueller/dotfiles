@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Bluetooth
 import Quickshell.Io
 
 // System menu for the bar's distro logo: the system at a glance (host,
@@ -11,7 +12,8 @@ import Quickshell.Io
 // memory, swap, the disks (/ and the home folder's, if that's another
 // partition) and GPU, read every 2 seconds while it's open, and the
 // brightness of the screens (the backlight, or monitors over DDC/CI). The gear
-// opens Machine Settings.
+// opens Machine Settings. Also Bluetooth, the on-screen keyboard and power,
+// which a compact bar (Modes.compactBar) leaves out.
 Popup {
     id: root
 
@@ -31,6 +33,13 @@ Popup {
     property var backlight: null // { value, max } of the built-in screen, null without one
 
     readonly property string toggle: Quickshell.shellPath("toggle.sh")
+    readonly property var adapter: Bluetooth.defaultAdapter
+    property bool bluetoothHardware: false
+
+    function open(menu) {
+        Quickshell.execDetached([toggle, menu]);
+        close();
+    }
 
     function gib(bytes) {
         return `${(bytes / 1073741824).toFixed(1)} GiB`;
@@ -120,10 +129,13 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
 
         IconButton {
             glyph: Theme.glyph(0xf0493) // 󰒓
-            onClicked: {
-                Quickshell.execDetached([root.toggle, "settings"]);
-                root.close();
-            }
+            onClicked: root.open("settings")
+        }
+        IconButton {
+            glyph: Theme.glyph(0xf0425) // 󰐥
+            accent: Theme.red
+            active: hovered
+            onClicked: root.open("power")
         }
     }
 
@@ -162,6 +174,95 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     color: parent.modelData[0] === "Updates" && root.updates > 0 ? Theme.peach : Theme.text
                 }
             }
+        }
+    }
+
+    // Bluetooth (the row opens its menu, the switch turns it on and off) and
+    // the on-screen keyboard
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.topMargin: 6
+        spacing: 6
+
+        Rectangle {
+            id: bluetooth
+
+            readonly property bool on: root.adapter?.enabled ?? false
+            readonly property var connected: (root.adapter?.devices.values ?? []).filter(d => d.connected)
+            readonly property var device: connected.length === 1 ? connected[0] : null
+
+            visible: !!root.adapter || root.bluetoothHardware
+            Layout.fillWidth: true
+            implicitHeight: Modes.touch ? 36 : 28
+            radius: 8
+            color: btMouse.containsMouse ? Theme.surface1 : Theme.surface0
+
+            Behavior on color { ColorAnimation { duration: 150 } }
+
+            MouseArea {
+                id: btMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.open("bluetooth")
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 8
+                spacing: 8
+
+                Label {
+                    text: Theme.glyph(!bluetooth.on ? 0xf00b2 : bluetooth.connected.length ? 0xf00b1 : 0xf00af) // 󰂲 󰂱 󰂯
+                    color: bluetooth.on ? Theme.blue : Theme.overlay1
+                }
+                Label {
+                    text: "Bluetooth"
+                    font.bold: true
+                }
+                Label {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: {
+                        if (!bluetooth.on)
+                            return "Off";
+                        const d = bluetooth.device;
+                        if (d)
+                            return `${d.name}${d.batteryAvailable ? ` · ${Math.round(d.battery * 100)} %` : ""}`;
+                        return bluetooth.connected.length ? `${bluetooth.connected.length} connected` : "On";
+                    }
+                    color: Theme.subtext0
+                }
+                Switch {
+                    visible: !!root.adapter
+                    checked: bluetooth.on
+                    accent: Theme.blue
+                    onToggled: root.adapter.enabled = !bluetooth.on
+                }
+            }
+        }
+
+        Item {
+            visible: !bluetooth.visible
+            Layout.fillWidth: true
+        }
+        IconButton {
+            glyph: Theme.glyph(0xf030c) // 󰌌
+            text: "Keyboard"
+            onClicked: {
+                Quickshell.execDetached([Quickshell.shellPath("osk.sh")]);
+                root.close();
+            }
+        }
+    }
+
+    // A Bluetooth controller BlueZ doesn't list (the Bluetooth menu says why)
+    Process {
+        running: true
+        command: ["sh", "-c", "ls -A /sys/class/bluetooth"]
+        stdout: StdioCollector {
+            onStreamFinished: root.bluetoothHardware = !!text.trim()
         }
     }
 

@@ -16,7 +16,9 @@ import Quickshell.Widgets
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
 // otherwise a key: the launcher, closing the window and the on-screen
-// keyboard.
+// keyboard. On narrow screens (Modes.compactBar) Bluetooth, the keyboard
+// and power are in the system menu instead. The clock moves left of the
+// middle when the right side would reach it.
 PanelWindow {
     id: bar
 
@@ -28,6 +30,7 @@ PanelWindow {
 
     readonly property string toggle: Quickshell.shellPath("toggle.sh")
     readonly property var monitor: Hyprland.monitorFor(screen)
+    readonly property bool compact: Modes.compactBar(screen)
 
     function menu(name) {
         Quickshell.execDetached([toggle, name]);
@@ -52,6 +55,8 @@ PanelWindow {
 
     // Left: workspaces and the focused window ------------------------------------
     RowLayout {
+        id: left
+
         anchors.left: parent.left
         anchors.leftMargin: 6
         anchors.verticalCenter: parent.verticalCenter
@@ -103,7 +108,9 @@ PanelWindow {
     }
 
     BarChip {
-        anchors.centerIn: parent
+        // Centred, unless the right side reaches it
+        x: Math.max(left.x + left.width + 6, Math.min((bar.width - width) / 2, right.x - 6 - width))
+        anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 1
         padding: 14
         accent: Theme.mauve
@@ -114,6 +121,8 @@ PanelWindow {
 
     // Right: tray and status -----------------------------------------------------
     RowLayout {
+        id: right
+
         anchors.right: parent.right
         anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
@@ -248,7 +257,7 @@ PanelWindow {
             readonly property var device: connected.length === 1 ? connected[0] : null
             property bool hardware: false
 
-            visible: !!adapter || hardware
+            visible: (!!adapter || hardware) && !bar.compact
             accent: on ? Theme.blue : Theme.overlay0
             plain: !on
             text: {
@@ -383,25 +392,20 @@ PanelWindow {
             }
         }
 
-        // Touch: the on-screen keyboard (squeekboard, started by modes.lua),
-        // which otherwise only shows for a focused text field
+        // Touch: the on-screen keyboard (osk.sh)
         BarChip {
-            visible: Modes.touch
+            visible: Modes.touch && !bar.compact
             plain: true
             accent: Theme.text
             text: Theme.glyph(0xf030c) // 󰌌
-            onClicked: Quickshell.execDetached(["sh", "-c", `
-                pidof squeekboard >/dev/null || { squeekboard >/dev/null 2>&1 & sleep 1; }
-                osk="sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0"
-                if [ "$(busctl --user get-property $osk Visible)" = "b true" ]; then show=false; else show=true; fi
-                busctl --user call $osk SetVisible b $show
-            `])
+            onClicked: Quickshell.execDetached([Quickshell.shellPath("osk.sh")])
         }
 
         // Power menu
         BarChip {
             id: power
 
+            visible: !bar.compact
             accent: hovered ? Theme.red : Theme.overlay1
             plain: !hovered
             text: Theme.glyph(0xf0425) // 󰐥
