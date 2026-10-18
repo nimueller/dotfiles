@@ -87,6 +87,11 @@ install_desktop_system() {
 }
 
 set_default_shell() {
+  if grep -qs 'exec zsh' "$HOME/.profile"; then
+    echo "$HOME/.profile already starts Zsh, skipping"
+    return
+  fi
+
   echo -n '
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -115,8 +120,9 @@ to set Zsh as your default shell later.
 
   # shellcheck disable=SC2016 # $BASH_VERSION belongs in .profile literally
   echo -n '
-# execute zsh if it exists
-if [ -n "$BASH_VERSION" ]; then
+# execute zsh if it exists; interactive shells only: the LightDM session
+# wrapper (/etc/lightdm/Xsession) runs bash --login too, and Zsh would replace it
+if [ -n "$BASH_VERSION" ] && [[ $- == *i* ]]; then
     if (which zsh >/dev/null 2>&1); then
         exec zsh
     fi
