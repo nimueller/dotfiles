@@ -99,6 +99,18 @@ in
         };
 
       };
+
+      # Discord's WebRTC logs of calls, kept beyond its last sessions to look
+      # into lag later (pkgs/scripts/discord-call-logs.sh)
+      discord-call-logs = {
+        Unit.Description = "Keep Discord's logs of calls";
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${my-pkgs.discord-call-logs}/bin/discord-call-logs";
+          Nice = 19;
+          IOSchedulingClass = "idle";
+        };
+      };
     };
     timers.quickshell-calendar-reminders = {
       Unit.Description = "Check calendar reminders every minute";
@@ -108,6 +120,15 @@ in
       };
       Install.WantedBy = [ "timers.target" ];
 
+    };
+    # Often enough that Discord restarting twice in between is unlikely
+    timers.discord-call-logs = {
+      Unit.Description = "Keep Discord's logs of calls every 5 minutes";
+      Timer = {
+        OnCalendar = "*:0/5";
+        AccuracySec = "1min";
+      };
+      Install.WantedBy = [ "timers.target" ];
     };
   };
 

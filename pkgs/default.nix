@@ -70,6 +70,17 @@
     name = "laptop-idle";
     text = builtins.readFile ./scripts/laptop-idle.sh;
   };
+  # Keeps Discord's logs of calls (timer in home-manager/desktop/default.nix)
+  discord-call-logs = pkgs.writeShellApplication {
+    name = "discord-call-logs";
+    runtimeInputs = with pkgs; [
+      zstd
+      gnugrep
+      findutils
+      coreutils
+    ];
+    text = builtins.readFile ./scripts/discord-call-logs.sh;
+  };
   init-tex = pkgs.writeShellApplication {
     name = "init-tex";
     text = builtins.readFile ./scripts/init-tex.sh;
