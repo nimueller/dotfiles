@@ -14,6 +14,9 @@
 --   text field is focused and from the bar's keyboard button. On convertibles
 --   with a tablet mode switch (e.g. a keyboard cover folded back or
 --   detached) it shows by itself only in tablet mode; the button always works.
+--   Where the hyprgrass plugin is installed (touch screen gestures; not in
+--   the Arch repos, built by hand), three-finger swipes switch workspaces
+--   as on the touchpad.
 local M = { forced = {}, laptop = false, touch = false, detected = {} }
 
 -- Forced modes, from local.lua: { laptop = true|false, touch = true|false };
@@ -30,6 +33,12 @@ local function read(path)
     local text = f:read("a")
     f:close()
     return text
+end
+
+local function exists(path)
+    local f = io.open(path)
+    if f then f:close() end
+    return f ~= nil
 end
 
 local function shell(cmd)
@@ -129,6 +138,8 @@ local function laptop()
     end
 end
 
+local HYPRGRASS = "/usr/lib/hyprgrass/libhyprgrass.so"
+
 local function touch()
     hl.config({
         gestures = {
@@ -138,6 +149,27 @@ local function touch()
             hide_on_touch = true,
         },
     })
+
+    -- Hyprland loads the plugin after reading the config, then reads it
+    -- again; its functions are there from the second time on. A plugin built
+    -- for another Hyprland version doesn't load (with a notification).
+    if exists(HYPRGRASS) then
+        hl.plugin.load(HYPRGRASS)
+        if hl.plugin.hyprgrass then
+            -- Higher is more sensitive, but a finger that touches down after the
+            -- others moved 100/sensitivity px cancels the gesture: at 4.0 the
+            -- third finger often comes too late, below 3.0 swipes start late
+            hl.config({ plugin = { hyprgrass = { sensitivity = 3.0 } } })
+            hl.plugin.hyprgrass.gesture({
+                pattern = { kind = "swipe", fingers = 3, direction = "horizontal" },
+                action  = "workspace",
+                -- the whole screen's width is one workspace otherwise, and
+                -- a swipe of less than half of it snaps back
+                scale   = 1.6,
+            })
+        end
+    end
+
     hl.on("hyprland.start", function()
         hl.exec_cmd("squeekboard")
     end)
