@@ -21,6 +21,12 @@ hl.window_rule({
     no_initial_focus = true,
 })
 
+-- The browser gets focus when it asks for it: a link clicked in kitty shows
+-- it on its workspace instead of a tab opening out of sight. Only for the
+-- browser: for all windows, apps that ask for focus when they start would
+-- pull their workspace forward despite "silent" (workspacerules.lua)
+hl.window_rule({ match = { class = "^brave-browser$" }, focus_on_activate = true })
+
 hl.window_rule({ match = { class = "upc.exe" },                             tile = true })
 hl.window_rule({ match = { class = "polkit-gnome-authentication-agent-1" }, pin = true })
 hl.window_rule({ match = { title = "Picture-in-Picture" },                  float = true, pin = true })
