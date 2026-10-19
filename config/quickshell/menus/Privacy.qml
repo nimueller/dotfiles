@@ -14,7 +14,8 @@ import Quickshell.Services.Pipewire
 //  - Camera: browsers open /dev/video* directly rather than through PipeWire,
 //    so this looks for any process holding a video device open (PipeWire
 //    included, while an app streams the camera through it), every 2 s.
-// When one of them starts being used, the OSD says so and by which apps.
+// When one of them starts being used, the OSD says so and by which apps;
+// clicking the bar's chip lists them (PrivacyPanel.qml).
 Item {
     id: root
 
@@ -31,10 +32,35 @@ Item {
 
     readonly property bool active: microphone || screen || camera
 
-    property var cameraApps: []
+    // The apps using them, for the OSD and PrivacyPanel: { name, icon, pid,
+    // window } each, named and drawn like in the sound menu; window is null
+    // when the app has none
+    property var cameraProcesses: [] // { pid, comm }
+    readonly property var cameraUsers: unique(cameraProcesses.map(c => {
+        const window = Windows.forPid(c.pid);
+        const entry = Windows.entry(window);
+        const icons = [entry?.icon, c.comm, Windows.launcherEntry(c.pid)?.icon].map(i => i ? Quickshell.iconPath(i, true) : "");
+        return { name: entry?.name || c.comm, icon: icons.find(i => i) ?? "", pid: c.pid, window };
+    }))
+    readonly property var microphoneUsers: unique(microphones.map(streamUser))
+    readonly property var screenUsers: unique(videoStreams.map(streamUser))
 
-    function apps(nodes) {
-        return [...new Set(nodes.map(n => n.properties["application.name"] || n.name).filter(a => a))];
+    // Flatpaks send their PID inside the sandbox: theirs is the window's
+    function streamUser(node) {
+        const p = Audio.props(node);
+        const appId = p["pipewire.access.portal.app_id"];
+        const ownPid = parseInt(p["application.process.id"]);
+        const window = appId ? Windows.forApp(p["application.icon-name"]) ?? Windows.forApp(appId) : ownPid > 0 ? Windows.forPid(ownPid) : null;
+        const pid = appId ? window?.lastIpcObject?.pid : ownPid;
+        return { name: Audio.appName(node), icon: Audio.appIcon(node), pid: pid > 0 ? pid : 0, window };
+    }
+
+    function unique(users) {
+        const seen = new Set();
+        return users.filter(u => {
+            const key = `${u.name}:${u.pid}`;
+            return !seen.has(key) && seen.add(key);
+        });
     }
 
     // properties is only filled in for bound nodes
@@ -45,11 +71,11 @@ Item {
     // The names of the processes holding a camera open
     Process {
         id: devices
-        command: ["sh", "-c", 'set -- /dev/video*; [ -e "$1" ] || exit 0; find /proc/[0-9]*/fd -lname "/dev/video*" 2>/dev/null | cut -d/ -f3 | sort -u | while read -r pid; do cat "/proc/$pid/comm"; done 2>/dev/null']
+        command: ["sh", "-c", 'set -- /dev/video*; [ -e "$1" ] || exit 0; find /proc/[0-9]*/fd -lname "/dev/video*" 2>/dev/null | cut -d/ -f3 | sort -u | while read -r pid; do echo "$pid $(cat "/proc/$pid/comm")"; done 2>/dev/null']
         stdout: StdioCollector {
             onStreamFinished: {
-                const holders = [...new Set(text.split("\n").filter(l => l))];
-                root.cameraApps = holders.filter(h => h !== "pipewire" && h !== "wireplumber");
+                const holders = text.split("\n").filter(l => / ./.test(l)).map(l => ({ pid: parseInt(l), comm: l.slice(l.indexOf(" ") + 1) }));
+                root.cameraProcesses = holders.filter(h => h.comm !== "pipewire" && h.comm !== "wireplumber");
                 root.camera = holders.length > 0;
             }
         }
@@ -83,9 +109,9 @@ Item {
             if (!root.started || started.length === 0)
                 return;
             const names = { camera: "Camera", microphone: "Microphone", screen: "Screen" };
-            const users = { camera: root.cameraApps, microphone: root.apps(root.microphones), screen: root.apps(root.videoStreams) };
+            const users = { camera: root.cameraUsers, microphone: root.microphoneUsers, screen: root.screenUsers };
             const title = started.map((k, i) => i === 0 ? names[k] : names[k].toLowerCase()).join(" and ") + (started.length > 1 ? " are" : " is") + (started.length === 1 && started[0] === "screen" ? " shared" : " in use");
-            root.osd.privacy(started[0], title, [...new Set([].concat(...started.map(k => users[k])))].join(", "));
+            root.osd.privacy(started[0], title, [...new Set([].concat(...started.map(k => users[k].map(u => u.name))))].join(", "));
         }
     }
 

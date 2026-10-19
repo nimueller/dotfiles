@@ -26,6 +26,7 @@ PanelWindow {
     required property var center // NotificationCenter
     required property var network // NetworkStatus
     required property var privacy // Privacy
+    required property var privacyPanel // PrivacyPanel
     required property var phones // PhoneStatus
 
     readonly property string toggle: Quickshell.shellPath("toggle.sh")
@@ -171,14 +172,14 @@ PanelWindow {
         }
 
         // Privacy: something records the microphone, uses a camera or shares
-        // the screen
+        // the screen; click for the apps that do
         BarChip {
             id: privacy
 
             visible: bar.privacy?.active ?? false
             solid: true
             accent: Theme.peach
-            interactive: false
+            onClicked: bar.privacyPanel.toggle()
 
             BarLabel {
                 visible: bar.privacy.camera

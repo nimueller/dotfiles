@@ -68,6 +68,12 @@ ShellRoot {
         osd: osd
     }
 
+    // Which apps use them, from the bar's privacy chip
+    PrivacyPanel {
+        id: privacyApps
+        privacy: privacyStatus
+    }
+
     // KDE Connect phones for the bar (kdeconnect.py)
     PhoneStatus {
         id: phoneStatus
@@ -118,6 +124,7 @@ ShellRoot {
             center: notificationCenter
             network: networkStatus
             privacy: privacyStatus
+            privacyPanel: privacyApps
             phones: phoneStatus
         }
     }
