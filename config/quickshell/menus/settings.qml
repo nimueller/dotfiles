@@ -615,24 +615,69 @@ ShellRoot {
                             }
                         }
 
-                        Label {
+                        // What the monitor can't do, and a warning if one of
+                        // those is on anyway
+                        ColumnLayout {
+                            id: unsupported
+
                             readonly property var missing: [["vrr", "variable refresh"], ["wideColor", "wide colour"], ["hdr", "HDR"]].filter(([f]) => !root.supports(parent.m, f))
                             readonly property var stillOn: missing.filter(([f]) => parent.m?.[f])
 
-                            visible: missing.length > 0
-                            Layout.columnSpan: 4
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            elide: Text.ElideNone
                             // "a, b or c"
                             function list(items, last) {
                                 const t = items.map(([, text]) => text);
                                 return t.length > 1 ? `${t.slice(0, -1).join(", ")} ${last} ${t[t.length - 1]}` : t[0];
                             }
 
-                            text: `This monitor doesn't support ${list(missing, "or")}.${stillOn.length ? ` Switch ${list(stillOn, "and")} off, ${stillOn.length > 1 ? "they don't" : "it doesn't"} work here.` : ""}`
-                            font.pixelSize: 11
-                            color: stillOn.length ? Theme.peach : Theme.subtext0
+                            visible: missing.length > 0
+                            Layout.columnSpan: 4
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Label {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideNone
+                                text: `This monitor doesn't support ${unsupported.list(unsupported.missing, "or")}.`
+                                font.pixelSize: 11
+                                color: Theme.subtext0
+                            }
+
+                            Rectangle {
+                                visible: unsupported.stillOn.length > 0
+                                Layout.fillWidth: true
+                                implicitHeight: warning.implicitHeight + 16
+                                radius: 8
+                                color: Theme.alpha(Theme.yellow, 0.12)
+                                border.width: 1
+                                border.color: Theme.alpha(Theme.yellow, 0.5)
+
+                                RowLayout {
+                                    id: warning
+
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 10
+
+                                    Label {
+                                        text: Theme.glyph(0xf0026) // 󰀦
+                                        font.pixelSize: 16
+                                        color: Theme.yellow
+                                    }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        elide: Text.ElideNone
+                                        text: {
+                                            const on = unsupported.list(unsupported.stillOn, "and") ?? "";
+                                            const many = unsupported.stillOn.length > 1;
+                                            return `${on.charAt(0).toUpperCase()}${on.slice(1)} ${many ? "are" : "is"} on, but won't work here. Switch ${many ? "them" : "it"} off.`;
+                                        }
+                                        color: Theme.yellow
+                                    }
+                                }
+                            }
                         }
                     }
 
