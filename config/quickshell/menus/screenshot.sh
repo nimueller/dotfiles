@@ -17,6 +17,11 @@ notify() {
     timeout 300 notify-send -a Screenshot "$@"
 }
 
+# Success only pops up: transient, so it stays out of the notification center
+notify_done() {
+    notify -e "$@"
+}
+
 export_shot() {
     local shot=$1 source=$2 layer=$3 geometry=$4 percent=$5 action=$6
     local out=$runtime/last.png args=("$source")
@@ -38,17 +43,17 @@ export_shot() {
         mkdir -p "$saved"
         file=$saved/Screenshot_$(date +%Y-%m-%d_%H-%M-%S).png
         cp "$out" "$file"
-        case $(notify -i "$file" -A open=Open -A folder="Show in folder" "Screenshot saved" "$(basename "$file") · $size, also copied") in
+        case $(notify_done -i "$file" -A open=Open -A folder="Show in folder" "Screenshot saved" "$(basename "$file") · $size, also copied") in
             open) xdg-open "$file" ;;
             folder) xdg-open "$saved" ;;
         esac
     else
-        case $(notify -i "$out" -A save=Save "Screenshot copied" "$size") in
+        case $(notify_done -i "$out" -A save=Save "Screenshot copied" "$size") in
             save)
                 mkdir -p "$saved"
                 file=$saved/Screenshot_$(date +%Y-%m-%d_%H-%M-%S).png
                 cp "$out" "$file"
-                notify -i "$file" "Screenshot saved" "$(basename "$file")"
+                notify_done -i "$file" "Screenshot saved" "$(basename "$file")"
                 ;;
         esac
     fi
