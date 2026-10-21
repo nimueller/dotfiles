@@ -37,7 +37,7 @@ daemon and the on-screen display, so they open instantly. The bigger menus are s
 | ![App launcher](resources/launcher.webp) | ![Screenshot editor](resources/screenshot-editor.webp) |
 | **Launcher:** type to filter, apps you use often come first, open windows that match come before them, or run the text as a command; it also does sums, and `:` searches emoji | **Screenshot editor:** select, adjust, draw, scale, then copy or save |
 | ![Power menu](resources/power-menu.webp) | |
-| **Power menu:** lock, log out, suspend, reboot or shut down, by mouse or key; reboot and shut down close the apps with hyprshutdown first, which shows the ones that hold it up | |
+| **Power menu:** lock, log out, suspend, reboot or shut down, by mouse or key; reboot and shut down close the apps with hyprshutdown first, which shows the ones that hold it up; on Cancel the bar, wallpaper and idle lock come back | |
 
 - **Bar:** workspaces, window title, clock, tray (with themed menus), camera, microphone and screen-sharing indicators, volume,
   battery, Bluetooth, phone, network (with the Wi-Fi signal) and a notification bell. Clicking a module opens its menu.

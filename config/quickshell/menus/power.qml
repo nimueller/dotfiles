@@ -18,9 +18,9 @@ PanelWindow {
     ]
 
     // Close the apps and Hyprland with hyprshutdown first, which shows the
-    // apps that hold it up, then `command`
+    // apps that hold it up, then `command` (shutdown.sh)
     function gracefully(label, command) {
-        return `if command -v hyprshutdown >/dev/null; then hyprshutdown -t '${label}' -p '${command}'; else ${command}; fi`;
+        return `"${Quickshell.shellPath("shutdown.sh")}" '${label}' '${command}'`;
     }
     property int selected: 0
     property string uptime: ""
