@@ -14,13 +14,13 @@ over kdeconnectd's D-Bus interface, with the system's Python like drives.py.
 """
 
 import json
-import os
 import sys
 
 import gi
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib  # noqa: E402
+from portal import choose_files  # noqa: E402
 
 SERVICE = "org.kde.kdeconnect"
 ROOT = "/modules/kdeconnect"
@@ -245,49 +245,6 @@ class Watch:
 # Actions --------------------------------------------------------------------
 
 
-def choose_files(title):
-    """URIs of the files picked in the file chooser portal, [] if cancelled."""
-    token = f"kdeconnect{os.getpid()}"
-    sender = bus.get_unique_name()[1:].replace(".", "_")
-    handle = f"/org/freedesktop/portal/desktop/request/{sender}/{token}"
-    loop = GLib.MainLoop()
-    uris = []
-
-    def response(_bus, _sender, _path, _iface, _signal, params):
-        code, results = params.unpack()
-        if code == 0:
-            uris.extend(results.get("uris", []))
-        loop.quit()
-
-    bus.signal_subscribe(
-        "org.freedesktop.portal.Desktop",
-        "org.freedesktop.portal.Request",
-        "Response",
-        handle,
-        None,
-        Gio.DBusSignalFlags.NONE,
-        response,
-    )
-    options = {
-        "handle_token": GLib.Variant("s", token),
-        "multiple": GLib.Variant("b", True),
-        "accept_label": GLib.Variant("s", "_Send"),
-    }
-    bus.call_sync(
-        "org.freedesktop.portal.Desktop",
-        "/org/freedesktop/portal/desktop",
-        "org.freedesktop.portal.FileChooser",
-        "OpenFile",
-        GLib.Variant("(ssa{sv})", ("", title, options)),
-        None,
-        Gio.DBusCallFlags.NONE,
-        -1,
-        None,
-    )
-    loop.run()
-    return uris
-
-
 def browse(device_id, name):
     path, iface = plugin(device_id, "sftp")
     folders = []
@@ -316,8 +273,7 @@ def main(action, device_id):
     elif action == "clipboard":
         call(*plugin(device_id, "clipboard"), "sendClipboard")
     elif action == "send":
-        # "Select…" so the window rule floats it (config/hypr/windowrules.lua)
-        uris = choose_files(f"Select files to send to {name}")
+        uris = choose_files(bus, f"Select files to send to {name}", "_Send", multiple=True)
         if uris:
             call(*plugin(device_id, "share"), "shareUrls", GLib.Variant("(as)", (uris,)))
     elif action == "browse":

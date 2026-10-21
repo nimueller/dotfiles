@@ -14,7 +14,9 @@ import Quickshell.Io
 // config/hypr/local.lua (see local.example.lua) between
 // "-- BEGIN settings" and "-- END settings"; anything else in that file is
 // kept. Apply tries the displays right away and goes back unless kept
-// within 15 seconds. Opened from the launcher or with `toggle.sh settings`.
+// within 15 seconds. The profile picture on the lock screen is ~/.face
+// instead, changed right away (face.py). Opened from the launcher or with
+// `toggle.sh settings`.
 ShellRoot {
     id: root
 
@@ -32,6 +34,7 @@ ShellRoot {
     property int selected: 0
     property bool dirty: false
     property string status: ""
+    property int faceVersion: 0 // to load ~/.face again once it's replaced
 
     // Apply: the live state before it, and the countdown to go back to it
     property var before: []
@@ -292,6 +295,23 @@ ShellRoot {
         }
     }
 
+    // Picks an image and makes it ~/.face
+    Process {
+        id: face
+
+        command: ["/usr/bin/python3", Quickshell.shellPath("face.py")]
+        stdout: StdioCollector {
+            onStreamFinished: if (text.trim() === "saved") {
+                root.faceVersion++;
+                root.status = "Profile picture changed. The lock screen shows it from the next lock.";
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim())
+                root.status = `Couldn't change the profile picture: ${text.trim().split("\n").pop()}`
+        }
+    }
+
     // Window ---------------------------------------------------------------------
 
     FloatingWindow {
@@ -341,7 +361,8 @@ ShellRoot {
                             { id: "autostart", text: "Autostart", glyph: 0xf040a },
                             { id: "modes", text: "Laptop & touch", glyph: 0xf0322 },
                             { id: "bar", text: "Bar", glyph: 0xf10a9 },
-                            { id: "warnings", text: "Warnings", glyph: 0xf0026 }
+                            { id: "warnings", text: "Warnings", glyph: 0xf0026 },
+                            { id: "profile", text: "Profile picture", glyph: 0xf0004 }
                         ]
 
                         delegate: Rectangle {
@@ -389,7 +410,7 @@ ShellRoot {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: "Stored in config/hypr/local.lua, which stays out of git."
+                        text: root.page === "profile" ? "Stored in ~/.face, which stays out of git." : "Stored in config/hypr/local.lua, which stays out of git."
                         font.pixelSize: 10
                         color: Theme.overlay0
                     }
@@ -921,6 +942,77 @@ ShellRoot {
                     }
                 }
 
+                // Profile picture --------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "profile"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: "Profile picture — on the lock screen"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 20
+
+                        Rectangle {
+                            implicitWidth: 128
+                            implicitHeight: 128
+                            radius: 8
+                            color: Theme.surface0
+                            border.width: 2
+                            border.color: Theme.lavender
+
+                            Image {
+                                id: faceImage
+
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                // The query only makes it load the file again
+                                source: `file://${root.home}/.face?${root.faceVersion}`
+                                sourceSize: Qt.size(256, 256)
+                                fillMode: Image.PreserveAspectCrop
+                                cache: false
+                                asynchronous: true
+                            }
+                            Label {
+                                visible: faceImage.status !== Image.Ready
+                                anchors.centerIn: parent
+                                text: Theme.glyph(0xf0004) // 󰀄
+                                font.pixelSize: 48
+                                color: Theme.overlay1
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Label {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideNone
+                                text: "Any image: cropped to a square from its middle and made 512 pixels wide. The lock screen shows it round."
+                                color: Theme.subtext0
+                            }
+                            IconButton {
+                                glyph: Theme.glyph(0xf02e9) // 󰋩
+                                text: face.running ? "Choosing…" : "Choose picture…"
+                                onClicked: if (!face.running) {
+                                    root.status = "";
+                                    face.running = true;
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
                 // Actions --------------------------------------------------------
                 RowLayout {
                     Layout.fillWidth: true
@@ -950,7 +1042,8 @@ ShellRoot {
                         onClicked: root.apply()
                     }
                     IconButton {
-                        visible: root.countdown === 0
+                        // The profile picture is changed right away
+                        visible: root.countdown === 0 && root.page !== "profile"
                         glyph: Theme.glyph(0xf0193) // 󰆓
                         text: "Save"
                         accent: Theme.blue
