@@ -8,7 +8,7 @@ import Quickshell.Bluetooth
 import Quickshell.Io
 
 // System menu for the bar's distro logo: the system at a glance (host,
-// kernel, uptime, packages, pending updates) and the live use of CPU,
+// kernel, the monitors' resolutions, uptime, packages, pending updates) and the live use of CPU,
 // memory, swap, the disks (/ and the home folder's, if that's another
 // partition) and GPU, read every 2 seconds while it's open, and the
 // brightness of the screens (the backlight, or monitors over DDC/CI). The gear
@@ -22,6 +22,7 @@ Popup {
     cardWidth: 400
 
     property var info: ({}) // os, kernel, host, packages, uptime (s)
+    property var monitors: [] // hyprctl monitors: name, model, width, height, refreshRate, scale
     property int updates: -1 // pending pacman updates; -1 while counting, -2 without checkupdates
     property real cpu: 0 // 0..1
     property var cpuTemp: null // °C
@@ -62,6 +63,18 @@ Popup {
                     info[line.slice(0, i)] = line.slice(i + 1);
                 }
                 root.info = info;
+            }
+        }
+    }
+
+    Process {
+        running: true
+        command: ["hyprctl", "-j", "monitors"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.monitors = JSON.parse(text);
+                } catch (e) {}
             }
         }
     }
@@ -150,6 +163,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             model: [
                 ["Host", root.info.host ?? ""],
                 ["Kernel", root.info.kernel ?? ""],
+                ...root.monitors.map(m => [m.name, [m.model, `${m.width} × ${m.height}`, `${Math.round(m.refreshRate)} Hz`, m.scale !== 1 ? `scale ${m.scale}` : ""].filter(s => s).join(" · ")]),
                 ["Uptime", root.info.uptime ? root.uptime(Number(root.info.uptime)) : ""],
                 ["Packages", root.info.packages ? `${root.info.packages} from pacman` : ""],
                 ["Updates", root.updates === -1 ? "Checking…" : root.updates === -2 ? "checkupdates isn't installed" : root.updates === 0 ? "Up to date" : `${root.updates} available`]
