@@ -8,3 +8,6 @@ result-*
 
 # This machine's own Hyprland settings (see config/hypr/local.example.lua)
 config/hypr/local.lua
+
+# Python helpers that import each other (quickshell/menus/portal.py)
+__pycache__/
