@@ -9,11 +9,17 @@ import Quickshell.Services.Pipewire
 Singleton {
     readonly property var sinks: devices(true)
     readonly property var sources: devices(false)
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream && n.isSink)
-    readonly property var recordings: Pipewire.nodes.values.filter(n => n.audio && n.isStream && !n.isSink)
+    readonly property var streams: visible().filter(n => n.isStream && n.isSink)
+    readonly property var recordings: visible().filter(n => n.isStream && !n.isSink)
 
     function devices(sink) {
-        return Pipewire.nodes.values.filter(n => n.audio && !n.isStream && n.isSink === sink);
+        return visible().filter(n => !n.isStream && n.isSink === sink);
+    }
+
+    // Nodes with `dotfiles.hidden = true` belong to a filter-chain's plumbing,
+    // e.g. speakers that are only fed through a protection filter.
+    function visible() {
+        return Pipewire.nodes.values.filter(n => n.audio && n.properties["dotfiles.hidden"] !== "true");
     }
 
     // "GPU ... Digital Stereo (HDMI) [Some Monitor]" -> "Some Monitor",
