@@ -1,8 +1,9 @@
 import QtQuick
 
 // The monitors as boxes in their real arrangement (logical size), scaled to
-// fit. Click to select one, drag to move it; on release it snaps to the
-// edges of the others and moved(index, x, y) reports the new position.
+// fit. Click to select one, drag to move it; while dragged it snaps to the
+// edges of the others, and on release moved(index, x, y) reports the new
+// position.
 Item {
     id: root
 
@@ -36,8 +37,9 @@ Item {
     readonly property real originY: (height - bounds.h * factor) / 2 - bounds.y * factor
 
     // Snap one edge to the closest edge of another monitor within `reach`
+    // (in pixels on screen, so it feels the same however small the boxes are)
     function snap(index, x, y) {
-        const me = size(monitors[index]), reach = 60;
+        const me = size(monitors[index]), reach = 16 / factor;
         let bestX = x, bestY = y, dx = reach, dy = reach;
         for (const { m, i } of shown) {
             if (i === index)
@@ -76,6 +78,17 @@ Item {
             readonly property var m: modelData.m
             readonly property var s: root.size(m)
             readonly property bool current: root.selected === modelData.i
+            property bool dragging: false
+            property point grab // where in the box it was grabbed
+            property point pressedAt
+            property var to: null // the snapped position while dragged
+
+            // Back to the binding, at the reported position (or where it was)
+            function settle() {
+                dragging = false;
+                x = Qt.binding(() => root.originX + m.x * root.factor);
+                y = Qt.binding(() => root.originY + m.y * root.factor);
+            }
 
             x: root.originX + m.x * root.factor
             y: root.originY + m.y * root.factor
@@ -85,7 +98,7 @@ Item {
             color: current ? Theme.alpha(Theme.lavender, 0.22) : Theme.surface0
             border.width: current ? 2 : 1
             border.color: current ? Theme.lavender : Theme.surface2
-            z: drag.drag.active ? 2 : current ? 1 : 0
+            z: dragging ? 2 : current ? 1 : 0
 
             Column {
                 anchors.centerIn: parent
@@ -105,23 +118,32 @@ Item {
                 }
             }
 
+            // Dragged by hand rather than with drag.target, so the box can
+            // jump to where it snaps
             MouseArea {
-                id: drag
-
                 anchors.fill: parent
-                cursorShape: drag.drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                drag.target: box
-                drag.threshold: 4
-                onPressed: root.picked(box.modelData.i)
-                onReleased: {
-                    if (!drag.drag.active)
-                        return;
-                    const p = root.snap(box.modelData.i, (box.x - root.originX) / root.factor, (box.y - root.originY) / root.factor);
-                    root.moved(box.modelData.i, p.x, p.y);
-                    // Back to the binding, at the reported position
-                    box.x = Qt.binding(() => root.originX + box.m.x * root.factor);
-                    box.y = Qt.binding(() => root.originY + box.m.y * root.factor);
+                cursorShape: box.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                onPressed: mouse => {
+                    root.picked(box.modelData.i);
+                    box.grab = Qt.point(mouse.x, mouse.y);
+                    box.pressedAt = mapToItem(root, mouse.x, mouse.y);
                 }
+                onPositionChanged: mouse => {
+                    const p = mapToItem(root, mouse.x, mouse.y);
+                    if (!box.dragging && Math.hypot(p.x - box.pressedAt.x, p.y - box.pressedAt.y) < 4)
+                        return;
+                    box.dragging = true;
+                    box.to = root.snap(box.modelData.i, (p.x - box.grab.x - root.originX) / root.factor, (p.y - box.grab.y - root.originY) / root.factor);
+                    box.x = root.originX + box.to.x * root.factor;
+                    box.y = root.originY + box.to.y * root.factor;
+                }
+                onReleased: {
+                    if (!box.dragging)
+                        return;
+                    root.moved(box.modelData.i, box.to.x, box.to.y);
+                    box.settle();
+                }
+                onCanceled: box.settle()
             }
         }
     }
