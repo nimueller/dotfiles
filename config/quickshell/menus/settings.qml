@@ -26,6 +26,7 @@ ShellRoot {
 
     property string page: "displays"
     property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
+    property var caps: ({}) // what each connected monitor supports, by port: { vrr, wideColor, hdr }, missing if unknown
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({ windowTitle: false })
@@ -201,6 +202,11 @@ ShellRoot {
         dirty = true;
     }
 
+    // Whether monitor m supports a feature (vrr, wideColor, hdr); yes if unknown
+    function supports(m, feature) {
+        return !m?.connected || root.caps[m.name]?.[feature] !== false;
+    }
+
     // Two modes are the same if resolution and rounded refresh rate match
     function sameMode(a, b) {
         const p = s => {
@@ -291,6 +297,28 @@ ShellRoot {
                 } catch (e) {
                     root.load([]);
                 }
+            }
+        }
+    }
+
+    // "DP-1 vrr=1 wide=1 hdr=0" for each connected monitor
+    Process {
+        running: true
+        command: [Quickshell.shellPath("monitor-caps.sh")]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const keys = { vrr: "vrr", wide: "wideColor", hdr: "hdr" };
+                const caps = {};
+                for (const line of text.trim().split("\n").filter(l => l)) {
+                    const [name, ...fields] = line.split(" ");
+                    caps[name] = {};
+                    for (const f of fields) {
+                        const [k, v] = f.split("=");
+                        if (keys[k])
+                            caps[name][keys[k]] = v === "1";
+                    }
+                }
+                root.caps = caps;
             }
         }
     }
@@ -562,8 +590,11 @@ ShellRoot {
                         Label {
                             text: "Variable refresh"
                         }
+                        // Off and locked where the monitor can't; one that's
+                        // on can still be switched off
                         Switch {
                             checked: parent.m?.vrr ?? false
+                            enabled: checked || root.supports(parent.m, "vrr")
                             onToggled: root.change(root.selected, { vrr: !parent.m.vrr })
                         }
                         Label {
@@ -574,12 +605,34 @@ ShellRoot {
 
                             Switch {
                                 checked: parent.parent.m?.wideColor ?? false
+                                enabled: checked || root.supports(parent.parent.m, "wideColor")
                                 onToggled: root.change(root.selected, { wideColor: !parent.parent.m.wideColor })
                             }
                             Switch {
                                 checked: parent.parent.m?.hdr ?? false
+                                enabled: checked || root.supports(parent.parent.m, "hdr")
                                 onToggled: root.change(root.selected, { hdr: !parent.parent.m.hdr })
                             }
+                        }
+
+                        Label {
+                            readonly property var missing: [["vrr", "variable refresh"], ["wideColor", "wide colour"], ["hdr", "HDR"]].filter(([f]) => !root.supports(parent.m, f))
+                            readonly property var stillOn: missing.filter(([f]) => parent.m?.[f])
+
+                            visible: missing.length > 0
+                            Layout.columnSpan: 4
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            elide: Text.ElideNone
+                            // "a, b or c"
+                            function list(items, last) {
+                                const t = items.map(([, text]) => text);
+                                return t.length > 1 ? `${t.slice(0, -1).join(", ")} ${last} ${t[t.length - 1]}` : t[0];
+                            }
+
+                            text: `This monitor doesn't support ${list(missing, "or")}.${stillOn.length ? ` Switch ${list(stillOn, "and")} off, ${stillOn.length > 1 ? "they don't" : "it doesn't"} work here.` : ""}`
+                            font.pixelSize: 11
+                            color: stillOn.length ? Theme.peach : Theme.subtext0
                         }
                     }
 
