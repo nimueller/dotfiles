@@ -15,7 +15,8 @@
 # 6. Docker: container ports published on this machine only, by default
 # 7. Bluetooth: bluetoothd for the Bluetooth menu, where there's an adapter,
 #    and an address for controllers that come without one
-# 8. power profiles: power-profiles-daemon for the battery menu, on laptops
+# 8. power profiles: power-profiles-daemon for the battery menu, on laptops,
+#    and a CPU cap in power saver where it has no CPU driver (Snapdragon)
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -223,4 +224,33 @@ elif systemctl is-enabled --quiet tlp.service 2>/dev/null; then
     echo "TLP manages the power here, which conflicts with power-profiles-daemon; skipping"
 elif ask "Power saver, balanced and performance in the battery menu: start power-profiles-daemon?"; then
     sudo systemctl enable --now power-profiles-daemon.service
+fi
+# Without a CPU driver of its own (only "placeholder", e.g. on Snapdragon
+# laptops) power-profiles-daemon's power saver changes nothing: cap the CPU
+# clusters then instead (power-saver-cpu.sh)
+if systemctl is-enabled --quiet power-profiles-daemon.service 2>/dev/null; then
+    if systemctl is-enabled --quiet power-saver-cpu.service 2>/dev/null; then
+        sudo install -m 755 "$dir/power-saver-cpu.sh" /usr/local/lib/power-saver-cpu
+        sudo systemctl restart power-saver-cpu.service
+        echo "Power saver already caps the CPU"
+    elif ! powerprofilesctl 2>/dev/null | grep -q CpuDriver &&
+        ask "power-profiles-daemon has no CPU driver here, so power saver does nothing. Cap the CPU at about 70 % of its top speed in power saver?"; then
+        sudo install -m 755 "$dir/power-saver-cpu.sh" /usr/local/lib/power-saver-cpu
+        sudo tee /etc/systemd/system/power-saver-cpu.service >/dev/null <<'UNIT'
+[Unit]
+Description=CPU cap in power-profiles-daemon's power saver
+After=power-profiles-daemon.service
+Wants=power-profiles-daemon.service
+
+[Service]
+ExecStart=/usr/local/lib/power-saver-cpu
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+        sudo systemctl daemon-reload
+        sudo systemctl enable --now power-saver-cpu.service
+    fi
 fi
