@@ -8,9 +8,9 @@ import Quickshell.Io
 // Displays (arrangement, mode, scale, rotation, VRR, HDR, workspaces, the
 // main monitor for notifications), environment
 // variables (e.g. drivers), autostart programs, the laptop and touch mode
-// (config/hypr/modes.lua: detected, or forced on or off), the touchpad
-// (right click in the corner or with two fingers, tapping, scrolling,
-// typing), the bar and when to warn
+// (config/hypr/modes.lua: detected, or forced on or off) with the touchpad
+// (right click in the corner or with two fingers, tapping, scrolling and its
+// speed, typing), the bar and when to warn
 // about memory, the CPU and the disk (read by the shell through
 // LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
@@ -38,6 +38,7 @@ ShellRoot {
     property int selected: 0
     property bool dirty: false
     property string status: ""
+    property bool scrollTried: false // the scrolling speed was changed live and not saved yet
     property int faceVersion: 0 // to load ~/.face again once it's replaced
 
     // Apply: the live state before it, and the countdown to go back to it
@@ -129,6 +130,7 @@ ShellRoot {
         const re = /-- BEGIN settings[\s\S]*?-- END settings\n?/;
         file.setText(re.test(text) ? text.replace(re, block() + "\n") : `${text.replace(/\n*$/, "\n\n")}${block()}\n`);
         dirty = false;
+        scrollTried = false;
         status = "Saved. Environment and autostart changes apply at the next login.";
     }
 
@@ -201,6 +203,19 @@ ShellRoot {
             if (!isNaN(v) && v >= 0 && v !== value)
                 edited(v);
         }
+    }
+
+    // The touchpad's scrolling speed, null for the default; tried right away
+    function scrollFactor(f) {
+        const t = Object.assign({}, touchpad);
+        if (f === null || f === 1)
+            delete t.scroll_factor;
+        else
+            t.scroll_factor = f;
+        touchpad = t;
+        dirty = true;
+        scrollTried = true;
+        run([`hl.config({ input = { touchpad = { scroll_factor = ${f ?? 1} } } })`]);
     }
 
     function change(index, props) {
@@ -348,6 +363,13 @@ ShellRoot {
         }
     }
 
+    // A scrolling speed tried but not saved: the config's again
+    function quit() {
+        if (scrollTried)
+            Quickshell.execDetached(["hyprctl", "reload"]);
+        Qt.quit();
+    }
+
     // Window ---------------------------------------------------------------------
 
     FloatingWindow {
@@ -358,14 +380,14 @@ ShellRoot {
         implicitHeight: 600
         color: Theme.base
         onVisibleChanged: if (!visible)
-            Qt.quit()
+            root.quit()
 
         WindowClose {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: 10
             z: 1
-            onClicked: Qt.quit()
+            onClicked: root.quit()
         }
 
         RowLayout {
@@ -396,7 +418,6 @@ ShellRoot {
                             { id: "env", text: "Environment", glyph: 0xf0169 },
                             { id: "autostart", text: "Autostart", glyph: 0xf040a },
                             { id: "modes", text: "Laptop & touch", glyph: 0xf0322 },
-                            { id: "touchpad", text: "Touchpad", glyph: 0xf037d },
                             { id: "bar", text: "Bar", glyph: 0xf10a9 },
                             { id: "warnings", text: "Warnings", glyph: 0xf0026 },
                             { id: "profile", text: "Profile picture", glyph: 0xf0004 }
@@ -880,20 +901,9 @@ ShellRoot {
                         color: Theme.subtext0
                     }
 
-                    Item {
-                        Layout.fillHeight: true
-                    }
-                }
-
-                // Touchpad -----------------------------------------------------------
-                ColumnLayout {
-                    visible: root.page === "touchpad"
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 10
-
                     SectionTitle {
-                        text: "Touchpad — for every touchpad on this machine"
+                        Layout.topMargin: 10
+                        text: "Touchpad — every touchpad on this machine"
                     }
 
                     Repeater {
@@ -901,10 +911,10 @@ ShellRoot {
                         // mode turns on clickfinger_behavior, general.lua
                         // natural_scroll; Hyprland's defaults otherwise)
                         model: [
-                            { id: "clickfinger_behavior", text: "Right click", about: "Pressing down: in the bottom right corner (and the middle for a middle click) as on Windows and macOS, or anywhere with two fingers (three for a middle click)", def: Modes.laptop, on: "With two fingers", off: "In the corner" },
-                            { id: "tap_to_click", text: "Tap to click", about: "A tap clicks without pressing down; two fingers right-click, three middle-click", def: true, on: "On", off: "Off" },
+                            { id: "clickfinger_behavior", text: "Right click", about: "Pressing down in the bottom right corner (the middle: middle click), or anywhere with two fingers (three: middle click)", def: Modes.laptop, on: "With two fingers", off: "In the corner" },
+                            { id: "tap_to_click", text: "Tap to click", about: "Two fingers right-click, three middle-click", def: true, on: "On", off: "Off" },
                             { id: "natural_scroll", text: "Natural scrolling", about: "The content follows the fingers, like on a phone", def: true, on: "On", off: "Off" },
-                            { id: "disable_while_typing", text: "Off while typing", about: "Ignores the touchpad for a moment after a key press, against touches with the palm", def: true, on: "On", off: "Off" }
+                            { id: "disable_while_typing", text: "Off while typing", about: "For a moment after a key press, against touches with the palm", def: true, on: "On", off: "Off" }
                         ]
 
                         delegate: RowLayout {
@@ -954,13 +964,50 @@ ShellRoot {
                         }
                     }
 
-                    Label {
+                    // Scrolling speed: input:touchpad:scroll_factor, 1 by
+                    // default; tried right away while dragging, the saved
+                    // one comes back on closing without saving
+                    RowLayout {
+                        id: scrollRow
+
+                        readonly property real factor: root.touchpad.scroll_factor ?? 1
+
                         Layout.fillWidth: true
-                        Layout.topMargin: 6
-                        wrapMode: Text.WordWrap
-                        elide: Text.ElideNone
-                        text: "Saving applies them right away."
-                        color: Theme.subtext0
+                        spacing: 14
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Label {
+                                text: "Scrolling speed"
+                                font.bold: true
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideNone
+                                text: "How far pages move with two fingers; works while you drag"
+                                font.pixelSize: 11
+                                color: Theme.subtext0
+                            }
+                        }
+                        Slider {
+                            Layout.preferredWidth: 130
+                            // 0.2 to 2
+                            value: (scrollRow.factor - 0.2) / 1.8
+                            onMoved: v => root.scrollFactor(Math.round((0.2 + v * 1.8) * 20) / 20)
+                        }
+                        Label {
+                            Layout.preferredWidth: 40
+                            horizontalAlignment: Text.AlignRight
+                            text: `${Math.round(scrollRow.factor * 100)} %`
+                        }
+                        IconButton {
+                            glyph: Theme.glyph(0xf0450) // 󰑐
+                            visible: root.touchpad.scroll_factor !== undefined
+                            onClicked: root.scrollFactor(null)
+                        }
                     }
 
                     Item {
