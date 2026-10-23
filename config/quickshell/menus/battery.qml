@@ -7,7 +7,8 @@ import Quickshell.Io
 import Quickshell.Services.UPower
 
 // Battery menu for the bar's battery module (laptops): the charge, how long
-// it lasts or until it's full, the power it draws and its health, the
+// it lasts or until it's full, the power it draws and its health, how
+// long it has run since unplugged with an estimate at that pace, the
 // power profile (power-profiles-daemon, which system/setup.sh starts) and
 // the batteries of other devices (mouse, headset, ...).
 Popup {
@@ -43,6 +44,65 @@ Popup {
         if (batteryState === UPowerDeviceState.Discharging)
             return battery.timeToEmpty > 0 ? `${duration(battery.timeToEmpty)} left` : "On battery";
         return UPower.onBattery ? "On battery" : "Plugged in, not charging";
+    }
+
+    // Since unplugged: UPower's charge history (one entry per percent, kept
+    // across reboots) back to the last time it charged. The pace leaves out
+    // gaps over 30 minutes (suspend), so it is percent per hour awake; unlike
+    // timeToEmpty (UPower: energy now / power draw right now) it doesn't
+    // jump with every load spike.
+    readonly property var cell: UPower.devices.values.find(d => d.isLaptopBattery) ?? null
+    readonly property bool discharging: batteryState === UPowerDeviceState.Discharging
+    property var history: [] // [[time, percent, state]], newest first
+    readonly property var stats: {
+        const gap = 1800, now = Date.now() / 1000;
+        let i = 0;
+        while (i < history.length && (history[i][2] === UPowerDeviceState.Discharging || history[i][2] === UPowerDeviceState.Unknown))
+            i++;
+        const run = history.slice(0, i).filter(e => e[2] === UPowerDeviceState.Discharging);
+        if (!discharging || !run.length)
+            return null;
+        let awake = now - run[0][0] <= gap ? now - run[0][0] : 0;
+        let used = awake ? run[0][1] - percent : 0;
+        for (let j = 1; j < run.length; j++) {
+            const dt = run[j - 1][0] - run[j][0];
+            if (dt <= gap) {
+                awake += dt;
+                used += run[j][1] - run[j - 1][1];
+            }
+        }
+        const pace = awake >= 600 && used >= 2 ? used / awake : 0; // percent per second
+        return {
+            since: now - run[run.length - 1][0],
+            used: run[run.length - 1][1] - percent,
+            pace: pace,
+            left: pace ? percent / pace : 0,
+            total: pace ? 100 / pace : 0
+        };
+    }
+
+    function loadHistory() {
+        if (!cell || historyProc.running)
+            return;
+        historyProc.command = ["busctl", "--system", "--json=short", "call", "org.freedesktop.UPower", `/org/freedesktop/UPower/devices/battery_${cell.nativePath.replace(/[^A-Za-z0-9]/g, "_")}`, "org.freedesktop.UPower.Device", "GetHistory", "suu", "charge", "604800", "5000"];
+        historyProc.running = true;
+    }
+
+    onCellChanged: loadHistory()
+    onPercentChanged: loadHistory()
+    Component.onCompleted: loadHistory()
+
+    Process {
+        id: historyProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    popup.history = JSON.parse(text).data[0].sort((a, b) => b[0] - a[0]);
+                } catch (e) {
+                    popup.history = [];
+                }
+            }
+        }
     }
 
     Process {
@@ -117,6 +177,49 @@ Popup {
             text: cell ? `Health ${Math.round(cell.healthPercentage)}%${cell.model ? ` · ${cell.model}` : ""}` : ""
             font.pixelSize: 10
             color: Theme.overlay1
+        }
+    }
+
+    // Since unplugged
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: !!popup.stats
+        spacing: 6
+
+        SectionTitle {
+            text: "Since unplugged"
+        }
+
+        Repeater {
+            model: {
+                const s = popup.stats;
+                if (!s)
+                    return [];
+                const rows = [["On battery", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.used))}% used`]];
+                if (!s.pace)
+                    return rows.concat([["At this pace", "Not enough data yet"]]);
+                return rows.concat([
+                    ["Pace", `${(s.pace * 3600).toFixed(1)}% per hour`],
+                    ["At this pace", `${popup.duration(s.left)} left`],
+                    ["Full charge lasts", `about ${popup.duration(s.total)}`]
+                ]);
+            }
+
+            delegate: RowLayout {
+                required property var modelData
+
+                Layout.fillWidth: true
+                spacing: 8
+
+                Label {
+                    Layout.fillWidth: true
+                    text: modelData[0]
+                    color: Theme.subtext1
+                }
+                Label {
+                    text: modelData[1]
+                }
+            }
         }
     }
 
