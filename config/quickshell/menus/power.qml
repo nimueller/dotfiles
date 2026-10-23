@@ -15,7 +15,17 @@ PanelWindow {
         { text: "Suspend", key: "U", glyph: 0xf0904, accent: Theme.mauve, command: "systemctl suspend" },
         { text: "Reboot", key: "R", glyph: 0xf0709, accent: Theme.peach, command: root.gracefully("Rebooting…", "systemctl reboot") },
         { text: "Shut down", key: "S", glyph: 0xf0425, accent: Theme.red, command: root.gracefully("Shutting down…", "systemctl poweroff") }
-    ]
+    ].concat(root.streaming ? [
+        // Last, so the selection doesn't move when it shows up
+        { text: "Disconnect", key: "D", glyph: 0xf078a, accent: Theme.teal, command: "sunshine-disconnect" }
+    ] : [])
+
+    // A Moonlight client is connected. The stay-awake inhibitor from
+    // Sunshine's prep commands (config/sunshine, StayAwake.qml) lasts as long
+    // as the app, also while no client is connected; whether one is, only
+    // Sunshine's log says: the last of "CLIENT CONNECTED", "CLIENT
+    // DISCONNECTED" and "<address>: Ping Timeout" (the client vanished)
+    property bool streaming: false
 
     // Close the apps and Hyprland with hyprshutdown first, which shows the
     // apps that hold it up, then `command` (shutdown.sh)
@@ -42,6 +52,12 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-power"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+    Process {
+        running: true
+        command: ["sh", "-c", 'pgrep -x sunshine >/dev/null && kill -0 "$(cat "$XDG_RUNTIME_DIR/stay-awake-sunshine.pid" 2>/dev/null)" 2>/dev/null && grep -E "CLIENT (DIS)?CONNECTED|: Ping Timeout" "${XDG_CONFIG_HOME:-$HOME/.config}/sunshine/sunshine.log" | tail -n1 | grep -q "CLIENT CONNECTED"']
+        onExited: code => root.streaming = code === 0
+    }
 
     Process {
         running: true

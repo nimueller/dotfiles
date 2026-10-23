@@ -208,6 +208,7 @@ in
     pavucontrol
 
     my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
+    my-pkgs.sunshine-disconnect # ends the Sunshine stream (config/quickshell/menus/power.qml)
     my-pkgs.after-unlock # autostarts that need the keyring (config/hypr/autostart.lua)
     my-pkgs.laptop-idle # dims and suspends laptops when idle (config/hypr/hypridle.conf)
     my-pkgs.quickshell-calendar-python

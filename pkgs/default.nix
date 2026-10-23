@@ -59,6 +59,17 @@
     name = "stay-awake";
     text = builtins.readFile ./scripts/stay-awake.sh;
   };
+  # Ends the Sunshine stream from the power menu (config/quickshell/menus/power.qml)
+  sunshine-disconnect = pkgs.writeShellApplication {
+    name = "sunshine-disconnect";
+    runtimeInputs = with pkgs; [
+      curl
+      libsecret
+      libnotify
+      coreutils
+    ];
+    text = builtins.readFile ./scripts/sunshine-disconnect.sh;
+  };
   # pgrep comes from the system too
   after-unlock = pkgs.writeShellApplication {
     name = "after-unlock";
