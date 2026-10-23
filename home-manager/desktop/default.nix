@@ -185,6 +185,16 @@ in
 
   fonts.fontconfig.enable = true;
 
+  # The profile's hicolor theme is put together from the packages' icons and
+  # has no icon-theme.cache, so Qt stats every size directory for each icon it
+  # looks up there: a name that no theme has took ~0.5 s each (the sound menu
+  # tries several per app). Built here like NixOS does for its system profile.
+  home.extraProfileCommands = ''
+    if [ -w $out/share/icons/hicolor ]; then
+      ${pkgs.gtk3.out}/bin/gtk-update-icon-cache --quiet --ignore-theme-index $out/share/icons/hicolor
+    fi
+  '';
+
   # Packages needed on Hyprland specifically, in addition to a standard desktop
   home.packages = with pkgs; [
     nerd-fonts.noto # the quickshell menus' font

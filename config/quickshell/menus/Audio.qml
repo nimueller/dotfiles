@@ -23,9 +23,11 @@ Singleton {
     }
 
     // Nodes with `dotfiles.hidden = true` belong to a filter-chain's plumbing,
-    // e.g. speakers that are only fed through a protection filter.
+    // e.g. speakers that are only fed through a protection filter. Only nodes
+    // whose properties have arrived (`ready`): before that a hidden one would
+    // show up for a moment.
     function visible() {
-        return Pipewire.nodes.values.filter(n => n.audio && n.properties["dotfiles.hidden"] !== "true");
+        return Pipewire.nodes.values.filter(n => n.audio && n.ready && n.properties["dotfiles.hidden"] !== "true");
     }
 
     // "GPU ... Digital Stereo (HDMI) [Some Monitor]" -> "Some Monitor",
