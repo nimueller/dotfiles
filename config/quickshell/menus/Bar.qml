@@ -16,7 +16,8 @@ import Quickshell.Widgets
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
 // otherwise a key: the launcher, closing the window and the on-screen
-// keyboard. On narrow screens (Modes.compactBar) Bluetooth, the keyboard
+// keyboard; in tablet mode it's taller still, and holding a finger on a
+// chip is a right click (BarChip.qml). On narrow screens (Modes.compactBar) Bluetooth, the keyboard
 // and power are in the system menu instead. The clock moves left of the
 // middle when the right side would reach it.
 PanelWindow {
@@ -47,7 +48,7 @@ PanelWindow {
         left: true
         right: true
     }
-    implicitHeight: Modes.touch ? 40 : 27
+    implicitHeight: Modes.barSize(27, 40, 48)
     color: Theme.crust
 
     WlrLayershell.namespace: "quickshell-bar"
@@ -135,7 +136,8 @@ PanelWindow {
         anchors.verticalCenterOffset: 1
         spacing: 6
 
-        // Tray: left click activates, right click opens the app's menu
+        // Tray: left click activates, right click (or holding a finger on
+        // it) opens the app's menu
         TrayMenu {
             id: trayMenu
         }
@@ -154,11 +156,16 @@ PanelWindow {
                     required property var modelData
 
                     anchors.verticalCenter: parent.verticalCenter
-                    implicitSize: Modes.touch ? 20 : 15
+                    implicitSize: Modes.barSize(15, 20, 24)
                     source: modelData.icon
 
                     MouseArea {
                         anchors.fill: parent
+                        // Touch: over the gaps between the icons and up to
+                        // the bar's edges
+                        anchors.margins: Modes.touch ? -3 : 0
+                        anchors.topMargin: Modes.touch ? -10 : 0
+                        anchors.bottomMargin: Modes.touch ? -10 : 0
                         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                         cursorShape: Qt.PointingHandCursor
                         onClicked: event => {
@@ -169,6 +176,10 @@ PanelWindow {
                                 item.activate();
                             else if (item.hasMenu)
                                 trayMenu.open(item, trayIcon);
+                        }
+                        onPressAndHold: {
+                            if (Modes.touch && trayIcon.modelData.hasMenu)
+                                trayMenu.open(trayIcon.modelData, trayIcon);
                         }
                         onWheel: event => trayIcon.modelData.scroll(event.angleDelta.y, false)
                     }

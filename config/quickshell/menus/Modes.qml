@@ -27,6 +27,12 @@ Singleton {
         return (screen?.width ?? 0) > 0 && screen.width < 1700;
     }
 
+    // A size of the bar for the mode: with a mouse, touch, tablet (touch
+    // with the keyboard folded away, so only fingers)
+    function barSize(normal, touchSize, tabletSize) {
+        return tablet ? tabletSize : touch ? touchSize : normal;
+    }
+
     FileView {
         path: `${Quickshell.env("XDG_RUNTIME_DIR")}/dotfiles-modes.json`
         watchChanges: true

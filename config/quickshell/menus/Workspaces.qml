@@ -14,7 +14,7 @@ Rectangle {
     readonly property var workspaces: Hyprland.workspaces.values.filter(w => w.monitor === monitor && (w.id > 0 || w.name === special)).sort((a, b) => (a.id < 0) - (b.id < 0) || a.id - b.id)
 
     implicitWidth: row.implicitWidth + 6
-    implicitHeight: Modes.touch ? 30 : 19
+    implicitHeight: Modes.barSize(19, 30, 36)
     radius: 8
     color: Theme.surface0
 
@@ -45,10 +45,10 @@ Rectangle {
                 readonly property bool isSpecial: modelData.id < 0
                 readonly property bool active: isSpecial || root.monitor?.activeWorkspace === modelData
 
-                implicitWidth: Math.max(Modes.touch ? 44 : 30, label.implicitWidth + 22)
-                implicitHeight: Modes.touch ? 24 : 15
+                implicitWidth: Math.max(Modes.barSize(30, 44, 52), label.implicitWidth + 22)
+                implicitHeight: Modes.barSize(15, 24, 30)
                 radius: 6
-                color: active ? (isSpecial ? Theme.mauve : Theme.lavender) : modelData.urgent ? Theme.peach : mouse.containsMouse ? Theme.surface1 : "transparent"
+                color: active ? (isSpecial ? Theme.mauve : Theme.lavender) : modelData.urgent ? Theme.peach : mouse.containsMouse || mouse.pressed ? Theme.surface1 : "transparent"
 
                 Behavior on color { ColorAnimation { duration: 200 } }
 
@@ -63,6 +63,9 @@ Rectangle {
                 MouseArea {
                     id: mouse
                     anchors.fill: parent
+                    // Touch: up to the bar's edges
+                    anchors.topMargin: Modes.touch ? -8 : 0
+                    anchors.bottomMargin: Modes.touch ? -8 : 0
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     // Lua dispatchers: Quickshell 0.3.1 doesn't detect the Lua
