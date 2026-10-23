@@ -66,8 +66,13 @@ PanelWindow {
         left: atLeft ? 6 : 0
     }
 
-    implicitWidth: cardWidth
-    implicitHeight: card.implicitHeight
+    // Bigger in tablet mode, for fingers: the card at its usual size, scaled
+    // up, so the menus need no sizes of their own for it. As far as the
+    // screen's height allows, above the bar.
+    readonly property real zoom: Modes.tablet ? Math.max(1, Math.min(1.3, ((screen?.height ?? 0) - 60) / card.implicitHeight)) : 1
+
+    implicitWidth: Math.ceil(cardWidth * zoom)
+    implicitHeight: Math.ceil(card.implicitHeight * zoom)
     color: "transparent"
     exclusiveZone: 0
 
@@ -84,8 +89,10 @@ PanelWindow {
     Rectangle {
         id: card
 
-        width: parent.width
+        width: root.cardWidth
         implicitHeight: body.implicitHeight + 32
+        scale: root.zoom
+        transformOrigin: Item.TopLeft
         radius: 12
         color: Theme.base
         border.width: 1
