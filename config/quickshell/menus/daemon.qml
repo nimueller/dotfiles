@@ -99,6 +99,20 @@ ShellRoot {
     // Laptops: notifications when the battery runs low
     BatteryWatch {}
 
+    // Laptops: the charge, power draw and the apps' CPU time on battery,
+    // once a minute for the battery history (battery-log.py)
+    Process {
+        id: batteryLog
+        running: Modes.laptop
+        command: ["/usr/bin/python3", Quickshell.shellPath("battery-log.py")]
+        onExited: if (Modes.laptop) batteryLogRestart.start()
+    }
+    Timer {
+        id: batteryLogRestart
+        interval: 5000
+        onTriggered: batteryLog.running = Modes.laptop
+    }
+
     // Downloads, Documents etc. stay in Files' sidebar (bookmarks.py)
     Process {
         id: bookmarks

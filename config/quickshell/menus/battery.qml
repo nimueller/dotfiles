@@ -10,7 +10,8 @@ import Quickshell.Services.UPower
 // it lasts or until it's full, the power it draws and its health, how
 // long it has run since unplugged with an estimate at that pace, the
 // power profile (power-profiles-daemon, which system/setup.sh starts) and
-// the batteries of other devices (mouse, headset, ...).
+// the batteries of other devices (mouse, headset, ...). The button in the
+// title opens the history (battery-history.qml).
 Popup {
     id: popup
 
@@ -117,6 +118,15 @@ Popup {
         title: "Battery"
         badge: UPower.onBattery ? "On battery" : "Plugged in"
         badgeColor: UPower.onBattery ? Theme.yellow : Theme.teal
+
+        // The history: charge, draw, times on battery, busiest apps
+        IconButton {
+            glyph: Theme.glyph(0xf0128) // 󰄨
+            onClicked: {
+                Quickshell.execDetached([Quickshell.shellPath("toggle.sh"), "battery-history"]);
+                popup.close();
+            }
+        }
     }
 
     // Charge
