@@ -86,6 +86,11 @@ in
     };
   };
 
+  # A sandbox gets KeePassXC's socket folder only if it exists when the
+  # browser starts, which is usually before KeePassXC: created at login.
+  # KeePassXC uses it as it is and never removes it
+  systemd.user.tmpfiles.rules = [ "d %t/app/org.keepassxc.KeePassXC 0700 - - -" ];
+
   # Brave's flags file and the browsers' KeePassXC entries, inside their
   # sandboxes: a direct link to the dotfiles (the sandbox can't follow one
   # through the Nix store), and copies of the entries
