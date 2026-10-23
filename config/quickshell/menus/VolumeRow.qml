@@ -49,7 +49,7 @@ RowLayout {
             cursorShape: Qt.PointingHandCursor
             onClicked: {
                 if (root.node?.audio)
-                    root.node.audio.muted = !root.node.audio.muted;
+                    Audio.setMuted(root.node, !root.node.audio.muted);
             }
         }
     }
