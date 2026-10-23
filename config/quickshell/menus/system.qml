@@ -31,7 +31,7 @@ Popup {
     property var swap: ({ used: 0, total: 0 })
     property var disks: [] // { target, used, total }
     property var gpu: null // { name, load, memUsed, memTotal, temp }
-    property var backlight: null // { value, max } of the built-in screen, null without one
+    property var backlight: null // { percent } of the built-in screen (backlight.sh), null without one
 
     readonly property string toggle: Quickshell.shellPath("toggle.sh")
     readonly property var adapter: Bluetooth.defaultAdapter
@@ -290,12 +290,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
     Brightness {
         visible: !!root.backlight
         title: "Built-in screen"
-        value: root.backlight ? root.backlight.value / root.backlight.max : 0
+        value: root.backlight ? root.backlight.percent / 100 : 0
         onMoved: v => {
-            // At least 5 % so the screen never goes dark, like the keys
-            const value = Math.max(0.05, v);
-            root.backlight = { value: Math.round(value * root.backlight.max), max: root.backlight.max };
-            Quickshell.execDetached(["brightnessctl", "-q", "-c", "backlight", "set", `${Math.round(value * 100)}%`]);
+            // backlight.sh keeps it above dark, like the keys
+            root.backlight = { percent: Math.max(2, Math.round(v * 100)) };
+            Quickshell.execDetached([Quickshell.shellPath("backlight.sh"), "set", String(Math.round(v * 100))]);
         }
     }
     Repeater {
@@ -357,15 +356,15 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         id: ddc
     }
 
-    // brightnessctl -m: device,class,current,percent,max
+    // backlight.sh: the percent, nothing without a backlight
     Process {
         running: true
-        command: ["brightnessctl", "-m", "-c", "backlight", "info"]
+        command: [Quickshell.shellPath("backlight.sh"), "get"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const f = text.trim().split(",");
-                if (f.length >= 5 && parseInt(f[4]) > 0)
-                    root.backlight = { value: parseInt(f[2]), max: parseInt(f[4]) };
+                const percent = parseInt(text);
+                if (!isNaN(percent))
+                    root.backlight = { percent: percent };
             }
         }
     }
