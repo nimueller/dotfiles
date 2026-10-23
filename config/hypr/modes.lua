@@ -183,20 +183,22 @@ local function touch()
         hl.exec_cmd("squeekboard")
     end)
 
-    -- With a tablet mode switch, text fields bring up the keyboard only in
-    -- tablet mode (squeekboard follows this setting; the bar's button calls
-    -- SetVisible and works either way). It starts off, with the keyboard
-    -- attached; libinput reports a switch that's already on when Hyprland
-    -- starts, which turns it on.
+    -- Text fields bring up the keyboard when this setting is on (squeekboard
+    -- follows it; the bar's button calls SetVisible and works either way).
+    -- Set only here, not by home-manager, which would turn it on again with
+    -- every switch. Without a tablet mode switch it's always on. With one,
+    -- only in tablet mode: it starts off, with the keyboard attached;
+    -- libinput reports a switch that's already on when Hyprland starts,
+    -- which turns it on.
+    local auto = "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled "
     if M.tabletSwitch then
-        local auto = "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled "
         local hide = "busctl --user call sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0 SetVisible b false"
         hl.bind("switch:on:" .. M.tabletSwitch,  hl.dsp.exec_cmd(auto .. "true"),                    { locked = true })
         hl.bind("switch:off:" .. M.tabletSwitch, hl.dsp.exec_cmd(auto .. "false; " .. hide), { locked = true })
-        hl.on("hyprland.start", function()
-            hl.exec_cmd(auto .. "false")
-        end)
     end
+    hl.on("hyprland.start", function()
+        hl.exec_cmd(auto .. (M.tabletSwitch and "false" or "true"))
+    end)
 end
 
 local function json(on)

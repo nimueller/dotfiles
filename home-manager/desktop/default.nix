@@ -22,11 +22,9 @@ in
     "com/github/stunkymonkey/nautilus-open-any-terminal" = {
       terminal = "kitty";
     };
-    # The on-screen keyboard (squeekboard, touch mode: config/hypr/modes.lua)
-    # shows by itself for text fields; without the touch mode it doesn't run
-    "org/gnome/desktop/a11y/applications" = {
-      screen-keyboard-enabled = true;
-    };
+    # Not the on-screen keyboard's screen-keyboard-enabled: the touch mode
+    # sets it, by the tablet mode switch (config/hypr/modes.lua), and a value
+    # here would turn it on again with every switch, also in laptop mode
   };
 
   services.kdeconnect.enable = true;
