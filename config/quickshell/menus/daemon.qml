@@ -13,8 +13,9 @@ import Quickshell.Io
 // its popups and center (replaces dunst), the OSD for the volume and
 // brightness keys (replaces SwayOSD), the stay-awake inhibitor, the
 // camera/microphone/screen-sharing watch, the KDE Connect phones, the
-// fixed folders in Files' sidebar and the warnings about a full memory, an
-// overloaded CPU, a full disk or a low battery. The bar menus and the
+// Bluetooth pairing agent, the fixed folders in Files' sidebar and the
+// warnings about a full memory, an overloaded CPU, a full disk or a low
+// battery. The bar menus and the
 // windows opened from them live here too, created only while open
 // (Menus.qml).
 //
@@ -78,6 +79,9 @@ ShellRoot {
         id: privacyApps
         privacy: privacyStatus
     }
+
+    // The Bluetooth pairing agent (bluetooth-agent.py), all the time
+    readonly property var bluetoothAgent: BluetoothAgent
 
     // KDE Connect phones for the bar (kdeconnect.py)
     PhoneStatus {
