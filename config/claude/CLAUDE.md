@@ -35,3 +35,25 @@ sections:
 - **Testing:** How was the change verified, and with what result?
 - **Possible issues / TODOs:** Risks, side effects, open points or follow-up
   work. Only include this section if there are any.
+
+## No private data in commits and pull requests
+
+Commits, commit messages, code, comments, PR and issue titles and
+descriptions can be public (the dotfiles repository is). Never put into them:
+
+- **Secrets:** tokens, passwords, API keys, private keys, cookies, recovery
+  codes.
+- **Identifiers of my devices, networks and accounts:** MAC and Bluetooth
+  addresses, serial numbers, machine IDs and UUIDs, IP addresses and host
+  names of my network, Wi-Fi names, device names that contain my name,
+  email addresses and user names (except the Git author).
+- **Personal data** of mine or of others: names, addresses, phone numbers,
+  calendar or contact entries.
+
+Logs and command output often contain such values: quote them shortened, or
+with placeholders like `<headphones>` or `AA:BB:CC:DD:EE:FF`, and describe a
+device by its type ("the headphones") instead of its name. Before every
+commit, push and `gh pr create`/`gh pr edit`, check the diff, the commit
+messages and the description for it. If something has already been pushed or
+published, tell me instead of rewriting history or force-pushing yourself;
+an edited PR description keeps the old version in its edit history.
