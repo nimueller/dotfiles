@@ -14,7 +14,8 @@
 #    lets in only SSH, Samba, KDE Connect, Sunshine, mDNS and DHCPv6
 # 6. Docker: container ports published on this machine only, by default
 # 7. Bluetooth: bluetoothd for the Bluetooth menu, where there's an adapter,
-#    and an address for controllers that come without one
+#    pairing without an agent, and an address for controllers that come
+#    without one
 # 8. power profiles: power-profiles-daemon for the battery menu, on laptops,
 #    and a CPU cap in power saver where it has no CPU driver (Snapdragon)
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
@@ -179,6 +180,19 @@ elif systemctl is-enabled --quiet bluetooth.service 2>/dev/null; then
     echo "Bluetooth already starts at boot"
 elif ask "Start Bluetooth now and at every boot (bluetooth.service, for the Bluetooth menu)?"; then
     sudo systemctl enable --now bluetooth.service
+fi
+# The Bluetooth menu pairs without an agent. Without one, BlueZ leaves the
+# controller non-bondable: a pairing then stores no key, and the device goes
+# again shortly after the menu stops searching
+if [ -n "$(ls -A /sys/class/bluetooth 2>/dev/null)" ] && [ -f /etc/bluetooth/main.conf ]; then
+    if grep -q '^AlwaysPairable *= *true' /etc/bluetooth/main.conf; then
+        echo "Bluetooth already pairs without an agent"
+    elif ask "Let BlueZ pair without an agent (AlwaysPairable in /etc/bluetooth/main.conf, for the Bluetooth menu)?"; then
+        sudo sed -i -E 's/^#?AlwaysPairable *=.*/AlwaysPairable = true/' /etc/bluetooth/main.conf
+        grep -q '^AlwaysPairable = true' /etc/bluetooth/main.conf ||
+            sudo sed -i 's/^\[General\]$/[General]\nAlwaysPairable = true/' /etc/bluetooth/main.conf
+        sudo systemctl try-restart bluetooth.service
+    fi
 fi
 # A controller without an address of its own (Qualcomm WCN399x on Snapdragon
 # laptops) stays unconfigured, and BlueZ doesn't

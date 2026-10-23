@@ -10,7 +10,7 @@ import Quickshell.Bluetooth
 // battery) and, while the menu is open, the devices nearby to pair with.
 // There's no pairing agent here, so devices that show or ask for a code
 // (keyboards) pair in Blueman, the gear; headphones, mice and speakers
-// pair right here.
+// pair right here, which needs BlueZ's AlwaysPairable (system/setup.sh).
 Popup {
     id: popup
 
@@ -40,6 +40,10 @@ Popup {
         errors = mark(errors, d.address, "");
         if (!d.paired && !d.bonded) {
             trying = mark(trying, d.address, "pair");
+            // Trusted before pairing: headphones connect their audio
+            // themselves right after, and without an agent BlueZ turns away
+            // an untrusted device
+            d.trusted = true;
             d.pair();
         } else if (d.connected) {
             d.disconnect();
