@@ -197,7 +197,7 @@ Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell li
 
 ## Maintenance
 
-- Apply changes to the Nix side with `home-manager switch --flake ~/dotfiles#desktop` (or `#headless`); this also
+- Apply changes to the Nix side with `home-manager switch --flake ~/dotfiles#desktop` (or `#headless`; on ARM `#desktop_aarch64` or `#headless_aarch64`); this also
   installs and removes the declared Flatpaks.
 - `pkg-sync` compares the installed packages and Flatpaks with the lists: what's installed but not declared, and the
   other way round. `pkg-sync adopt` adds packages to the lists, `pkg-sync prune` uninstalls them, `pkg-sync install`
