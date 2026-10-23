@@ -41,6 +41,9 @@
 
     file.".p10k.zsh".source =
       config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/zsh/p10k.zsh";
+    # Claude Code's instructions for every project
+    file.".claude/CLAUDE.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/claude/CLAUDE.md";
   };
 
   programs = {
