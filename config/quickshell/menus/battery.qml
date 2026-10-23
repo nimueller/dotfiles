@@ -7,8 +7,9 @@ import Quickshell.Io
 import Quickshell.Services.UPower
 
 // Battery menu for the bar's battery module (laptops): the charge, how long
-// it lasts or until it's full, the power it draws and its health, how
-// long it has run since unplugged with an estimate at that pace, the
+// it lasts or until it's full (and at what time), the power it draws and
+// its health, how long it has run since unplugged with an estimate at that
+// pace or since plugged in with the pace of charging, the
 // power profile (power-profiles-daemon, which system/setup.sh starts) and
 // the batteries of other devices (mouse, headset, ...). The button in the
 // title opens the history (battery-history.qml).
@@ -37,49 +38,78 @@ Popup {
         return h ? `${h} h ${m} min` : `${m} min`;
     }
 
+    function clock(seconds) {
+        return Qt.formatTime(new Date(Date.now() + seconds * 1000), "HH:mm");
+    }
+
+    // Until full: from the pace while charging when there's enough of it,
+    // else UPower's timeToFull (charge left / charging power now)
+    readonly property real toFull: stats?.toFull || (charging ? battery.timeToFull : 0)
+
     readonly property string summary: {
         if (full)
             return "Fully charged";
         if (charging)
-            return battery.timeToFull > 0 ? `Full in ${duration(battery.timeToFull)}` : "Charging";
+            return toFull > 0 ? `Full at ${clock(toFull)} · in ${duration(toFull)}` : "Charging";
         if (batteryState === UPowerDeviceState.Discharging)
             return battery.timeToEmpty > 0 ? `${duration(battery.timeToEmpty)} left` : "On battery";
         return UPower.onBattery ? "On battery" : "Plugged in, not charging";
     }
 
-    // Since unplugged: UPower's charge history (one entry per percent, kept
-    // across reboots) back to the last time it charged. The pace leaves out
-    // gaps over 30 minutes (suspend), so it is percent per hour awake; unlike
-    // timeToEmpty (UPower: energy now / power draw right now) it doesn't
-    // jump with every load spike.
+    // Since unplugged or plugged in: UPower's charge history (one entry per
+    // percent, kept across reboots) back to the last change between charging
+    // and discharging. The pace leaves out gaps over 30 minutes (suspend), so
+    // on battery it is percent per hour awake; unlike timeToEmpty (UPower:
+    // energy now / power draw right now) it doesn't jump with every load
+    // spike.
     readonly property var cell: UPower.devices.values.find(d => d.isLaptopBattery) ?? null
     readonly property bool discharging: batteryState === UPowerDeviceState.Discharging
     property var history: [] // [[time, percent, state]], newest first
     readonly property var stats: {
         const gap = 1800, now = Date.now() / 1000;
+        const state = discharging ? UPowerDeviceState.Discharging : charging ? UPowerDeviceState.Charging : -1;
         let i = 0;
-        while (i < history.length && (history[i][2] === UPowerDeviceState.Discharging || history[i][2] === UPowerDeviceState.Unknown))
+        while (i < history.length && (history[i][2] === state || history[i][2] === UPowerDeviceState.Unknown))
             i++;
-        const run = history.slice(0, i).filter(e => e[2] === UPowerDeviceState.Discharging);
-        if (!discharging || !run.length)
+        const run = history.slice(0, i).filter(e => e[2] === state);
+        if (state < 0 || !run.length)
             return null;
+        // Percent used (on battery) or gained (charging) in the time awake;
+        // while charging only the last 15 minutes, as the pace changes with
+        // the charge
+        const sign = discharging ? 1 : -1;
         let awake = now - run[0][0] <= gap ? now - run[0][0] : 0;
-        let used = awake ? run[0][1] - percent : 0;
-        for (let j = 1; j < run.length; j++) {
+        let moved = awake ? sign * (run[0][1] - percent) : 0;
+        for (let j = 1; j < run.length && (discharging || now - run[j][0] <= 900); j++) {
             const dt = run[j - 1][0] - run[j][0];
             if (dt <= gap) {
                 awake += dt;
-                used += run[j][1] - run[j - 1][1];
+                moved += sign * (run[j][1] - run[j - 1][1]);
             }
         }
-        const pace = awake >= 600 && used >= 2 ? used / awake : 0; // percent per second
+        const pace = awake >= (discharging ? 600 : 300) && moved >= 2 ? moved / awake : 0; // percent per second
         return {
             since: now - run[run.length - 1][0],
-            used: run[run.length - 1][1] - percent,
+            moved: sign * (run[run.length - 1][1] - percent),
             pace: pace,
-            left: pace ? percent / pace : 0,
-            total: pace ? 100 / pace : 0
+            left: discharging && pace ? percent / pace : 0,
+            total: discharging && pace ? 100 / pace : 0,
+            toFull: !discharging && pace ? untilFull(pace) : 0
         };
+    }
+
+    // Charging slows down towards full (measured on this Surface Pro X:
+    // 80-90 % at about 0.6 and 90-100 % at about 0.27 of the pace below 80 %),
+    // so add up the time percent by percent from the pace now
+    function chargeFactor(p) {
+        return p < 80 ? 1 : p < 90 ? 0.6 : 0.27;
+    }
+    function untilFull(pace) {
+        const base = pace / chargeFactor(percent);
+        let seconds = 0;
+        for (let p = Math.floor(percent); p < 100; p++)
+            seconds += 1 / (base * chargeFactor(p));
+        return seconds;
     }
 
     function loadHistory() {
@@ -190,14 +220,14 @@ Popup {
         }
     }
 
-    // Since unplugged
+    // Since unplugged / plugged in
     ColumnLayout {
         Layout.fillWidth: true
         visible: !!popup.stats
         spacing: 6
 
         SectionTitle {
-            text: "Since unplugged"
+            text: popup.discharging ? "Since unplugged" : "Since plugged in"
         }
 
         Repeater {
@@ -205,7 +235,14 @@ Popup {
                 const s = popup.stats;
                 if (!s)
                     return [];
-                const rows = [["On battery", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.used))}% used`]];
+                if (!popup.discharging) {
+                    const rows = [["Charging", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% gained`]];
+                    if (!s.pace)
+                        return rows.concat([["Full at", popup.toFull > 0 ? `${popup.clock(popup.toFull)} (UPower)` : "Not enough data yet"]]);
+                    // Full is in the summary; 80 % comes sooner, as charging slows down after it
+                    return rows.concat([["Pace", `${(s.pace * 3600).toFixed(0)}% per hour`]]).concat(popup.percent < 80 ? [["80% at", `about ${popup.clock((80 - popup.percent) / s.pace)}`]] : []);
+                }
+                const rows = [["On battery", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% used`]];
                 if (!s.pace)
                     return rows.concat([["At this pace", "Not enough data yet"]]);
                 return rows.concat([
