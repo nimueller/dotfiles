@@ -152,8 +152,22 @@ Singleton {
             Quickshell.execDetached(["pw-metadata", String(stream.id), "target.object", node.name]);
     }
 
+    // When the shell itself last changed a volume or mute (bar, menus, OSD
+    // keys), so the OSD can tell those apart from changes made by Bluetooth
+    // headphones
+    property real localChange: 0
+
     function setVolume(node, v) {
-        if (node?.audio)
-            node.audio.volume = Math.max(0, Math.min(1, v));
+        if (!node?.audio)
+            return;
+        localChange = Date.now();
+        node.audio.volume = Math.max(0, Math.min(1, v));
+    }
+
+    function setMuted(node, muted) {
+        if (!node?.audio)
+            return;
+        localChange = Date.now();
+        node.audio.muted = muted;
     }
 }

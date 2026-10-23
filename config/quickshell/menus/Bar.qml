@@ -222,13 +222,12 @@ PanelWindow {
                 if (button === Qt.RightButton)
                     Quickshell.execDetached(["pavucontrol"]);
                 else if (button === Qt.MiddleButton)
-                    sink.audio.muted = !muted;
+                    Audio.setMuted(sink, !muted);
                 else
                     bar.menu("audio");
             }
             onScrolled: steps => {
-                if (sink?.audio)
-                    sink.audio.volume = Math.max(0, Math.min(1, Math.round((volume + steps * 0.02) * 100) / 100));
+                Audio.setVolume(sink, Math.round((volume + steps * 0.02) * 100) / 100);
             }
 
             PwObjectTracker {

@@ -10,7 +10,9 @@ import Quickshell.Wayland
 // Caps Lock / Num Lock (replaces SwayOSD), part of daemon.qml. The keys send
 // Hyprland events (see keybinds.lua) that daemon.qml passes to volume(),
 // toggleMute(), toggleMic(), brightness() and lockKey(); StayAwake.qml calls
-// awake(), Privacy.qml privacy(). Shown above the bar on the focused monitor.
+// awake(), Privacy.qml privacy(). Bluetooth headphones' own volume buttons
+// show it too (deviceChange() below). Shown above the bar on the focused
+// monitor.
 Scope {
     id: root
 
@@ -56,8 +58,8 @@ Scope {
         if (!audio)
             return;
         const next = Math.max(0, Math.min(1, Math.round(audio.volume * 100 + step) / 100));
-        audio.muted = false;
-        audio.volume = next;
+        Audio.setMuted(sink, false);
+        Audio.setVolume(sink, next);
         show("volume", next, false);
     }
 
@@ -65,7 +67,7 @@ Scope {
         const audio = sink?.audio;
         if (!audio)
             return;
-        audio.muted = !audio.muted;
+        Audio.setMuted(sink, !audio.muted);
         show("volume", audio.volume, audio.muted);
     }
 
@@ -145,6 +147,31 @@ Scope {
 
     PwObjectTracker {
         objects: [root.sink, root.source]
+    }
+
+    // Bluetooth headphones with AVRCP absolute volume change it themselves:
+    // no key event reaches Hyprland, only the sink's volume changes. Show
+    // those changes, but not the shell's own (Audio.localChange: bar, menus,
+    // the keys above) nor the first ones of a sink that just connected or
+    // became the default.
+    readonly property bool bluetooth: sink?.name?.startsWith("bluez_output.") ?? false
+    readonly property real sinkVolume: sink?.audio?.volume ?? 0
+    readonly property bool sinkMuted: sink?.audio?.muted ?? false
+
+    onSinkChanged: settling.restart()
+    onSinkVolumeChanged: deviceChange()
+    onSinkMutedChanged: deviceChange()
+
+    function deviceChange() {
+        if (!bluetooth || !sink.ready || settling.running || Date.now() - Audio.localChange < 500)
+            return;
+        show("volume", sinkVolume, sinkMuted);
+    }
+
+    Timer {
+        id: settling
+        interval: 1500
+        running: true
     }
 
     Ddc {
