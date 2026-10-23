@@ -14,8 +14,11 @@ import Quickshell.Io
 // brightness keys (replaces SwayOSD), the stay-awake inhibitor, the
 // camera/microphone/screen-sharing watch, the KDE Connect phones, the
 // fixed folders in Files' sidebar and the warnings about a full memory, an
-// overloaded CPU, a full disk or a low battery.
+// overloaded CPU, a full disk or a low battery. The bar menus and the
+// windows opened from them live here too, created only while open
+// (Menus.qml).
 //
+//   toggle.sh audio|battery|...        open/close a menu (Menus.names)
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
 //   toggle.sh notifications            open/close the notification center
@@ -29,6 +32,8 @@ ShellRoot {
     // the tray made the next exit hang. Apply changes with
     // `toggle.sh daemon --restart`.
     settings.watchFiles: false
+
+    Component.onCompleted: Menus.hosted = true
 
     NotificationStore {
         id: notificationStore
@@ -140,6 +145,14 @@ ShellRoot {
             privacy: privacyStatus
             privacyPanel: privacyApps
             phones: phoneStatus
+        }
+    }
+
+    IpcHandler {
+        target: "menus"
+
+        function toggle(name: string): void {
+            Menus.toggle(name);
         }
     }
 

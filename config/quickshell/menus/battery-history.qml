@@ -147,20 +147,20 @@ ShellRoot {
         implicitHeight: 720
         color: Theme.base
         onVisibleChanged: if (!visible)
-            Qt.quit()
+            Menus.close("battery-history")
 
         WindowClose {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: 10
             z: 1
-            onClicked: Qt.quit()
+            onClicked: Menus.close("battery-history")
         }
 
         Item {
             anchors.fill: parent
             focus: true
-            Keys.onEscapePressed: Qt.quit()
+            Keys.onEscapePressed: Menus.close("battery-history")
         }
 
         Flickable {

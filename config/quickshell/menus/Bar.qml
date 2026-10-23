@@ -33,8 +33,13 @@ PanelWindow {
     readonly property var monitor: Hyprland.monitorFor(screen)
     readonly property bool compact: Modes.compactBar(screen)
 
+    // The menus right here in the daemon (Menus.qml), the launcher through
+    // toggle.sh
     function menu(name) {
-        Quickshell.execDetached([toggle, name]);
+        if (Menus.names.includes(name))
+            Menus.toggle(name);
+        else
+            Quickshell.execDetached([toggle, name]);
     }
 
     anchors {

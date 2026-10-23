@@ -254,7 +254,7 @@ Popup {
             glyph: Theme.glyph(0xf0493) // 󰒓
             onClicked: {
                 Quickshell.execDetached(["nm-connection-editor"]);
-                Qt.quit();
+                popup.close();
             }
         }
     }

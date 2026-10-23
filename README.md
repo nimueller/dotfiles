@@ -30,7 +30,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 ## The Quickshell desktop
 
 One resident Quickshell process holds the bar on every monitor, the launcher, the clipboard history, the notification
-daemon and the on-screen display, so they open instantly. The bigger menus are started on demand and quit when they close.
+daemon, the on-screen display and the menus, so they open instantly. The menus are only created while they're open.
 
 | | |
 |:---:|:---:|
@@ -190,8 +190,9 @@ Good to know:
 | `config` | The configuration files themselves: Hyprland, Quickshell, kitty, Neovim, Zsh, Sunshine |
 
 The files in `config` are linked into `~/.config` with `mkOutOfStoreSymlink`, so `~/.config/<app>` points straight at
-`~/dotfiles/config/<app>`: edits take effect without rebuilding. The Quickshell daemon is the one exception; restart it
-with `~/.config/quickshell/menus/toggle.sh daemon --restart`.
+`~/dotfiles/config/<app>`: edits take effect without rebuilding. The Quickshell daemon, with the menus, is the one
+exception; restart it with `~/.config/quickshell/menus/toggle.sh daemon --restart`, or try a menu on its own with
+`qs -p ~/.config/quickshell/menus/<menu>.qml`.
 
 Hyprland's config starts at `config/hypr/hyprland.lua`, and the desktop shell lives in `config/quickshell/menus`.
 

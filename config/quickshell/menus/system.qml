@@ -33,12 +33,11 @@ Popup {
     property var gpu: null // { name, load, memUsed, memTotal, temp }
     property var backlight: null // { percent } of the built-in screen (backlight.sh), null without one
 
-    readonly property string toggle: Quickshell.shellPath("toggle.sh")
     readonly property var adapter: Bluetooth.defaultAdapter
     property bool bluetoothHardware: false
 
     function open(menu) {
-        Quickshell.execDetached([toggle, menu]);
+        Menus.toggle(menu);
         close();
     }
 

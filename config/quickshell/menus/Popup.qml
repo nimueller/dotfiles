@@ -7,9 +7,9 @@ import Quickshell.Wayland
 // Card above the right end of the bar (its centre for the clock, its left end
 // for the system menu), shared
 // by the bar menus. Closes on Escape or a click outside; `toggle.sh <name>`
-// opens and closes it. Menus are short-lived instances that quit on close,
-// unless `resident` (inside daemon.qml): then they only hide, and toggle()
-// shows them again.
+// opens and closes it. Menus are created when they open and destroyed on
+// close (Menus.qml), unless `resident` (the launcher, the clipboard, the
+// notification center): then they only hide, and toggle() shows them again.
 PanelWindow {
     id: root
 
@@ -28,15 +28,12 @@ PanelWindow {
             closedAt = Date.now();
             return;
         }
-        // Clicking the bar icon clears the grab before the bar runs toggle.sh;
-        // the stamp tells toggle.sh not to reopen the menu right away.
-        Quickshell.execDetached(["touch", `${Quickshell.env("XDG_RUNTIME_DIR")}/qs-${name}-closed`]);
-        // Let go of the keyboard focus and the window before quitting: tearing
-        // down a still focused item crashed in Qt's input method now and then
-        // (QInputMethod::commit while the items were deleted)
+        // Let go of the keyboard focus and the window before it's destroyed:
+        // tearing down a still focused item crashed in Qt's input method now
+        // and then (QInputMethod::commit while the items were deleted)
         card.focus = false;
         shown = false;
-        Qt.callLater(Qt.quit);
+        Menus.close(name);
     }
 
     // Resident menus: a click on the bar icon first closes the menu through

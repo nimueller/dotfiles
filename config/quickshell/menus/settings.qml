@@ -367,7 +367,7 @@ ShellRoot {
     function quit() {
         if (scrollTried)
             Quickshell.execDetached(["hyprctl", "reload"]);
-        Qt.quit();
+        Menus.close("settings");
     }
 
     // Window ---------------------------------------------------------------------

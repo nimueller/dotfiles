@@ -153,7 +153,7 @@ Popup {
         IconButton {
             glyph: Theme.glyph(0xf0128) // 󰄨
             onClicked: {
-                Quickshell.execDetached([Quickshell.shellPath("toggle.sh"), "battery-history"]);
+                Menus.toggle("battery-history");
                 popup.close();
             }
         }

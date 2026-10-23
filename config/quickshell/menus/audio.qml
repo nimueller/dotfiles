@@ -7,11 +7,16 @@ import Quickshell.Services.Pipewire
 
 // Sound menu for the bar's sound module
 Popup {
+    id: popup
+
     name: "audio"
 
     PwObjectTracker {
         objects: Audio.all
     }
+
+    // The PIDs of windows opened since the last refresh, for the apps' names
+    Component.onCompleted: Windows.refresh()
 
     Header {
         glyph: Theme.glyph(0xf057e) // 󰕾
@@ -23,7 +28,7 @@ Popup {
             glyph: Theme.glyph(0xf0493) // 󰒓
             onClicked: {
                 Quickshell.execDetached(["pavucontrol"]);
-                Qt.quit();
+                popup.close();
             }
         }
     }

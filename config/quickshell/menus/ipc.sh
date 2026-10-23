@@ -3,6 +3,7 @@
 # it isn't running.
 #   ipc.sh notifications toggle|dnd|clear
 #   ipc.sh launcher|clipboard toggle
+#   ipc.sh menus toggle <menu>         (toggle.sh <menu>)
 daemon=$(dirname "$(readlink -f "$0")")/daemon.qml
 qs ipc -p "$daemon" call "$@" >/dev/null 2>&1 && exit 0
 qs -p "$daemon" -n -d >/dev/null 2>&1
