@@ -1,8 +1,8 @@
 [Added Associations]
 application/x-zerosize=nvim.desktop;
 application/vnd.openxmlformats-officedocument.wordprocessingml.document=org.libreoffice.LibreOffice.writer.desktop;
-x-scheme-handler/mailto=userapp-Thunderbird-PBX0P3.desktop;
-x-scheme-handler/mid=userapp-Thunderbird-PBX0P3.desktop;
+x-scheme-handler/mailto=userapp-Thunderbird-XGAKX3.desktop;userapp-Thunderbird-PBX0P3.desktop;
+x-scheme-handler/mid=userapp-Thunderbird-XGAKX3.desktop;userapp-Thunderbird-PBX0P3.desktop;
 x-scheme-handler/news=userapp-Thunderbird-1BNUP3.desktop;
 x-scheme-handler/snews=userapp-Thunderbird-1BNUP3.desktop;
 x-scheme-handler/nntp=userapp-Thunderbird-1BNUP3.desktop;
@@ -22,8 +22,9 @@ application/xhtml+xml=com.brave.Browser.desktop;brave-browser.desktop;app.zen_br
 application/x-extension-xhtml=com.brave.Browser.desktop;brave-browser.desktop;app.zen_browser.zen.desktop;
 application/x-extension-xht=com.brave.Browser.desktop;brave-browser.desktop;app.zen_browser.zen.desktop;
 application/json=nvim.desktop;
-x-scheme-handler/net.thunderbird=userapp-Thunderbird-CYRLS3.desktop;
+x-scheme-handler/net.thunderbird=userapp-Thunderbird-NN0JX3.desktop;userapp-Thunderbird-CYRLS3.desktop;
 application/pdf=ai.storyteller.pdfcraft.desktop;
+message/rfc822=userapp-Thunderbird-XGAKX3.desktop;
 
 [Default Applications]
 application/pdf=ai.storyteller.pdfcraft.desktop
@@ -46,9 +47,9 @@ modrinth=modrinth-app-handler.desktop
 x-scheme-handler/discord=discord.desktop
 application/x-zerosize=nvim.desktop
 x-scheme-handler/discord-455712169795780630=discord-455712169795780630.desktop
-x-scheme-handler/mailto=userapp-Thunderbird-PBX0P3.desktop
-message/rfc822=userapp-Thunderbird-PBX0P3.desktop
-x-scheme-handler/mid=userapp-Thunderbird-PBX0P3.desktop
+x-scheme-handler/mailto=userapp-Thunderbird-XGAKX3.desktop
+message/rfc822=userapp-Thunderbird-XGAKX3.desktop
+x-scheme-handler/mid=userapp-Thunderbird-XGAKX3.desktop
 x-scheme-handler/news=userapp-Thunderbird-1BNUP3.desktop
 x-scheme-handler/snews=userapp-Thunderbird-1BNUP3.desktop
 x-scheme-handler/nntp=userapp-Thunderbird-1BNUP3.desktop
@@ -68,7 +69,7 @@ application/x-extension-xhtml=com.brave.Browser.desktop
 application/x-extension-xht=com.brave.Browser.desktop
 application/json=nvim.desktop
 x-scheme-handler/jetbrains=jetbrainsd.desktop
-x-scheme-handler/net.thunderbird=userapp-Thunderbird-CYRLS3.desktop
+x-scheme-handler/net.thunderbird=userapp-Thunderbird-NN0JX3.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 
 [Removed Associations]
