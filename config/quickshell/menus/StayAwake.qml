@@ -85,10 +85,12 @@ Scope {
         }
     }
 
-    // Sunshine's state, after a restart of the daemon
+    // Sunshine's state, after a restart of the daemon. Without a pid file
+    // there is nothing to check: sh (bash in POSIX mode) takes `kill -0 ""`
+    // as success
     Process {
         running: true
-        command: ["sh", "-c", 'kill -0 "$(cat "$XDG_RUNTIME_DIR/stay-awake-sunshine.pid" 2>/dev/null)" 2>/dev/null']
+        command: ["sh", "-c", 'pid=$(cat "$XDG_RUNTIME_DIR/stay-awake-sunshine.pid" 2>/dev/null) && [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null']
         onExited: code => root.sunshine = code === 0
     }
 
