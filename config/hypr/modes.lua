@@ -17,13 +17,22 @@
 --   Where the hyprgrass plugin is installed (touch screen gestures; not in
 --   the Arch repos, built by hand), three-finger swipes switch workspaces
 --   as on the touchpad.
-local M = { forced = {}, laptop = false, touch = false, detected = {} }
+local M = { forced = {}, laptop = false, touch = false, detected = {}, touchpadOptions = {} }
 
 -- Forced modes, from local.lua: { laptop = true|false, touch = true|false };
 -- a mode that isn't named is detected
 function M.set(modes)
     for name, on in pairs(modes) do
         M.forced[name] = on
+    end
+end
+
+-- Touchpad options from local.lua (Machine Settings), e.g.
+-- { clickfinger_behavior = false }: applied after the modes, so they win
+-- over laptop mode's and general.lua's, with or without laptop mode
+function M.touchpad(options)
+    for name, value in pairs(options) do
+        M.touchpadOptions[name] = value
     end
 end
 
@@ -204,6 +213,10 @@ function M.apply()
 
     if M.laptop then laptop() end
     if M.touch then touch() end
+    if next(M.touchpadOptions) then
+        hl.config({ input = { touchpad = M.touchpadOptions } })
+    end
+    M.touchpadOptions = {}
 
     local runtime = os.getenv("XDG_RUNTIME_DIR")
     local f = runtime and io.open(runtime .. "/dotfiles-modes.json", "w")
