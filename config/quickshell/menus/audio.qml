@@ -10,7 +10,7 @@ Popup {
     name: "audio"
 
     PwObjectTracker {
-        objects: [...Audio.sinks, ...Audio.sources, ...Audio.streams]
+        objects: Audio.all
     }
 
     Header {

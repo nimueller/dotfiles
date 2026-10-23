@@ -12,6 +12,12 @@ Singleton {
     readonly property var streams: visible().filter(n => n.isStream && n.isSink)
     readonly property var recordings: visible().filter(n => n.isStream && !n.isSink)
 
+    // Every audio node, hidden or not, for the menu's PwObjectTracker. A node's
+    // properties (and so `dotfiles.hidden`) only arrive once it is bound; were
+    // only the visible ones tracked, a hidden node would drop out as soon as
+    // it was bound, lose its properties, show up again, get bound again, ...
+    readonly property var all: Pipewire.nodes.values.filter(n => n.audio)
+
     function devices(sink) {
         return visible().filter(n => !n.isStream && n.isSink === sink);
     }
