@@ -455,8 +455,26 @@ Popup {
                     Quickshell.execDetached(["sh", "-c", `
                         f=$(zenity --file-selection --title="Import VPN configuration" \\
                             --file-filter="VPN configuration | *.ovpn *.conf" --file-filter="All files | *") || exit 0
-                        case $f in *.conf) type=wireguard ;; *) type=openvpn ;; esac
-                        if out=$(nmcli connection import type "$type" file "$f" 2>&1); then
+                        case $f in
+                            *.conf)
+                                # WireGuard names the interface after the file, at most
+                                # 15 characters, so import a copy under a valid name and
+                                # rename the connection afterwards.
+                                type=wireguard
+                                name=$(basename "$f" .conf)
+                                ifname=$(printf %s "$name" | tr -c 'A-Za-z0-9_-' _ | cut -c1-15)
+                                [ -n "$ifname" ] || ifname=wg0
+                                dir=$(mktemp -d)
+                                trap 'rm -rf "$dir"' EXIT
+                                src=$dir/$ifname.conf
+                                cp "$f" "$src" ;;
+                            *) type=openvpn src=$f ;;
+                        esac
+                        if out=$(nmcli connection import type "$type" file "$src" 2>&1); then
+                            uuid=$(printf %s "$out" | grep -oE '[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}')
+                            if [ "$type" = wireguard ] && [ -n "$uuid" ] && [ "$name" != "$ifname" ]; then
+                                nmcli connection modify "$uuid" connection.id "$name"
+                            fi
                             notify-send -a Network "VPN imported" "$out"
                         else
                             notify-send -u critical -a Network "VPN import failed" "$out"
