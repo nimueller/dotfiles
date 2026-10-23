@@ -8,13 +8,15 @@ import Quickshell.Bluetooth
 // Bluetooth menu for the bar's Bluetooth module, on top of BlueZ: switch it
 // on and off, the paired devices (connect, disconnect, forget, their
 // battery) and, while the menu is open, the devices nearby to pair with.
-// There's no pairing agent here, so devices that show or ask for a code
-// (keyboards) pair in Blueman, the gear; headphones, mice and speakers
-// pair right here, which needs BlueZ's AlwaysPairable (system/setup.sh).
+// The pairing agent's questions (codes to compare or type, devices that
+// want to pair or connect) show on top; one opens the menu (BluetoothAgent).
 Popup {
     id: popup
 
     name: "bluetooth"
+
+    // Ours is the agent BlueZ asks, even after Blueman (the gear) took over
+    Component.onCompleted: BluetoothAgent.makeDefault()
 
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool on: adapter?.enabled ?? false
@@ -41,8 +43,8 @@ Popup {
         if (!d.paired && !d.bonded) {
             trying = mark(trying, d.address, "pair");
             // Trusted before pairing: headphones connect their audio
-            // themselves right after, and without an agent BlueZ turns away
-            // an untrusted device
+            // themselves right after, and BlueZ lets a trusted device in
+            // without asking
             d.trusted = true;
             d.pair();
         } else if (d.connected) {
@@ -94,7 +96,7 @@ Popup {
                     const d = watch.modelData;
                     if (!d.paired && !d.bonded && !d.pairing && popup.trying[d.address] === "pair") {
                         popup.trying = popup.mark(popup.trying, d.address, "");
-                        popup.errors = popup.mark(popup.errors, d.address, "Pairing didn't work. Devices that show or ask for a code (keyboards) pair in Blueman, the gear.");
+                        popup.errors = popup.mark(popup.errors, d.address, "Pairing didn't work. Is it still in pairing mode?");
                     }
                 }
             }
@@ -128,6 +130,17 @@ Popup {
                 Quickshell.execDetached(["blueman-manager"]);
                 popup.close();
             }
+        }
+    }
+
+    Repeater {
+        model: BluetoothAgent.requests
+
+        delegate: BluetoothRequest {
+            required property var modelData
+
+            Layout.fillWidth: true
+            request: modelData
         }
     }
 
