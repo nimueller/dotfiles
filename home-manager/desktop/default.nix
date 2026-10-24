@@ -211,6 +211,7 @@ in
     playerctl
     hyprpicker
     grim # screenshots (config/quickshell/menus/screenshot.sh)
+    qrencode # Wi-Fi QR codes (config/quickshell/menus/network.qml)
     imagemagick
     libnotify
     libsecret
