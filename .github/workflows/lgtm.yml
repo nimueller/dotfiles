@@ -1,0 +1,40 @@
+name: lgtm
+on:
+  issue_comment:
+    types: [created]
+
+# A comment that says exactly "@claude lgtm" on a pull request, written by the
+# repository's owner, rebases it onto main, merges it and deletes its branch.
+# No Claude involved: claude.yml skips these comments. Anything after "lgtm"
+# doesn't merge, so "@claude lgtm, but ..." can't merge by accident.
+#
+# Like updater.yml, it needs "Read and write permissions" for workflows in the
+# repository settings (Actions > General > Workflow permissions).
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    if: |
+      github.event.issue.pull_request &&
+      github.event.comment.author_association == 'OWNER' &&
+      startsWith(github.event.comment.body, '@claude lgtm')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR: ${{ github.event.issue.number }}
+      COMMENT_ID: ${{ github.event.comment.id }}
+      BODY: ${{ github.event.comment.body }}
+    steps:
+      - name: 🚀 Rebase, merge and delete the branch
+        run: |
+          body=$(printf '%s' "$BODY" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          if [ "${body,,}" != "@claude lgtm" ]; then
+            # shellcheck disable=SC2016 # the backticks are Markdown
+            gh pr comment "$PR" --body 'Not merged: only a comment of exactly `@claude lgtm` merges.'
+            exit 0
+          fi
+          gh api "repos/$GH_REPO/issues/comments/$COMMENT_ID/reactions" -f content=+1 >/dev/null
+          gh pr merge "$PR" --rebase --delete-branch
