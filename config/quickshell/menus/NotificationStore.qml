@@ -17,6 +17,9 @@ import Quickshell.Wayland
 // A media player's notification about the track it plays pops up like any
 // other but stays out of the history: its sender is the process behind an
 // MPRIS player, and it names that player's current track.
+//
+// The rules from Machine Settings (LocalSettings.notificationRules) hide
+// notifications, keep them from popping up or out of the history.
 Scope {
     id: root
 
@@ -77,7 +80,16 @@ Scope {
             pid: Number(n.hints["sender-pid"] ?? 0),
             desktop: n.desktopEntry
         };
-        if (!e.transient && isTrack(e))
+        const action = LocalSettings.notificationAction(e.app, e.desktop, e.summary, e.body);
+        if (action === "hide") {
+            // Gone for the app too, as if it timed out
+            if (old)
+                remove(old.key);
+            else
+                n.expire();
+            return;
+        }
+        if (action === "popup" || (!e.transient && isTrack(e)))
             e.transient = true;
         entries = [e, ...entries.filter(x => x.key !== e.key)].slice(0, historyLength);
         // The sender's window, for the popup: it may be new, and short-lived
@@ -86,7 +98,7 @@ Scope {
         if (e.pid)
             Windows.readAncestors(e.pid);
         trackCheck.restart();
-        if (!silenced && !popups.includes(e.key))
+        if (!silenced && action !== "center" && !popups.includes(e.key))
             popups = [e.key, ...popups];
         n.closed.connect(() => {
             // The app withdrew it (or it was dismissed): drop the live object

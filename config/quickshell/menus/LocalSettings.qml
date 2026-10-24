@@ -34,6 +34,19 @@ Singleton {
         return { memory: Object.assign({}, d.memory, w?.memory), cpu: Object.assign({}, d.cpu, w?.cpu), disk };
     }
 
+    // Rules for notifications (NotificationStore.qml): { app, text, action }.
+    // app is part of the app's name or desktop entry, text part of the
+    // summary or body, both ignoring case; an empty one matches anything, a
+    // rule with neither is skipped. The first rule that matches decides:
+    // "hide" drops the notification, "center" keeps it from popping up,
+    // "popup" keeps it out of the notification center.
+    readonly property var notificationRules: (settings.notifications?.rules ?? []).filter(r => r.app?.trim() || r.text?.trim())
+
+    function notificationAction(app, desktop, summary, body) {
+        const has = (haystacks, needle) => !needle?.trim() || haystacks.some(h => (h ?? "").toLowerCase().includes(needle.trim().toLowerCase()));
+        return notificationRules.find(r => has([app, desktop], r.app) && has([summary, body], r.text))?.action ?? "";
+    }
+
     // The main monitor (notifications): the screen whose model and serial
     // number are in its description, else the one on its port, else the first
     readonly property var mainMonitor: (settings.monitors ?? []).find(m => m.main) ?? null
