@@ -146,6 +146,15 @@ def save(path, text):
     tmp.replace(path)
 
 
+def sample_time(line):
+    """The time of a sample, 0 for a broken line: after a hard power-off
+    the last append can be on disk as NUL bytes only."""
+    try:
+        return float(line.split(",", 1)[0])
+    except ValueError:
+        return 0
+
+
 def prune(apps):
     cutoff = time.time() - KEEP_DAYS * 86400
     for hour in [h for h in apps if int(h) < cutoff - 3600]:
@@ -154,7 +163,7 @@ def prune(apps):
         lines = SAMPLES.read_text().splitlines()
     except OSError:
         return
-    kept = [line for line in lines if float(line.split(",", 1)[0]) >= cutoff]
+    kept = [line for line in lines if sample_time(line) >= cutoff]
     if len(kept) < len(lines):
         save(SAMPLES, "".join(f"{line}\n" for line in kept))
 
