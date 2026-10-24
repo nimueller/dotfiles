@@ -10,6 +10,5 @@ nautilus-open-any-terminal
 pycharm-professional
 remmina-plugin-rdesktop
 sunshine
-thunderbird-gnome-theme-git
 vk-hdr-layer-kwin6-git
 yay
