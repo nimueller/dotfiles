@@ -147,6 +147,16 @@ local function laptop()
     end
 end
 
+-- Tablet mode (the switch, see touch()) for the shell
+local function tabletMode(on)
+    local runtime = os.getenv("XDG_RUNTIME_DIR")
+    local f = runtime and io.open(runtime .. "/dotfiles-tablet", "w")
+    if f then
+        f:write(on and "true\n" or "false\n")
+        f:close()
+    end
+end
+
 local HYPRGRASS = "/usr/lib/hyprgrass/libhyprgrass.so"
 
 local function touch()
@@ -190,13 +200,24 @@ local function touch()
     -- only in tablet mode: it starts off, with the keyboard attached;
     -- libinput reports a switch that's already on when Hyprland starts,
     -- which turns it on.
+    --
+    -- The shell reads the switch from $XDG_RUNTIME_DIR/dotfiles-tablet and
+    -- makes its menus bigger in tablet mode (quickshell/menus/Popup.qml).
+    -- Like the setting, it starts off and the switch turns it on.
     local auto = "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled "
     if M.tabletSwitch then
         local hide = "busctl --user call sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0 SetVisible b false"
-        hl.bind("switch:on:" .. M.tabletSwitch,  hl.dsp.exec_cmd(auto .. "true"),                    { locked = true })
-        hl.bind("switch:off:" .. M.tabletSwitch, hl.dsp.exec_cmd(auto .. "false; " .. hide), { locked = true })
+        hl.bind("switch:on:" .. M.tabletSwitch, function()
+            tabletMode(true)
+            hl.exec_cmd(auto .. "true")
+        end, { locked = true })
+        hl.bind("switch:off:" .. M.tabletSwitch, function()
+            tabletMode(false)
+            hl.exec_cmd(auto .. "false; " .. hide)
+        end, { locked = true })
     end
     hl.on("hyprland.start", function()
+        if M.tabletSwitch then tabletMode(false) end
         hl.exec_cmd(auto .. (M.tabletSwitch and "false" or "true"))
     end)
 end
