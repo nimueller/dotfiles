@@ -36,6 +36,7 @@ ShellRoot {
     property var touchpad: ({}) // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
     property var rules: [] // notification rules: { app, text, action }, see LocalSettings.qml
+    property string trackAction: "popup" // the rule for track announcements, "" for none
     property var recentApps: [] // apps in the notification history, newest first
     property int selected: 0
     property bool dirty: false
@@ -99,7 +100,7 @@ ShellRoot {
             touchpad: touchpad,
             bar: bar,
             warnings: warnings,
-            notifications: { rules: rules.filter(r => r.app.trim() || r.text.trim()) }
+            notifications: { rules: rules.filter(r => r.app.trim() || r.text.trim()), tracks: trackAction }
         };
     }
 
@@ -178,6 +179,7 @@ ShellRoot {
         touchpad = s.touchpad ?? {};
         warnings = LocalSettings.withDefaults(s.warnings);
         autostart = s.autostart;
+        trackAction = s.notifications?.tracks ?? "popup";
         rules = (s.notifications?.rules ?? []).map(r => ({ app: r.app ?? "", text: r.text ?? "", action: r.action ?? "hide" }));
         selected = Math.max(0, list.findIndex(m => m.connected));
     }
@@ -1265,6 +1267,46 @@ ShellRoot {
                         glyph: Theme.glyph(0xf0415) // 󰐕
                         text: "Add rule"
                         onClicked: root.rules = [...root.rules, { app: "", text: "", action: "hide" }]
+                    }
+
+                    // The built-in rule, after the others
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 6
+                        spacing: 14
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Label {
+                                text: "Track announcements of media players"
+                                font.bold: true
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                elide: Text.ElideNone
+                                text: "What a music player (e.g. YouTube Music) sends about the track it starts: from the player's process and naming its current track. Unless a rule above matches."
+                                font.pixelSize: 11
+                                color: Theme.subtext0
+                            }
+                        }
+                        Dropdown {
+                            Layout.preferredWidth: 190
+                            Layout.alignment: Qt.AlignTop
+                            model: [
+                                { text: "Like any other", value: "" },
+                                { text: "Hide completely", value: "hide" },
+                                { text: "Only in the center", value: "center" },
+                                { text: "Only as a popup", value: "popup" }
+                            ]
+                            current: root.trackAction
+                            onPicked: value => {
+                                root.trackAction = value;
+                                root.dirty = true;
+                            }
+                        }
                     }
 
                     // A rule for an app that notified lately, in one click

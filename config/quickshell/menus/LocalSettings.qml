@@ -42,6 +42,10 @@ Singleton {
     // "popup" keeps it out of the notification center.
     readonly property var notificationRules: (settings.notifications?.rules ?? []).filter(r => r.app?.trim() || r.text?.trim())
 
+    // The rule for media players' track announcements (NotificationStore.qml),
+    // after the others: an action as above, "" to treat them like any other
+    readonly property string trackAction: settings.notifications?.tracks ?? "popup"
+
     function notificationAction(app, desktop, summary, body) {
         const has = (haystacks, needle) => !needle?.trim() || haystacks.some(h => (h ?? "").toLowerCase().includes(needle.trim().toLowerCase()));
         return notificationRules.find(r => has([app, desktop], r.app) && has([summary, body], r.text))?.action ?? "";
