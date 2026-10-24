@@ -12,6 +12,9 @@ on:
 
 jobs:
   claude-review:
+    # Not for pushes of Claude itself ("@claude fix ..." in claude.yml): the
+    # action refuses runs started by a bot and the check would fail
+    if: github.actor != 'claude[bot]'
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
