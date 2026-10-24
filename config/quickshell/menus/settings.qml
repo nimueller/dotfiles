@@ -10,9 +10,9 @@ import Quickshell.Io
 // variables (e.g. drivers), autostart programs, the laptop and touch mode
 // (config/hypr/modes.lua: detected, or forced on or off) with the touchpad
 // (right click in the corner or with two fingers, tapping, scrolling and its
-// speed, typing), the bar and when to warn
-// about memory, the CPU and the disk (read by the shell through
-// LocalSettings.qml), written to
+// speed, typing), the bar, when to warn
+// about memory, the CPU and the disk and which notifications to hide (read
+// by the shell through LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
 // "-- BEGIN settings" and "-- END settings"; anything else in that file is
 // kept. Apply tries the displays right away and goes back unless kept
@@ -35,6 +35,8 @@ ShellRoot {
     property var modes: ({}) // laptop, touch: true | false when forced, missing when detected
     property var touchpad: ({}) // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
+    property var rules: [] // notification rules: { app, text, action }, see LocalSettings.qml
+    property var recentApps: [] // apps in the notification history, newest first
     property int selected: 0
     property bool dirty: false
     property string status: ""
@@ -96,7 +98,8 @@ ShellRoot {
             modes: modes,
             touchpad: touchpad,
             bar: bar,
-            warnings: warnings
+            warnings: warnings,
+            notifications: { rules: rules.filter(r => r.app.trim() || r.text.trim()) }
         };
     }
 
@@ -175,6 +178,7 @@ ShellRoot {
         touchpad = s.touchpad ?? {};
         warnings = LocalSettings.withDefaults(s.warnings);
         autostart = s.autostart;
+        rules = (s.notifications?.rules ?? []).map(r => ({ app: r.app ?? "", text: r.text ?? "", action: r.action ?? "hide" }));
         selected = Math.max(0, list.findIndex(m => m.connected));
     }
 
@@ -186,6 +190,11 @@ ShellRoot {
 
     function warnDisk(index, props) {
         warn("disk", { levels: warnings.disk.levels.map((l, i) => i === index ? Object.assign({}, l, props) : l) });
+    }
+
+    function changeRule(index, props) {
+        rules = rules.map((r, i) => i === index ? Object.assign({}, r, props) : r);
+        dirty = true;
     }
 
     // A number of the warnings' limits
@@ -346,6 +355,19 @@ ShellRoot {
         }
     }
 
+    // The notification history (NotificationStore.qml), for its apps
+    FileView {
+        path: `${root.home}/.cache/quickshell-notifications.json`
+        blockLoading: true
+        printErrors: false
+        onLoaded: {
+            try {
+                const apps = JSON.parse(text()).entries.map(e => e.app).filter(a => a);
+                root.recentApps = apps.filter((a, i) => apps.indexOf(a) === i).slice(0, 12);
+            } catch (e) {}
+        }
+    }
+
     // Picks an image and makes it ~/.face
     Process {
         id: face
@@ -420,6 +442,7 @@ ShellRoot {
                             { id: "modes", text: "Laptop & touch", glyph: 0xf0322 },
                             { id: "bar", text: "Bar", glyph: 0xf10a9 },
                             { id: "warnings", text: "Warnings", glyph: 0xf0026 },
+                            { id: "notifications", text: "Notifications", glyph: 0xf009b },
                             { id: "profile", text: "Profile picture", glyph: 0xf0004 }
                         ]
 
@@ -1172,6 +1195,113 @@ ShellRoot {
                             root.warnings = LocalSettings.withDefaults({});
                             root.dirty = true;
                         }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Notifications ----------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "notifications"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 8
+
+                    SectionTitle {
+                        text: "Notifications to hide — the first rule that matches decides"
+                    }
+
+                    Repeater {
+                        model: root.rules
+
+                        delegate: RowLayout {
+                            required property var modelData
+                            required property int index
+
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            InputField {
+                                Layout.preferredWidth: 160
+                                text: modelData.app
+                                placeholder: "App (any)"
+                                onTextChanged: if (text !== root.rules[index].app) {
+                                    root.rules[index].app = text;
+                                    root.dirty = true;
+                                }
+                            }
+                            InputField {
+                                Layout.fillWidth: true
+                                text: modelData.text
+                                placeholder: "Text contains (anything)"
+                                onTextChanged: if (text !== root.rules[index].text) {
+                                    root.rules[index].text = text;
+                                    root.dirty = true;
+                                }
+                            }
+                            Dropdown {
+                                Layout.preferredWidth: 190
+                                model: [
+                                    { text: "Hide completely", value: "hide" },
+                                    { text: "Only in the center", value: "center" },
+                                    { text: "Only as a popup", value: "popup" }
+                                ]
+                                current: modelData.action
+                                onPicked: value => root.changeRule(index, { action: value })
+                            }
+                            IconButton {
+                                glyph: Theme.glyph(0xf0156) // 󰅖
+                                onClicked: {
+                                    root.rules = root.rules.filter((_, i) => i !== index);
+                                    root.dirty = true;
+                                }
+                            }
+                        }
+                    }
+
+                    IconButton {
+                        glyph: Theme.glyph(0xf0415) // 󰐕
+                        text: "Add rule"
+                        onClicked: root.rules = [...root.rules, { app: "", text: "", action: "hide" }]
+                    }
+
+                    // A rule for an app that notified lately, in one click
+                    Label {
+                        visible: root.recentApps.length > 0
+                        Layout.topMargin: 6
+                        text: "From the notification history:"
+                        color: Theme.subtext0
+                    }
+                    Flow {
+                        visible: root.recentApps.length > 0
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Repeater {
+                            model: root.recentApps
+
+                            delegate: IconButton {
+                                required property var modelData
+
+                                glyph: Theme.glyph(0xf0415) // 󰐕
+                                text: modelData
+                                onClicked: {
+                                    root.rules = [...root.rules, { app: modelData, text: "", action: "hide" }];
+                                    root.dirty = true;
+                                }
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 6
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: "App and text are parts of the app's name and of the title or body, case doesn't matter; an empty field matches every notification. \"Only in the center\" doesn't pop up, \"Only as a popup\" isn't kept in the center. Saving applies right away, to new notifications."
+                        color: Theme.subtext0
                     }
 
                     Item {
