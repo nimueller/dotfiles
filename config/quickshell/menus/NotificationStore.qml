@@ -14,12 +14,11 @@ import Quickshell.Wayland
 // pid (the sender's process, from the sender-pid hint libnotify sets),
 // desktop (desktop entry id) }
 //
-// A media player's notification about the track it plays pops up like any
-// other but stays out of the history: its sender is the process behind an
-// MPRIS player, and it names that player's current track.
-//
-// The rules from Machine Settings (LocalSettings.notificationRules) hide
-// notifications, keep them from popping up or out of the history.
+// The rules from Machine Settings (LocalSettings.qml) hide notifications,
+// keep them from popping up or out of the history. One of them is for a
+// media player's notification about the track it plays (by default: it
+// only pops up): its sender is the process behind an MPRIS player, and it
+// names that player's current track.
 Scope {
     id: root
 
@@ -80,7 +79,10 @@ Scope {
             pid: Number(n.hints["sender-pid"] ?? 0),
             desktop: n.desktopEntry
         };
-        const action = LocalSettings.notificationAction(e.app, e.desktop, e.summary, e.body);
+        // A rule of its own comes first, then the one for track announcements
+        e.ruled = LocalSettings.notificationAction(e.app, e.desktop, e.summary, e.body);
+        e.track = !e.ruled && !e.transient && !!LocalSettings.trackAction && isTrack(e);
+        const action = e.ruled || (e.track ? LocalSettings.trackAction : "");
         if (action === "hide") {
             // Gone for the app too, as if it timed out
             if (old)
@@ -89,7 +91,7 @@ Scope {
                 n.expire();
             return;
         }
-        if (action === "popup" || (!e.transient && isTrack(e)))
+        if (action === "popup")
             e.transient = true;
         entries = [e, ...entries.filter(x => x.key !== e.key)].slice(0, historyLength);
         // The sender's window, for the popup: it may be new, and short-lived
@@ -174,15 +176,23 @@ Scope {
 
     // Players may update their track a moment after they notify, so new
     // entries are checked again shortly after they arrive. Popping up ones
-    // stay until they close.
+    // stay until they close, unless they're hidden.
     Timer {
         id: trackCheck
         interval: 2000
         onTriggered: {
-            for (const e of root.entries.filter(e => !e.transient && Date.now() - e.time < 10000 && root.isTrack(e))) {
-                e.transient = true;
-                if (!root.popups.includes(e.key))
+            const action = LocalSettings.trackAction;
+            for (const e of root.entries.filter(e => action && !e.transient && !e.ruled && !e.track && Date.now() - e.time < 10000 && root.isTrack(e))) {
+                e.track = true;
+                if (action === "hide") {
                     root.remove(e.key);
+                } else if (action === "center") {
+                    root.popups = root.popups.filter(k => k !== e.key);
+                } else {
+                    e.transient = true;
+                    if (!root.popups.includes(e.key))
+                        root.remove(e.key);
+                }
             }
             root.entries = root.entries.slice(); // history follows
         }
