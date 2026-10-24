@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 
 // One Wi-Fi network. Click to connect (open or saved networks) or to expand
-// it for a password / disconnect / forget. Enterprise networks (802.1X) need
-// a user name too: Set up opens the connection editor.
+// it for a password / disconnect / forget / share. Enterprise networks
+// (802.1X) need a user name too: Set up opens the connection editor. Share
+// shows a QR code that phones join the network with, and the password.
 Rectangle {
     id: root
 
@@ -13,12 +14,15 @@ Rectangle {
     property bool askPassword: false // the saved password didn't work
     property string address: "" // device and IP address while connected
     property string error: ""
+    property string qr: "" // QR code (data URL) while shared
+    property string password: "" // shown with it
 
     signal clicked
     signal connectRequested(string password)
     signal setupRequested
     signal disconnectRequested
     signal forgetRequested
+    signal shareRequested
 
     readonly property bool setup: network.enterprise && !network.known && !network.active
     readonly property bool needsPassword: network.secure && !setup && !network.active && (!network.known || askPassword)
@@ -149,10 +153,49 @@ Rectangle {
                 }
             }
             IconButton {
+                visible: root.network.known && !root.network.enterprise
+                glyph: Theme.glyph(0xf0432) // 󰐲
+                text: "Share"
+                active: !!root.qr
+                accent: Theme.sapphire
+                onClicked: root.shareRequested()
+            }
+            IconButton {
                 visible: root.network.known
                 glyph: Theme.glyph(0xf01b4) // 󰆴
                 text: "Forget"
                 onClicked: root.forgetRequested()
+            }
+        }
+
+        // Shared: the QR code on white (its quiet zone) and the password
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.bottomMargin: 4
+            visible: root.expanded && !!root.qr
+            spacing: 6
+
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                implicitWidth: code.implicitWidth + 24
+                implicitHeight: code.implicitHeight + 24
+                radius: 8
+                color: "white"
+
+                Image {
+                    id: code
+                    anchors.centerIn: parent
+                    source: root.qr
+                    smooth: false
+                }
+            }
+            Label {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                text: root.password ? `Password: ${root.password}` : "No password"
+                font.pixelSize: 10
+                color: Theme.subtext0
+                wrapMode: Text.WrapAnywhere
             }
         }
 
