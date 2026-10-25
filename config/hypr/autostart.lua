@@ -22,7 +22,7 @@ hl.on("hyprland.start", function()
     -- a Wake-on-LAN boot can be reached over Sunshine) and locks right away.
     -- The password also unlocks the keyring: /etc/pam.d/hyprlock includes
     -- login, which has pam_gnome_keyring (system/setup.sh).
-    hl.exec_cmd("hyprlock")
+    hl.exec_cmd("lock-screen")
 
     M.daemons()
 
