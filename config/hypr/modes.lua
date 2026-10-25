@@ -14,6 +14,7 @@
 --   text field is focused and from the bar's keyboard button. On convertibles
 --   with a tablet mode switch (e.g. a keyboard cover folded back or
 --   detached) it shows by itself only in tablet mode; the button always works.
+--   On the lock screen too, the same way, with a button of its own there.
 --   Where the hyprgrass plugin is installed (touch screen gestures; not in
 --   the Arch repos, built by hand), three-finger swipes switch workspaces
 --   as on the touchpad.
@@ -192,6 +193,9 @@ local function touch()
     hl.on("hyprland.start", function()
         hl.exec_cmd("squeekboard")
     end)
+    -- Above the lock screen, and it takes touches there: hyprlock has a button
+    -- for it (pkgs/scripts/lock-screen.sh), the keys go to the password field
+    hl.layer_rule({ match = { namespace = "^osk$" }, above_lock = 2 })
 
     -- Text fields bring up the keyboard when this setting is on (squeekboard
     -- follows it; the bar's button calls SetVisible and works either way).
