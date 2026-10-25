@@ -56,11 +56,15 @@ hyprlock &
 lock=$!
 # hyprlock takes clicks only on the screen the pointer entered, and a touch
 # doesn't count as entering: the pointer put where it is gives it the screen
-# for the keyboard button
+# for the keyboard button. Its surface takes a moment to show up (longer
+# after a suspend), so a few times over the first seconds.
 (
-    sleep 0.5
-    read -r x y < <(hyprctl cursorpos | tr -d ,)
-    hyprctl dispatch "hl.dsp.cursor.move({ x = $x, y = $y })" >/dev/null
+    for _ in $(seq 8); do
+        sleep 0.5
+        kill -0 "$lock" 2>/dev/null || exit 0
+        read -r x y < <(hyprctl cursorpos | tr -d ,)
+        hyprctl dispatch "hl.dsp.cursor.move({ x = $x, y = $y })" >/dev/null
+    done
 ) &
 # At the login squeekboard starts along with the lock screen, and the
 # tablet mode switch reports its state a moment later: tries for a few seconds
