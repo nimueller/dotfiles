@@ -4,18 +4,26 @@ on:
     types: [created]
 
 # A comment that says exactly "@claude lgtm" on a pull request, written by the
-# repository's owner, merges it once all its checks pass: it waits for the
-# checks of the pull request, then squashes it onto main and deletes the
-# branch. If main moved on, it first rebases the branch onto main and runs the
-# checks again itself (pushes of the workflow token start no workflows); if
-# main moves on during that, it rebases again, up to three times. So the
-# squash commit always has exactly the tested content on top of the tested
-# main, and main stays linear. On a failure it comments why and doesn't merge.
+# repository's owner, squashes it onto its base branch once the checks pass,
+# and deletes the branch:
+# - It waits for the checks of the pull request except "check flake"
+#   (install.yml); a failed one stops it.
+# - It rebases the branch onto its base if the base moved on, and runs the
+#   checks of install.yml itself on exactly the commit it squashes: results
+#   from before a rebase may be outdated either way, and pushes of the workflow
+#   token start no workflows. If the base moves on during that, once more, up
+#   to three times. So the squash commit has exactly the tested content on top
+#   of the tested base, and the history stays linear.
+# - Pull requests stacked on this one (based on its branch) are rebased onto
+#   the base branch and retargeted to it before the branch is deleted.
+# On a failure it comments why and doesn't merge.
 # No Claude involved: claude.yml skips these comments. Anything after "lgtm"
 # doesn't merge, so "@claude lgtm, but ..." can't merge by accident.
 #
 # Like updater.yml, it needs "Read and write permissions" for workflows in the
-# repository settings (Actions > General > Workflow permissions).
+# repository settings (Actions > General > Workflow permissions). The workflow
+# token may not push or merge changes to workflow files: such pull requests
+# need a manual merge.
 permissions:
   contents: write
   pull-requests: write
@@ -52,7 +60,7 @@ jobs:
           gh api "repos/$GH_REPO/issues/comments/$COMMENT_ID/reactions" -f content=+1 >/dev/null
           echo "merge=true" >>"$GITHUB_OUTPUT"
 
-      - name: ⏳ Wait for the checks of the pull request
+      - name: ⏳ Wait for the other checks of the pull request
         if: steps.comment.outputs.merge == 'true'
         id: checks
         run: |
@@ -60,64 +68,104 @@ jobs:
             gh pr comment "$PR" --body "Not merged: $1 ($RUN_URL)"
             exit 1
           }
-          head=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
-          # Checks of a fresh push may not be registered yet: an hour at most
-          deadline=$((SECONDS + 3600))
+          read -r head base ref < <(gh pr view "$PR" --json headRefOid,baseRefName,headRefName -q '"\(.headRefOid) \(.baseRefName) \(.headRefName)"')
+          # "check flake" runs below on the commit that gets squashed
+          others='[.[] | select(.workflow != "check flake")]'
+          # An hour at most; checks of a fresh push may take a moment to show up
+          start=$SECONDS
           while :; do
-            checks=$(gh pr checks "$PR" --json name,bucket 2>/dev/null || true)
+            checks=$(gh pr checks "$PR" --json name,bucket,workflow 2>/dev/null || true)
             [ -n "$checks" ] || checks='[]'
-            failed=$(jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")' <<<"$checks")
+            failed=$(jq -r "$others | map(select(.bucket == \"fail\" or .bucket == \"cancel\") | .name) | join(\", \")" <<<"$checks")
             [ -z "$failed" ] || fail "checks failed: $failed."
-            if [ "$(jq length <<<"$checks")" -gt 0 ] &&
-              [ "$(jq '[.[] | select(.bucket == "pending")] | length' <<<"$checks")" = 0 ]; then
+            pending=$(jq "$others | map(select(.bucket == \"pending\")) | length" <<<"$checks")
+            if [ "$pending" = 0 ] && { [ "$(jq length <<<"$checks")" -gt 0 ] || [ $((SECONDS - start)) -ge 120 ]; }; then
               break
             fi
-            [ "$SECONDS" -lt "$deadline" ] || fail "the checks didn't finish within an hour."
+            [ $((SECONDS - start)) -lt 3600 ] || fail "the checks didn't finish within an hour."
             sleep 30
           done
           [ "$(gh pr view "$PR" --json headRefOid -q .headRefOid)" = "$head" ] ||
             fail "new commits arrived while waiting for the checks; comment again."
-          echo "head=$head" >>"$GITHUB_OUTPUT"
+          {
+            echo "head=$head"
+            echo "base=$base"
+            echo "ref=$ref"
+          } >>"$GITHUB_OUTPUT"
 
       - name: 🔍 Checkout repository
         if: steps.comment.outputs.merge == 'true'
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - if: steps.comment.outputs.merge == 'true'
         uses: cachix/install-nix-action@v31
 
-      - name: 🚀 Rebase onto main if needed, squash and delete the branch
+      - name: 🚀 Rebase if needed, check and squash
         if: steps.comment.outputs.merge == 'true'
         env:
           HEAD_SHA: ${{ steps.checks.outputs.head }}
+          BASE: ${{ steps.checks.outputs.base }}
+          REF: ${{ steps.checks.outputs.ref }}
         run: |
           fail() {
             gh pr comment "$PR" --body "Not merged: $1 ($RUN_URL)"
             exit 1
           }
-          # Commits on main that $1 doesn't have
-          behind() { gh api "repos/$GH_REPO/compare/$1...main" -q .ahead_by; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           sha=$HEAD_SHA
           for _ in 1 2 3; do
-            if [ "$(behind "$sha")" != 0 ]; then
-              gh pr update-branch "$PR" --rebase ||
-                fail "rebasing onto main failed, probably a conflict; rebase the branch yourself and comment again."
-              old=$sha
-              for _ in $(seq 30); do
-                sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
-                [ "$sha" = "$old" ] || break
-                sleep 2
-              done
-              [ "$sha" != "$old" ] || fail "the rebased branch didn't show up."
-              git fetch -q origin "$sha"
-              git checkout -q --detach "$sha"
-              ./check.sh || fail "the checks failed on the branch rebased onto main."
-              .github/check-flake.sh || fail "the flake check failed on the branch rebased onto main."
-              # main moved on during the checks: once more
-              [ "$(behind "$sha")" = 0 ] || continue
+            git fetch -q origin "$BASE"
+            base_sha=$(git rev-parse FETCH_HEAD)
+            git checkout -q --detach "$sha"
+            if ! git merge-base --is-ancestor "$base_sha" "$sha"; then
+              if ! git rebase -q "$base_sha"; then
+                git rebase --abort
+                fail "rebasing onto $BASE failed, probably a conflict; rebase the branch yourself and comment again."
+              fi
+              git push -q --force-with-lease="$REF:$sha" origin "HEAD:refs/heads/$REF" ||
+                fail "pushing the branch rebased onto $BASE failed (changes to workflow files have to be merged by hand)."
+              sha=$(git rev-parse HEAD)
             fi
-            gh pr merge "$PR" --squash --delete-branch --match-head-commit "$sha" ||
+            ./check.sh || fail "check.sh failed on the commit to squash."
+            .github/check-flake.sh || fail "the flake check failed on the commit to squash."
+            # The base moved on during the checks: once more
+            [ "$(git ls-remote origin "refs/heads/$BASE" | cut -f1)" = "$base_sha" ] || continue
+            # The pull request may need a moment to see a pushed rebase
+            for _ in $(seq 30); do
+              [ "$(gh pr view "$PR" --json headRefOid -q .headRefOid)" = "$sha" ] && break
+              sleep 2
+            done
+            gh pr merge "$PR" --squash --match-head-commit "$sha" ||
               fail "merging failed; were there new commits?"
             exit 0
           done
-          fail "main kept moving on, three rebases in a row were outdated after their checks; comment again."
+          fail "$BASE kept moving on, three rebases in a row were outdated after their checks; comment again."
+
+      - name: 🪜 Move stacked pull requests onto the base and delete the branch
+        if: steps.comment.outputs.merge == 'true'
+        env:
+          HEAD_SHA: ${{ steps.checks.outputs.head }}
+          BASE: ${{ steps.checks.outputs.base }}
+          REF: ${{ steps.checks.outputs.ref }}
+        run: |
+          git fetch -q origin "$BASE"
+          new_base=$(git rev-parse FETCH_HEAD)
+          while read -r num ref sha; do
+            git fetch -q origin "$sha"
+            # Its commits after those of the merged branch (as it was before a rebase above)
+            upstream=$(git merge-base "$sha" "$HEAD_SHA")
+            git checkout -q --detach "$sha"
+            # Retarget first: deleting the branch would otherwise close it
+            gh pr edit "$num" --base "$BASE"
+            if git rebase -q --onto "$new_base" "$upstream" &&
+              git push -q --force-with-lease="$ref:$sha" origin "HEAD:refs/heads/$ref"; then
+              gh pr comment "$num" --body "#$PR was squashed onto \`$BASE\`; this branch is rebased onto it now. Its \"check flake\" checks don't rerun for this push; \`@claude lgtm\` runs them itself."
+            else
+              git rebase --abort 2>/dev/null || true
+              gh pr comment "$num" --body "#$PR was squashed onto \`$BASE\`, but rebasing this branch onto it failed; rebase it yourself: \`git rebase --onto origin/$BASE $upstream $ref\` ($RUN_URL)"
+            fi
+          done < <(gh pr list --base "$REF" --state open --json number,headRefName,headRefOid -q '.[] | "\(.number) \(.headRefName) \(.headRefOid)"')
+          gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$REF"
