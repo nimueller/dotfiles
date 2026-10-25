@@ -212,7 +212,7 @@ def parse_calendars(root, tree):
 
 
 def utc_stamp(day):
-    return dt.datetime.combine(day, dt.time()).astimezone().astimezone(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return dt.datetime.combine(day, dt.time()).astimezone().astimezone(dt.UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def caldav_events(auth, start, end, href):
@@ -297,7 +297,7 @@ def create(url, auth, event):
     ev = icalendar.Event()
     uid = str(uuid.uuid4())
     ev.add("uid", uid)
-    ev.add("dtstamp", dt.datetime.now(dt.timezone.utc))
+    ev.add("dtstamp", dt.datetime.now(dt.UTC))
     apply_fields(ev, event)
     cal.add_component(ev)
     cal.add_missing_timezones()
@@ -328,7 +328,7 @@ def update(url, auth, event):
     apply_fields(ev, event)
     for key in ("dtstamp", "last-modified"):
         ev.pop(key, None)
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     ev.add("dtstamp", now)
     ev.add("last-modified", now)
     sequence = int(ev.pop("sequence", 0))
