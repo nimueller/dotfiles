@@ -17,6 +17,8 @@
 #    and an address for controllers that come without one
 # 8. power profiles: power-profiles-daemon for the battery menu, on laptops,
 #    and a CPU cap in power saver where it has no CPU driver (Snapdragon)
+# 9. touch screen: iptsd (touch and pen of Surfaces) for the touch screens
+#    it handles at every boot, where it's installed
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -252,5 +254,41 @@ WantedBy=multi-user.target
 UNIT
         sudo systemctl daemon-reload
         sudo systemctl enable --now power-saver-cpu.service
+    fi
+fi
+
+echo ''
+echo "== Touch screen"
+# iptsd's udev rule starts it only once iptsd-check-device has accepted the
+# touch screen, a request to the device right after it shows up. On the
+# Surface Pro X that request now and then comes too early and fails: then
+# no iptsd, no pen, and only plain touch at that boot. A rule of our own
+# starts it for the touch screens that pass the check now, by their HID id,
+# without asking the device.
+rules=/etc/udev/rules.d/51-iptsd-known.rules
+if ! command -v iptsd-check-device >/dev/null 2>&1; then
+    echo "No iptsd, skipping"
+else
+    ids=()
+    for dev in /dev/hidraw*; do
+        [ -e "$dev" ] || continue
+        if sudo iptsd-check-device --quiet "$dev"; then
+            # the HID device above the hidraw node: bus:vendor:product.instance
+            hid=$(basename "$(readlink -f "/sys/class/hidraw/${dev#/dev/}/device")")
+            ids+=("${hid%.*}")
+        fi
+    done
+    if [ ${#ids[@]} -eq 0 ]; then
+        echo "No touch screen for iptsd here, skipping"
+    else
+        rule=$(for id in "${ids[@]}"; do
+            echo "SUBSYSTEM==\"hidraw\", ACTION==\"add\", KERNELS==\"$id.*\", TAG+=\"systemd\", ENV{SYSTEMD_WANTS}+=\"iptsd@dev-%k.service\""
+        done)
+        if [ "$(cat "$rules" 2>/dev/null)" = "$rule" ]; then
+            echo "iptsd already starts for the touch screen at every boot"
+        elif ask "Start iptsd (touch and pen) for the touch screen at every boot, even when its check at boot fails?"; then
+            echo "$rule" | sudo tee "$rules" >/dev/null
+            sudo udevadm control --reload
+        fi
     fi
 fi
