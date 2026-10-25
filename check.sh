@@ -34,7 +34,7 @@ qml() {
 step "nixfmt" bash -c 'git ls-files -z "*.nix" | xargs -0 nixfmt --check'
 step "statix" statix check .
 step "deadnix" deadnix --fail .
-step "shellcheck" shellcheck install.sh check.sh .githooks/pre-commit pkgs/scripts/*.sh config/quickshell/menus/*.sh system/*.sh
+step "shellcheck" shellcheck install.sh check.sh .github/check-flake.sh .githooks/pre-commit pkgs/scripts/*.sh config/quickshell/menus/*.sh system/*.sh
 step "ruff" ruff check .
 step "ruff format" ruff format --check .
 step "qmllint" qml

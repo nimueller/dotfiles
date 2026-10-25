@@ -4,7 +4,13 @@ on:
     types: [created]
 
 # A comment that says exactly "@claude lgtm" on a pull request, written by the
-# repository's owner, rebases it onto main, merges it and deletes its branch.
+# repository's owner, merges it once all its checks pass: it waits for the
+# checks of the pull request, then squashes it onto main and deletes the
+# branch. If main moved on, it first rebases the branch onto main and runs the
+# checks again itself (pushes of the workflow token start no workflows); if
+# main moves on during that, it rebases again, up to three times. So the
+# squash commit always has exactly the tested content on top of the tested
+# main, and main stays linear. On a failure it comments why and doesn't merge.
 # No Claude involved: claude.yml skips these comments. Anything after "lgtm"
 # doesn't merge, so "@claude lgtm, but ..." can't merge by accident.
 #
@@ -14,6 +20,9 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: lgtm-${{ github.event.issue.number }}
+
 jobs:
   merge:
     if: |
@@ -21,14 +30,18 @@ jobs:
       github.event.comment.author_association == 'OWNER' &&
       startsWith(github.event.comment.body, '@claude lgtm')
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PR: ${{ github.event.issue.number }}
-      COMMENT_ID: ${{ github.event.comment.id }}
-      BODY: ${{ github.event.comment.body }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - name: 🚀 Rebase, merge and delete the branch
+      - name: 💬 Only exactly "@claude lgtm"
+        id: comment
+        env:
+          COMMENT_ID: ${{ github.event.comment.id }}
+          BODY: ${{ github.event.comment.body }}
         run: |
           body=$(printf '%s' "$BODY" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
           if [ "${body,,}" != "@claude lgtm" ]; then
@@ -37,4 +50,74 @@ jobs:
             exit 0
           fi
           gh api "repos/$GH_REPO/issues/comments/$COMMENT_ID/reactions" -f content=+1 >/dev/null
-          gh pr merge "$PR" --rebase --delete-branch
+          echo "merge=true" >>"$GITHUB_OUTPUT"
+
+      - name: ⏳ Wait for the checks of the pull request
+        if: steps.comment.outputs.merge == 'true'
+        id: checks
+        run: |
+          fail() {
+            gh pr comment "$PR" --body "Not merged: $1 ($RUN_URL)"
+            exit 1
+          }
+          head=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
+          # Checks of a fresh push may not be registered yet: an hour at most
+          deadline=$((SECONDS + 3600))
+          while :; do
+            checks=$(gh pr checks "$PR" --json name,bucket 2>/dev/null || true)
+            [ -n "$checks" ] || checks='[]'
+            failed=$(jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")' <<<"$checks")
+            [ -z "$failed" ] || fail "checks failed: $failed."
+            if [ "$(jq length <<<"$checks")" -gt 0 ] &&
+              [ "$(jq '[.[] | select(.bucket == "pending")] | length' <<<"$checks")" = 0 ]; then
+              break
+            fi
+            [ "$SECONDS" -lt "$deadline" ] || fail "the checks didn't finish within an hour."
+            sleep 30
+          done
+          [ "$(gh pr view "$PR" --json headRefOid -q .headRefOid)" = "$head" ] ||
+            fail "new commits arrived while waiting for the checks; comment again."
+          echo "head=$head" >>"$GITHUB_OUTPUT"
+
+      - name: 🔍 Checkout repository
+        if: steps.comment.outputs.merge == 'true'
+        uses: actions/checkout@v5
+      - if: steps.comment.outputs.merge == 'true'
+        uses: cachix/install-nix-action@v31
+
+      - name: 🚀 Rebase onto main if needed, squash and delete the branch
+        if: steps.comment.outputs.merge == 'true'
+        env:
+          HEAD_SHA: ${{ steps.checks.outputs.head }}
+        run: |
+          fail() {
+            gh pr comment "$PR" --body "Not merged: $1 ($RUN_URL)"
+            exit 1
+          }
+          # Commits on main that $1 doesn't have
+          behind() { gh api "repos/$GH_REPO/compare/$1...main" -q .ahead_by; }
+
+          sha=$HEAD_SHA
+          for _ in 1 2 3; do
+            if [ "$(behind "$sha")" != 0 ]; then
+              gh pr update-branch "$PR" --rebase ||
+                fail "rebasing onto main failed, probably a conflict; rebase the branch yourself and comment again."
+              old=$sha
+              for _ in $(seq 30); do
+                sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
+                [ "$sha" = "$old" ] || break
+                sleep 2
+              done
+              [ "$sha" != "$old" ] || fail "the rebased branch didn't show up."
+              git fetch -q origin "$sha"
+              git checkout -q --detach "$sha"
+              ./check.sh || fail "the checks failed on the branch rebased onto main."
+              .github/check-flake.sh || fail "the flake check failed on the branch rebased onto main."
+              # main moved on during the checks: once more
+              [ "$(behind "$sha")" = 0 ] || continue
+            fi
+            gh pr merge "$PR" --squash --delete-branch --match-head-commit "$sha" ||
+              fail "merging failed; were there new commits?"
+            exit 0
+          done
+          fail "main kept moving on, three rebases in a row were outdated after their checks; comment again."
