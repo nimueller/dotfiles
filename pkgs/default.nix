@@ -75,10 +75,12 @@
     name = "after-unlock";
     text = builtins.readFile ./scripts/after-unlock.sh;
   };
-  # The lock screen, with the on-screen keyboard in the touch mode
-  # (config/hypr/hyprlock.conf); busctl and pgrep come from the system
+  # The lock screen, with the on-screen keyboard in the touch mode and a
+  # Caps Lock warning (config/hypr/hyprlock.conf); busctl, pgrep and hyprctl
+  # come from the system
   lock-screen = pkgs.writeShellApplication {
     name = "lock-screen";
+    runtimeInputs = [ pkgs.jq ];
     text = builtins.readFile ./scripts/lock-screen.sh;
   };
   # Dims and suspends laptops when idle (config/hypr/hypridle.conf);

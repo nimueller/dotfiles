@@ -4,11 +4,12 @@
 #   lock-screen            lock (hypridle.conf, keybinds.lua, the power menu, the login)
 #   lock-screen button     the lock screen's keyboard button, only in the touch mode
 #   lock-screen keyboard   shows or hides the on-screen keyboard (the button's click)
+#   lock-screen capslock   a warning while Caps Lock is on (the lock screen's label)
 # In the touch mode (config/hypr/modes.lua) the on-screen keyboard (squeekboard)
 # may show above the lock screen. It shows by itself where it would for a
 # text field (in tablet mode, or always without a tablet mode switch): hyprlock
 # has no text input of its own that would bring it up. After unlocking it hides.
-# busctl, pgrep and hyprctl come from the system.
+# busctl, pgrep and hyprctl come from the system, jq from the package.
 runtime=${XDG_RUNTIME_DIR:-/tmp}
 
 touch_mode() {
@@ -40,9 +41,15 @@ case ${1:-} in
         fi
         exit 0
         ;;
+    capslock)
+        if [ "$(hyprctl devices -j | jq '[.keyboards[] | select(.main) | .capsLock] | any')" = true ]; then
+            echo "󰪛   Caps Lock is on"
+        fi
+        exit 0
+        ;;
     "") ;;
     *)
-        echo "usage: lock-screen [button|keyboard]" >&2
+        echo "usage: lock-screen [button|keyboard|capslock]" >&2
         exit 1
         ;;
 esac
