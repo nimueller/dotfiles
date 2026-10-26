@@ -12,6 +12,7 @@ Rectangle {
     property bool masked: false
     property bool revealed: false
     property color accent: Theme.sapphire
+    readonly property bool focused: input.activeFocus
 
     signal accepted
     signal typed
