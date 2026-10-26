@@ -188,73 +188,76 @@ in
     configFile."systemd/user/sockets.target.wants/gcr-ssh-agent.socket".source =
       config.lib.file.mkOutOfStoreSymlink "/usr/lib/systemd/user/gcr-ssh-agent.socket";
   };
-  # The same socket for the shells
-  home.sessionVariables.SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/gcr/ssh";
 
   fonts.fontconfig.enable = true;
 
-  # The profile's hicolor theme is put together from the packages' icons and
-  # has no icon-theme.cache, so Qt stats every size directory for each icon it
-  # looks up there: a name that no theme has took ~0.5 s each (the sound menu
-  # tries several per app). Built here like NixOS does for its system profile.
-  home.extraProfileCommands = ''
-    if [ -w $out/share/icons/hicolor ]; then
-      ${pkgs.gtk3.out}/bin/gtk-update-icon-cache --quiet --ignore-theme-index $out/share/icons/hicolor
-    fi
-  '';
+  home = {
+    # gcr's SSH agent (xdg.configFile above) for the shells
+    sessionVariables.SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/gcr/ssh";
 
-  # Packages needed on Hyprland specifically, in addition to a standard desktop
-  home.packages = with pkgs; [
-    nerd-fonts.noto # the quickshell menus' font
-    nerd-fonts.caskaydia-cove # the quickshell bar's font
-    noto-fonts
-    noto-fonts-lgc-plus
-    noto-fonts-cjk-sans
-    noto-fonts-cjk-serif
-    noto-fonts-emoji-blob-bin
-    noto-fonts-color-emoji
-    noto-fonts-monochrome-emoji
+    # The profile's hicolor theme is put together from the packages' icons and
+    # has no icon-theme.cache, so Qt stats every size directory for each icon it
+    # looks up there: a name that no theme has took ~0.5 s each (the sound menu
+    # tries several per app). Built here like NixOS does for its system profile.
+    extraProfileCommands = ''
+      if [ -w $out/share/icons/hicolor ]; then
+        ${pkgs.gtk3.out}/bin/gtk-update-icon-cache --quiet --ignore-theme-index $out/share/icons/hicolor
+      fi
+    '';
 
-    xdg-terminal-exec
-    playerctl
-    hyprpicker
-    grim # screenshots (config/quickshell/menus/screenshot.sh)
-    imagemagick
-    libnotify
-    libsecret
-    cliphist
-    pavucontrol
+    # Packages needed on Hyprland specifically, in addition to a standard desktop
+    packages = with pkgs; [
+      nerd-fonts.noto # the quickshell menus' font
+      nerd-fonts.caskaydia-cove # the quickshell bar's font
+      noto-fonts
+      noto-fonts-lgc-plus
+      noto-fonts-cjk-sans
+      noto-fonts-cjk-serif
+      noto-fonts-emoji-blob-bin
+      noto-fonts-color-emoji
+      noto-fonts-monochrome-emoji
 
-    my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
-    my-pkgs.sunshine-disconnect # ends the Sunshine stream (config/quickshell/menus/power.qml)
-    my-pkgs.after-unlock # autostarts that need the keyring (config/hypr/autostart.lua)
-    my-pkgs.lock-screen # hyprlock, with the on-screen keyboard in the touch mode
-    my-pkgs.laptop-idle # dims and suspends laptops when idle (config/hypr/hypridle.conf)
-    my-pkgs.quickshell-calendar-python
-    my-pkgs.init-tex
-    my-pkgs.edit-tex
-    my-pkgs.pkg-sync # installed software against the lists and flatpak.nix
+      xdg-terminal-exec
+      playerctl
+      hyprpicker
+      grim # screenshots (config/quickshell/menus/screenshot.sh)
+      imagemagick
+      libnotify
+      libsecret
+      cliphist
+      pavucontrol
 
-    # Apps that aren't on Flathub, instead of the AUR; none needs the GPU
-    # much (Nix apps on Arch don't get the NVIDIA driver)
-    claude-code
-    naps2 # scanning
-    tinymediamanager
-    pear-desktop # YouTube Music (Electron: software rendering)
-    my-pkgs.phones-in-files # the phones in Files' sidebar (config/quickshell/menus/kdeconnect.py)
+      my-pkgs.stay-awake # keeps the screen awake for Sunshine streams (config/sunshine)
+      my-pkgs.sunshine-disconnect # ends the Sunshine stream (config/quickshell/menus/power.qml)
+      my-pkgs.after-unlock # autostarts that need the keyring (config/hypr/autostart.lua)
+      my-pkgs.lock-screen # hyprlock, with the on-screen keyboard in the touch mode
+      my-pkgs.laptop-idle # dims and suspends laptops when idle (config/hypr/hypridle.conf)
+      my-pkgs.quickshell-calendar-python
+      my-pkgs.init-tex
+      my-pkgs.edit-tex
+      my-pkgs.pkg-sync # installed software against the lists and flatpak.nix
 
-    # Gnome GUI apps
-    adwaita-icon-theme
-    evince # PDF viewer
-    eog # Image viewer
-    gnome-characters # Emoji picker
-    gnome-font-viewer
-    marktext # Markdown, rendered: GFM, KaTeX, Mermaid, GitLab mode; opens .md files
-    dconf-editor
-    file-roller
-    seahorse # Manage keyring
-    # Other GUI apps
-    keepassxc
-    wl-clipboard
-  ];
+      # Apps that aren't on Flathub, instead of the AUR; none needs the GPU
+      # much (Nix apps on Arch don't get the NVIDIA driver)
+      claude-code
+      naps2 # scanning
+      tinymediamanager
+      pear-desktop # YouTube Music (Electron: software rendering)
+      my-pkgs.phones-in-files # the phones in Files' sidebar (config/quickshell/menus/kdeconnect.py)
+
+      # Gnome GUI apps
+      adwaita-icon-theme
+      evince # PDF viewer
+      eog # Image viewer
+      gnome-characters # Emoji picker
+      gnome-font-viewer
+      marktext # Markdown, rendered: GFM, KaTeX, Mermaid, GitLab mode; opens .md files
+      dconf-editor
+      file-roller
+      seahorse # Manage keyring
+      # Other GUI apps
+      keepassxc
+      wl-clipboard
+    ];
+  };
 }
