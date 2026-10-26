@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 // Toolbar of the screenshot editor (ShotScreen.qml): drawing tools, colour,
-// stroke size, undo / redo, resolution, then copy, save and cancel. Hovering a button names it and its key underneath.
+// stroke size, undo / redo, resolution, then copy, save, copy the text and
+// cancel. Hovering a button names it and its key underneath.
 Rectangle {
     id: bar
 
@@ -160,6 +161,11 @@ Rectangle {
             active: true
             onClicked: bar.editor.finish("save")
             onHoveredChanged: bar.say(hovered, "Save to ~/Pictures/Screenshots and copy   Ctrl+S")
+        }
+        IconButton {
+            glyph: Theme.glyph(0xf113a) // 󱄺
+            onClicked: bar.editor.finish("text")
+            onHoveredChanged: bar.say(hovered, "Copy the text or the QR code's content   Ctrl+T")
         }
         IconButton {
             glyph: Theme.glyph(0xf0156) // 󰅖

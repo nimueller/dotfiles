@@ -222,6 +222,17 @@ in
       hyprpicker
       grim # screenshots (config/quickshell/menus/screenshot.sh)
       imagemagick
+      # The screenshot editor's text and QR codes; zbar without its camera apps
+      (tesseract.override {
+        enableLanguages = [
+          "eng"
+          "deu"
+        ];
+      })
+      (zbar.override {
+        enableVideo = false;
+        withXorg = false;
+      })
       libnotify
       libsecret
       cliphist

@@ -7,7 +7,8 @@ import Quickshell.Io
 // monitor (into QS_SCREENSHOT_DIR). Drag to
 // select a region or click a window (a click on the desktop takes the whole
 // monitor), then adjust the box by its edges and corners or move it, draw on
-// it, pick the resolution and copy (Enter) or save (Ctrl+S). The keys are in
+// it, pick the resolution and copy (Enter) or save (Ctrl+S), or copy the
+// text or QR code in it (Ctrl+T). The keys are in
 // ShotScreen.qml; Escape cancels.
 ShellRoot {
     id: root
@@ -37,7 +38,7 @@ ShellRoot {
     readonly property var colors: [Theme.red, Theme.peach, Theme.yellow, Theme.green, Theme.blue, Theme.mauve, "#ffffff", "#000000"]
     readonly property var percents: [100, 75, 50, 25]
 
-    signal finish(string action) // "copy" or "save", handled by the selected monitor
+    signal finish(string action) // "copy", "save" or "text", handled by the selected monitor
 
     function select(name, rect) {
         if (name !== screenName) {

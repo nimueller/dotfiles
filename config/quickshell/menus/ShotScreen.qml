@@ -9,7 +9,8 @@ import Quickshell.Wayland
 //   to move (move tool) or to draw (the other tools; Shift keeps lines at
 //   45° and boxes square). Double-click inside copies, right click drops the
 //   selection.
-//   Keys: Enter / Ctrl+C copy, Ctrl+S save, Escape cancel, Ctrl+Z and
+//   Keys: Enter / Ctrl+C copy, Ctrl+S save, Ctrl+T copy the text (OCR) or
+//   the QR code's content, Escape cancel, Ctrl+Z and
 //   Ctrl+Shift+Z / Ctrl+Y undo and redo, V P L A R O M T B pick a tool, F
 //   takes the whole monitor, 1-4 the resolution (100, 75, 50, 25 %), arrows
 //   move the box (Shift: 10 px).
@@ -581,6 +582,8 @@ PanelWindow {
                 win.exportShot("copy");
             else if (ctrl && k === Qt.Key_S)
                 win.exportShot("save");
+            else if (ctrl && k === Qt.Key_T)
+                win.exportShot("text");
             else if (ctrl && (k === Qt.Key_Y || k === Qt.Key_Z && shift))
                 e.redo();
             else if (ctrl && k === Qt.Key_Z)
