@@ -36,12 +36,17 @@ in
     packages = with pkgs; [
       # Terminal programs
       fzf # Lifesaver!
-      autojump # Lifesaver #2!
       tldr
       lsd
       jq
       lua
       tree
+    ];
+
+    # Before the system's directories: pipx/uv tools and cargo install
+    sessionPath = [
+      "$HOME/.local/bin"
+      "$HOME/.cargo/bin"
     ];
 
     file.".p10k.zsh".source =
@@ -54,6 +59,16 @@ in
   programs = {
     zsh = {
       enable = true;
+      # The files stay in ~ (the default before stateVersion 26.05)
+      dotDir = config.home.homeDirectory;
+      history = {
+        size = 100000;
+        save = 100000;
+        extended = true; # with time stamps
+        ignoreAllDups = true;
+        ignoreSpace = true;
+        share = true;
+      };
       autosuggestion = {
         enable = true;
       };
@@ -69,9 +84,13 @@ in
           "fzf"
           "git"
           "sudo"
-          "autojump"
           "colorize"
         ];
+        # The completion cache in ~/.cache instead of a .zcompdump-<host>-<version>
+        # in ~ for every host and zsh version
+        extraConfig = ''
+          ZSH_COMPDUMP="$ZSH_CACHE_DIR/zcompdump-$ZSH_VERSION"
+        '';
       };
       plugins = [
         {
@@ -81,6 +100,22 @@ in
         }
       ];
       initContent = builtins.readFile ../../config/zsh/init-content.zsh;
+    };
+
+    # `j <part of a path>` jumps to the best match of the visited directories
+    # (the command autojump had)
+    zoxide = {
+      enable = true;
+      options = [
+        "--cmd"
+        "j"
+      ];
+    };
+
+    # .envrc per project, e.g. `use flake` for its toolchain
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
     };
 
     btop = {
