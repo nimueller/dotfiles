@@ -12,8 +12,12 @@ push directly to the main branch (`main`/`master`). Instead:
    output the link to it.
 4. Don't merge it yourself unless I explicitly say so.
 
-Exception: only when I explicitly say in the session to commit/push directly
-to `main` does that apply, and only for that one change.
+Exceptions:
+
+- When I explicitly say in the session to commit/push directly to `main`,
+  that applies, but only for that one change.
+- Changes that only touch `README.md` go directly to `main`, without a branch
+  or pull request. The rules on private data below still apply.
 
 ## Without a remote: commit directly
 
