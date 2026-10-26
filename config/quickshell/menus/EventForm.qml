@@ -6,7 +6,7 @@ import QtQuick.Layouts
 // dd.mm.yyyy. Picking another day in the grid moves it there. Typing a place
 // suggests addresses from Photon (OpenStreetMap search made for search as
 // you type), nearest to `near` first; arrow keys and Enter pick one, Escape
-// hides them. Tab goes to the next field, Shift+Tab or Ctrl+Tab back.
+// hides them. Tab goes to the next field, Shift+Tab back.
 ColumnLayout {
     id: root
 
@@ -157,7 +157,7 @@ ColumnLayout {
 
     onSuggestionsChanged: highlighted = -1
 
-    // Tab and Shift+Tab (or Ctrl+Tab) go round the shown fields; leaving the
+    // Tab and Shift+Tab go round the shown fields; leaving the
     // place hides its suggestions
     function focusNext(step) {
         const fields = [title, place, startDate, startTime, endDate, endTime, customAlarm].filter(f => f.visible);
@@ -167,7 +167,7 @@ ColumnLayout {
         fields[at < 0 ? 0 : (at + step + fields.length) % fields.length].focusField();
     }
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && event.modifiers & Qt.ControlModifier))
+        if (event.key === Qt.Key_Backtab)
             focusNext(-1);
         else if (event.key === Qt.Key_Tab)
             focusNext(1);
