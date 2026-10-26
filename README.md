@@ -21,7 +21,9 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **Compositor** | Hyprland, configured in Lua |
 | **Shell UI** | Quickshell: bar, menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, a settings app for the machine |
 | **Lock / idle** | hyprlock and hypridle, hyprpaper for the wallpapers |
-| **Terminal** | kitty, Zsh with Powerlevel10k |
+| **Terminal** | kitty, Zsh with Powerlevel10k, zoxide (`j`), direnv with nix-direnv |
+| **Git** | Commits signed with SSH and verified locally, delta as pager, GitHub CLI |
+| **SSH** | Client defaults from Home Manager (keep-alive, shared connections), gcr's agent on the desktop |
 | **Editor** | Neovim with lazy.nvim; language servers come from Nix |
 | **Browser** | Brave from Flathub |
 | **Laptop / touch** | Modes that turn on by themselves on laptops and with touch screens |
@@ -45,17 +47,32 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 ```
 
 - The configurations are made for my user name. To use them yourself, fork the repository and change `username` in
-  `flake.nix` (and the clone URL in `install.sh`).
+  `flake.nix`, the Git identity and signing key in `home-manager/headless/default.nix` (and the clone URL in
+  `install.sh`).
 - On ARM (`aarch64`) the script picks `headless_aarch64` or `desktop_aarch64`.
 - For the desktop it also runs `system/setup.sh`, which needs root and asks before every step: the session packages
   from pacman, PAM (the login unlocks the keyring), LightDM auto-login, logind, firewall, Docker and Bluetooth.
-- Settings that belong to one machine (monitors, driver variables, private autostarts) go into the untracked
-  `config/hypr/local.lua`. The **Machine Settings** app in the launcher edits it.
+- Settings that belong to one machine stay out of the repository, in untracked files that the tracked configuration
+  includes:
+
+  | File | What goes there |
+  |---|---|
+  | `config/hypr/local.lua` | Monitors, driver variables, private autostarts; the **Machine Settings** app in the launcher edits it |
+  | `~/.ssh/config.local` | The SSH hosts (host names, users, keys); `~/.ssh/config` itself comes from Home Manager |
+  | `~/.config/git/config.local` | Further Git identities, e.g. `includeIf "gitdir:~/work/"` with another email and key |
+
+- Home Manager doesn't overwrite files it doesn't own: `install.sh` renames them to `*.hm-backup`, a plain
+  `home-manager switch` stops. On a machine that already has a `~/.ssh/config`, move it to `~/.ssh/config.local` first
+  (a renamed `config.hm-backup` isn't included); an existing `~/.claude/settings.json` has to go too.
 
 ## Usage
 
 - `config/` holds the actual configuration files. They are linked into `~/.config`, so edits take effect without a
   rebuild. Only the Quickshell daemon needs a restart: `~/.config/quickshell/menus/toggle.sh daemon --restart`.
+- Claude Code's `CLAUDE.md` and `settings.json` are linked from `config/claude`: plugins enabled with
+  `claude plugin enable` or settings changed in `/config` show up as changes in the repository.
+- `j <part of a path>` jumps to the best match of the visited directories (zoxide); autojump's history comes along with
+  `zoxide import autojump --merge`. A project's `.envrc` with `use flake` loads its toolchain on `cd` (direnv).
 - Packages and everything else on the Nix side live in `home-manager/` and `flake.nix`. Apply changes with
   `home-manager switch --flake ~/dotfiles#desktop` (or `#headless`, `#desktop_aarch64`, `#headless_aarch64`).
 - `pkg-sync` compares the installed packages and Flatpaks with the declared lists and can adopt, prune or install them.
@@ -95,4 +112,20 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
 - [ ] Turning the screen with the device (iio-sensor-proxy)
 - [ ] Night light with `hyprsunset`
-- [ ] Waiting updates at a glance on the bar, including AUR updates
+- [ ] Waiting updates at a glance on the bar, including AUR and Flatpak updates and the age of `flake.lock`
+- [ ] `install.sh`: move an existing `~/.ssh/config` to `~/.ssh/config.local` before the first switch
+
+Ideas:
+
+- [ ] Media controls (MPRIS) on the bar or in the sound menu: cover, title, play/pause/skip, position
+- [ ] Screen recording in the screenshot tool (area, window or screen), with an indicator on the bar
+- [ ] Text (OCR) and QR codes from a screenshot area into the clipboard
+- [ ] An overview of all workspaces with window previews, by gesture in touch mode
+- [ ] Launcher: SSH hosts (opens `kitten ssh`), KeePassXC entries through the Secret Service, unit and currency
+  conversion, file search
+- [ ] Backups of the data the dotfiles don't cover (SSH keys, password database, documents, projects), e.g. restic
+  with a systemd timer and the last backup in the system menu
+- [ ] KeePassXC's settings from Home Manager, without the database paths
+- [ ] `nix-index` with `comma` (run a program without installing it), `nh` for switches with a diff of the packages
+- [ ] lazygit in Catppuccin, atuin for a shell history synced across machines
+- [ ] Verify GitHub's squash merges locally too (import GitHub's web-flow key)
