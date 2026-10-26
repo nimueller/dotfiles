@@ -181,7 +181,15 @@ in
     };
     # Mask dunst's own unit in case anything asks for it directly
     configFile."systemd/user/dunst.service".source = config.lib.file.mkOutOfStoreSymlink "/dev/null";
+    # The SSH agent of gcr (with gnome-keyring, system/packages/session.txt),
+    # enabled like `systemctl --user enable` does. It keeps the keys that ssh
+    # adds (AddKeysToAgent, home-manager/headless) for the session; the socket
+    # sets SSH_AUTH_SOCK for the systemd services itself.
+    configFile."systemd/user/sockets.target.wants/gcr-ssh-agent.socket".source =
+      config.lib.file.mkOutOfStoreSymlink "/usr/lib/systemd/user/gcr-ssh-agent.socket";
   };
+  # The same socket for the shells
+  home.sessionVariables.SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/gcr/ssh";
 
   fonts.fontconfig.enable = true;
 
