@@ -49,6 +49,3 @@ bindkey '^X^_' redo
 chpwd() {
   ls
 }
-
-export PATH="$HOME/.cargo/bin:$PATH"
-
