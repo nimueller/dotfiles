@@ -12,11 +12,16 @@ in
 {
   # btop++
   xdg.configFile."btop/themes/".source = "${theme.btop}/themes/";
-  programs.btop.settings.color_theme = "catppuccin_macchiato";
 
-  # bat ships the Catppuccin themes itself
-  programs.bat = {
-    enable = true;
-    config.theme = "Catppuccin Macchiato";
+  programs = {
+    btop.settings.color_theme = "catppuccin_macchiato";
+
+    # bat ships the Catppuccin themes itself
+    bat = {
+      enable = true;
+      config.theme = "Catppuccin Macchiato";
+    };
+    # delta has the same themes built in
+    delta.options.syntax-theme = "Catppuccin Macchiato";
   };
 }
