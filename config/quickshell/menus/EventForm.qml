@@ -169,7 +169,7 @@ ColumnLayout {
         placeholder: "Place (optional)"
         accent: Theme.mauve
         onAccepted: root.submit()
-        onEdited: placeTimer.restart()
+        onTyped: placeTimer.restart()
     }
     // Waits for a pause in typing before asking for addresses
     Timer {

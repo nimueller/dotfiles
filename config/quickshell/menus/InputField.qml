@@ -1,7 +1,7 @@
 import QtQuick
 
 // Text field with a placeholder; `masked` for passwords and one-time codes,
-// with an eye to show what's typed. edited() fires only for typing, not
+// with an eye to show what's typed. typed() fires only for typing, not
 // when `text` is set.
 Rectangle {
     id: root
@@ -13,7 +13,7 @@ Rectangle {
     property color accent: Theme.sapphire
 
     signal accepted
-    signal edited
+    signal typed
 
     function focusField() {
         input.forceActiveFocus();
@@ -38,7 +38,7 @@ Rectangle {
         font.pixelSize: 12
         clip: true
         onAccepted: root.accepted()
-        onTextEdited: root.edited()
+        onTextEdited: root.typed()
 
         Label {
             anchors.verticalCenter: parent.verticalCenter
