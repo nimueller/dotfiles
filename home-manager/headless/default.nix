@@ -49,11 +49,16 @@ in
       "$HOME/.cargo/bin"
     ];
 
-    file.".p10k.zsh".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/zsh/p10k.zsh";
-    # Claude Code's instructions for every project
-    file.".claude/CLAUDE.md".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/claude/CLAUDE.md";
+    file = {
+      ".p10k.zsh".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/zsh/p10k.zsh";
+      # Claude Code's instructions for every project
+      ".claude/CLAUDE.md".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/claude/CLAUDE.md";
+      # Its settings (theme, plugins); `claude plugin enable`/`disable` and
+      # /config write through the link into the repository
+      ".claude/settings.json".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/claude/settings.json";
+    };
   };
 
   programs = {
