@@ -11,7 +11,8 @@ import Quickshell.Io
 // (with reminders) on Nextcloud. Events come from Nextcloud (CalDAV) and
 // read-only ICS subscriptions via calendar-dav.py; the forecast from
 // Open-Meteo, the current weather from the nearest airport's METAR
-// (aviationweather.gov). The gear opens the settings.
+// (aviationweather.gov); address suggestions for an appointment's place from
+// Photon (photon.komoot.io). The gear opens the settings.
 //
 // Settings: ~/.local/state/quickshell-calendar.json (the app password is in
 // the keyring). Last events and weather are cached in
@@ -545,6 +546,7 @@ Popup {
                 visible: popup.creating
                 day: popup.selected
                 calendars: popup.writable
+                near: popup.settings.location ?? null
                 busy: popup.saving
                 error: popup.saveError
                 onSaveRequested: event => popup.saveEvent(event)
