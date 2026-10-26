@@ -3,7 +3,9 @@ import QtQuick.Layouts
 
 // New or edited appointment: title, place, date(s), times or all day,
 // reminders, and for new ones the (writable) calendar to save it in. Dates as yyyy-mm-dd or
-// dd.mm.yyyy. Picking another day in the grid moves it there.
+// dd.mm.yyyy. Picking another day in the grid moves it there. Typing a place
+// suggests addresses from Photon (OpenStreetMap search made for search as
+// you type), nearest to `near` first.
 ColumnLayout {
     id: root
 
@@ -11,12 +13,15 @@ ColumnLayout {
     property var calendars: [] // writable: [{ href, name, color }]
     property bool busy: false
     property string error: ""
+    property var near: null // { lat, lon } to rank places by, or null
 
     property var target: null // the event being edited, null for a new one
     property string calendar: ""
     property bool allDay: false
     property var alarms: [] // minutes before the start
     property string problem: ""
+    property var suggestions: [] // [{ text }] addresses for the typed place
+    property int searches: 0 // answers to older searches are dropped
 
     signal saveRequested(var event)
     signal cancelled
@@ -33,6 +38,7 @@ ColumnLayout {
         allDay = false;
         alarms = [15];
         problem = "";
+        suggestions = [];
         if (!calendars.some(c => c.href === calendar))
             calendar = calendars[0]?.href ?? "";
         title.focusField();
@@ -52,6 +58,7 @@ ColumnLayout {
         calendar = event.calendar;
         alarms = (event.alarms ?? []).slice();
         problem = "";
+        suggestions = [];
         title.focusField();
     }
 
@@ -66,6 +73,37 @@ ColumnLayout {
     function parseTime(text) {
         const m = text.trim().match(/^(\d{1,2})(?::(\d{2}))?$/);
         return m && +m[1] < 24 && +(m[2] ?? 0) < 60 ? [+m[1], +(m[2] ?? 0)] : null;
+    }
+
+    // One line per place: its name, street and house number, postcode and city
+    function describePlace(p) {
+        const street = [p.street ?? (p.type === "street" ? p.name : ""), p.housenumber].filter(x => x).join(" ");
+        const town = [p.postcode, p.city ?? p.town ?? p.village].filter(x => x).join(" ");
+        const name = p.name && !street.startsWith(p.name) ? p.name : "";
+        return [name, street, town || p.country].filter(x => x).join(", ");
+    }
+
+    function searchPlace() {
+        const query = place.text.trim();
+        const search = ++searches;
+        if (query.length < 3) {
+            suggestions = [];
+            return;
+        }
+        const bias = near ? `&lat=${near.lat}&lon=${near.lon}` : "";
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE || search !== searches)
+                return;
+            try {
+                const lines = JSON.parse(xhr.responseText).features.map(f => describePlace(f.properties));
+                suggestions = [...new Set(lines)].filter(x => x && x !== query).slice(0, 5).map(text => ({ text }));
+            } catch (e) {
+                suggestions = []; // no suggestions, the place can still be typed
+            }
+        };
+        xhr.open("GET", `https://photon.komoot.io/api/?limit=8&q=${encodeURIComponent(query)}${bias}`);
+        xhr.send();
     }
 
     function submit() {
@@ -87,6 +125,7 @@ ColumnLayout {
                 return;
             }
             problem = "";
+            suggestions = [];
             const fmt = allDay ? "yyyy-MM-dd" : "yyyy-MM-ddTHH:mm";
             root.saveRequested({
                 calendar,
@@ -130,6 +169,47 @@ ColumnLayout {
         placeholder: "Place (optional)"
         accent: Theme.mauve
         onAccepted: root.submit()
+        onEdited: placeTimer.restart()
+    }
+    // Waits for a pause in typing before asking for addresses
+    Timer {
+        id: placeTimer
+        interval: 350
+        onTriggered: root.searchPlace()
+    }
+    Repeater {
+        model: root.suggestions
+
+        delegate: Rectangle {
+            id: suggestion
+
+            required property var modelData
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: 26
+            radius: 8
+            color: suggestionMouse.containsMouse ? Theme.alpha(Theme.mauve, 0.14) : "transparent"
+
+            Label {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                text: `${Theme.glyph(0xf034e)}  ${suggestion.modelData.text}` // 󰍎
+                color: suggestionMouse.containsMouse ? Theme.mauve : Theme.subtext1
+            }
+            MouseArea {
+                id: suggestionMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    place.text = suggestion.modelData.text;
+                    root.suggestions = [];
+                    root.searches++;
+                    place.focusField();
+                }
+            }
+        }
     }
 
     RowLayout {
