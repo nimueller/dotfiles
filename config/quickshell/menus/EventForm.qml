@@ -5,7 +5,8 @@ import QtQuick.Layouts
 // reminders, and for new ones the (writable) calendar to save it in. Dates as yyyy-mm-dd or
 // dd.mm.yyyy. Picking another day in the grid moves it there. Typing a place
 // suggests addresses from Photon (OpenStreetMap search made for search as
-// you type), nearest to `near` first.
+// you type), nearest to `near` first; arrow keys and Enter pick one, Escape
+// hides them.
 ColumnLayout {
     id: root
 
@@ -22,6 +23,7 @@ ColumnLayout {
     property string problem: ""
     property var suggestions: [] // [{ text }] addresses for the typed place
     property int searches: 0 // answers to older searches are dropped
+    property int highlighted: -1 // suggestion chosen with the arrow keys
 
     signal saveRequested(var event)
     signal cancelled
@@ -38,7 +40,7 @@ ColumnLayout {
         allDay = false;
         alarms = [15];
         problem = "";
-        suggestions = [];
+        clearSuggestions();
         if (!calendars.some(c => c.href === calendar))
             calendar = calendars[0]?.href ?? "";
         title.focusField();
@@ -58,7 +60,7 @@ ColumnLayout {
         calendar = event.calendar;
         alarms = (event.alarms ?? []).slice();
         problem = "";
-        suggestions = [];
+        clearSuggestions();
         title.focusField();
     }
 
@@ -81,6 +83,18 @@ ColumnLayout {
         const town = [p.postcode, p.city ?? p.town ?? p.village].filter(x => x).join(" ");
         const name = p.name && !street.startsWith(p.name) ? p.name : "";
         return [name, street, town || p.country].filter(x => x).join(", ");
+    }
+
+    // Hides the suggestions, also those of a search still under way
+    function clearSuggestions() {
+        placeTimer.stop();
+        searches++;
+        suggestions = [];
+    }
+
+    function pickSuggestion(index) {
+        place.text = suggestions[index].text;
+        clearSuggestions();
     }
 
     function searchPlace() {
@@ -125,7 +139,7 @@ ColumnLayout {
                 return;
             }
             problem = "";
-            suggestions = [];
+            clearSuggestions();
             const fmt = allDay ? "yyyy-MM-dd" : "yyyy-MM-ddTHH:mm";
             root.saveRequested({
                 calendar,
@@ -140,6 +154,8 @@ ColumnLayout {
             });
         }
     }
+
+    onSuggestionsChanged: highlighted = -1
 
     onDayChanged: {
         // Picking another day in the grid moves the appointment there,
@@ -168,8 +184,22 @@ ColumnLayout {
         Layout.fillWidth: true
         placeholder: "Place (optional)"
         accent: Theme.mauve
-        onAccepted: root.submit()
+        onAccepted: root.highlighted >= 0 ? root.pickSuggestion(root.highlighted) : root.submit()
         onTyped: placeTimer.restart()
+        onKeyPressed: event => {
+            const count = root.suggestions.length, ctrl = event.modifiers & Qt.ControlModifier;
+            if (!count)
+                return;
+            if (event.key === Qt.Key_Down || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N)))
+                root.highlighted = (root.highlighted + 1) % count;
+            else if (event.key === Qt.Key_Up || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P)))
+                root.highlighted = root.highlighted <= 0 ? count - 1 : root.highlighted - 1;
+            else if (event.key === Qt.Key_Escape)
+                root.clearSuggestions(); // the second Escape closes the menu
+            else
+                return;
+            event.accepted = true;
+        }
     }
     // Waits for a pause in typing before asking for addresses
     Timer {
@@ -184,18 +214,20 @@ ColumnLayout {
             id: suggestion
 
             required property var modelData
+            required property int index
+            readonly property bool lit: suggestionMouse.containsMouse || index === root.highlighted
 
             Layout.fillWidth: true
             Layout.preferredHeight: 26
             radius: 8
-            color: suggestionMouse.containsMouse ? Theme.alpha(Theme.mauve, 0.14) : "transparent"
+            color: lit ? Theme.alpha(Theme.mauve, 0.14) : "transparent"
 
             Label {
                 anchors.fill: parent
                 anchors.leftMargin: 10
                 anchors.rightMargin: 10
                 text: `${Theme.glyph(0xf034e)}  ${suggestion.modelData.text}` // 󰍎
-                color: suggestionMouse.containsMouse ? Theme.mauve : Theme.subtext1
+                color: suggestion.lit ? Theme.mauve : Theme.subtext1
             }
             MouseArea {
                 id: suggestionMouse
@@ -203,9 +235,7 @@ ColumnLayout {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    place.text = suggestion.modelData.text;
-                    root.suggestions = [];
-                    root.searches++;
+                    root.pickSuggestion(suggestion.index);
                     place.focusField();
                 }
             }
