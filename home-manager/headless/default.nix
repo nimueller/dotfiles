@@ -181,6 +181,26 @@ in
       };
     };
 
+    ssh = {
+      enable = true;
+      enableDefaultConfig = false;
+      # The hosts, users and keys of this machine: untracked, in ~/.ssh
+      includes = [ "config.local" ];
+      settings."*" = {
+        ServerAliveInterval = 60;
+        ServerAliveCountMax = 3;
+        # Unlocked keys stay in the agent (gcr on the desktop) for the session
+        AddKeysToAgent = "yes";
+        # Only the IdentityFile of the host (or ssh's default keys), not every
+        # key in the agent: servers give up after a few wrong ones
+        IdentitiesOnly = true;
+        # Further connections to a host reuse the first one, for 10 minutes
+        ControlMaster = "auto";
+        ControlPath = "~/.ssh/master-%C";
+        ControlPersist = "10m";
+      };
+    };
+
     gh = {
       enable = true;
       settings.git_protocol = "ssh";
