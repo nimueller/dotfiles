@@ -5,9 +5,11 @@
 #       region or a window, adjust it, draw on it, choose the resolution, copy
 #       or save. `window` and `screen` start with the active window or the
 #       focused monitor already selected.
-#   screenshot.sh --export <dir> <source.png> <layer.png|-> <WxH+X+Y> <percent> copy|save
+#   screenshot.sh --export <dir> <source.png> <layer.png|-> <WxH+X+Y> <percent> copy|save|text
 #       Run by the editor as it closes: draws the layer over the screenshot,
 #       crops and scales it, copies it (and saves it), with a notification.
+#       `text` copies what's in it instead: the content of the QR codes or
+#       barcodes (zbar), else the text Tesseract reads.
 dir=$(dirname "$(readlink -f "$0")")
 runtime=${XDG_RUNTIME_DIR:-/tmp}/qs-screenshot
 saved=$HOME/Pictures/Screenshots
@@ -22,19 +24,57 @@ notify_done() {
     notify -e "$@"
 }
 
+# Escapes text for a notification body, which takes markup
+markup() {
+    local s=${1//&/&amp;}
+    s=${s//</&lt;}
+    printf '%s' "${s//>/&gt;}"
+}
+
+read_text() {
+    local img=$1 text what
+    if text=$(zbarimg --raw -q "$img"); then
+        what="QR code"
+    else
+        # Twice the size: Tesseract misses small letters at 1x
+        text=$(magick "$img" -colorspace Gray -resize 200% png:- | tesseract - - -l deu+eng -c page_separator= 2>/dev/null)
+        what="Text"
+    fi
+    if [[ -z ${text//[[:space:]]/} ]]; then
+        notify -i dialog-information "No text found" "Neither a QR code nor text in the selection"
+        return 1
+    fi
+    printf '%s' "$text" | wl-copy --type text/plain
+
+    local preview=$text
+    ((${#preview} > 300)) && preview="${preview:0:300}…"
+    if [[ $text =~ ^https?://[^[:space:]]+$ ]]; then
+        case $(notify_done -i edit-paste -A open=Open "$what copied" "$(markup "$preview")") in
+            open) xdg-open "$text" ;;
+        esac
+    else
+        notify_done -i edit-paste "$what copied" "$(markup "$preview")"
+    fi
+}
+
 export_shot() {
     local shot=$1 source=$2 layer=$3 geometry=$4 percent=$5 action=$6
     local out=$runtime/last.png args=("$source")
 
     [[ $layer != - ]] && args+=("$layer" -composite)
     args+=(-crop "$geometry" +repage)
-    [[ $percent != 100 ]] && args+=(-resize "$percent%")
+    # The text is read at full size
+    [[ $percent != 100 && $action != text ]] && args+=(-resize "$percent%")
     if ! magick "${args[@]}" "$out"; then
         notify -u critical -i dialog-error "Screenshot failed" "ImageMagick couldn't write the image"
         rm -rf "$shot"
         return 1
     fi
     rm -rf "$shot"
+    if [[ $action == text ]]; then
+        read_text "$out"
+        return
+    fi
     wl-copy --type image/png <"$out"
 
     local size file

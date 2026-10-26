@@ -31,7 +31,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | | |
 |:---:|:---:|
 | ![App launcher](resources/launcher.webp) | ![Screenshot editor](resources/screenshot-editor.webp) |
-| **Launcher:** apps, open windows, commands, sums and emoji | **Screenshot editor:** select, draw, scale, copy or save |
+| **Launcher:** apps, open windows, commands, sums and emoji | **Screenshot editor:** select, draw, scale, copy or save, or copy the text or QR code in it |
 
 ## Installation
 
@@ -119,7 +119,6 @@ Ideas:
 
 - [ ] Media controls (MPRIS) on the bar or in the sound menu: cover, title, play/pause/skip, position
 - [ ] Screen recording in the screenshot tool (area, window or screen), with an indicator on the bar
-- [ ] Text (OCR) and QR codes from a screenshot area into the clipboard
 - [ ] An overview of all workspaces with window previews, by gesture in touch mode
 - [ ] Launcher: SSH hosts (opens `kitten ssh`), KeePassXC entries through the Secret Service, unit and currency
   conversion, file search
