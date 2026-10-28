@@ -20,7 +20,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **OS** | Arch Linux, packages via Nix + Home Manager (the session itself from pacman) |
 | **Compositor** | Hyprland, configured in Lua |
 | **Shell UI** | Quickshell: bar, menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, scanner (PDF with OCR, both sides from the feeder), a settings app for the machine |
-| **Lock / idle** | hyprlock and hypridle, hyprpaper for the wallpapers |
+| **Lock / idle** | hyprlock and hypridle (a switch in the system menu keeps the screen awake), hyprpaper for the wallpapers, hyprsunset as night light (21:00–7:00, or by hand from the system menu) |
 | **Terminal** | kitty, Zsh with Powerlevel10k, zoxide (`j`), direnv with nix-direnv |
 | **Git** | Commits signed with SSH and verified locally, delta as pager, GitHub CLI |
 | **SSH** | Client defaults from Home Manager (keep-alive, shared connections), gcr's agent on the desktop |
@@ -111,10 +111,8 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 ## TODO
 
 - [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it
-- [ ] A toggle that keeps the screen awake
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
 - [ ] Turning the screen with the device (iio-sensor-proxy)
-- [ ] Night light with `hyprsunset`
 - [ ] Waiting updates at a glance on the bar, including AUR and Flatpak updates and the age of `flake.lock`
 - [ ] `install.sh`: move an existing `~/.ssh/config` to `~/.ssh/config.local` before the first switch
 
