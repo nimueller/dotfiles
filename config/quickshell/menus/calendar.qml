@@ -692,6 +692,11 @@ Popup {
         onSearchLocation: query => popup.searchLocation(query, false)
         onPickLocation: place => popup.pickLocation(place, true)
         onSetOwnLocation: own => popup.update({ ownLocation: own })
+        onOpenMachineSettings: {
+            Menus.settingsPage = "location";
+            Menus.toggle("settings");
+            popup.close();
+        }
         onSetWeekStart: day => {
             popup.update({ weekStart: day });
             popup.fetchEvents();

@@ -24,6 +24,7 @@ RowLayout {
     signal searchLocation(string query)
     signal pickLocation(var place)
     signal setOwnLocation(bool own)
+    signal openMachineSettings
     signal setWeekStart(int day)
     signal setWeekNumbers(bool on)
     signal setReminders(bool on)
@@ -72,6 +73,12 @@ RowLayout {
             font.pixelSize: 10
             color: Theme.overlay1
             wrapMode: Text.Wrap
+        }
+        IconButton {
+            visible: !root.ownLocation
+            glyph: Theme.glyph(0xf0493) // 󰒓
+            text: root.machineLocation ? "Change in Machine Settings" : "Set in Machine Settings"
+            onClicked: root.openMachineSettings()
         }
         // The calendar's own place; following the machine's, it's changed in Machine Settings
         RowLayout {
