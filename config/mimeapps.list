@@ -25,6 +25,7 @@ application/json=nvim.desktop;
 x-scheme-handler/net.thunderbird=userapp-Thunderbird-NN0JX3.desktop;userapp-Thunderbird-CYRLS3.desktop;
 application/pdf=ai.storyteller.pdfcraft.desktop;
 message/rfc822=userapp-Thunderbird-XGAKX3.desktop;
+video/mp4=vlc.desktop;
 
 [Default Applications]
 application/pdf=ai.storyteller.pdfcraft.desktop
@@ -71,5 +72,6 @@ application/json=nvim.desktop
 x-scheme-handler/jetbrains=jetbrainsd.desktop
 x-scheme-handler/net.thunderbird=userapp-Thunderbird-NN0JX3.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+video/mp4=vlc.desktop
 
 [Removed Associations]

@@ -4,19 +4,11 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
 
-// The media player the bar and the sound menu control (MPRIS): the one
-// playing, or else the one that played last. playerctld is left out, it only
-// mirrors the others, and so are browsers' players while they have no track.
+// The media players (MPRIS) for the sound menu, with display helpers.
+// playerctld is left out, it only mirrors the others, and so are browsers'
+// players while they have no track.
 Singleton {
-    id: root
-
     readonly property var players: Mpris.players.values.filter(p => !p.dbusName.endsWith(".playerctld") && (p.isPlaying || !!p.trackTitle))
-    readonly property var playing: players.find(p => p.isPlaying) ?? null
-    property var last: null
-    readonly property var player: playing ?? (players.includes(last) ? last : players[0]) ?? null
-
-    onPlayingChanged: if (playing)
-        last = playing
 
     // The track's title, or the player's name when it sends none
     function title(p) {
