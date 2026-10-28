@@ -62,8 +62,7 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
   | `~/.config/git/config.local` | Further Git identities, e.g. `includeIf "gitdir:~/work/"` with another email and key |
 
 - Home Manager doesn't overwrite files it doesn't own: `install.sh` renames them to `*.hm-backup`, a plain
-  `home-manager switch` stops. On a machine that already has a `~/.ssh/config`, move it to `~/.ssh/config.local` first
-  (a renamed `config.hm-backup` isn't included); an existing `~/.claude/settings.json` has to go too.
+  `home-manager switch` stops. An existing `~/.claude/settings.json` has to go first.
 
 ## Usage
 
@@ -114,7 +113,6 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
 - [ ] One general location setting (e.g. in Machine Settings) for the weather and the night light, instead of the calendar's weather location
 - [ ] Turning the screen with the device (iio-sensor-proxy)
-- [ ] `install.sh`: move an existing `~/.ssh/config` to `~/.ssh/config.local` before the first switch
 
 Ideas:
 
