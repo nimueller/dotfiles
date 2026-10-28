@@ -117,7 +117,6 @@ Ideas:
 
 - [ ] Media controls (MPRIS) on the bar or in the sound menu: cover, title, play/pause/skip, position
 - [ ] Screen recording in the screenshot tool (area, window or screen), with an indicator on the bar
-- [ ] An overview of all workspaces with window previews, by gesture in touch mode
 - [ ] Launcher: SSH hosts (opens `kitten ssh`), KeePassXC entries through the Secret Service, unit and currency
   conversion, file search
 - [ ] Backups of the data the dotfiles don't cover (SSH keys, password database, documents, projects), e.g. restic

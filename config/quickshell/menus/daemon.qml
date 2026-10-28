@@ -26,6 +26,9 @@ import Quickshell.Io
 //   toggle.sh audio|battery|...        open/close a menu (Menus.names)
 //   SUPER+D / toggle.sh launcher       show/hide the launcher
 //   SUPER+V / toggle.sh clipboard      show/hide the clipboard history
+//   SUPER+W / toggle.sh overview       the workspaces with their windows
+//                                      (hl.dsp.event("quickshell-overview"),
+//                                      also from the gestures in modes.lua)
 //   toggle.sh notifications            open/close the notification center
 //   ipc.sh notifications dnd|clear     do not disturb / clear all from scripts
 //   hl.dsp.event("quickshell-osd volume +5")    keybinds.lua: volume +/-N,
@@ -199,6 +202,10 @@ ShellRoot {
             if (event.name === "custom" && event.data.startsWith("quickshell-awake ")) {
                 const [, name, state] = event.data.split(" ");
                 stayAwake.event(name, state);
+                return;
+            }
+            if (event.name === "custom" && event.data === "quickshell-overview") {
+                Menus.toggle("overview");
                 return;
             }
             if (event.name !== "custom" || !event.data.startsWith("quickshell-osd "))

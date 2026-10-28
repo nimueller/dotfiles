@@ -4,8 +4,8 @@ import Quickshell.Hyprland
 
 // The workspaces of one monitor in a chip: the active one as a lavender
 // pill, a special workspace only while it's shown on this monitor (mauve),
-// urgent ones in peach. Click to switch, scroll to move along like SUPER +
-// wheel. In the touch mode a + at the end opens a new, empty workspace:
+// urgent ones in peach. Click to switch, the active one for the overview of
+// all workspaces (overview.qml), scroll to move along like SUPER + wheel. In the touch mode a + at the end opens a new, empty workspace:
 // without a keyboard there's no SUPER + number, and a swipe past the last
 // workspace makes a new one only when that has windows.
 Rectangle {
@@ -73,7 +73,9 @@ Rectangle {
                     // Lua dispatchers: Quickshell 0.3.1 doesn't detect the Lua
                     // config, so HyprlandWorkspace.activate() does nothing
                     onClicked: {
-                        if (button.isSpecial)
+                        if (button.active && !button.isSpecial)
+                            Menus.toggle("overview");
+                        else if (button.isSpecial)
                             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("${label.text}")`);
                         else
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = ${button.modelData.id} })`);
