@@ -19,7 +19,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 |---|---|
 | **OS** | Arch Linux, packages via Nix + Home Manager (the session itself from pacman) |
 | **Compositor** | Hyprland, configured in Lua |
-| **Shell UI** | Quickshell: bar, menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, scanner (PDF with OCR, both sides from the feeder), a settings app for the machine |
+| **Shell UI** | Quickshell: bar (with waiting pacman, AUR and Flatpak updates), menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, scanner (PDF with OCR, both sides from the feeder), a settings app for the machine |
 | **Lock / idle** | hyprlock and hypridle, hyprpaper for the wallpapers |
 | **Terminal** | kitty, Zsh with Powerlevel10k, zoxide (`j`), direnv with nix-direnv |
 | **Git** | Commits signed with SSH and verified locally, delta as pager, GitHub CLI |
@@ -115,7 +115,6 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
 - [ ] Turning the screen with the device (iio-sensor-proxy)
 - [ ] Night light with `hyprsunset`
-- [ ] Waiting updates at a glance on the bar, including AUR and Flatpak updates and the age of `flake.lock`
 - [ ] `install.sh`: move an existing `~/.ssh/config` to `~/.ssh/config.local` before the first switch
 
 Ideas:
