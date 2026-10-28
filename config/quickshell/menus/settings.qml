@@ -10,7 +10,8 @@ import Quickshell.Io
 // variables (e.g. drivers), autostart programs, the laptop and touch mode
 // (config/hypr/modes.lua: detected, or forced on or off) with the touchpad
 // (right click in the corner or with two fingers, tapping, scrolling and its
-// speed, typing), the bar, when to warn
+// speed, typing), the location (weather and night light), the night light's
+// schedule, the bar, when to warn
 // about memory, the CPU and the disk and which notifications to hide (read
 // by the shell through LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
@@ -27,11 +28,21 @@ ShellRoot {
     readonly property string path: Quickshell.env("MACHINE_SETTINGS_FILE") || `${home}/.config/hypr/local.lua`
 
     property string page: "displays"
+    Component.onCompleted: {
+        if (Menus.settingsPage)
+            page = Menus.settingsPage;
+        Menus.settingsPage = "";
+    }
     property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
     property var caps: ({}) // what each connected monitor supports, by port: { vrr, wideColor, hdr }, missing if unknown
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({ windowTitle: false })
+    property var location: null // { name, lat, lon }, see LocalSettings.qml
+    property var nightLight: LocalSettings.nightLightDefaults // see LocalSettings.qml
+    property var nightTimes: null // night-light.py's state, for today's sunset and sunrise
+    property var locationResults: [] // Open-Meteo's geocoding results
+    property string locationError: ""
     property var modes: ({}) // laptop, touch: true | false when forced, missing when detected
     property var touchpad: ({}) // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
@@ -99,6 +110,8 @@ ShellRoot {
             modes: modes,
             touchpad: touchpad,
             bar: bar,
+            location: location,
+            nightLight: nightLight,
             warnings: warnings,
             notifications: { rules: rules.filter(r => r.app.trim() || r.text.trim()), tracks: trackAction }
         };
@@ -175,6 +188,8 @@ ShellRoot {
         monitors = list;
         env = s.env;
         bar = Object.assign({ windowTitle: false }, s.bar);
+        location = s.location ?? null;
+        nightLight = Object.assign({}, LocalSettings.nightLightDefaults, s.nightLight);
         modes = s.modes ?? {};
         touchpad = s.touchpad ?? {};
         warnings = LocalSettings.withDefaults(s.warnings);
@@ -192,6 +207,37 @@ ShellRoot {
 
     function warnDisk(index, props) {
         warn("disk", { levels: warnings.disk.levels.map((l, i) => i === index ? Object.assign({}, l, props) : l) });
+    }
+
+    function searchLocation(query) {
+        locationError = "";
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            try {
+                if (xhr.status !== 200)
+                    throw new Error();
+                locationResults = JSON.parse(xhr.responseText).results ?? [];
+                if (!locationResults.length)
+                    locationError = `No place called “${query}” found`;
+            } catch (e) {
+                locationError = "Couldn't reach the location search";
+            }
+        };
+        xhr.open("GET", `https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=${encodeURIComponent(query)}`);
+        xhr.send();
+    }
+
+    function night(props) {
+        nightLight = Object.assign({}, nightLight, props);
+        dirty = true;
+    }
+
+    // "7:5" or "0705" -> "07:05", "" if it isn't a time
+    function clockTime(text) {
+        const m = text.trim().match(/^(\d{1,2}):?(\d{2})$/);
+        return m && +m[1] < 24 && +m[2] < 60 ? `${m[1].padStart(2, "0")}:${m[2]}` : "";
     }
 
     function changeRule(index, props) {
@@ -321,6 +367,19 @@ ShellRoot {
         printErrors: false
     }
 
+    // What night-light.py works out from the saved settings, again after Save
+    FileView {
+        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/night-light.json`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                root.nightTimes = JSON.parse(text());
+            } catch (e) {}
+        }
+    }
+
     Process {
         running: true
         command: ["hyprctl", "monitors", "all", "-j"]
@@ -442,6 +501,8 @@ ShellRoot {
                             { id: "env", text: "Environment", glyph: 0xf0169 },
                             { id: "autostart", text: "Autostart", glyph: 0xf040a },
                             { id: "modes", text: "Laptop & touch", glyph: 0xf0322 },
+                            { id: "location", text: "Location", glyph: 0xf034e },
+                            { id: "night", text: "Night light", glyph: 0xf0594 },
                             { id: "bar", text: "Bar", glyph: 0xf10a9 },
                             { id: "warnings", text: "Warnings", glyph: 0xf0026 },
                             { id: "notifications", text: "Notifications", glyph: 0xf009b },
@@ -1033,6 +1094,250 @@ ShellRoot {
                             visible: root.touchpad.scroll_factor !== undefined
                             onClicked: root.scrollFactor(null)
                         }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Location ---------------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "location"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: "Location — for the weather and the night light's sunset and sunrise"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set" // 󰍎
+                            color: root.location ? Theme.text : Theme.overlay0
+                        }
+                        IconButton {
+                            visible: !!root.location
+                            glyph: Theme.glyph(0xf0156) // 󰅖
+                            text: "Clear"
+                            onClicked: {
+                                root.location = null;
+                                root.dirty = true;
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        InputField {
+                            id: city
+                            Layout.fillWidth: true
+                            placeholder: "Search a city"
+                            onAccepted: if (text)
+                                root.searchLocation(text)
+                        }
+                        IconButton {
+                            glyph: Theme.glyph(0xf0349) // 󰍉
+                            text: "Search"
+                            onClicked: if (city.text)
+                                root.searchLocation(city.text)
+                        }
+                    }
+
+                    Repeater {
+                        model: root.locationResults
+
+                        delegate: Rectangle {
+                            id: place
+
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 28
+                            radius: 8
+                            color: placeMouse.containsMouse ? Theme.alpha(Theme.lavender, 0.14) : "transparent"
+
+                            Label {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                text: [place.modelData.name, place.modelData.admin1, place.modelData.country].filter(x => x).join(", ")
+                                color: placeMouse.containsMouse ? Theme.lavender : Theme.subtext1
+                            }
+                            MouseArea {
+                                id: placeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    // Last: emptying the results destroys this delegate
+                                    const r = place.modelData;
+                                    city.text = "";
+                                    root.location = { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude };
+                                    root.dirty = true;
+                                    root.locationResults = [];
+                                }
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        visible: !!root.locationError
+                        text: root.locationError
+                        color: Theme.red
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: "The calendar's weather follows it unless it's set to its own place there. Without one, both use the calendar's place, and the night light runs from 19:00 to 07:00 if there is none either."
+                        color: Theme.subtext0
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Night light -------------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "night"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: "Night light — warmer colours at night"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        Label {
+                            Layout.rightMargin: 4
+                            text: "Turn on"
+                        }
+                        Repeater {
+                            model: [["sun", "Sunset to sunrise"], ["times", "At set times"], ["off", "Only by hand"]]
+
+                            delegate: IconButton {
+                                required property var modelData
+
+                                text: modelData[1]
+                                active: root.nightLight.schedule === modelData[0]
+                                onClicked: root.night({ schedule: modelData[0] })
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: root.nightLight.schedule === "times"
+                        spacing: 8
+
+                        Label {
+                            text: "From"
+                        }
+                        InputField {
+                            Layout.preferredWidth: 64
+                            text: root.nightLight.from
+                            placeholder: "21:00"
+                            border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
+                            onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.from)
+                                root.night({ from: root.clockTime(text) })
+                        }
+                        Label {
+                            text: "until"
+                        }
+                        InputField {
+                            Layout.preferredWidth: 64
+                            text: root.nightLight.until
+                            placeholder: "07:00"
+                            border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
+                            onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.until)
+                                root.night({ until: root.clockTime(text) })
+                        }
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    // Where sunset and sunrise come from, and today's times
+                    // once night-light.py has them for the place shown
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: root.nightLight.schedule === "sun"
+                        spacing: 6
+
+                        readonly property var t: root.nightTimes
+                        // The place night-light.py goes by once saved: this
+                        // machine's, else the calendar's (only known from its state)
+                        readonly property string place: root.location?.name ?? (t?.placeFrom === "calendar" ? t.place : "")
+                        readonly property bool current: !!t && t.schedule === "sun" && !!place && t.place === place
+
+                        Label {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            elide: Text.ElideNone
+                            text: {
+                                const where = parent.place;
+                                if (!where)
+                                    return "No location is set, so it can't work out the sunset and sunrise: it turns on at 19:00 and off at 07:00. Set a location to follow the sun.";
+                                const whose = root.location ? "this computer's location (the Location page)" : "the calendar's weather location, as this computer has none (the Location page)";
+                                return `It turns on at sunset and off at sunrise in ${where}, ${whose}. They're worked out every day from the place's coordinates, so they move with the seasons.`;
+                            }
+                            color: Theme.subtext0
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            visible: !!parent.place
+                            text: parent.current ? (parent.t.from ? `Today: on from ${parent.t.from} (sunset) until ${parent.t.until} (sunrise)` : parent.t.night ? "Today: on all day, the sun doesn't rise" : "Today: off all day, the sun doesn't set") : "Today's times show here once it's saved."
+                            color: parent.current ? Theme.text : Theme.overlay1
+                        }
+                        IconButton {
+                            glyph: Theme.glyph(0xf034e) // 󰍎
+                            text: root.location ? "Change location" : "Set a location"
+                            onClicked: root.page = "location"
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Label {
+                            text: "Colour temperature"
+                        }
+                        NumberField {
+                            Layout.preferredWidth: 64
+                            value: root.nightLight.temperature
+                            onEdited: v => {
+                                if (v >= 1000 && v <= 6000)
+                                    root.night({ temperature: Math.round(v) });
+                            }
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: "K — lower is warmer, 1000 to 6000"
+                            color: Theme.subtext0
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: "The switch in the system menu turns it on or off by hand until the next sunset or sunrise (or set time). Only by hand: it never turns on by itself."
+                        color: Theme.subtext0
                     }
 
                     Item {

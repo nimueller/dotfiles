@@ -1,13 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Settings view of the calendar menu. Left: weather location and how weeks
-// are shown. Right: the Nextcloud account with its calendars, and read-only
+// Settings view of the calendar menu. Left: weather location (the machine's
+// from Machine Settings, or its own) and how weeks are shown. Right: the Nextcloud account with its calendars, and read-only
 // ICS subscriptions (holidays etc.).
 RowLayout {
     id: root
 
-    property var location: null // { name, lat, lon }
+    property var location: null // the weather's: { name, lat, lon }
+    property bool ownLocation: false // its own instead of the machine's
+    property var machineLocation: null // Machine Settings' (LocalSettings.qml), null if none
     property var locationResults: []
     property int weekStart: 1
     property bool weekNumbers: true
@@ -21,6 +23,8 @@ RowLayout {
 
     signal searchLocation(string query)
     signal pickLocation(var place)
+    signal setOwnLocation(bool own)
+    signal openMachineSettings
     signal setWeekStart(int day)
     signal setWeekNumbers(bool on)
     signal setReminders(bool on)
@@ -43,13 +47,43 @@ RowLayout {
         SectionTitle {
             text: "Weather location"
         }
+        RowLayout {
+            Layout.fillWidth: true
+
+            Label {
+                Layout.fillWidth: true
+                text: "Same as the machine's (Machine Settings)"
+                color: Theme.subtext1
+            }
+            Switch {
+                checked: !root.ownLocation
+                accent: Theme.mauve
+                onToggled: root.setOwnLocation(!root.ownLocation)
+            }
+        }
         Label {
             Layout.fillWidth: true
             text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set" // 󰍎
             color: root.location ? Theme.text : Theme.overlay0
         }
+        Label {
+            Layout.fillWidth: true
+            visible: !root.ownLocation && !root.machineLocation
+            text: "Machine Settings has no location yet, so this one is used until it has. Picking a city here makes it the calendar's own."
+            font.pixelSize: 10
+            color: Theme.overlay1
+            wrapMode: Text.Wrap
+        }
+        IconButton {
+            visible: !root.ownLocation
+            glyph: Theme.glyph(0xf0493) // 󰒓
+            text: root.machineLocation ? "Change in Machine Settings" : "Set in Machine Settings"
+            onClicked: root.openMachineSettings()
+        }
+        // The calendar's own place; following the machine's, it's changed in Machine Settings
         RowLayout {
             Layout.fillWidth: true
+            visible: root.ownLocation || !root.machineLocation
             spacing: 6
 
             InputField {
@@ -66,7 +100,7 @@ RowLayout {
             }
         }
         Repeater {
-            model: root.locationResults
+            model: root.ownLocation || !root.machineLocation ? root.locationResults : []
 
             delegate: Rectangle {
                 id: place

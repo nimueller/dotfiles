@@ -1,35 +1,50 @@
 #!/usr/bin/env python3
 # pyright: strict
-"""The night light's schedule: warmer colours (hyprsunset) from sunset to
-sunrise at the weather location of the calendar menu, run by daemon.qml for
-the session.
+"""The night light's schedule: warmer colours (hyprsunset) at night, run by
+daemon.qml for the session. Machine Settings (settings.qml) sets it in the
+"-- settings:" line of local.lua, as "nightLight":
+
+  {"schedule": "sun", "from": "21:00", "until": "07:00", "temperature": 4500}
+
+schedule "sun" is from sunset to sunrise at this machine's location (also
+in local.lua), else at the calendar menu's weather location, else FALLBACK;
+"times" from `from` until `until`; "off" only by hand (the system menu's
+switch). Missing or invalid values are DEFAULTS.
 
   night-light.py
 
-Once a minute it works out whether it's night, and only when that changes
-does it tell hyprsunset (hyprctl hyprsunset), so the system menu's switch
-(system.qml) holds until the next sunset or sunrise. Without a location it
-uses FALLBACK. For the system menu it writes the day's times to
-$XDG_RUNTIME_DIR/night-light.json:
+Once a minute it works out whether it's night, and only when that (or the
+temperature) changes does it tell hyprsunset (hyprctl hyprsunset), so the
+system menu's switch (system.qml) holds until the next change. For the
+system menu it writes the day's times to $XDG_RUNTIME_DIR/night-light.json:
 
-  {"night": true, "sunset": "16:51", "sunrise": "07:12", "place": "Berlin"}
+  {"night": true, "schedule": "sun", "from": "16:51", "until": "07:12",
+   "place": "Berlin", "placeFrom": "machine", "temperature": 4500}
 
-(sunset and sunrise are null on days the sun doesn't set or rise, place is
-null for FALLBACK.)
+(from and until are null for "off" and on days the sun doesn't set or rise,
+place is null unless the times are a place's sunset and sunrise; placeFrom
+says whose place it is, "machine" or "calendar".)
 """
 
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import time
 from datetime import UTC, date, datetime, timezone
 from pathlib import Path
+from typing import cast
 
-TEMPERATURE = 4500  # K at night, also in system.qml
-FALLBACK = ("19:00", "07:00")  # night without a location: from, until
-LOCATION = Path.home() / ".local/state/quickshell-calendar.json"  # calendar.qml's settings
+DEFAULTS: dict[str, object] = {"schedule": "sun", "from": "21:00", "until": "07:00", "temperature": 4500}
+SCHEDULES = ("sun", "times", "off")
+TEMPERATURES = (1000, 6000)  # K, hyprsunset's range that tints at all
+FALLBACK = ("19:00", "07:00")  # "sun" without a location: from, until
+HHMM = re.compile(r"^([01]?\d|2[0-3]):[0-5]\d$")
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+MACHINE = CONFIG / "hypr/local.lua"  # Machine Settings' "-- settings:" line (settings.qml)
+CALENDAR = Path.home() / ".local/state/quickshell-calendar.json"  # calendar.qml's settings
 STATE = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / "night-light.json"
 J2000 = 2451545.0  # Julian date of 2000-01-01 12:00 UTC
 UNIX_EPOCH = 2440587.5  # Julian date of 1970-01-01 00:00 UTC
@@ -69,39 +84,82 @@ def at(day: date, hhmm: str, tz: timezone) -> datetime:
     return datetime(day.year, day.month, day.day, int(hours), int(minutes), tzinfo=tz)
 
 
-def schedule(now: datetime, place: dict[str, object] | None) -> dict[str, object]:
+def options(settings: object) -> dict[str, object]:
+    """settings["nightLight"] over DEFAULTS, invalid values left out"""
+    given: object = cast(dict[str, object], settings).get("nightLight") if isinstance(settings, dict) else None
+    night = cast(dict[str, object], given) if isinstance(given, dict) else {}
+    out = dict(DEFAULTS)
+    if night.get("schedule") in SCHEDULES:
+        out["schedule"] = night["schedule"]
+    for key in ("from", "until"):
+        value = night.get(key)
+        if isinstance(value, str) and HHMM.match(value):
+            out[key] = value
+    temperature = night.get("temperature")
+    if isinstance(temperature, int | float) and TEMPERATURES[0] <= temperature <= TEMPERATURES[1]:
+        out["temperature"] = int(temperature)
+    return out
+
+
+def schedule(now: datetime, place: dict[str, object] | None, opts: dict[str, object]) -> dict[str, object]:
     """Whether it's night at `now` (local, with tzinfo), and the day's times"""
-    if place is not None:
+    state: dict[str, object] = {"schedule": opts["schedule"], "temperature": opts["temperature"], "place": None}
+    if opts["schedule"] == "off":
+        return {"night": False, "from": None, "until": None, **state}
+    tz = now.tzinfo if isinstance(now.tzinfo, timezone) else UTC
+    if opts["schedule"] == "times":
+        start, end = at(now.date(), str(opts["from"]), tz), at(now.date(), str(opts["until"]), tz)
+    elif place is not None:
+        state["place"] = place.get("name")
         times = sun_times(now.date(), float(str(place["lat"])), float(str(place["lon"])))
         if isinstance(times, str):
-            return {"night": times == POLAR_NIGHT, "sunset": None, "sunrise": None, "place": place.get("name")}
-        sunrise, sunset = (t.astimezone(now.tzinfo) for t in times)
-        name = place.get("name")
+            return {"night": times == POLAR_NIGHT, "from": None, "until": None, **state}
+        end, start = (t.astimezone(now.tzinfo) for t in times)
     else:
-        tz = now.tzinfo if isinstance(now.tzinfo, timezone) else UTC
-        sunset, sunrise = at(now.date(), FALLBACK[0], tz), at(now.date(), FALLBACK[1], tz)
-        name = None
-    return {
-        "night": now < sunrise or now >= sunset,
-        "sunset": sunset.strftime("%H:%M"),
-        "sunrise": sunrise.strftime("%H:%M"),
-        "place": name,
-    }
+        start, end = at(now.date(), FALLBACK[0], tz), at(now.date(), FALLBACK[1], tz)
+    # Across midnight (the usual) or within the day
+    night = (now >= start or now < end) if start > end else start <= now < end
+    return {"night": night, "from": start.strftime("%H:%M"), "until": end.strftime("%H:%M"), **state}
 
 
-def location() -> dict[str, object] | None:
-    try:
-        place = json.loads(LOCATION.read_text()).get("location")
-    except (OSError, ValueError, AttributeError):
+def place_in(settings: object) -> dict[str, object] | None:
+    """settings["location"] if it's a place with lat and lon"""
+    if not isinstance(settings, dict):
         return None
+    place: object = cast(dict[str, object], settings).get("location")
     if isinstance(place, dict) and "lat" in place and "lon" in place:
-        return place  # pyright: ignore[reportUnknownVariableType]
+        return cast(dict[str, object], place)
     return None
 
 
-def tell_hyprsunset(night: bool) -> bool:
+def machine_settings(lua: str) -> object:
+    """The JSON of local.lua's "-- settings:" line, None without one"""
+    line = re.search(r"^-- settings: (.*)$", lua, re.MULTILINE)
+    return json.loads(line[1]) if line else None
+
+
+def read_machine_settings() -> object:
+    try:
+        return machine_settings(MACHINE.read_text())
+    except (OSError, ValueError):
+        return None
+
+
+def location(settings: object) -> tuple[dict[str, object] | None, str | None]:
+    """The machine's location, else the calendar's, and whose it is"""
+    place = place_in(settings)
+    if place is not None:
+        return place, "machine"
+    try:
+        place = place_in(json.loads(CALENDAR.read_text()))
+    except (OSError, ValueError):
+        pass
+    return place, "calendar" if place is not None else None
+
+
+def tell_hyprsunset(night: bool, temperature: int) -> bool:
     """False while hyprsunset isn't there (yet): try again next minute"""
-    command = ["temperature", str(TEMPERATURE)] if night else ["identity"]
+    command = ["temperature", str(temperature)] if night else ["identity"]
     result = subprocess.run(["hyprctl", "hyprsunset", *command], capture_output=True, text=True, check=False)
     return result.returncode == 0 and result.stdout.strip() == "ok"
 
@@ -110,12 +168,19 @@ def main(args: list[str]) -> int:
     if args:
         print(__doc__, file=sys.stderr)
         return 2
-    told: bool | None = None
+    told: tuple[bool, int | None] | None = None
     while True:
-        state = schedule(datetime.now().astimezone(), location())
+        settings = read_machine_settings()
+        place, place_from = location(settings)
+        state = schedule(datetime.now().astimezone(), place, options(settings))
+        state["placeFrom"] = place_from if state["place"] is not None else None
         night = bool(state["night"])
-        if night != told and tell_hyprsunset(night):
-            told = night
+        temperature = int(str(state["temperature"]))
+        # The temperature only matters at night: changing it by day keeps a
+        # night light that was switched on by hand
+        wanted = (night, temperature if night else None)
+        if wanted != told and tell_hyprsunset(night, temperature):
+            told = wanted
         try:
             STATE.write_text(json.dumps(state) + "\n")
         except OSError:
