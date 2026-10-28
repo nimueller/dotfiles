@@ -8,7 +8,8 @@ import Quickshell.Bluetooth
 import Quickshell.Io
 
 // System menu for the bar's distro logo: the system at a glance (host,
-// kernel, the monitors' resolutions, uptime, packages, pending updates) and the live use of CPU,
+// kernel, the monitors' resolutions, uptime, packages, waiting updates of
+// pacman, the AUR and Flatpak and the age of flake.lock) and the live use of CPU,
 // memory, swap, the disks (/ and the home folder's, if that's another
 // partition) and GPU, read every 2 seconds while it's open, and the
 // brightness of the screens (the backlight, or monitors over DDC/CI). The gear
@@ -23,7 +24,6 @@ Popup {
 
     property var info: ({}) // os, kernel, host, packages, uptime (s)
     property var monitors: [] // hyprctl monitors: name, model, width, height, refreshRate, scale
-    property int updates: -1 // pending pacman updates; -1 while counting, -2 without checkupdates
     property real cpu: 0 // 0..1
     property var cpuTemp: null // °C
     property var lastCpu: null // [busy, total] of the previous reading
@@ -78,13 +78,15 @@ Popup {
         }
     }
 
-    // Pending updates: checkupdates syncs a copy of the databases, so it takes a moment
-    Process {
-        running: true
-        command: ["sh", "-c", "command -v checkupdates >/dev/null || { echo -2; exit; }; checkupdates 2>/dev/null | wc -l"]
-        stdout: StdioCollector {
-            onStreamFinished: root.updates = parseInt(text.trim()) || 0
-        }
+    // Waiting updates (Updates.qml): fresh ones while the menu is open
+    Component.onCompleted: Updates.refresh()
+
+    // "12 from pacman · 2 from the AUR", "Up to date"
+    function updatesText() {
+        if (!Updates.checked)
+            return "Checking…";
+        const parts = [[Updates.pacman, "pacman"], [Updates.aur, "the AUR"], [Updates.flatpak, "Flatpak"]].filter(([n]) => n > 0).map(([n, from]) => `${n} from ${from}`);
+        return parts.length ? parts.join(" · ") : "Up to date";
     }
 
     // Every 2 seconds: CPU, memory, swap, disks, temperatures, GPU
@@ -165,7 +167,8 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 ...root.monitors.map(m => [m.name, [m.model, `${m.width} × ${m.height}`, `${Math.round(m.refreshRate)} Hz`, m.scale !== 1 ? `scale ${m.scale}` : ""].filter(s => s).join(" · ")]),
                 ["Uptime", root.info.uptime ? root.uptime(Number(root.info.uptime)) : ""],
                 ["Packages", root.info.packages ? `${root.info.packages} from pacman` : ""],
-                ["Updates", root.updates === -1 ? "Checking…" : root.updates === -2 ? "checkupdates isn't installed" : root.updates === 0 ? "Up to date" : `${root.updates} available`]
+                ["Updates", root.updatesText()],
+                ...(Updates.flakeAge !== null ? [["flake.lock", Updates.flakeAge === 0 ? "Updated today" : `${Updates.flakeAge} ${Updates.flakeAge === 1 ? "day" : "days"} old${Updates.flakeStale ? " · git pull, then switch" : ""}`]] : [])
             ]
 
             delegate: Item {
@@ -184,7 +187,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     x: 90
                     width: parent.width - 90
                     text: parent.modelData[1]
-                    color: parent.modelData[0] === "Updates" && root.updates > 0 ? Theme.peach : Theme.text
+                    color: (parent.modelData[0] === "Updates" && Updates.total > 0) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale) ? Theme.peach : Theme.text
                 }
             }
         }
@@ -426,13 +429,13 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             Layout.fillWidth: true
         }
         IconButton {
-            visible: root.updates > 0
+            visible: Updates.total > 0
             glyph: Theme.glyph(0xf06b0) // 󰚰
             text: "Update"
             accent: Theme.peach
             active: true
             onClicked: {
-                Quickshell.execDetached(["kitty", "--hold", "sudo", "pacman", "-Syu"]);
+                Updates.update();
                 root.close();
             }
         }

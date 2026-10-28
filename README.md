@@ -115,7 +115,6 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
 - [ ] Turning the screen with the device (iio-sensor-proxy)
 - [ ] Night light with `hyprsunset`
-- [ ] Waiting updates at a glance on the bar, including AUR and Flatpak updates and the age of `flake.lock`
 - [ ] `install.sh`: move an existing `~/.ssh/config` to `~/.ssh/config.local` before the first switch
 
 Ideas:
