@@ -28,9 +28,9 @@ PanelWindow {
     property bool streaming: false
 
     // Close the apps and Hyprland with hyprshutdown first, which shows the
-    // apps that hold it up, then `command` (shutdown.sh)
+    // apps that hold it up, then `command` (shutdown.py)
     function gracefully(label, command) {
-        return `"${Quickshell.shellPath("shutdown.sh")}" '${label}' '${command}'`;
+        return `"${Quickshell.shellPath("shutdown.py")}" '${label}' '${command}'`;
     }
     property int selected: 0
     property string uptime: ""

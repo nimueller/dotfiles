@@ -46,7 +46,8 @@
   '';
 
   # Installed software against system/packages/*.txt and the Flatpaks in
-  # home-manager/desktop/flatpak.nix (ruff in check.sh checks it)
+  # home-manager/desktop/flatpak.nix. Python scripts: check.sh lints them
+  # (ruff, pyright) instead of the writer's flake8 (doCheck)
   pkg-sync = pkgs.writers.writePython3Bin "pkg-sync" { doCheck = false; } (
     builtins.readFile ./scripts/pkg-sync.py
   );
@@ -90,16 +91,9 @@
     text = builtins.readFile ./scripts/laptop-idle.sh;
   };
   # Keeps Discord's logs of calls (timer in home-manager/desktop/default.nix)
-  discord-call-logs = pkgs.writeShellApplication {
-    name = "discord-call-logs";
-    runtimeInputs = with pkgs; [
-      zstd
-      gnugrep
-      findutils
-      coreutils
-    ];
-    text = builtins.readFile ./scripts/discord-call-logs.sh;
-  };
+  discord-call-logs = pkgs.writers.writePython3Bin "discord-call-logs" { doCheck = false; } (
+    builtins.readFile ./scripts/discord-call-logs.py
+  );
   init-tex = pkgs.writeShellApplication {
     name = "init-tex";
     text = builtins.readFile ./scripts/init-tex.sh;

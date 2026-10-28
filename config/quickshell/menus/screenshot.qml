@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Screenshot editor, started by screenshot.sh once it has frozen every
+// Screenshot editor, started by screenshot.py once it has frozen every
 // monitor (into QS_SCREENSHOT_DIR). Drag to
 // select a region or click a window (a click on the desktop takes the whole
 // monitor), then adjust the box by its edges and corners or move it, draw on

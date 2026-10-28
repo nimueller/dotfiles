@@ -31,7 +31,7 @@ Popup {
     property var swap: ({ used: 0, total: 0 })
     property var disks: [] // { target, used, total }
     property var gpu: null // { name, load, memUsed, memTotal, temp }
-    property var backlight: null // { percent } of the built-in screen (backlight.sh), null without one
+    property var backlight: null // { percent } of the built-in screen (backlight.py), null without one
 
     readonly property var adapter: Bluetooth.defaultAdapter
     property bool bluetoothHardware: false
@@ -291,9 +291,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         title: "Built-in screen"
         value: root.backlight ? root.backlight.percent / 100 : 0
         onMoved: v => {
-            // backlight.sh keeps it above dark, like the keys
+            // backlight.py keeps it above dark, like the keys
             root.backlight = { percent: Math.max(2, Math.round(v * 100)) };
-            Quickshell.execDetached([Quickshell.shellPath("backlight.sh"), "set", String(Math.round(v * 100))]);
+            Quickshell.execDetached([Quickshell.shellPath("backlight.py"), "set", String(Math.round(v * 100))]);
         }
     }
     Repeater {
@@ -355,10 +355,10 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         id: ddc
     }
 
-    // backlight.sh: the percent, nothing without a backlight
+    // backlight.py: the percent, nothing without a backlight
     Process {
         running: true
-        command: [Quickshell.shellPath("backlight.sh"), "get"]
+        command: [Quickshell.shellPath("backlight.py"), "get"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const percent = parseInt(text);
