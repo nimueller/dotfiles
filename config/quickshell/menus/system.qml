@@ -14,7 +14,8 @@ import Quickshell.Io
 // partition) and GPU, read every 2 seconds while it's open, and the
 // brightness of the screens (the backlight, or monitors over DDC/CI), switches
 // to keep the screen awake (Awake.qml) and for the night light (hyprsunset,
-// scheduled by night-light.py). The gear opens Machine Settings. Also
+// scheduled by night-light.py; a click on it shows when it's on). The gear
+// opens Machine Settings. Also
 // Bluetooth, the on-screen keyboard and power, which a compact bar
 // (Modes.compactBar) leaves out.
 Popup {
@@ -35,8 +36,9 @@ Popup {
     property var gpu: null // { name, load, memUsed, memTotal, temp }
     property var backlight: null // { percent } of the built-in screen (backlight.py), null without one
     property var nightLight: null // { on } from hyprsunset, null while it isn't running
-    property var nightTimes: null // { night, sunset, sunrise, place } from night-light.py
-    readonly property int nightTemperature: 4500 // as in night-light.py
+    property var nightTimes: null // { night, schedule, from, until, place, temperature } from night-light.py
+    readonly property int nightTemperature: nightTimes?.temperature ?? LocalSettings.nightLight.temperature
+    property bool nightOpen: false // the night light's schedule shown
 
     readonly property var adapter: Bluetooth.defaultAdapter
     property bool bluetoothHardware: false
@@ -278,8 +280,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         }
     }
 
-    // The screen: stay awake by hand, and the night light, which a click
-    // turns on or off until the next sunset or sunrise (night-light.py)
+    // The screen: stay awake by hand, and the night light, which its switch
+    // turns on or off until the next sunset or sunrise (night-light.py); a
+    // click elsewhere on it shows the schedule
     RowLayout {
         Layout.fillWidth: true
         spacing: 6
@@ -299,17 +302,77 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 if (!root.nightLight)
                     return "Unavailable";
                 const t = root.nightTimes;
-                if (!t?.sunset)
+                if (!t?.from)
                     return root.nightLight.on ? "On" : "Off";
-                return root.nightLight.on ? `Until ${t.sunrise}` : t.night ? "Off tonight" : `From ${t.sunset}`;
+                return root.nightLight.on ? `Until ${t.until}` : t.night ? "Off tonight" : `From ${t.from}`;
             }
             checked: root.nightLight?.on ?? false
             enabled: !!root.nightLight
+            expandable: true
+            expanded: root.nightOpen
+            onClicked: root.nightOpen = !root.nightOpen
             accent: Theme.peach
             onToggled: {
                 const on = !root.nightLight.on;
                 root.nightLight = { on: on };
                 Quickshell.execDetached(on ? ["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)] : ["hyprctl", "hyprsunset", "identity"]);
+            }
+        }
+    }
+
+    // The night light's schedule, from the click on it
+    Rectangle {
+        Layout.fillWidth: true
+        visible: root.nightOpen
+        implicitHeight: nightColumn.implicitHeight + 20
+        radius: 8
+        color: Theme.alpha(Theme.peach, 0.08)
+
+        ColumnLayout {
+            id: nightColumn
+
+            readonly property var t: root.nightTimes
+
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 6
+
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
+                font.bold: true
+                text: {
+                    const t = nightColumn.t;
+                    if (!t)
+                        return "No schedule: night-light.py isn't running";
+                    if (t.schedule === "off")
+                        return "Only by hand";
+                    if (!t.from)
+                        return t.night ? "On all day: the sun doesn't rise today" : "Off all day: the sun doesn't set today";
+                    return `On from ${t.from} until ${t.until}`;
+                }
+            }
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
+                color: Theme.subtext0
+                text: {
+                    const t = nightColumn.t;
+                    if (!t)
+                        return "";
+                    const where = t.schedule === "times" ? "At set times" : t.schedule === "off" ? "It doesn't turn on by itself" : t.place ? `Sunset to sunrise in ${t.place}` : "Without a location: fixed times";
+                    return `${where}  ·  ${t.temperature ?? root.nightTemperature} K`;
+                }
+            }
+            IconButton {
+                glyph: Theme.glyph(0xf0493) // 󰒓
+                text: "Night light settings"
+                onClicked: {
+                    Menus.settingsPage = "night";
+                    root.open("settings");
+                }
             }
         }
     }
@@ -525,7 +588,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         property bool checked
         property bool enabled: true
         property color accent
+        // A click besides the switch: clicked() instead of toggled(), e.g. for details
+        property bool expandable: false
+        property bool expanded: false
         signal toggled
+        signal clicked
 
         Layout.fillWidth: true
         implicitHeight: Modes.touch ? 36 : 28
@@ -539,9 +606,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             id: toggleMouse
             anchors.fill: parent
             hoverEnabled: true
-            enabled: toggle.enabled
+            enabled: toggle.enabled || toggle.expandable
             cursorShape: Qt.PointingHandCursor
-            onClicked: toggle.toggled()
+            onClicked: toggle.expandable ? toggle.clicked() : toggle.toggled()
         }
 
         RowLayout {
@@ -563,6 +630,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 elide: Text.ElideRight
                 text: toggle.detail
                 color: Theme.subtext0
+            }
+            Label {
+                visible: toggle.expandable
+                text: Theme.glyph(toggle.expanded ? 0xf0143 : 0xf0140) // 󰅃 / 󰅀
+                color: Theme.overlay1
             }
             Switch {
                 checked: toggle.checked

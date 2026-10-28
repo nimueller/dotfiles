@@ -126,7 +126,7 @@ ShellRoot {
         onTriggered: batteryLog.running = Modes.laptop
     }
 
-    // The night light from sunset to sunrise (night-light.py, hyprsunset)
+    // The night light on its schedule (night-light.py, hyprsunset)
     Process {
         id: nightLight
         running: true

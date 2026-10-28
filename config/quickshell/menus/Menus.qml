@@ -19,6 +19,10 @@ Singleton {
     // Set by daemon.qml
     property bool hosted: false
 
+    // The page Machine Settings (settings.qml) opens on, for whoever opens it;
+    // it takes it and sets it back to ""
+    property string settingsPage: ""
+
     property var loaders: ({}) // name → LazyLoader
     property var closedAt: ({}) // name → ms
 
