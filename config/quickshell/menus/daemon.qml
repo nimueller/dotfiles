@@ -17,7 +17,7 @@ import Quickshell.Io
 // its popups and center (replaces dunst), the OSD for the volume and
 // brightness keys (replaces SwayOSD), the stay-awake inhibitor, the
 // camera/microphone/screen-sharing watch, the KDE Connect phones, the
-// Bluetooth pairing agent, the fixed folders in Files' sidebar and the
+// night light's schedule, the Bluetooth pairing agent, the fixed folders in Files' sidebar and the
 // warnings about a full memory, an overloaded CPU, a full disk or a low
 // battery. The bar menus and the
 // windows opened from them live here too, created only while open
@@ -124,6 +124,19 @@ ShellRoot {
         id: batteryLogRestart
         interval: 5000
         onTriggered: batteryLog.running = Modes.laptop
+    }
+
+    // The night light from sunset to sunrise (night-light.py, hyprsunset)
+    Process {
+        id: nightLight
+        running: true
+        command: ["/usr/bin/python3", Quickshell.shellPath("night-light.py")]
+        onExited: nightLightRestart.start()
+    }
+    Timer {
+        id: nightLightRestart
+        interval: 5000
+        onTriggered: nightLight.running = true
     }
 
     // Downloads, Documents etc. stay in Files' sidebar (bookmarks.py)

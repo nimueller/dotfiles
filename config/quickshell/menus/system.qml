@@ -13,7 +13,7 @@ import Quickshell.Io
 // partition) and GPU, read every 2 seconds while it's open, and the
 // brightness of the screens (the backlight, or monitors over DDC/CI), switches
 // to keep the screen awake (Awake.qml) and for the night light (hyprsunset,
-// config/hypr/hyprsunset.conf). The gear opens Machine Settings. Also
+// scheduled by night-light.py). The gear opens Machine Settings. Also
 // Bluetooth, the on-screen keyboard and power, which a compact bar
 // (Modes.compactBar) leaves out.
 Popup {
@@ -35,7 +35,8 @@ Popup {
     property var gpu: null // { name, load, memUsed, memTotal, temp }
     property var backlight: null // { percent } of the built-in screen (backlight.py), null without one
     property var nightLight: null // { on } from hyprsunset, null while it isn't running
-    readonly property int nightTemperature: 4500 // as in config/hypr/hyprsunset.conf
+    property var nightTimes: null // { night, sunset, sunrise, place } from night-light.py
+    readonly property int nightTemperature: 4500 // as in night-light.py
 
     readonly property var adapter: Bluetooth.defaultAdapter
     property bool bluetoothHardware: false
@@ -275,7 +276,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
     }
 
     // The screen: stay awake by hand, and the night light, which a click
-    // turns on or off until hyprsunset's next scheduled change
+    // turns on or off until the next sunset or sunrise (night-light.py)
     RowLayout {
         Layout.fillWidth: true
         spacing: 6
@@ -291,7 +292,14 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         Toggle {
             glyph: 0xf0594 // 󰖔
             title: "Night light"
-            detail: !root.nightLight ? "Unavailable" : root.nightLight.on ? "On" : "Off"
+            detail: {
+                if (!root.nightLight)
+                    return "Unavailable";
+                const t = root.nightTimes;
+                if (!t?.sunset)
+                    return root.nightLight.on ? "On" : "Off";
+                return root.nightLight.on ? `Until ${t.sunrise}` : t.night ? "Off tonight" : `From ${t.sunset}`;
+            }
             checked: root.nightLight?.on ?? false
             enabled: !!root.nightLight
             accent: Theme.peach
@@ -314,6 +322,17 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 if (identity === "true" || identity === "false")
                     root.nightLight = { on: identity === "false" && parseInt(kelvin) < 6000 };
             }
+        }
+    }
+
+    // Today's sunset and sunrise at the weather location
+    FileView {
+        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/night-light.json`
+        printErrors: false
+        onLoaded: {
+            try {
+                root.nightTimes = JSON.parse(text());
+            } catch (e) {}
         }
     }
 
