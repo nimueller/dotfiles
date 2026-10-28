@@ -47,6 +47,28 @@ Popup {
         accent: Theme.mauve
     }
 
+    // Media players (MPRIS): cover, title, play/pause/skip, position
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: Media.players.length > 0
+        spacing: 10
+
+        SectionTitle {
+            text: "Playing"
+        }
+
+        Repeater {
+            model: Media.players
+
+            delegate: MediaCard {
+                required property var modelData
+
+                Layout.fillWidth: true
+                player: modelData
+            }
+        }
+    }
+
     // Per-application volume
     ColumnLayout {
         Layout.fillWidth: true

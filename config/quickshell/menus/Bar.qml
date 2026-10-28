@@ -12,13 +12,14 @@ import Quickshell.Widgets
 
 // The bar at the bottom of a monitor, part of daemon.qml:
 // the distro logo (system menu), waiting updates, workspaces and window title on the left, the clock in the middle, tray,
-// privacy, a screen recording, sound, battery, Bluetooth, phone, network, notifications and power on the right.
+// privacy, a screen recording, the playing media, sound, battery, Bluetooth, phone, network, notifications and power on the
+// right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
 // otherwise a key: the launcher, closing the window and the on-screen
 // keyboard; in tablet mode it's taller still, and holding a finger on a
 // chip is a right click (BarChip.qml). On narrow screens (Modes.compactBar) Bluetooth, the keyboard
-// and power are in the system menu instead. The clock moves left of the
+// and power are in the system menu instead, and the media title is left out. The clock moves left of the
 // middle when the right side would reach it.
 PanelWindow {
     id: bar
@@ -234,6 +235,28 @@ PanelWindow {
             accent: Theme.red
             text: `${Theme.glyph(0xf044a)}  ${Recording.elapsed}` // 󰑊
             onClicked: Recording.stop()
+        }
+
+        // Media (MPRIS): the playing title; click for the sound menu with the
+        // controls, middle click to play or pause, right click for the next
+        // track. Only while something plays, or is paused
+        // in the middle of a track.
+        BarChip {
+            readonly property var player: Media.player
+            readonly property string title: Media.title(player)
+
+            visible: !!player && !bar.compact && (player.isPlaying || player.position > 0) && !!title
+            accent: Theme.lavender
+            plain: !player?.isPlaying
+            text: `${Theme.glyph(player?.isPlaying ? 0xf075a : 0xf03e4)}  ${title.length > 24 ? title.slice(0, 23) + "…" : title}` // 󰝚 / 󰏤
+            onClicked: button => {
+                if (button === Qt.MiddleButton)
+                    player.togglePlaying();
+                else if (button === Qt.RightButton && player.canGoNext)
+                    player.next();
+                else
+                    bar.menu("audio");
+            }
         }
 
         // Sound: click for the menu, right click for pavucontrol, scroll for the
