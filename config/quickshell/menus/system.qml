@@ -48,6 +48,12 @@ Popup {
         close();
     }
 
+    // Machine Settings on one of its pages
+    function openSettings(page) {
+        Menus.settingsPage = page;
+        open("settings");
+    }
+
     function gib(bytes) {
         return `${(bytes / 1073741824).toFixed(1)} GiB`;
     }
@@ -350,9 +356,12 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                         return "Only by hand";
                     if (!t.from)
                         return t.night ? "On all day: the sun doesn't rise today" : "Off all day: the sun doesn't set today";
+                    if (t.place)
+                        return `On from ${t.from} (sunset) until ${t.until} (sunrise)`;
                     return `On from ${t.from} until ${t.until}`;
                 }
             }
+            // Where the times come from, and where to change that
             Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
@@ -362,16 +371,34 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     const t = nightColumn.t;
                     if (!t)
                         return "";
-                    const where = t.schedule === "times" ? "At set times" : t.schedule === "off" ? "It doesn't turn on by itself" : t.place ? `Sunset to sunrise in ${t.place}` : "Without a location: fixed times";
-                    return `${where}  ·  ${t.temperature ?? root.nightTemperature} K`;
+                    let why;
+                    if (t.schedule === "times")
+                        why = "The times set in Machine Settings.";
+                    else if (t.schedule === "off")
+                        why = "It doesn't turn on by itself: set so in Machine Settings.";
+                    else if (t.placeFrom === "machine")
+                        why = `Today's sunset and sunrise in ${t.place}, this computer's location in Machine Settings.`;
+                    else if (t.placeFrom === "calendar")
+                        why = `Today's sunset and sunrise in ${t.place}, the calendar's weather location: Machine Settings has no location.`;
+                    else
+                        why = "Fixed times, as no location is set to work out the sunset and sunrise.";
+                    return `${why} Warmer colours at ${t.temperature ?? root.nightTemperature} K.`;
                 }
             }
-            IconButton {
-                glyph: Theme.glyph(0xf0493) // 󰒓
-                text: "Night light settings"
-                onClicked: {
-                    Menus.settingsPage = "night";
-                    root.open("settings");
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                IconButton {
+                    visible: nightColumn.t?.schedule === "sun"
+                    glyph: Theme.glyph(0xf034e) // 󰍎
+                    text: "Location"
+                    onClicked: root.openSettings("location")
+                }
+                IconButton {
+                    glyph: Theme.glyph(0xf0493) // 󰒓
+                    text: "Night light settings"
+                    onClicked: root.openSettings("night")
                 }
             }
         }

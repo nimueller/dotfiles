@@ -19,10 +19,11 @@ system menu's switch (system.qml) holds until the next change. For the
 system menu it writes the day's times to $XDG_RUNTIME_DIR/night-light.json:
 
   {"night": true, "schedule": "sun", "from": "16:51", "until": "07:12",
-   "place": "Berlin", "temperature": 4500}
+   "place": "Berlin", "placeFrom": "machine", "temperature": 4500}
 
 (from and until are null for "off" and on days the sun doesn't set or rise,
-place is null unless the times are a place's sunset and sunrise.)
+place is null unless the times are a place's sunset and sunrise; placeFrom
+says whose place it is, "machine" or "calendar".)
 """
 
 import json
@@ -144,15 +145,16 @@ def read_machine_settings() -> object:
         return None
 
 
-def location(settings: object) -> dict[str, object] | None:
-    """The machine's location, else the calendar's"""
+def location(settings: object) -> tuple[dict[str, object] | None, str | None]:
+    """The machine's location, else the calendar's, and whose it is"""
     place = place_in(settings)
-    if place is None:
-        try:
-            place = place_in(json.loads(CALENDAR.read_text()))
-        except (OSError, ValueError):
-            pass
-    return place
+    if place is not None:
+        return place, "machine"
+    try:
+        place = place_in(json.loads(CALENDAR.read_text()))
+    except (OSError, ValueError):
+        pass
+    return place, "calendar" if place is not None else None
 
 
 def tell_hyprsunset(night: bool, temperature: int) -> bool:
@@ -169,7 +171,9 @@ def main(args: list[str]) -> int:
     told: tuple[bool, int | None] | None = None
     while True:
         settings = read_machine_settings()
-        state = schedule(datetime.now().astimezone(), location(settings), options(settings))
+        place, place_from = location(settings)
+        state = schedule(datetime.now().astimezone(), place, options(settings))
+        state["placeFrom"] = place_from if state["place"] is not None else None
         night = bool(state["night"])
         temperature = int(str(state["temperature"]))
         # The temperature only matters at night: changing it by day keeps a

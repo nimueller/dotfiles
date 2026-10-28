@@ -1,6 +1,10 @@
 # pyright: strict
+import json
+import tempfile
 import unittest
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+from unittest import mock
 
 from helpers import load
 
@@ -119,6 +123,17 @@ class Location(unittest.TestCase):
         self.assertIsNone(night_light.place_in({"location": None}))
         self.assertIsNone(night_light.place_in({"location": {"name": "Nowhere"}}))
         self.assertIsNone(night_light.place_in(["location"]))
+
+    def test_machine_first_then_calendar(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            calendar = Path(tmp) / "calendar.json"
+            calendar.write_text(json.dumps({"location": BERLIN}))
+            with mock.patch.object(night_light, "CALENDAR", calendar):
+                north = {"name": "North", "lat": 78.2, "lon": 15.6}
+                self.assertEqual(night_light.location({"location": north}), (north, "machine"))
+                self.assertEqual(night_light.location({}), (BERLIN, "calendar"))
+                calendar.unlink()
+                self.assertEqual(night_light.location(None), (None, None))
 
 
 if __name__ == "__main__":
