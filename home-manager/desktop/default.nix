@@ -137,7 +137,10 @@ in
         name = "Machine Settings";
         comment = "Displays, environment variables and autostart programs of this machine";
         exec = "${config.dotfiles}/config/quickshell/menus/toggle.sh settings";
-        icon = "preferences-desktop-display";
+        # Adwaita's own: the theme Qt reads (the Nix one, first in
+        # XDG_DATA_DIRS) doesn't inherit AdwaitaLegacy, which has
+        # preferences-desktop-display
+        icon = "video-display";
         categories = [ "Settings" ];
       };
 

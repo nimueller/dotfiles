@@ -231,6 +231,8 @@ def scan(device, folder, prefix, source, mode, dpi, left, top, width, height, co
                 say(lock, f"progress {m.group(1)}")
             elif "out of documents" in line:
                 say(lock, "error The feeder is empty")
+            elif line.startswith("scanimage: rounded value"):
+                pass  # a note on an option, e.g. a resolution it doesn't offer
             elif m := re.match(r"scanimage: (?:sane_\w+: )?(.*)", line):
                 say(lock, f"error {m.group(1)}")
 
