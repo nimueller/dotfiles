@@ -14,7 +14,7 @@ import Quickshell
 Singleton {
     id: root
 
-    readonly property var names: ["audio", "battery", "battery-history", "bluetooth", "calendar", "kdeconnect", "network", "power", "settings", "system", "window"]
+    readonly property var names: ["audio", "battery", "battery-history", "bluetooth", "calendar", "kdeconnect", "network", "power", "scan", "settings", "system", "window"]
 
     // Set by daemon.qml
     property bool hosted: false

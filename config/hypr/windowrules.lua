@@ -48,6 +48,9 @@ hl.window_rule({ match = { title = "^Machine Settings$" }, float = true, size = 
 -- Battery History (config/quickshell/menus/battery-history.qml)
 hl.window_rule({ match = { title = "^Battery History$" }, float = true, size = "760 720", center = true })
 
+-- Scanner (config/quickshell/menus/scan.qml)
+hl.window_rule({ match = { title = "^Scanner$" }, float = true, size = "1040 740", center = true })
+
 -- File chooser (Nautilus, config/xdg-desktop-portal): floating and centred,
 -- also for apps that don't name their window to the portal (Hyprland floats
 -- the others by itself). To Hyprland it's a Nautilus window like the others,

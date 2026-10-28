@@ -2,6 +2,10 @@
 // its own context and buffers, ~100 MB per bar; this simple UI draws fine on
 // the CPU and the daemon needs ~200 MB instead of ~490 MB.
 //@ pragma Env QT_QUICK_BACKEND=software
+// The icons of the GTK desktop (adwaita-icon-theme): without a theme, Qt
+// looks only in hicolor, which has the apps' icons but not the devices'
+// (the launcher's "scanner", "video-display")
+//@ pragma IconTheme Adwaita
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland

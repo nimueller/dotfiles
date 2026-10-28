@@ -3,6 +3,7 @@
 # they can. The IDEs stay here: a Nix build's library paths would reach the
 # programs started from them, without the NVIDIA driver. `pkg-sync` compares
 # with what's installed; `pkg-sync aur PKG` checks one before adding it.
+epsonscan2
 intellij-idea-ultimate-edition
 nautilus-checksums
 nautilus-launch
