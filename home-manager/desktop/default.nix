@@ -99,7 +99,7 @@ in
       };
 
       # Discord's WebRTC logs of calls, kept beyond its last sessions to look
-      # into lag later (pkgs/scripts/discord-call-logs.sh)
+      # into lag later (pkgs/scripts/discord-call-logs.py)
       discord-call-logs = {
         Unit.Description = "Keep Discord's logs of calls";
         Service = {
@@ -247,7 +247,7 @@ in
       xdg-terminal-exec
       playerctl
       hyprpicker
-      grim # screenshots (config/quickshell/menus/screenshot.sh)
+      grim # screenshots (config/quickshell/menus/screenshot.py)
       imagemagick
       # The text and QR codes of the screenshot editor and the text of the
       # scanner's PDFs; zbar without its camera apps

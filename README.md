@@ -76,8 +76,10 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 - Packages and everything else on the Nix side live in `home-manager/` and `flake.nix`. Apply changes with
   `home-manager switch --flake ~/dotfiles#desktop` (or `#headless`, `#desktop_aarch64`, `#headless_aarch64`).
 - `pkg-sync` compares the installed packages and Flatpaks with the declared lists and can adopt, prune or install them.
-- `./check.sh` runs the linters (Nix, shell, Python, QML) that CI also runs; `nix fmt` formats the Nix files.
-  `git config core.hooksPath .githooks` runs it before every commit.
+- `./check.sh` runs the linters (Nix, shell, Python, QML), pyright and the Python tests, as CI does; `nix fmt` formats
+  the Nix files, `ruff format .` the Python. `nix develop` opens a shell with these tools, and
+  `git config core.hooksPath .githooks` runs the checks before every commit. `CLAUDE.md` has the conventions (when Shell,
+  when Python, how to test).
 - CI updates `flake.lock` every week and merges the update when everything still builds.
 
 | Path | What it holds |
@@ -87,6 +89,7 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 | `config/` | Configuration files: Hyprland (`hypr/hyprland.lua`), Quickshell (`quickshell/menus`), kitty, Neovim, Zsh, … |
 | `system/` | The root side: pacman package lists and `setup.sh` |
 | `pkgs/` | Small helper scripts |
+| `tests/` | Unit tests of the Python scripts |
 
 ## Keybindings
 

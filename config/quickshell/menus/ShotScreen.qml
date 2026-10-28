@@ -213,7 +213,7 @@ PanelWindow {
     // Result -------------------------------------------------------------------
 
     // Grab the drawings (without the screenshot under them) at the physical
-    // size, then screenshot.sh puts them onto the shot, crops and scales it.
+    // size, then screenshot.py puts them onto the shot, crops and scales it.
     // It runs detached, so the editor can close right away.
     function exportShot(action) {
         if (!selected)
@@ -222,7 +222,7 @@ PanelWindow {
         const f = factor;
         const geometry = `${Math.round(sel.width * f)}x${Math.round(sel.height * f)}+${Math.round(sel.x * f)}+${Math.round(sel.y * f)}`;
         const run = layerFile => {
-            Quickshell.execDetached([Quickshell.shellPath("screenshot.sh"), "--export", editor.dir, file, layerFile, geometry, String(editor.percent), action]);
+            Quickshell.execDetached([Quickshell.shellPath("screenshot.py"), "--export", editor.dir, file, layerFile, geometry, String(editor.percent), action]);
             Qt.quit();
         };
         if (!editor.shapes.length) {

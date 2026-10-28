@@ -7,7 +7,7 @@ local function daemon(pattern, command)
 end
 
 -- System programs. Also run again after the shutdown was cancelled
--- (quickshell/menus/shutdown.sh): hyprshutdown ends them right away.
+-- (quickshell/menus/shutdown.py): hyprshutdown ends them right away.
 function M.daemons()
     daemon("[p]olkit-gnome-authentication-agent-1", "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 || notify-send 'Polkit authentication agent not found' 'Point its path in ~/.config/hypr/autostart.lua to the installed agent.'")
     daemon("[w]l-paste --watch cliphist", "wl-paste --watch cliphist store")

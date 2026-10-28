@@ -75,10 +75,10 @@ hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Utilities
--- Screenshot editor (config/quickshell/menus/screenshot.sh): select, draw, scale, copy or save
-hl.bind(mainMod .. " + SHIFT + S",           exec("~/.config/quickshell/menus/screenshot.sh"))
-hl.bind(mainMod .. " + CONTROL + SHIFT + S", exec("~/.config/quickshell/menus/screenshot.sh window"))
-hl.bind("Print",                             exec("~/.config/quickshell/menus/screenshot.sh screen"))
+-- Screenshot editor (config/quickshell/menus/screenshot.py): select, draw, scale, copy or save
+hl.bind(mainMod .. " + SHIFT + S",           exec("~/.config/quickshell/menus/screenshot.py"))
+hl.bind(mainMod .. " + CONTROL + SHIFT + S", exec("~/.config/quickshell/menus/screenshot.py window"))
+hl.bind("Print",                             exec("~/.config/quickshell/menus/screenshot.py screen"))
 hl.bind(mainMod .. " + SHIFT + C",           exec("hyprpicker -a")) -- Colour picker
 hl.bind(mainMod .. " + Escape",              exec("lock-screen")) -- Lock the screen (pkgs/scripts/lock-screen.sh)
 hl.bind(mainMod .. " + I",                   exec("~/.config/quickshell/menus/toggle.sh window")) -- Details of the focused window

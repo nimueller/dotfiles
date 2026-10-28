@@ -80,7 +80,7 @@ Scope {
     }
 
     // step in percent. The focused monitor over DDC/CI (Ddc.qml) when it
-    // answers, otherwise the backlight (backlight.sh: the same scale as the
+    // answers, otherwise the backlight (backlight.py: the same scale as the
     // system menu, never so low the screen goes dark).
     function brightness(step) {
         const monitor = window.screen?.name ?? "";
@@ -88,7 +88,7 @@ Scope {
             ddc.step(monitor, step);
             return;
         }
-        brightnessProc.command = [Quickshell.shellPath("backlight.sh"), "step", String(step)];
+        brightnessProc.command = [Quickshell.shellPath("backlight.py"), "step", String(step)];
         brightnessProc.running = true;
     }
 
@@ -179,7 +179,7 @@ Scope {
         onChanged: (name, value) => root.show("brightness", value, false)
     }
 
-    // backlight.sh: the percent afterwards
+    // backlight.py: the percent afterwards
     Process {
         id: brightnessProc
         stdout: StdioCollector {

@@ -338,7 +338,7 @@ ShellRoot {
     // "DP-1 vrr=1 wide=1 hdr=0" for each connected monitor
     Process {
         running: true
-        command: [Quickshell.shellPath("monitor-caps.sh")]
+        command: [Quickshell.shellPath("monitor-caps.py")]
         stdout: StdioCollector {
             onStreamFinished: {
                 const keys = { vrr: "vrr", wide: "wideColor", hdr: "hdr" };

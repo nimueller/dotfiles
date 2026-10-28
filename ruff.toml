@@ -1,7 +1,15 @@
-# Python in this repository: the calendar helper and the keyring merge
+# Python in this repository: the helpers of the Quickshell menus, pkgs/ and
+# .github/, and their tests (see CLAUDE.md)
 line-length = 120
+# The Python is 3.14 (Arch and nixpkgs), but the formatter would then drop the
+# parentheses of `except (A, B):`, which reads like Python 2
+target-version = "py313"
 
 [lint]
 # pycodestyle, pyflakes, import order, bugbear, pyupgrade, comprehensions,
 # pylint warnings, refurb. Not DTZ: the calendar works in local time on purpose.
 select = ["E", "F", "W", "I", "B", "UP", "C4", "PLW", "FURB"]
+
+[lint.isort]
+# New in 3.14's standard library, which ruff knows only with py314
+extra-standard-library = ["compression"]

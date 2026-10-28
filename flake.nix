@@ -59,6 +59,36 @@
         system: nixpkgs.legacyPackages.${system}.nixfmt-tree
       );
 
+      # The tools of check.sh (`nix develop` for a shell with them): linters
+      # for Nix, shell, Python and QML, and a Python with the libraries the
+      # helpers import, so pyright knows their types
+      devShells = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShellNoCC {
+            packages = with pkgs; [
+              nixfmt
+              statix
+              deadnix
+              shellcheck
+              ruff
+              pyright
+              quickshell
+              qt6.qtdeclarative
+              (python3.withPackages (ps: [
+                ps.pygobject3
+                ps.pygobject-stubs
+                ps.icalendar
+                ps.recurring-ical-events
+              ]))
+            ];
+          };
+        }
+      );
+
       homeConfigurations = {
         headless = mkHome { modules = [ ./home-manager/headless ]; };
 
