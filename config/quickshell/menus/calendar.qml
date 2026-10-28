@@ -28,7 +28,7 @@ Popup {
     readonly property string helper: Quickshell.shellPath("calendar-dav.py")
     readonly property var palette: [Theme.peach, Theme.teal, Theme.pink, Theme.yellow, Theme.green, Theme.maroon, Theme.sky]
 
-    property var settings: ({}) // { location, weekStart, weekNumbers, nextcloud: { url, user, calendars }, ics: [...] }
+    property var settings: ({}) // { location, ownLocation, weekStart, weekNumbers, nextcloud: { url, user, calendars }, ics: [...] }
     property var cache: ({}) // { weather: { at, place, data }, events: { "yyyy-MM": [...] } }
     property bool editing: false
     property bool creating: false
@@ -48,6 +48,14 @@ Popup {
     property string saveError: ""
     property var prefill: ({})
     property int filesReady: 0 // settings and cache loaded (or missing)
+
+    // The weather's place: the machine's location (Machine Settings) unless
+    // the calendar is set to its own, or none is set there. settings.location
+    // is the calendar's own one, kept while it follows the machine's.
+    readonly property bool ownLocation: settings.ownLocation ?? false
+    readonly property var location: !ownLocation && LocalSettings.location ? LocalSettings.location : settings.location ?? null
+    onLocationChanged: if (filesReady === 2)
+        fetchWeather(false)
 
     readonly property int weekStart: settings.weekStart ?? 1
     readonly property bool weekNumbers: settings.weekNumbers ?? true
@@ -319,7 +327,7 @@ Popup {
     }
 
     function fetchWeather(force) {
-        const place = settings.location;
+        const place = location;
         if (!place) {
             zoneProc.running = true; // guess from the time zone first
             return;
@@ -355,7 +363,7 @@ Popup {
         get(`https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=${encodeURIComponent(query)}`, data => {
             const results = data.results ?? [];
             if (pickFirst && results.length)
-                pickLocation(results[0]);
+                pickLocation(results[0], false);
             else
                 locationResults = results;
             if (!results.length)
@@ -363,9 +371,11 @@ Popup {
         }, () => weatherError = "Couldn't reach the location search");
     }
 
-    function pickLocation(r) {
+    function pickLocation(r, byHand) {
         locationResults = [];
-        update({ location: { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude } });
+        // Picked by hand: the calendar's own from now on; the time zone's
+        // guess only fills in while the machine has no location
+        update({ location: { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude }, ownLocation: byHand || ownLocation });
         fetchWeather(true);
     }
 
@@ -529,7 +539,7 @@ Popup {
                 Layout.fillWidth: true
                 weather: popup.cache.weather?.data ?? null
                 metar: popup.cache.weather?.metar ?? null
-                place: popup.settings.location?.name.split(",")[0] ?? ""
+                place: popup.location?.name.split(",")[0] ?? ""
                 error: popup.weatherError
                 onConfigure: popup.editing = true
             }
@@ -546,7 +556,7 @@ Popup {
                 visible: popup.creating
                 day: popup.selected
                 calendars: popup.writable
-                near: popup.settings.location ?? null
+                near: popup.location
                 busy: popup.saving
                 error: popup.saveError
                 onSaveRequested: event => popup.saveEvent(event)
@@ -667,7 +677,9 @@ Popup {
     CalendarSettings {
         Layout.fillWidth: true
         visible: popup.editing
-        location: popup.settings.location ?? null
+        location: popup.location
+        ownLocation: popup.ownLocation
+        machineLocation: LocalSettings.location
         locationResults: popup.locationResults
         weekStart: popup.weekStart
         weekNumbers: popup.weekNumbers
@@ -678,7 +690,8 @@ Popup {
         busy: popup.accountBusy
         error: popup.accountError || popup.weatherError
         onSearchLocation: query => popup.searchLocation(query, false)
-        onPickLocation: place => popup.pickLocation(place)
+        onPickLocation: place => popup.pickLocation(place, true)
+        onSetOwnLocation: own => popup.update({ ownLocation: own })
         onSetWeekStart: day => {
             popup.update({ weekStart: day });
             popup.fetchEvents();

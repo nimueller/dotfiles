@@ -328,7 +328,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         }
     }
 
-    // Today's sunset and sunrise at the weather location
+    // Today's sunset and sunrise at the location (night-light.py)
     FileView {
         path: `${Quickshell.env("XDG_RUNTIME_DIR")}/night-light.json`
         printErrors: false

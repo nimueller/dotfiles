@@ -15,6 +15,14 @@ Singleton {
     // The focused window's title in the bar
     readonly property bool windowTitle: settings.bar?.windowTitle ?? false
 
+    // This machine's location { name, lat, lon }, or null: for the weather
+    // (unless the calendar has its own) and the night light (night-light.py
+    // reads it from local.lua itself)
+    readonly property var location: {
+        const l = settings.location;
+        return l && typeof l.lat === "number" && typeof l.lon === "number" ? l : null;
+    }
+
     // When SystemWatch.qml warns: memory below percent free, the CPU's
     // pressure above percent for minutes, and the disks with / and the home
     // folder below percent or gb free (whichever is less) at each level, the

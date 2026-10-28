@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # pyright: strict
 """The night light's schedule: warmer colours (hyprsunset) from sunset to
-sunrise at the weather location of the calendar menu, run by daemon.qml for
-the session.
+sunrise at this machine's location (Machine Settings, in local.lua), else at
+the calendar menu's weather location, run by daemon.qml for the session.
 
   night-light.py
 
@@ -21,15 +21,19 @@ null for FALLBACK.)
 import json
 import math
 import os
+import re
 import subprocess
 import sys
 import time
 from datetime import UTC, date, datetime, timezone
 from pathlib import Path
+from typing import cast
 
 TEMPERATURE = 4500  # K at night, also in system.qml
 FALLBACK = ("19:00", "07:00")  # night without a location: from, until
-LOCATION = Path.home() / ".local/state/quickshell-calendar.json"  # calendar.qml's settings
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+MACHINE = CONFIG / "hypr/local.lua"  # Machine Settings' "-- settings:" line (settings.qml)
+CALENDAR = Path.home() / ".local/state/quickshell-calendar.json"  # calendar.qml's settings
 STATE = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / "night-light.json"
 J2000 = 2451545.0  # Julian date of 2000-01-01 12:00 UTC
 UNIX_EPOCH = 2440587.5  # Julian date of 1970-01-01 00:00 UTC
@@ -89,14 +93,33 @@ def schedule(now: datetime, place: dict[str, object] | None) -> dict[str, object
     }
 
 
+def place_in(settings: object) -> dict[str, object] | None:
+    """settings["location"] if it's a place with lat and lon"""
+    if not isinstance(settings, dict):
+        return None
+    place: object = cast(dict[str, object], settings).get("location")
+    if isinstance(place, dict) and "lat" in place and "lon" in place:
+        return cast(dict[str, object], place)
+    return None
+
+
+def machine_settings(lua: str) -> object:
+    """The JSON of local.lua's "-- settings:" line, None without one"""
+    line = re.search(r"^-- settings: (.*)$", lua, re.MULTILINE)
+    return json.loads(line[1]) if line else None
+
+
 def location() -> dict[str, object] | None:
     try:
-        place = json.loads(LOCATION.read_text()).get("location")
-    except (OSError, ValueError, AttributeError):
-        return None
-    if isinstance(place, dict) and "lat" in place and "lon" in place:
-        return place  # pyright: ignore[reportUnknownVariableType]
-    return None
+        place = place_in(machine_settings(MACHINE.read_text()))
+    except (OSError, ValueError):
+        place = None
+    if place is None:
+        try:
+            place = place_in(json.loads(CALENDAR.read_text()))
+        except (OSError, ValueError):
+            pass
+    return place
 
 
 def tell_hyprsunset(night: bool) -> bool:

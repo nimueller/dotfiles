@@ -10,7 +10,7 @@ import Quickshell.Io
 // variables (e.g. drivers), autostart programs, the laptop and touch mode
 // (config/hypr/modes.lua: detected, or forced on or off) with the touchpad
 // (right click in the corner or with two fingers, tapping, scrolling and its
-// speed, typing), the bar, when to warn
+// speed, typing), the location (weather and night light), the bar, when to warn
 // about memory, the CPU and the disk and which notifications to hide (read
 // by the shell through LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
@@ -32,6 +32,9 @@ ShellRoot {
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({ windowTitle: false })
+    property var location: null // { name, lat, lon }, see LocalSettings.qml
+    property var locationResults: [] // Open-Meteo's geocoding results
+    property string locationError: ""
     property var modes: ({}) // laptop, touch: true | false when forced, missing when detected
     property var touchpad: ({}) // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
@@ -99,6 +102,7 @@ ShellRoot {
             modes: modes,
             touchpad: touchpad,
             bar: bar,
+            location: location,
             warnings: warnings,
             notifications: { rules: rules.filter(r => r.app.trim() || r.text.trim()), tracks: trackAction }
         };
@@ -175,6 +179,7 @@ ShellRoot {
         monitors = list;
         env = s.env;
         bar = Object.assign({ windowTitle: false }, s.bar);
+        location = s.location ?? null;
         modes = s.modes ?? {};
         touchpad = s.touchpad ?? {};
         warnings = LocalSettings.withDefaults(s.warnings);
@@ -192,6 +197,26 @@ ShellRoot {
 
     function warnDisk(index, props) {
         warn("disk", { levels: warnings.disk.levels.map((l, i) => i === index ? Object.assign({}, l, props) : l) });
+    }
+
+    function searchLocation(query) {
+        locationError = "";
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            try {
+                if (xhr.status !== 200)
+                    throw new Error();
+                locationResults = JSON.parse(xhr.responseText).results ?? [];
+                if (!locationResults.length)
+                    locationError = `No place called “${query}” found`;
+            } catch (e) {
+                locationError = "Couldn't reach the location search";
+            }
+        };
+        xhr.open("GET", `https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=${encodeURIComponent(query)}`);
+        xhr.send();
     }
 
     function changeRule(index, props) {
@@ -442,6 +467,7 @@ ShellRoot {
                             { id: "env", text: "Environment", glyph: 0xf0169 },
                             { id: "autostart", text: "Autostart", glyph: 0xf040a },
                             { id: "modes", text: "Laptop & touch", glyph: 0xf0322 },
+                            { id: "location", text: "Location", glyph: 0xf034e },
                             { id: "bar", text: "Bar", glyph: 0xf10a9 },
                             { id: "warnings", text: "Warnings", glyph: 0xf0026 },
                             { id: "notifications", text: "Notifications", glyph: 0xf009b },
@@ -1033,6 +1059,111 @@ ShellRoot {
                             visible: root.touchpad.scroll_factor !== undefined
                             onClicked: root.scrollFactor(null)
                         }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Location ---------------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "location"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: "Location — for the weather and the night light's sunset and sunrise"
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set" // 󰍎
+                            color: root.location ? Theme.text : Theme.overlay0
+                        }
+                        IconButton {
+                            visible: !!root.location
+                            glyph: Theme.glyph(0xf0156) // 󰅖
+                            text: "Clear"
+                            onClicked: {
+                                root.location = null;
+                                root.dirty = true;
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        InputField {
+                            id: city
+                            Layout.fillWidth: true
+                            placeholder: "Search a city"
+                            onAccepted: if (text)
+                                root.searchLocation(text)
+                        }
+                        IconButton {
+                            glyph: Theme.glyph(0xf0349) // 󰍉
+                            text: "Search"
+                            onClicked: if (city.text)
+                                root.searchLocation(city.text)
+                        }
+                    }
+
+                    Repeater {
+                        model: root.locationResults
+
+                        delegate: Rectangle {
+                            id: place
+
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 28
+                            radius: 8
+                            color: placeMouse.containsMouse ? Theme.alpha(Theme.lavender, 0.14) : "transparent"
+
+                            Label {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                text: [place.modelData.name, place.modelData.admin1, place.modelData.country].filter(x => x).join(", ")
+                                color: placeMouse.containsMouse ? Theme.lavender : Theme.subtext1
+                            }
+                            MouseArea {
+                                id: placeMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    const r = place.modelData;
+                                    root.location = { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude };
+                                    root.locationResults = [];
+                                    city.text = "";
+                                    root.dirty = true;
+                                }
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        visible: !!root.locationError
+                        text: root.locationError
+                        color: Theme.red
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: "The calendar's weather follows it unless it's set to its own place there. Without one, both use the calendar's place, and the night light runs from 19:00 to 07:00 if there is none either."
+                        color: Theme.subtext0
                     }
 
                     Item {

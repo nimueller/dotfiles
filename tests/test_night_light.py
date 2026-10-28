@@ -60,5 +60,19 @@ class Schedule(unittest.TestCase):
         self.assertEqual((state["night"], state["sunset"]), (True, None))
 
 
+class Location(unittest.TestCase):
+    def test_machine_settings_line(self) -> None:
+        line = '-- settings: {"location": {"name": "Berlin", "lat": 52.52, "lon": 13.405}}'
+        lua = f"-- BEGIN settings\n{line}\n-- END settings\n"
+        self.assertEqual(night_light.place_in(night_light.machine_settings(lua)), BERLIN)
+
+    def test_without_a_place(self) -> None:
+        self.assertIsNone(night_light.machine_settings("hl.env('A', 'b')\n"))
+        self.assertIsNone(night_light.place_in(None))
+        self.assertIsNone(night_light.place_in({"location": None}))
+        self.assertIsNone(night_light.place_in({"location": {"name": "Nowhere"}}))
+        self.assertIsNone(night_light.place_in(["location"]))
+
+
 if __name__ == "__main__":
     unittest.main()
