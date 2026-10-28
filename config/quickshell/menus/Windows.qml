@@ -87,7 +87,14 @@ Singleton {
     // (also evaluated again once the desktop entries have loaded)
     function entry(window) {
         const id = window?.lastIpcObject?.class ?? "";
-        return id && DesktopEntries.applications.values.length >= 0 ? DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) : null;
+        return id && DesktopEntries.applications.values.length >= 0 ? DesktopEntries.byId(id) ?? steamEntry(id) ?? DesktopEntries.heuristicLookup(id) : null;
+    }
+
+    // Steam games' windows are "steam_app_<appid>", their shortcuts (named
+    // after the game) start them with "steam steam://rungameid/<appid>"
+    function steamEntry(id) {
+        const appid = id.match(/^steam_app_(\d+)$/)?.[1];
+        return appid ? DesktopEntries.applications.values.find(e => e.execString.endsWith(`steam://rungameid/${appid}`)) ?? null : null;
     }
 
     // The desktop entry of the program that started a process, for programs
