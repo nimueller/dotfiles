@@ -6,7 +6,8 @@ lock-media title|artist     the track's title or artist, as Pango markup
 lock-media position         "1:23  ━━━━━━━━━━━━━━━━━━  4:04", the part played
                             in lavender
 lock-media cover            the path of the cover as a file hyprlock can
-                            read (a transparent one without a track)
+                            read (BLANK, a transparent one, without a track)
+lock-media blank            writes BLANK's PNG to stdout (for the package)
 lock-media button previous|toggle|next
                             the button's glyph (play or pause for toggle)
 lock-media previous|toggle|next
@@ -32,6 +33,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 CACHE = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / "lock-media"
+# Installed by home-manager/desktop from `lock-media blank`: hyprlock's image
+# needs a file that exists from the start (an empty or missing path stalls
+# every label's update)
+BLANK = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share") / "lock-media/blank.png"
 # playerInstance: "chromium.instance1162", for -p; playerName would match every instance
 FIELDS = ["playerInstance", "status", "xesam:title", "xesam:artist", "mpris:artUrl", "position", "mpris:length"]
 BAR = 18  # cells of the position bar
@@ -104,26 +109,21 @@ def image_type(data: bytes) -> str | None:
     return None
 
 
-def blank() -> Path:
-    """A transparent 1×1 PNG: an image widget needs some picture"""
-    path = CACHE / "blank.png"
-    if not path.exists():
+def blank_png() -> bytes:
+    """A transparent 1×1 PNG"""
 
-        def chunk(kind: bytes, data: bytes) -> bytes:
-            return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
 
-        png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
-        png += chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00\x00")) + chunk(b"IEND", b"")
-        CACHE.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(png)
-    return path
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+    return png + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00\x00")) + chunk(b"IEND", b"")
 
 
 def cover(player: Player | None) -> Path:
     """The cover copied (file://) or downloaded (http) once into CACHE,
     named by the URL, so a new track is a new path for hyprlock"""
     if not player or not player.art:
-        return blank()
+        return BLANK
     key = hashlib.sha1(player.art.encode()).hexdigest()[:16]
     for known in CACHE.glob(f"cover-{key}.*"):
         return known
@@ -135,12 +135,12 @@ def cover(player: Player | None) -> Path:
             with urllib.request.urlopen(player.art, timeout=3) as response:
                 data: bytes = response.read()
         else:
-            return blank()
+            return BLANK
     except OSError:
-        return blank()
+        return BLANK
     kind = image_type(data)
     if not kind:
-        return blank()
+        return BLANK
     # Only the latest cover stays
     shutil.rmtree(CACHE, ignore_errors=True)
     CACHE.mkdir(parents=True, exist_ok=True)
@@ -165,6 +165,8 @@ def main(args: list[str]) -> None:
                 print(text if part == "position" else html.escape(text, quote=False))
         case ["cover"]:
             print(cover(current()))
+        case ["blank"]:
+            sys.stdout.buffer.write(blank_png())
         case ["button", ("previous" | "toggle" | "next") as which]:
             player = current()
             if player:

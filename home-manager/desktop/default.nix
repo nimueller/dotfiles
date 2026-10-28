@@ -186,6 +186,11 @@ in
       "nautilus-python/extensions/kdeconnect-share.py".source =
         "${config.services.kdeconnect.package}/share/nautilus-python/extensions/kdeconnect-share.py";
 
+      # The lock screen's cover until there is one (config/hypr/hyprlock.conf)
+      "lock-media/blank.png".source = pkgs.runCommand "lock-media-blank.png" { } ''
+        ${my-pkgs.lock-media}/bin/lock-media blank > $out
+      '';
+
       # For the launcher's emoji search (config/quickshell/menus/Launcher.qml)
       "quickshell-launcher/emoji.json".source = my-pkgs.quickshell-emoji;
 

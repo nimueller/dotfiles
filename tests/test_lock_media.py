@@ -46,6 +46,11 @@ class Show(unittest.TestCase):
         self.assertEqual(lock_media.image_type(b"RIFF\x00\x00\x00\x00WEBPVP8 "), "webp")
         self.assertIsNone(lock_media.image_type(b"<html>"))
 
+    def test_blank(self) -> None:
+        png = lock_media.blank_png()
+        self.assertEqual(lock_media.image_type(png), "png")
+        self.assertEqual(png[16:24], b"\x00\x00\x00\x01\x00\x00\x00\x01")  # 1×1
+
 
 if __name__ == "__main__":
     unittest.main()
