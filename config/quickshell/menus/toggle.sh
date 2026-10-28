@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
-#   toggle.sh audio|battery|battery-history|bluetooth|calendar|kdeconnect|network|notifications|power|settings|system|window|launcher|clipboard
+#   toggle.sh audio|battery|battery-history|bluetooth|calendar|kdeconnect|network|notifications|power|scan|settings|system|window|launcher|clipboard
 #   toggle.sh daemon --start|--restart   start the resident daemon (Hyprland),
 #                                        or restart it to apply changes
 # All of them are part of the resident daemon.qml, so they open without

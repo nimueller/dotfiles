@@ -31,7 +31,7 @@ Controls.ComboBox {
     contentItem: Label {
         leftPadding: 10
         rightPadding: 24
-        text: root.currentIndex >= 0 ? root.entries[root.currentIndex].text : "—"
+        text: root.currentIndex >= 0 ? root.entries[root.currentIndex]?.text ?? "—" : "—"
     }
 
     indicator: Label {

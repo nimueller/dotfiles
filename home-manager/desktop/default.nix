@@ -131,26 +131,50 @@ in
   };
 
   xdg = {
-    # The settings app for this machine's own settings (config/hypr/local.lua)
-    desktopEntries.machine-settings = {
-      name = "Machine Settings";
-      comment = "Displays, environment variables and autostart programs of this machine";
-      exec = "${config.dotfiles}/config/quickshell/menus/toggle.sh settings";
-      icon = "preferences-desktop-display";
-      categories = [ "Settings" ];
-    };
+    desktopEntries = {
+      # The settings app for this machine's own settings (config/hypr/local.lua)
+      machine-settings = {
+        name = "Machine Settings";
+        comment = "Displays, environment variables and autostart programs of this machine";
+        exec = "${config.dotfiles}/config/quickshell/menus/toggle.sh settings";
+        icon = "preferences-desktop-display";
+        categories = [ "Settings" ];
+      };
 
-    # Pear Desktop (Nix) as "YouTube Music", like its window title: the
-    # launcher, the sound menu and the window details take the name from
-    # here. Same id as the package's entry; ~/.nix-profile comes before /usr
-    # in XDG_DATA_DIRS, so this one wins.
-    desktopEntries."com.github.th-ch.youtube-music" = {
-      name = "YouTube Music";
-      comment = "YouTube Music Desktop App - including custom plugins";
-      exec = "pear-desktop";
-      icon = "pear-desktop";
-      categories = [ "AudioVideo" ];
-      settings.StartupWMClass = "com.github.th-ch.youtube-music";
+      # The scanner window (config/quickshell/menus/scan.qml)
+      scanner = {
+        name = "Scanner";
+        comment = "Scan documents and photos from network scanners into PDFs or images";
+        exec = "${config.dotfiles}/config/quickshell/menus/toggle.sh scan";
+        icon = "scanner";
+        categories = [
+          "Graphics"
+          "Scanning"
+        ];
+      };
+
+      # Epson's scanner driver (epsonscan2, AUR) comes with its own scan app:
+      # out of the launcher, the scanner window only uses the driver. Same id
+      # as the package's entry; ~/.nix-profile comes before /usr in
+      # XDG_DATA_DIRS, so this one wins.
+      epsonscan2 = {
+        name = "Epson Scan 2";
+        exec = "epsonscan2";
+        noDisplay = true;
+      };
+
+      # Pear Desktop (Nix) as "YouTube Music", like its window title: the
+      # launcher, the sound menu and the window details take the name from
+      # here. Same id as the package's entry; ~/.nix-profile comes before /usr
+      # in XDG_DATA_DIRS, so this one wins.
+      "com.github.th-ch.youtube-music" = {
+        name = "YouTube Music";
+        comment = "YouTube Music Desktop App - including custom plugins";
+        exec = "pear-desktop";
+        icon = "pear-desktop";
+        categories = [ "AudioVideo" ];
+        settings.StartupWMClass = "com.github.th-ch.youtube-music";
+      };
     };
 
     dataFile = {
@@ -222,7 +246,8 @@ in
       hyprpicker
       grim # screenshots (config/quickshell/menus/screenshot.sh)
       imagemagick
-      # The screenshot editor's text and QR codes; zbar without its camera apps
+      # The text and QR codes of the screenshot editor and the text of the
+      # scanner's PDFs; zbar without its camera apps
       (tesseract.override {
         enableLanguages = [
           "eng"
