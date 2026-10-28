@@ -87,7 +87,14 @@ Singleton {
     // (also evaluated again once the desktop entries have loaded)
     function entry(window) {
         const id = window?.lastIpcObject?.class ?? "";
-        return id && DesktopEntries.applications.values.length >= 0 ? DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) : null;
+        return id && DesktopEntries.applications.values.length >= 0 ? DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) ?? byName(window.title) : null;
+    }
+
+    // An entry named like the window: games' windows have ids no entry has
+    // ("steam_app_<appid>", "<game>.exe"), but are titled like the shortcut
+    // their launcher created
+    function byName(title) {
+        return title ? DesktopEntries.applications.values.find(e => e.name === title) ?? null : null;
     }
 
     // The desktop entry of the program that started a process, for programs
