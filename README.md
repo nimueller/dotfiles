@@ -112,6 +112,7 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 - [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
 - [ ] Turning the screen with the device (iio-sensor-proxy)
+- [ ] Bar: show the updates chip only when critical updates are among them, not for every waiting update
 
 Ideas:
 
