@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyright: strict
 """Helper of the scanner window (scan.qml), around SANE's scanimage.
 
   scan.py devices
@@ -39,7 +40,10 @@ import sys
 import tempfile
 import threading
 import urllib.request
+from collections.abc import Callable, Iterable
 from pathlib import Path
+from types import FrameType
+from typing import TypedDict
 
 CACHE = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "qs-scan"
 EPSON_CONF = Path.home() / ".epsonscan2/Network/epsonscan2.conf"
@@ -47,8 +51,28 @@ A4_HEIGHT = 297.18  # mm
 COMMON_DPI = [75, 100, 150, 200, 300, 600, 1200]
 IP = r"\d+\.\d+\.\d+\.\d+"
 
+Env = dict[str, str]
 
-def sane_env():
+
+class Device(TypedDict):
+    device: str
+    name: str
+    backend: str
+    ip: str
+
+
+class Options(TypedDict):
+    resolutions: list[int]
+    modes: list[str]
+    sources: list[str]
+    resolution: int | None
+    mode: str | None
+    source: str | None
+    width: float  # mm
+    height: float
+
+
+def sane_env() -> tuple[Env, list[str]]:
     """scanimage with only the network backends (see above)"""
     conf = CACHE / "sane"
     conf.mkdir(parents=True, exist_ok=True)
@@ -60,7 +84,7 @@ def sane_env():
     return {**os.environ, "SANE_CONFIG_DIR": f"{conf}:"}, backends
 
 
-def scanimage(*args, env):
+def scanimage(*args: str, env: Env) -> str:
     try:
         return subprocess.run(
             ["scanimage", *args], check=False, env=env, capture_output=True, text=True, timeout=30
@@ -69,10 +93,10 @@ def scanimage(*args, env):
         return ""
 
 
-def list_devices(env):
+def list_devices(env: Env) -> list[Device]:
     # airscan names the address as the type ("ip=…"), epsonscan2 at the end
     # of the device ("epsonscan2:networkscanner:esci2:network:<ip>")
-    devices = []
+    devices: list[Device] = []
     for line in scanimage("-f", "%d\t%v %m\t%t%n", env=env).splitlines():
         fields = line.split("\t")
         if len(fields) != 3:
@@ -90,7 +114,7 @@ def list_devices(env):
     return devices
 
 
-def devices():
+def devices() -> None:
     """epsonscan2 doesn't look for scanners in the network itself: it lists
     the addresses in its configuration, one per line, whether they answer or
     not. So that's kept to the Epson scanners airscan finds, and only those
@@ -111,7 +135,7 @@ def devices():
             found = list_devices(env)
 
     names = {d["ip"]: d["name"] for d in found if d["backend"] != "epsonscan2" and d["ip"]}
-    result = []
+    result: list[Device] = []
     for d in found:
         if d["backend"] == "epsonscan2":
             if d["ip"] not in names:
@@ -126,13 +150,13 @@ def devices():
 OPTION = re.compile(r"^\s+(--[\w-]+|-[xy]) (.+) \[([^\]]*)\]$")
 
 
-def parse_options(text):
+def parse_options(text: str) -> Options | None:
     """From `scanimage -A`, lines like
     --resolution 100|200|300|600|1200dpi [300]
     --resolution 50..1200dpi (in steps of 1) [200]
     --source Flatbed|ADF [Flatbed]
     -y 0..297.18mm [297.18]"""
-    found = {}  # name: (values, default)
+    found: dict[str, tuple[str, str]] = {}  # name: (values, default)
     for line in text.splitlines():
         if m := OPTION.match(line):
             name, values, current = m.groups()
@@ -141,14 +165,14 @@ def parse_options(text):
     if not found:
         return None
 
-    def choices(name):
+    def choices(name: str) -> list[str]:
         values = found.get(name, ("", ""))[0]
         return list(dict.fromkeys(values.split("|"))) if values else []
 
-    def default(name):
-        return found.get(name, ("", None))[1]
+    def default(name: str) -> str | None:
+        return found[name][1] if name in found else None
 
-    def maximum(name):
+    def maximum(name: str) -> float:
         return float(found.get(name, ("0", ""))[0].split("..")[-1])
 
     # A range ("50..1200"): the usual steps in it
@@ -174,7 +198,7 @@ def parse_options(text):
     }
 
 
-def options(device):
+def options(device: str) -> None:
     env, _ = sane_env()
     found = parse_options(scanimage("-d", device, "-A", env=env))
     print(json.dumps(found or {"error": "The scanner doesn't answer"}))
@@ -182,17 +206,31 @@ def options(device):
         sys.exit(1)
 
 
-def run(*command, **kwargs):
-    """True if it worked; the caller reports a failure"""
-    return subprocess.run([str(c) for c in command], check=False, **kwargs).returncode == 0
+def run(*command: str | Path, quiet: bool = False) -> bool:
+    """True if it worked; the caller reports a failure. `quiet`: without its
+    stderr"""
+    stderr = subprocess.DEVNULL if quiet else None
+    return subprocess.run([str(c) for c in command], check=False, stderr=stderr).returncode == 0
 
 
-def say(lock, line):
+def say(lock: threading.Lock, line: str) -> None:
     with lock:
         print(line, flush=True)
 
 
-def scan(device, folder, prefix, source, mode, dpi, left, top, width, height, count=None):
+def scan(
+    device: str,
+    folder: str,
+    prefix: str,
+    source: str,
+    mode: str,
+    dpi: str,
+    left: str,
+    top: str,
+    width: str,
+    height: str,
+    count: str | None = None,
+) -> None:
     env, _ = sane_env()
     Path(folder).mkdir(parents=True, exist_ok=True)
     args = ["-d", device, "--source", source, "--mode", mode, "--resolution", dpi]
@@ -207,7 +245,7 @@ def scan(device, folder, prefix, source, mode, dpi, left, top, width, height, co
 
     # Stopped by the window (SIGTERM), the scan stops too; killed, the
     # kernel stops it (PR_SET_PDEATHSIG)
-    def die_with_parent():
+    def die_with_parent() -> None:
         ctypes.CDLL(None).prctl(1, signal.SIGTERM)
 
     proc = subprocess.Popen(
@@ -220,12 +258,16 @@ def scan(device, folder, prefix, source, mode, dpi, left, top, width, height, co
         preexec_fn=die_with_parent,  # noqa: PLW1509
     )
     assert proc.stdout and proc.stderr
-    signal.signal(signal.SIGTERM, lambda *_: proc.terminate())
+
+    def stop(_signal: int, _frame: FrameType | None) -> None:
+        proc.terminate()
+
+    signal.signal(signal.SIGTERM, stop)
     lock = threading.Lock()
 
     # The progress, with \r, and the errors come on stderr; text mode reads
     # \r as a line end
-    def errors(stderr):
+    def errors(stderr: Iterable[str]) -> None:
         for line in stderr:
             if m := re.match(r"Progress: ([\d.]+)%", line):
                 say(lock, f"progress {m.group(1)}")
@@ -245,7 +287,7 @@ def scan(device, folder, prefix, source, mode, dpi, left, top, width, height, co
     sys.exit(proc.wait())
 
 
-def feeder(ip):
+def feeder(ip: str) -> None:
     """Only while the scanner is idle: it reports the feeder loaded while it
     pulls a page in, too. Scanners use self-signed certificates."""
     context = ssl.create_default_context()
@@ -265,7 +307,7 @@ def feeder(ip):
         print("empty")
 
 
-def notify(*args):
+def notify(*args: str) -> str:
     # Keep waiting for a click on an action for a while, not forever
     try:
         return subprocess.run(
@@ -275,7 +317,7 @@ def notify(*args):
         return ""
 
 
-def unused(file):
+def unused(file: str) -> Path:
     """Never over an earlier scan: "Name (2).pdf" (images: "Name (2)-1.jpg")"""
     path, n = Path(file), 1
     candidate = path
@@ -285,7 +327,7 @@ def unused(file):
     return candidate
 
 
-def save(kind, file, *pages):
+def save(kind: str, file: str, *pages: str) -> None:
     target = unused(file)
     target.parent.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)
@@ -293,7 +335,7 @@ def save(kind, file, *pages):
         # Each page turned, as JPEG for a PDF (a PNG of a colour page at 300
         # dpi makes a PDF ~10× as big); the resolution stays in it, so the
         # PDF's pages get their real size
-        turned = []
+        turned: list[Path] = []
         for i, arg in enumerate(pages, 1):
             page, degrees = arg.rsplit(":", 1)
             dst = Path(work) / f"{i:03d}.{'png' if kind == 'png' else 'jpg'}"
@@ -308,7 +350,7 @@ def save(kind, file, *pages):
         elif kind == "ocr":
             (Path(work) / "list.txt").write_text("".join(f"{p}\n" for p in turned))
             base = target.with_suffix("")
-            ok = run("tesseract", Path(work) / "list.txt", base, "-l", "deu+eng", "pdf", stderr=subprocess.DEVNULL)
+            ok = run("tesseract", Path(work) / "list.txt", base, "-l", "deu+eng", "pdf", quiet=True)
             written = [target] if ok else []
         elif len(turned) == 1:
             written = [Path(shutil.copy(turned[0], target))]
@@ -327,7 +369,7 @@ def save(kind, file, *pages):
     # The notification waits for a click: in a process of its own, without
     # the window's stdout, so the window gets its answer now
     subprocess.Popen(
-        [sys.executable, __file__, "saved", written[0], str(len(pages))],
+        [sys.executable, __file__, "saved", str(written[0]), str(len(pages))],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -335,7 +377,7 @@ def save(kind, file, *pages):
     )
 
 
-def saved(file, count):
+def saved(file: str, count: str) -> None:
     """The notification after save, with Open and Show in folder"""
     what = "1 page" if count == "1" else f"{count} pages"
     action = notify("-e", "-A", "open=Open", "-A", "folder=Show in folder", "Scan saved", f"{Path(file).name} · {what}")
@@ -343,7 +385,14 @@ def saved(file, count):
         run("xdg-open", file if action == "open" else Path(file).parent)
 
 
-COMMANDS = {"devices": devices, "options": options, "scan": scan, "feeder": feeder, "save": save, "saved": saved}
+COMMANDS: dict[str, Callable[..., None]] = {
+    "devices": devices,
+    "options": options,
+    "scan": scan,
+    "feeder": feeder,
+    "save": save,
+    "saved": saved,
+}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:
