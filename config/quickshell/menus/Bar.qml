@@ -11,7 +11,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 
 // The bar at the bottom of a monitor, part of daemon.qml:
-// the distro logo (system menu), workspaces and window title on the left, the clock in the middle, tray,
+// the distro logo (system menu), waiting updates, workspaces and window title on the left, the clock in the middle, tray,
 // privacy, sound, battery, Bluetooth, phone, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
@@ -74,6 +74,15 @@ PanelWindow {
         BarChip {
             accent: Theme.blue
             text: Theme.glyph(0xf303) // 
+            onClicked: bar.menu("system")
+        }
+
+        // Waiting updates (Updates.qml), or a dotfiles checkout whose
+        // flake.lock is weeks old; the system menu has the details
+        BarChip {
+            visible: Updates.total > 0 || Updates.flakeStale
+            accent: Theme.peach
+            text: `${Theme.glyph(0xf06b0)}  ${Updates.total > 0 ? Updates.total : "flake.lock"}` // 󰚰
             onClicked: bar.menu("system")
         }
 

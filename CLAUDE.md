@@ -90,6 +90,14 @@ each commit.
   directory. What needs the desktop (Hyprland, notifications, devices) is
   tried by hand.
 
+## README
+
+`README.md` is a short overview for visitors: what the setup is, how to
+install and use it, the keybindings and the TODO list. Don't describe a new
+feature or detail there for each change; comments and the pull request
+document it. Change the README only when something in it becomes wrong, to
+remove a TODO that's done, or when asked to.
+
 ## Commits and pull requests
 
 The rules in `config/claude/CLAUDE.md` apply (branches and pull requests, PR

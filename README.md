@@ -112,8 +112,8 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 
 - [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
+- [ ] One general location setting (e.g. in Machine Settings) for the weather and the night light, instead of the calendar's weather location
 - [ ] Turning the screen with the device (iio-sensor-proxy)
-- [ ] Waiting updates at a glance on the bar, including AUR and Flatpak updates and the age of `flake.lock`
 - [ ] `install.sh`: move an existing `~/.ssh/config` to `~/.ssh/config.local` before the first switch
 
 Ideas:
