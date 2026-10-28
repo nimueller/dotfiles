@@ -119,11 +119,12 @@ Singleton {
         return owner(node)?.name || p["application.name"] || node.description || node.name;
     }
 
-    // Media title, unless it's one of the generic names apps like to send.
+    // Media title, unless it's one of the generic names apps like to send
+    // (Wine numbers its streams: "audio stream #1").
     function mediaName(node) {
         const media = node.properties["media.name"] ?? "";
         const generic = ["audiostream", "playback", "audio stream", "output", ""];
-        return generic.includes(media.toLowerCase()) || media === appName(node) ? "" : media;
+        return generic.includes(media.toLowerCase().replace(/\s*#\d+$/, "")) || media === appName(node) ? "" : media;
     }
 
     // The app's icon, or else that of the program that started it
