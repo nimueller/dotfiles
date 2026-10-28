@@ -9,7 +9,7 @@
     # Neovim plugin package dependencies
     luarocks
     ripgrep
-    fd
+    fd # also the launcher's file search (config/quickshell/menus/launcher.py)
     tree-sitter
   ];
 }
