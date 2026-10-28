@@ -1141,11 +1141,12 @@ ShellRoot {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
+                                    // Last: emptying the results destroys this delegate
                                     const r = place.modelData;
-                                    root.location = { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude };
-                                    root.locationResults = [];
                                     city.text = "";
+                                    root.location = { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude };
                                     root.dirty = true;
+                                    root.locationResults = [];
                                 }
                             }
                         }
