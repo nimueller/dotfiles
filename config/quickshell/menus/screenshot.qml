@@ -7,8 +7,9 @@ import Quickshell.Io
 // monitor (into QS_SCREENSHOT_DIR). Drag to
 // select a region or click a window (a click on the desktop takes the whole
 // monitor), then adjust the box by its edges and corners or move it, draw on
-// it, pick the resolution and copy (Enter) or save (Ctrl+S), or copy the
-// text or QR code in it (Ctrl+T). The keys are in
+// it, pick the resolution and copy (Enter) or save (Ctrl+S), copy the
+// text or QR code in it (Ctrl+T), or record a video of it (Ctrl+R, without
+// the drawings; the bar shows the recording and stops it). The keys are in
 // ShotScreen.qml; Escape cancels.
 ShellRoot {
     id: root
@@ -34,11 +35,12 @@ ShellRoot {
     property int percent: 100
     property string color: Theme.red
     property int size: 1 // 0 thin, 1 medium, 2 thick
+    property bool sound: false // recordings: with what the speakers play
 
     readonly property var colors: [Theme.red, Theme.peach, Theme.yellow, Theme.green, Theme.blue, Theme.mauve, "#ffffff", "#000000"]
     readonly property var percents: [100, 75, 50, 25]
 
-    signal finish(string action) // "copy", "save" or "text", handled by the selected monitor
+    signal finish(string action) // "copy", "save", "text" or "record", handled by the selected monitor
 
     function select(name, rect) {
         if (name !== screenName) {
@@ -76,11 +78,12 @@ ShellRoot {
     property bool loaded: false
     function remember() {
         if (loaded)
-            settingsFile.setText(JSON.stringify({ percent, color, size }, null, 2));
+            settingsFile.setText(JSON.stringify({ percent, color, size, sound }, null, 2));
     }
     onPercentChanged: remember()
     onColorChanged: remember()
     onSizeChanged: remember()
+    onSoundChanged: remember()
 
     // Start with the active window or the focused monitor if asked to
     function preselect(mode) {
@@ -126,6 +129,7 @@ ShellRoot {
                 root.percent = root.percents.includes(s.percent) ? s.percent : 100;
                 root.color = s.color ?? Theme.red;
                 root.size = Math.max(0, Math.min(2, s.size ?? 1));
+                root.sound = s.sound === true;
             } catch (e) {}
         }
     }

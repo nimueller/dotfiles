@@ -75,7 +75,8 @@ hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 -- Utilities
--- Screenshot editor (config/quickshell/menus/screenshot.py): select, draw, scale, copy or save
+-- Screenshot editor (config/quickshell/menus/screenshot.py): select, draw, scale, copy or save,
+-- or record a video; while a recording runs, SUPER + SHIFT + S stops it
 hl.bind(mainMod .. " + SHIFT + S",           exec("~/.config/quickshell/menus/screenshot.py"))
 hl.bind(mainMod .. " + CONTROL + SHIFT + S", exec("~/.config/quickshell/menus/screenshot.py window"))
 hl.bind("Print",                             exec("~/.config/quickshell/menus/screenshot.py screen"))
