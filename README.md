@@ -62,8 +62,8 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
   | `~/.config/git/config.local` | Further Git identities, e.g. `includeIf "gitdir:~/work/"` with another email and key |
 
 - Home Manager doesn't overwrite files it doesn't own: `install.sh` renames them to `*.hm-backup`, a plain
-  `home-manager switch` stops. On a machine that already has a `~/.ssh/config`, move it to `~/.ssh/config.local` first
-  (a renamed `config.hm-backup` isn't included); an existing `~/.claude/settings.json` has to go too.
+  `home-manager switch` stops. An existing `~/.ssh/config` is moved to `~/.ssh/config.local` by `install.sh` (unless
+  that exists too); an existing `~/.claude/settings.json` has to go before a plain switch.
 
 ## Usage
 
@@ -116,7 +116,6 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 - [ ] Turning the screen with the device (iio-sensor-proxy)
 - [ ] Night light with `hyprsunset`
 - [ ] Waiting updates at a glance on the bar, including AUR and Flatpak updates and the age of `flake.lock`
-- [ ] `install.sh`: move an existing `~/.ssh/config` to `~/.ssh/config.local` before the first switch
 
 Ideas:
 
