@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
-// Scanner: scans from the network scanners SANE finds (scan.sh). Pick the
+// Scanner: scans from the network scanners SANE finds (scan.py). Pick the
 // scanner, glass or feeder, colour or grey and the resolution; a preview of
 // the glass lets you drag the area to scan. From the feeder, it can take one
 // page at a time (for scanners that pull in every page but hand over only
@@ -18,14 +18,14 @@ import Quickshell.Io
 ShellRoot {
     id: root
 
-    readonly property string helper: Quickshell.shellPath("scan.sh")
+    readonly property string helper: Quickshell.shellPath("scan.py")
     readonly property string home: Quickshell.env("HOME")
     readonly property string session: `${Quickshell.env("XDG_CACHE_HOME") || home + "/.cache"}/qs-scan/session-${Date.now()}`
     property string folder: `${home}/Documents/Scans`
 
     property var devices: [] // [{ device, name, backend, ip }]
     property bool searching: false
-    property var options: null // scan.sh options
+    property var options: null // scan.py options
     property bool asking: false
     property string error: ""
 
