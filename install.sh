@@ -70,6 +70,8 @@ install_repo() {
     cd "$DOTFILES_CLONE_DIRECTORY" || exit 1
   fi
 
+  move_ssh_config
+
   # The configuration installs Home Manager itself; files it would replace
   # are kept with the extension .hm-backup
   if command -v home-manager >/dev/null 2>&1; then
@@ -77,6 +79,24 @@ install_repo() {
   else
     nix run 'home-manager/master' -- switch -b hm-backup --flake ".#$FLAKE_OUTPUT"
   fi
+}
+
+# Home Manager writes ~/.ssh/config and includes the machine's own hosts from
+# ~/.ssh/config.local. An existing config of the user's own (not a link into
+# the Nix store) moves there, instead of ending up as config.hm-backup, which
+# nothing includes.
+move_ssh_config() {
+  local config=$HOME/.ssh/config local=$HOME/.ssh/config.local
+  if [ ! -f "$config" ] || [ -L "$config" ]; then
+    return
+  fi
+  if [ -e "$local" ]; then
+    echo "$config and $local both exist: merge your hosts into $local by hand"
+    echo "(Home Manager keeps $config as config.hm-backup)"
+    return
+  fi
+  mv "$config" "$local"
+  echo "Moved $config to $local, which the new config includes"
 }
 
 # Packages, PAM and logind for the desktop, from system/setup.sh (needs root;
