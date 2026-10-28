@@ -15,6 +15,8 @@
 --   with a tablet mode switch (e.g. a keyboard cover folded back or
 --   detached) it shows by itself only in tablet mode; the button always works.
 --   On the lock screen too, the same way, with a button of its own there.
+--   The built-in screen turns with the device where it has an
+--   accelerometer (auto-rotate, iio-sensor-proxy).
 --   Where the hyprgrass plugin is installed (touch screen gestures; not in
 --   the Arch repos, built by hand), three-finger swipes switch workspaces
 --   as on the touchpad.
@@ -192,6 +194,7 @@ local function touch()
 
     hl.on("hyprland.start", function()
         hl.exec_cmd("squeekboard")
+        hl.exec_cmd("auto-rotate")
     end)
     -- Above the lock screen, and it takes touches there: hyprlock has a button
     -- for it (pkgs/scripts/lock-screen.sh), the keys go to the password field

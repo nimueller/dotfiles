@@ -1,7 +1,8 @@
 # The desktop session: compositor, lock screen, idle, shell, portals and the
 # services it talks to (ddcutil: brightness of external monitors; BlueZ for
 # the Bluetooth menu, power-profiles-daemon for the battery menu, squeekboard
-# as the touch mode's on-screen keyboard, hyprshutdown for the power menu).
+# as the touch mode's on-screen keyboard, iio-sensor-proxy for its turning
+# screen, hyprshutdown for the power menu).
 # Everything else comes from Nix (home-manager/).
 hyprland
 hyprpaper
@@ -20,6 +21,7 @@ power-profiles-daemon
 bluez
 bluez-utils
 squeekboard
+iio-sensor-proxy
 brightnessctl
 ddcutil
 polkit-gnome

@@ -100,6 +100,12 @@
     name = "laptop-idle";
     text = builtins.readFile ./scripts/laptop-idle.sh;
   };
+  # Turns the built-in screen with the device in the touch mode
+  # (config/hypr/modes.lua); monitor-sensor (iio-sensor-proxy) and hyprctl
+  # come from the system
+  auto-rotate = pkgs.writers.writePython3Bin "auto-rotate" { doCheck = false; } (
+    builtins.readFile ./scripts/auto-rotate.py
+  );
   # Keeps Discord's logs of calls (timer in home-manager/desktop/default.nix)
   discord-call-logs = pkgs.writers.writePython3Bin "discord-call-logs" { doCheck = false; } (
     builtins.readFile ./scripts/discord-call-logs.py

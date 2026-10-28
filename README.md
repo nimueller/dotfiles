@@ -26,7 +26,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **SSH** | Client defaults from Home Manager (keep-alive, shared connections), gcr's agent on the desktop |
 | **Editor** | Neovim with lazy.nvim; language servers come from Nix |
 | **Browser** | Brave from Flathub |
-| **Laptop / touch** | Modes that turn on by themselves on laptops and with touch screens |
+| **Laptop / touch** | Modes that turn on by themselves on laptops and with touch screens; the screen turns with the device |
 
 | | |
 |:---:|:---:|
@@ -111,7 +111,6 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 
 - [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
-- [ ] Turning the screen with the device (iio-sensor-proxy)
 
 Ideas:
 

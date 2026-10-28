@@ -280,6 +280,7 @@ in
       my-pkgs.lock-media # the media player on the lock screen
       my-pkgs.lock-lockout # the lock screen's time left after too many wrong passwords
       my-pkgs.laptop-idle # dims and suspends laptops when idle (config/hypr/hypridle.conf)
+      my-pkgs.auto-rotate # turns the screen with the device in the touch mode (config/hypr/modes.lua)
       my-pkgs.quickshell-calendar-python
       my-pkgs.init-tex
       my-pkgs.edit-tex
