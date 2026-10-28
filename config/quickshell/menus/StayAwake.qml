@@ -5,8 +5,9 @@ import Quickshell.Services.Mpris
 import Quickshell.Wayland
 
 // Keeps the screen awake (no idle lock, monitors stay on; hypridle.conf)
-// while a browser or video player is playing, a game runs or Sunshine is
-// streaming, part of daemon.qml. Pausing counts as idle again, and music
+// while a browser or video player is playing, a game runs, Sunshine is
+// streaming or the switch in the system menu is on (Awake.qml), part of
+// daemon.qml. Pausing counts as idle again, and music
 // players don't count. Sunshine holds its own inhibitor: its prep commands
 // (config/sunshine) run the stay-awake script (pkgs/scripts), which works
 // without Quickshell and reports to it with the Hyprland event
@@ -27,7 +28,7 @@ Scope {
     // Game windows: Steam (and Proton) games, Wine programs, gamescope
     readonly property var game: ToplevelManager.toplevels.values.find(t => /^steam_app_|\.exe$|^gamescope$/i.test(t.appId ?? "")) ?? null
 
-    readonly property string reason: sunshine ? "Sunshine is streaming" : game ? game.title || "A game is running" : video ? [video.identity, video.trackTitle].filter(s => s).join(": ") : ""
+    readonly property string reason: sunshine ? "Sunshine is streaming" : Awake.manual ? "Until you turn it off" : game ? game.title || "A game is running" : video ? [video.identity, video.trackTitle].filter(s => s).join(": ") : ""
     readonly property bool wanted: reason !== ""
 
     // Playback flickers (buffering, ads, the next track): act on a change only
@@ -50,6 +51,16 @@ Scope {
             root.shownReason = root.reason;
             if (root.started && changed)
                 root.osd.awake(root.active, root.active ? root.reason : "The screen locks when idle again");
+        }
+    }
+
+    // The switch is a click: show it right away
+    Connections {
+        target: Awake
+
+        function onManualChanged() {
+            settle.stop();
+            settle.triggered();
         }
     }
 

@@ -12,9 +12,11 @@ import Quickshell.Io
 // pacman, the AUR and Flatpak and the age of flake.lock) and the live use of CPU,
 // memory, swap, the disks (/ and the home folder's, if that's another
 // partition) and GPU, read every 2 seconds while it's open, and the
-// brightness of the screens (the backlight, or monitors over DDC/CI). The gear
-// opens Machine Settings. Also Bluetooth, the on-screen keyboard and power,
-// which a compact bar (Modes.compactBar) leaves out.
+// brightness of the screens (the backlight, or monitors over DDC/CI), switches
+// to keep the screen awake (Awake.qml) and for the night light (hyprsunset,
+// scheduled by night-light.py). The gear opens Machine Settings. Also
+// Bluetooth, the on-screen keyboard and power, which a compact bar
+// (Modes.compactBar) leaves out.
 Popup {
     id: root
 
@@ -32,6 +34,9 @@ Popup {
     property var disks: [] // { target, used, total }
     property var gpu: null // { name, load, memUsed, memTotal, temp }
     property var backlight: null // { percent } of the built-in screen (backlight.py), null without one
+    property var nightLight: null // { on } from hyprsunset, null while it isn't running
+    property var nightTimes: null // { night, sunset, sunrise, place } from night-light.py
+    readonly property int nightTemperature: 4500 // as in night-light.py
 
     readonly property var adapter: Bluetooth.defaultAdapter
     property bool bluetoothHardware: false
@@ -273,6 +278,67 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         }
     }
 
+    // The screen: stay awake by hand, and the night light, which a click
+    // turns on or off until the next sunset or sunrise (night-light.py)
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: 6
+
+        Toggle {
+            glyph: Awake.manual ? 0xf0176 : 0xf04b2 // 󰅶 / 󰒲
+            title: "Stay awake"
+            detail: Awake.manual ? "No lock" : "Off"
+            checked: Awake.manual
+            accent: Theme.lavender
+            onToggled: Awake.manual = !Awake.manual
+        }
+        Toggle {
+            glyph: 0xf0594 // 󰖔
+            title: "Night light"
+            detail: {
+                if (!root.nightLight)
+                    return "Unavailable";
+                const t = root.nightTimes;
+                if (!t?.sunset)
+                    return root.nightLight.on ? "On" : "Off";
+                return root.nightLight.on ? `Until ${t.sunrise}` : t.night ? "Off tonight" : `From ${t.sunset}`;
+            }
+            checked: root.nightLight?.on ?? false
+            enabled: !!root.nightLight
+            accent: Theme.peach
+            onToggled: {
+                const on = !root.nightLight.on;
+                root.nightLight = { on: on };
+                Quickshell.execDetached(on ? ["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)] : ["hyprctl", "hyprsunset", "identity"]);
+            }
+        }
+    }
+
+    // hyprsunset's state: on when it tints, i.e. no identity matrix and a
+    // temperature below its default of 6000 K. hyprctl fails without it.
+    Process {
+        running: true
+        command: ["sh", "-c", "hyprctl hyprsunset identity get && hyprctl hyprsunset temperature"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const [identity, kelvin] = text.trim().split("\n");
+                if (identity === "true" || identity === "false")
+                    root.nightLight = { on: identity === "false" && parseInt(kelvin) < 6000 };
+            }
+        }
+    }
+
+    // Today's sunset and sunrise at the weather location
+    FileView {
+        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/night-light.json`
+        printErrors: false
+        onLoaded: {
+            try {
+                root.nightTimes = JSON.parse(text());
+            } catch (e) {}
+        }
+    }
+
     // A Bluetooth controller BlueZ doesn't list (the Bluetooth menu says why)
     Process {
         running: true
@@ -445,6 +511,64 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             onClicked: {
                 Quickshell.execDetached(["kitty", "btop"]);
                 root.close();
+            }
+        }
+    }
+
+    // A switch with a glyph, its name and state; the whole tile toggles
+    component Toggle: Rectangle {
+        id: toggle
+
+        property int glyph
+        property string title
+        property string detail
+        property bool checked
+        property bool enabled: true
+        property color accent
+        signal toggled
+
+        Layout.fillWidth: true
+        implicitHeight: Modes.touch ? 36 : 28
+        radius: 8
+        opacity: enabled ? 1 : 0.5
+        color: toggleMouse.containsMouse && enabled ? Theme.surface1 : Theme.surface0
+
+        Behavior on color { ColorAnimation { duration: 150 } }
+
+        MouseArea {
+            id: toggleMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: toggle.enabled
+            cursorShape: Qt.PointingHandCursor
+            onClicked: toggle.toggled()
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 8
+            spacing: 8
+
+            Label {
+                text: Theme.glyph(toggle.glyph)
+                color: toggle.checked ? toggle.accent : Theme.overlay1
+            }
+            Label {
+                text: toggle.title
+                font.bold: true
+            }
+            Label {
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                text: toggle.detail
+                color: Theme.subtext0
+            }
+            Switch {
+                checked: toggle.checked
+                enabled: toggle.enabled
+                accent: toggle.accent
+                onToggled: toggle.toggled()
             }
         }
     }

@@ -110,11 +110,9 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 ## TODO
 
 - [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it
-- [ ] A toggle that keeps the screen awake
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
 - [ ] One general location setting (e.g. in Machine Settings) for the weather and the night light, instead of the calendar's weather location
 - [ ] Turning the screen with the device (iio-sensor-proxy)
-- [ ] Night light with `hyprsunset`
 
 Ideas:
 
