@@ -26,7 +26,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 | **SSH** | Client defaults from Home Manager (keep-alive, shared connections), gcr's agent on the desktop |
 | **Editor** | Neovim with lazy.nvim; language servers come from Nix |
 | **Browser** | Brave from Flathub |
-| **Laptop / touch** | Modes that turn on by themselves on laptops and with touch screens; the screen turns with the device |
+| **Laptop / touch** | Modes that turn on by themselves on laptops and with touch screens |
 
 | | |
 |:---:|:---:|
