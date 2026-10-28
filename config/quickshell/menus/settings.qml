@@ -40,6 +40,7 @@ ShellRoot {
     property var bar: ({ windowTitle: false })
     property var location: null // { name, lat, lon }, see LocalSettings.qml
     property var nightLight: LocalSettings.nightLightDefaults // see LocalSettings.qml
+    property var nightTimes: null // night-light.py's state, for today's sunset and sunrise
     property var locationResults: [] // Open-Meteo's geocoding results
     property string locationError: ""
     property var modes: ({}) // laptop, touch: true | false when forced, missing when detected
@@ -364,6 +365,19 @@ ShellRoot {
         path: root.path
         blockLoading: true
         printErrors: false
+    }
+
+    // What night-light.py works out from the saved settings, again after Save
+    FileView {
+        path: `${Quickshell.env("XDG_RUNTIME_DIR")}/night-light.json`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                root.nightTimes = JSON.parse(text());
+            } catch (e) {}
+        }
     }
 
     Process {
@@ -1257,13 +1271,43 @@ ShellRoot {
                         }
                     }
 
-                    Label {
+                    // Where sunset and sunrise come from, and today's times
+                    // once night-light.py has them for the place shown
+                    ColumnLayout {
                         Layout.fillWidth: true
                         visible: root.nightLight.schedule === "sun"
-                        wrapMode: Text.WordWrap
-                        elide: Text.ElideNone
-                        text: root.location ? `At the sunset and sunrise in ${root.location.name} (Location).` : "At the sunset and sunrise of the calendar's weather location until a location is set (Location), without one from 19:00 to 07:00."
-                        color: Theme.subtext0
+                        spacing: 6
+
+                        readonly property var t: root.nightTimes
+                        // The place night-light.py goes by once saved: this
+                        // machine's, else the calendar's (only known from its state)
+                        readonly property string place: root.location?.name ?? (t?.placeFrom === "calendar" ? t.place : "")
+                        readonly property bool current: !!t && t.schedule === "sun" && !!place && t.place === place
+
+                        Label {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            elide: Text.ElideNone
+                            text: {
+                                const where = parent.place;
+                                if (!where)
+                                    return "No location is set, so it can't work out the sunset and sunrise: it turns on at 19:00 and off at 07:00. Set a location to follow the sun.";
+                                const whose = root.location ? "this computer's location (the Location page)" : "the calendar's weather location, as this computer has none (the Location page)";
+                                return `It turns on at sunset and off at sunrise in ${where}, ${whose}. They're worked out every day from the place's coordinates, so they move with the seasons.`;
+                            }
+                            color: Theme.subtext0
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            visible: !!parent.place
+                            text: parent.current ? (parent.t.from ? `Today: on from ${parent.t.from} (sunset) until ${parent.t.until} (sunrise)` : parent.t.night ? "Today: on all day, the sun doesn't rise" : "Today: off all day, the sun doesn't set") : "Today's times show here once it's saved."
+                            color: parent.current ? Theme.text : Theme.overlay1
+                        }
+                        IconButton {
+                            glyph: Theme.glyph(0xf034e) // 󰍎
+                            text: root.location ? "Change location" : "Set a location"
+                            onClicked: root.page = "location"
+                        }
                     }
 
                     RowLayout {
