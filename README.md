@@ -62,8 +62,7 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
   | `~/.config/git/config.local` | Further Git identities, e.g. `includeIf "gitdir:~/work/"` with another email and key |
 
 - Home Manager doesn't overwrite files it doesn't own: `install.sh` renames them to `*.hm-backup`, a plain
-  `home-manager switch` stops. An existing `~/.ssh/config` is moved to `~/.ssh/config.local` by `install.sh` (unless
-  that exists too); an existing `~/.claude/settings.json` has to go before a plain switch.
+  `home-manager switch` stops. An existing `~/.claude/settings.json` has to go first.
 
 ## Usage
 
