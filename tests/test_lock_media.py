@@ -40,6 +40,11 @@ class Show(unittest.TestCase):
     def test_no_length(self) -> None:
         self.assertEqual(lock_media.position(lock_media.parse(line("a", "Playing", "T", ""))[0]), "")
 
+    def test_live(self) -> None:
+        player = lock_media.parse(line("a", "Playing", "T", "9223372036854775807"))[0]
+        live = f'<span foreground="{lock_media.LIVE_COLOR}">●  Live</span>'
+        self.assertEqual(lock_media.position(player), f"{live}  1:00")
+
     def test_image_type(self) -> None:
         self.assertEqual(lock_media.image_type(b"\x89PNG\r\n"), "png")
         self.assertEqual(lock_media.image_type(b"\xff\xd8\xff\xe0"), "jpg")

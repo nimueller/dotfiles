@@ -4,7 +4,7 @@ asks for each part again and again, and the buttons control the same player.
 
 lock-media title|artist     the track's title or artist, as Pango markup
 lock-media position         "1:23  ━━━━━━━━━━━━━━━━━━  4:04", the part played
-                            in lavender
+                            in lavender; "● Live  1:03:29" for live streams
 lock-media cover            the path of the cover as a file hyprlock can
                             read (BLANK, a transparent one, without a track)
 lock-media blank            writes BLANK's PNG to stdout (for the package)
@@ -41,6 +41,10 @@ BLANK = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share") / 
 FIELDS = ["playerInstance", "status", "xesam:title", "xesam:artist", "mpris:artUrl", "position", "mpris:length"]
 BAR = 18  # cells of the position bar
 DONE, LEFT = "#b7bdf8", "#494d64"  # Catppuccin Macchiato lavender, surface1
+LIVE_COLOR = "#ed8796"  # red
+# Browsers send the largest int64 in µs as a live stream's length, about
+# 292,000 years; no recording comes near 1e9 s (31 years)
+LIVE = 1e9
 GLYPHS = {"previous": "󰒮", "next": "󰒭", "play": "󰐊", "pause": "󰏤"}  # 󰒮 󰒭 󰐊 󰏤
 
 
@@ -91,6 +95,9 @@ def time(seconds: float) -> str:
 
 
 def position(player: Player) -> str:
+    if player.length >= LIVE:
+        played = f"  {time(player.position)}" if player.position > 0 else ""
+        return f'<span foreground="{LIVE_COLOR}">●  Live</span>{played}'
     if player.length <= 0:
         return ""
     done = round(min(1, player.position / player.length) * BAR)
