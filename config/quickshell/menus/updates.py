@@ -23,8 +23,8 @@ What makes the waiting updates worth the bar's chip:
   security tracker (any severity), the installed version still affected;
 - news: Arch's news since the last full upgrade, which often ask for a
   manual step before the next one;
-- upgradeStale: the last full upgrade (lastUpgrade, days, from pacman.log)
-  is more than UPGRADE_STALE_DAYS old.
+- upgradeStale: the last full upgrade that went through (lastUpgrade,
+  days, from pacman.log) is more than UPGRADE_STALE_DAYS old.
 Without a full upgrade in the log, news and lastUpgrade are empty and null.
 
 The three checks ask the network and take about a second each, so they run
@@ -85,15 +85,23 @@ def flake_age(lock: str, now: float) -> int | None:
 
 
 def last_upgrade(log: str) -> float | None:
-    """The time of the last "starting full system upgrade" in pacman.log
-    (pacman -Syu, also through yay or paru)"""
-    for line in reversed(log.splitlines()):
+    """When the last full upgrade in pacman.log (pacman -Syu, also through
+    yay or paru) started that got through: its "starting full system
+    upgrade" followed by "transaction completed" before pacman's next
+    command. One that failed, e.g. on a download, upgraded nothing."""
+    last: float | None = None
+    started: float | None = None
+    for line in log.splitlines():
         if line.endswith("[PACMAN] starting full system upgrade"):
             try:
-                return datetime.strptime(line[1 : line.index("]")], "%Y-%m-%dT%H:%M:%S%z").timestamp()
+                started = datetime.strptime(line[1 : line.index("]")], "%Y-%m-%dT%H:%M:%S%z").timestamp()
             except ValueError:
-                continue
-    return None
+                started = None
+        elif "] [PACMAN] Running " in line:
+            started = None
+        elif line.endswith("[ALPM] transaction completed") and started is not None:
+            last, started = started, None
+    return last
 
 
 def vercmp(a: str, b: str) -> int:

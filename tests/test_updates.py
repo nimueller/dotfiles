@@ -57,12 +57,20 @@ class Critical(unittest.TestCase):
         log = "\n".join(
             [
                 "[2026-10-13T16:13:44+0200] [PACMAN] starting full system upgrade",
+                "[2026-10-13T16:14:00+0200] [ALPM] transaction started",
+                "[2026-10-13T16:15:00+0200] [ALPM] transaction completed",
                 "[2026-10-18T22:15:46+0200] [PACMAN] starting full system upgrade",
+                "[2026-10-18T22:17:58+0200] [ALPM] transaction started",
+                "[2026-10-18T22:18:30+0200] [ALPM] transaction completed",
                 "[2026-10-19T10:00:00+0200] [PACMAN] Running 'pacman -S foo'",
+                "[2026-10-19T10:00:05+0200] [ALPM] transaction completed",
+                # failed on a download: nothing upgraded
+                "[2026-10-29T21:25:32+0100] [PACMAN] Running 'pacman -S -u -y --config /etc/pacman.conf --'",
+                "[2026-10-29T21:25:32+0100] [PACMAN] starting full system upgrade",
             ]
         )
         self.assertEqual(updates.last_upgrade(log), 1792354546)
-        self.assertIsNone(updates.last_upgrade("[2026-10-19T10:00:00+0200] [PACMAN] Running 'pacman -S foo'"))
+        self.assertIsNone(updates.last_upgrade("[2026-10-29T21:25:32+0100] [PACMAN] starting full system upgrade"))
 
     def test_security_fixes(self) -> None:
         issues = json.dumps(
