@@ -20,6 +20,12 @@ Singleton {
         return p?.trackArtist || p?.trackAlbum || "";
     }
 
+    // Live streams: browsers send the largest int64 in µs as their length,
+    // about 292,000 years; no recording comes near 1e9 s (31 years)
+    function live(p) {
+        return (p?.lengthSupported ?? false) && p.length >= 1e9;
+    }
+
     // 3:07, 1:02:45
     function time(seconds) {
         const s = Math.max(0, Math.floor(seconds));

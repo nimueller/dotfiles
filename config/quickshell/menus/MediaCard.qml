@@ -5,15 +5,18 @@ import Quickshell.Widgets
 // One media player (MPRIS) in the sound menu:
 //   [cover]  title / artist / player     ⏮ ⏯ ⏭
 //   position slider                     0:42 / 3:07
-// The cover falls back to the player's icon; without a length (streams) there
-// is no slider. Click the cover to bring the player's window up.
+//   ● Live                                 1:03:29   (live streams)
+// The cover falls back to the player's icon; without a length (radio,
+// some streams) there is no slider. Click the cover to bring the player's
+// window up.
 Rectangle {
     id: root
 
     required property var player // MprisPlayer
     property color accent: Theme.lavender
 
-    readonly property bool hasLength: (player?.lengthSupported ?? false) && player.length > 0
+    readonly property bool live: Media.live(player)
+    readonly property bool hasLength: (player?.lengthSupported ?? false) && player.length > 0 && !live
 
     implicitHeight: column.implicitHeight + 20
     radius: 10
@@ -21,7 +24,7 @@ Rectangle {
 
     // MPRIS doesn't announce the position while it moves
     Timer {
-        running: root.visible && (root.player?.isPlaying ?? false) && root.hasLength
+        running: root.visible && (root.player?.isPlaying ?? false) && (root.hasLength || root.live)
         interval: 1000
         repeat: true
         onTriggered: root.player.positionChanged()
@@ -138,6 +141,28 @@ Rectangle {
             }
             Label {
                 text: `${Media.time(root.player?.position ?? 0)} / ${Media.time(root.player?.length ?? 0)}`
+                color: Theme.subtext1
+                font.pixelSize: 11
+                font.features: { "tnum": 1 }
+            }
+        }
+
+        // No end to show: how far it has played (where the player keeps it)
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.live
+            spacing: 10
+
+            Label {
+                Layout.fillWidth: true
+                text: "●  Live"
+                color: Theme.red
+                font.pixelSize: 11
+                font.bold: true
+            }
+            Label {
+                visible: (root.player?.position ?? 0) > 0
+                text: Media.time(root.player?.position ?? 0)
                 color: Theme.subtext1
                 font.pixelSize: 11
                 font.features: { "tnum": 1 }
