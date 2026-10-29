@@ -77,13 +77,18 @@ PanelWindow {
             onClicked: bar.menu("system")
         }
 
-        // Waiting updates (Updates.qml), or a dotfiles checkout whose
-        // flake.lock is weeks old; the system menu has the details
+        // Waiting updates that matter (Updates.critical), or a dotfiles
+        // checkout whose flake.lock is weeks old; the system menu has the
+        // details. Red with Arch news since the last upgrade: a click shows
+        // them first (updates.qml)
         BarChip {
-            visible: Updates.total > 0 || Updates.flakeStale
-            accent: Theme.peach
-            text: `${Theme.glyph(0xf06b0)}  ${Updates.total > 0 ? Updates.total : "flake.lock"}` // 󰚰
-            onClicked: bar.menu("system")
+            readonly property bool news: Updates.critical && Updates.news.length > 0
+
+            visible: Updates.critical || Updates.flakeStale
+            accent: news ? Theme.red : Theme.peach
+            solid: news
+            text: `${Theme.glyph(news ? 0xf0395 : 0xf06b0)}  ${Updates.critical ? Updates.total : "flake.lock"}` // 󰎕 / 󰚰
+            onClicked: bar.menu(news ? "updates" : "system")
         }
 
         // Touch: the launcher, which is SUPER + D otherwise
