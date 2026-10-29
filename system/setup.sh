@@ -6,7 +6,9 @@
 #    system upgrade: Arch doesn't support updating only some packages; then,
 #    for a new machine, this machine's other packages (apps.txt, aur.txt)
 # 2. PAM: unlock the `login` keyring with the login password on TTY logins
-#    and at the lock screen, and keep its password in step with `passwd`
+#    and at the lock screen, and keep its password in step with `passwd`;
+#    the lock screen counts its failed tries on its own and then waits only
+#    a minute (pam-hyprlock)
 # 3. login: LightDM logs in by itself and the session locks right away
 #    (config/hypr/autostart.lua), so a Wake-on-LAN boot reaches Sunshine
 # 4. logind: the power button opens the power menu instead of shutting down
@@ -80,6 +82,15 @@ elif ask "Unlock the keyring with your password when logging in on a TTY or unlo
     pam_line /etc/pam.d/passwd "password   optional     pam_gnome_keyring.so"
     echo "Done. The \`login\` keyring needs your login password as its password; it then"
     echo "unlocks at the next login."
+fi
+
+echo ''
+echo "== Lock screen"
+# pacman keeps a changed /etc/pam.d/hyprlock (a backup file of the package)
+if cmp -s "$dir/pam-hyprlock" /etc/pam.d/hyprlock; then
+    echo "The lock screen already counts its failed tries on its own"
+elif ask "Let the lock screen count its failed tries on its own and wait a minute after 5, instead of locking the account for 10 minutes after 3 (PAM)?"; then
+    sudo install -m 644 "$dir/pam-hyprlock" /etc/pam.d/hyprlock
 fi
 
 echo ''

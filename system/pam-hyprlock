@@ -1,0 +1,17 @@
+#%PAM-1.0
+# The lock screen (hyprlock), installed as /etc/pam.d/hyprlock by setup.sh.
+# The package's file includes `login`, whose pam_faillock counts in
+# /run/faillock: 3 failures in 15 minutes lock the account for 10 minutes,
+# for the TTY and sudo too. Someone else typing three wrong passwords, or
+# hyprlock ended while it waits for one (it counts as a failure), was enough.
+# Here the lock screen counts on its own, in /run/faillock-lock: after
+# 5 failures it waits a minute, and a login on a TTY stays open
+# (Ctrl+Alt+F3, log in, `pkill -USR1 hyprlock`). The lock screen shows the
+# time left (lock-lockout, pkgs/scripts/lock-lockout.py, which reads the
+# options from the preauth line). Otherwise the lines of system-auth, and
+# the keyring as in `login` (setup.sh).
+auth       required                 pam_faillock.so  preauth  dir=/run/faillock-lock deny=5 unlock_time=60
+auth       [success=1 default=bad]  pam_unix.so      try_first_pass nullok
+auth       [default=die]            pam_faillock.so  authfail dir=/run/faillock-lock deny=5 unlock_time=60
+auth       required                 pam_faillock.so  authsucc dir=/run/faillock-lock deny=5 unlock_time=60
+auth       optional                 pam_gnome_keyring.so
