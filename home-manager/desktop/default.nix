@@ -186,6 +186,11 @@ in
       "nautilus-python/extensions/kdeconnect-share.py".source =
         "${config.services.kdeconnect.package}/share/nautilus-python/extensions/kdeconnect-share.py";
 
+      # The lock screen's cover until there is one (config/hypr/hyprlock.conf)
+      "lock-media/blank.png".source = pkgs.runCommand "lock-media-blank.png" { } ''
+        ${my-pkgs.lock-media}/bin/lock-media blank > $out
+      '';
+
       # For the launcher's emoji search (config/quickshell/menus/Launcher.qml)
       "quickshell-launcher/emoji.json".source = my-pkgs.quickshell-emoji;
 
@@ -270,6 +275,7 @@ in
       my-pkgs.sunshine-disconnect # ends the Sunshine stream (config/quickshell/menus/power.qml)
       my-pkgs.after-unlock # autostarts that need the keyring (config/hypr/autostart.lua)
       my-pkgs.lock-screen # hyprlock, with the on-screen keyboard in the touch mode
+      my-pkgs.lock-media # the media player on the lock screen
       my-pkgs.laptop-idle # dims and suspends laptops when idle (config/hypr/hypridle.conf)
       my-pkgs.quickshell-calendar-python
       my-pkgs.init-tex
