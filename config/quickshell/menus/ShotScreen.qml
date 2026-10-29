@@ -10,7 +10,7 @@ import Quickshell.Wayland
 //   45° and boxes square). Double-click inside copies, right click drops the
 //   selection.
 //   Keys: Enter / Ctrl+C copy, Ctrl+S save, Ctrl+T copy the text (OCR) or
-//   the QR code's content, Escape cancel, Ctrl+Z and
+//   the QR code's content, Ctrl+R record a video, Escape cancel, Ctrl+Z and
 //   Ctrl+Shift+Z / Ctrl+Y undo and redo, V P L A R O M T B pick a tool, F
 //   takes the whole monitor, 1-4 the resolution (100, 75, 50, 25 %), arrows
 //   move the box (Shift: 10 px).
@@ -218,6 +218,10 @@ PanelWindow {
     function exportShot(action) {
         if (!selected)
             return;
+        if (action === "record") {
+            recordShot();
+            return;
+        }
         commitText();
         const f = factor;
         const geometry = `${Math.round(sel.width * f)}x${Math.round(sel.height * f)}+${Math.round(sel.x * f)}+${Math.round(sel.y * f)}`;
@@ -234,6 +238,16 @@ PanelWindow {
             result.saveToFile(`${editor.dir}/layer.png`);
             run(`${editor.dir}/layer.png`);
         }, Qt.size(width, height));
+    }
+
+    // A video of the selection, in the layout's logical coordinates, which
+    // wf-recorder takes; screenshot.py records until the bar or the
+    // screenshot key stops it
+    function recordShot() {
+        const position = `${Math.round(monitor.x + sel.x)},${Math.round(monitor.y + sel.y)}`;
+        const size = `${Math.round(sel.width)}x${Math.round(sel.height)}`;
+        Quickshell.execDetached([Quickshell.shellPath("screenshot.py"), "--record", editor.dir, name, position, size, String(editor.percent), editor.sound ? "sound" : "mute"]);
+        Qt.quit();
     }
 
     Connections {
@@ -584,6 +598,8 @@ PanelWindow {
                 win.exportShot("save");
             else if (ctrl && k === Qt.Key_T)
                 win.exportShot("text");
+            else if (ctrl && k === Qt.Key_R)
+                win.exportShot("record");
             else if (ctrl && (k === Qt.Key_Y || k === Qt.Key_Z && shift))
                 e.redo();
             else if (ctrl && k === Qt.Key_Z)

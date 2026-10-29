@@ -12,7 +12,7 @@ import Quickshell.Widgets
 
 // The bar at the bottom of a monitor, part of daemon.qml:
 // the distro logo (system menu), waiting updates, workspaces and window title on the left, the clock in the middle, tray,
-// privacy, sound, battery, Bluetooth, phone, network, notifications and power on the right.
+// privacy, a screen recording, sound, battery, Bluetooth, phone, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
 // otherwise a key: the launcher, closing the window and the on-screen
@@ -224,6 +224,16 @@ PanelWindow {
                 text: Theme.glyph(0xf0379) // 󰍹
                 color: privacy.foreground
             }
+        }
+
+        // Screen recording (screenshot.py, Recording.qml): how long it runs;
+        // click to stop it
+        BarChip {
+            visible: Recording.active
+            solid: true
+            accent: Theme.red
+            text: `${Theme.glyph(0xf044a)}  ${Recording.elapsed}` // 󰑊
+            onClicked: Recording.stop()
         }
 
         // Sound: click for the menu, right click for pavucontrol, scroll for the
