@@ -14,10 +14,16 @@ import Quickshell.Widgets
 // (the most recently used first); Enter goes to the window, also on a
 // scratchpad.
 //
-// Arithmetic ("2^10/3", "sqrt(2)*pi", "=e") shows its result in the first
-// row; Enter copies it. ":" searches emoji instead (":heart", in English or
-// German); Enter pastes the emoji into the window you came from. The emoji
-// list comes from Nix (pkgs/emoji.py), in ~/.local/share/quickshell-launcher.
+// Arithmetic ("2^10/3", "sqrt(2)*pi", "=e") and conversions ("10 km in mi",
+// "20 c to f", "100 usd in eur") show their result in the first row; Enter
+// copies it. ":" searches emoji instead (":heart", in English or German);
+// Enter pastes the emoji into the window you came from. The emoji list
+// comes from Nix (pkgs/emoji.py), in ~/.local/share/quickshell-launcher.
+// "/" searches files and folders in the home folder by name; Enter opens
+// them. The SSH hosts from ~/.ssh/config (and what it includes) come up for
+// "ssh <host>" or their name; Enter connects with kitty's `kitten ssh`.
+// Conversions, files and the hosts come from launcher.py, which runs while
+// the launcher is shown.
 //
 // Part of the resident daemon.qml, so SUPER+D only has to show it. The key
 // sends the Hyprland event "quickshell-launcher" (hl.dsp.event), which
@@ -33,6 +39,7 @@ PanelWindow {
 
     function show() {
         Windows.refresh(); // workspaces and focus order of the windows
+        helper.running = true;
         search.text = "";
         list.positionViewAtBeginning();
         shown = true;
@@ -41,6 +48,8 @@ PanelWindow {
 
     function hide() {
         shown = false;
+        helper.running = false;
+        found = [];
     }
 
     function toggle() {
@@ -77,6 +86,43 @@ PanelWindow {
     property string query: ""
     property var counts: ({}) // launches per desktop entry id
 
+    // From launcher.py: the SSH hosts, and what it found for the text
+    // (conversions, files), for the request `asked`
+    property var sshHosts: [] // [{ host, detail }]
+    property var found: []
+    property int asked: 0
+
+    onQueryChanged: {
+        asked++;
+        // File results stay until the next ones arrive, so the list doesn't flicker
+        if (!fileMode)
+            found = [];
+        if (helper.running)
+            helper.write(JSON.stringify({ id: asked, q: query }) + "\n");
+    }
+
+    Process {
+        id: helper
+        command: ["/usr/bin/python3", Quickshell.shellPath("launcher.py")]
+        stdinEnabled: true
+        // What was typed while it started
+        onStarted: write(JSON.stringify({ id: root.asked, q: root.query }) + "\n")
+        stdout: SplitParser {
+            onRead: line => {
+                let message = {};
+                try {
+                    message = JSON.parse(line);
+                } catch (e) {
+                    return;
+                }
+                if (message.hosts)
+                    root.sshHosts = message.hosts;
+                else if (message.id === root.asked)
+                    root.found = message.results;
+            }
+        }
+    }
+
     readonly property var apps: {
         const seen = new Set();
         return DesktopEntries.applications.values.filter(a => {
@@ -87,19 +133,36 @@ PanelWindow {
         });
     }
     readonly property bool emojiMode: query.startsWith(":")
+    readonly property bool fileMode: query.startsWith("/")
     readonly property var results: {
         if (emojiMode)
             return emojiResults(query.slice(1).trim().toLowerCase());
+        if (fileMode)
+            return found.filter(r => r.kind === "file").map(r => ({ file: r.path, name: r.name, dir: r.dir, folder: r.folder }));
         const q = query.trim().toLowerCase();
         const ranked = apps.map(app => ({ app, score: score(app, q) })).filter(r => r.score >= 0);
         ranked.sort((a, b) => b.score - a.score || a.app.name.localeCompare(b.app.name));
-        const list = [...windowResults(q), ...ranked.map(r => r.app)];
+        // "ssh " before it's trimmed
+        const typed = query.replace(/^\s+/, "").toLowerCase();
+        const ssh = typed.startsWith("ssh ");
+        const hosts = sshResults(ssh ? typed.slice(4).trim() : q, ssh);
+        const list = [...(ssh ? hosts : []), ...windowResults(q), ...ranked.map(r => r.app), ...(ssh ? [] : hosts)];
         const result = calculate(query);
         if (result !== null)
             list.unshift({ result });
+        for (const r of found.filter(r => r.kind === "convert"))
+            list.unshift({ result: r.value, display: r.text, detail: r.detail });
         if (q)
             list.push({ run: query.trim() });
         return list;
+    }
+
+    // SSH hosts for "ssh <start of the name>", or whose name starts with the
+    // text (two letters at least, so they don't crowd out the apps)
+    function sshResults(part, ssh) {
+        if (!ssh && part.length < 2)
+            return [];
+        return sshHosts.filter(h => h.host.toLowerCase().startsWith(part)).map(h => ({ ssh: h.host, detail: h.detail }));
     }
 
     function score(app, q) {
@@ -303,6 +366,16 @@ PanelWindow {
             Hyprland.dispatch(`hl.dsp.focus({ window = "address:${address}" })`);
             return;
         }
+        if (item.ssh !== undefined) {
+            Quickshell.execDetached(["kitty", "kitten", "ssh", item.ssh]);
+            hide();
+            return;
+        }
+        if (item.file !== undefined) {
+            Quickshell.execDetached(["xdg-open", item.file]);
+            hide();
+            return;
+        }
         if (item.result !== undefined) {
             Quickshell.execDetached(["wl-copy", "--", item.result]);
             hide();
@@ -428,7 +501,7 @@ PanelWindow {
 
                     Label {
                         visible: !search.text
-                        text: "Search apps, :emoji or calculate…"
+                        text: "Search apps, :emoji, /files or calculate…"
                         font.pixelSize: 15
                         color: Theme.overlay0
                     }
@@ -454,10 +527,10 @@ PanelWindow {
                 }
 
                 Label {
-                    readonly property int count: root.results.filter(r => r.run === undefined && r.result === undefined && r.window === undefined).length
+                    readonly property int count: root.results.filter(r => r.run === undefined && r.result === undefined && r.window === undefined && r.ssh === undefined).length
                     readonly property int windows: root.results.filter(r => r.window !== undefined).length
 
-                    text: root.emojiMode ? `${count} emoji` : `${windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : ""}${count} ${count === 1 ? "app" : "apps"}`
+                    text: root.emojiMode ? `${count} emoji` : root.fileMode ? `${count} ${count === 1 ? "file" : "files"}` : `${windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : ""}${count} ${count === 1 ? "app" : "apps"}`
                     font.pixelSize: 11
                     color: Theme.overlay0
                 }
@@ -504,10 +577,12 @@ PanelWindow {
                     readonly property bool isResult: modelData.result !== undefined
                     readonly property bool isEmoji: modelData.emoji !== undefined
                     readonly property bool isWindow: modelData.window !== undefined
-                    readonly property bool isApp: !isCommand && !isResult && !isEmoji && !isWindow
+                    readonly property bool isSsh: modelData.ssh !== undefined
+                    readonly property bool isFile: modelData.file !== undefined
+                    readonly property bool isApp: !isCommand && !isResult && !isEmoji && !isWindow && !isSsh && !isFile
                     readonly property string icon: isApp || isWindow ? Quickshell.iconPath(modelData.icon, true) : ""
                     readonly property bool current: ListView.isCurrentItem
-                    readonly property color accent: isCommand ? Theme.green : isResult ? Theme.peach : Theme.lavender
+                    readonly property color accent: isCommand ? Theme.green : isResult ? Theme.peach : isSsh ? Theme.teal : isFile ? Theme.blue : Theme.lavender
 
                     width: list.width
                     height: root.rowHeight
@@ -543,7 +618,7 @@ PanelWindow {
 
                                 Label {
                                     anchors.centerIn: parent
-                                    text: row.isCommand ? Theme.glyph(0xf018d) : row.isResult ? Theme.glyph(0xf00ec) : row.modelData.name[0].toUpperCase() // 󰆍 󰃬
+                                    text: row.isCommand ? Theme.glyph(0xf018d) : row.isResult ? Theme.glyph(0xf00ec) : row.isSsh ? Theme.glyph(0xf048b) : row.isFile ? Theme.glyph(row.modelData.folder ? 0xf024b : 0xf0214) : row.modelData.name[0].toUpperCase() // 󰆍 󰃬 󰒋 󰈔 󰉋
                                     font.pixelSize: row.isApp || row.isWindow ? 14 : 16
                                     font.bold: true
                                     color: row.accent
@@ -557,7 +632,7 @@ PanelWindow {
 
                             Label {
                                 Layout.fillWidth: true
-                                text: row.isCommand ? `Run “${row.modelData.run}”` : row.isResult ? `= ${row.modelData.result}` : row.modelData.name
+                                text: row.isCommand ? `Run “${row.modelData.run}”` : row.isResult ? `= ${row.modelData.display ?? row.modelData.result}` : row.isSsh ? `ssh ${row.modelData.ssh}` : row.modelData.name
                                 elide: Text.ElideRight
                                 font.pixelSize: 13
                                 font.bold: row.current
@@ -566,7 +641,7 @@ PanelWindow {
                             Label {
                                 Layout.fillWidth: true
                                 visible: !!text
-                                text: row.isCommand ? (row.modelData.run.startsWith("ssh ") ? "Open in terminal" : "Run as a command") : row.isResult ? "Copy the result" : row.isEmoji ? row.modelData.keywords : row.isWindow ? root.windowPlace(row.modelData) : row.modelData.comment || row.modelData.genericName
+                                text: row.isCommand ? (row.modelData.run.startsWith("ssh ") ? "Open in terminal" : "Run as a command") : row.isResult ? (row.modelData.detail ?? "Copy the result") : row.isSsh ? (row.modelData.detail || "SSH host") : row.isFile ? row.modelData.dir : row.isEmoji ? row.modelData.keywords : row.isWindow ? root.windowPlace(row.modelData) : row.modelData.comment || row.modelData.genericName
                                 font.pixelSize: 11
                                 color: Theme.overlay1
                             }
@@ -593,7 +668,9 @@ PanelWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 34
                 horizontalAlignment: Text.AlignHCenter
-                text: `↑↓  select     ⏎  ${root.emojiMode ? "paste" : root.results[list.currentIndex]?.result !== undefined ? "copy" : root.results[list.currentIndex]?.window !== undefined ? "go to window" : "launch"}     esc  close`
+                readonly property var item: root.results[list.currentIndex]
+
+                text: `↑↓  select     ⏎  ${root.emojiMode ? "paste" : item?.result !== undefined ? "copy" : item?.window !== undefined ? "go to window" : item?.ssh !== undefined ? "connect" : item?.file !== undefined ? "open" : "launch"}     esc  close`
                 font.pixelSize: 10
                 color: Theme.overlay0
             }
