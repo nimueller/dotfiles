@@ -27,6 +27,11 @@ hl.window_rule({
 -- pull their workspace forward despite "silent" (workspacerules.lua)
 hl.window_rule({ match = { class = "^brave-browser$" }, focus_on_activate = true })
 
+-- A fullscreen video in the browser must not switch the monitor to HDR: the
+-- switch is a modeset, and the screen goes black each time. Only for the
+-- browser, other fullscreen apps keep render.cm_auto_hdr.
+hl.window_rule({ match = { class = "^brave-browser$" }, no_auto_hdr = true })
+
 hl.window_rule({ match = { class = "upc.exe" },                             tile = true })
 hl.window_rule({ match = { class = "polkit-gnome-authentication-agent-1" }, pin = true })
 hl.window_rule({ match = { title = "Picture-in-Picture" },                  float = true, pin = true })
