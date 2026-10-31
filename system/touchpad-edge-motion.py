@@ -21,11 +21,12 @@ import os
 import select
 import struct
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
 ZONE_MM = 5  # how far in from the edge a finger counts as being at it
-SPEED = 500  # pointer units per second, before the pointer acceleration
+SPEED = 300  # pointer units per second, before the pointer acceleration
 TICK = 0.01  # seconds between steps of the pointer
 # A tapped drag shows no button on the device: it's told by its timing, with
 # libinput's limits (180 ms, 1.3 mm) and a little room for the first one
@@ -223,9 +224,12 @@ def run(device: str) -> None:
     tracker = Tracker(width, height, units, slot)
     mouse = virtual_mouse()
     step = max(round(SPEED * TICK), 1)
+    next_step = 0.0
     while True:
-        moving = tracker.direction() != (0, 0)
-        ready, _, _ = select.select([fd], [], [], TICK if moving else None)
+        wait = None
+        if tracker.direction() != (0, 0):
+            wait = max(next_step - time.monotonic(), 0)
+        ready, _, _ = select.select([fd], [], [], wait)
         if ready:
             try:
                 data = os.read(fd, EVENT.size * 64)
@@ -233,9 +237,12 @@ def run(device: str) -> None:
                 return
             for sec, usec, kind, code, value in EVENT.iter_unpack(data):
                 tracker.event(kind, code, value, sec + usec / 1e6)
-        else:
-            x, y = tracker.direction()
+        # By the clock, not when the touchpad is quiet: a finger resting at the
+        # edge keeps reporting, faster than a tick
+        x, y = tracker.direction()
+        if (x, y) != (0, 0) and time.monotonic() >= next_step:
             move(mouse, x * step, y * step)
+            next_step = time.monotonic() + TICK
 
 
 def main() -> None:
