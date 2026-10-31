@@ -40,6 +40,7 @@ ShellRoot {
 
     Component.onCompleted: Menus.hosted = true
 
+
     NotificationStore {
         id: notificationStore
         sharing: privacyStatus.screen // no popups on a shared screen

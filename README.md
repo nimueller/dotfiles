@@ -114,7 +114,6 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 
 Ideas:
 
-- [ ] An overview of all workspaces with window previews, by gesture in touch mode
 - [ ] Launcher: KeePassXC entries through the Secret Service
 - [ ] Backups of the data the dotfiles don't cover (SSH keys, password database, documents, projects), e.g. restic
   with a systemd timer and the last backup in the system menu

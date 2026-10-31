@@ -13,6 +13,7 @@ function M.daemons()
     daemon("[w]l-paste --watch cliphist", "wl-paste --watch cliphist store")
     daemon("^[s]unshine", "sunshine")
     hl.exec_cmd("~/.config/quickshell/menus/toggle.sh daemon --start") -- bar, launcher, notifications, OSD; only one
+    hl.exec_cmd("~/.config/quickshell/menus/toggle.sh overview --start") -- SUPER + W; only one
     daemon("^[h]yprpaper", "hyprpaper")
     daemon("^[h]ypridle", "hypridle") -- lock and screens off when idle, lock before suspend (hypridle.conf)
 end

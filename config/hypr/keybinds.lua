@@ -102,6 +102,7 @@ hl.bind(mainMod .. " + minus",               letter("ssharp"))          -- ß
 hl.bind(mainMod .. " + SHIFT + minus",       letter("ssharp", true))    -- ẞ
 
 hl.bind(mainMod .. " + V", hl.dsp.event("quickshell-clipboard")) -- clipboard history (quickshell/menus/Clipboard.qml)
+hl.bind(mainMod .. " + W", hl.dsp.event("quickshell-overview"))  -- workspaces with their windows (quickshell/menus/overview.qml)
 
 -- Program shortcuts
 hl.bind(mainMod .. " + T",         exec("kitty"))

@@ -5,7 +5,8 @@
 -- reads what's in effect from $XDG_RUNTIME_DIR/dotfiles-modes.json
 -- (quickshell/menus/Modes.qml).
 --
--- Laptop: tap to click, three-finger swipes between workspaces, keyboard
+-- Laptop: tap to click, three-finger swipes between workspaces (up and down:
+--   open and close the overview, quickshell/menus/overview.qml), keyboard
 --   backlight keys, and with the lid closed while another monitor is
 --   connected, the built-in screen goes off (logind doesn't suspend then).
 --   The idle dimming and suspend on battery are in hypridle.conf.
@@ -17,7 +18,8 @@
 --   On the lock screen too, the same way, with a button of its own there.
 --   Where the hyprgrass plugin is installed (touch screen gestures; not in
 --   the Arch repos, built by hand), three-finger swipes switch workspaces
---   as on the touchpad.
+--   and open the overview as on the touchpad. Without it, the overview's
+--   button on the bar does.
 local M = { forced = {}, laptop = false, touch = false, detected = {}, touchpadOptions = {} }
 
 -- Forced modes, from local.lua: { laptop = true|false, touch = true|false };
@@ -124,6 +126,14 @@ local function dock(closed)
     end
 end
 
+local function overviewOpen()
+    hl.dispatch(hl.dsp.event("quickshell-overview open"))
+end
+
+local function overviewClose()
+    hl.dispatch(hl.dsp.event("quickshell-overview close"))
+end
+
 local function laptop()
     hl.config({
         input = {
@@ -135,6 +145,8 @@ local function laptop()
         },
     })
     hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+    hl.gesture({ fingers = 3, direction = "up", action = overviewOpen })
+    hl.gesture({ fingers = 3, direction = "down", action = overviewClose })
 
     local kbd = "brightnessctl -q -d '*::kbd_backlight' set "
     hl.bind("XF86KbdBrightnessUp",   hl.dsp.exec_cmd(kbd .. "33%+"), { locked = true })
@@ -186,6 +198,16 @@ local function touch()
                 -- the whole screen's width is one workspace otherwise, and
                 -- a swipe of less than half of it snaps back
                 scale   = 1.6,
+            })
+            -- Not tried on a touch screen yet: a plugin that wants another
+            -- kind of action mustn't break the config
+            pcall(hl.plugin.hyprgrass.gesture, {
+                pattern = { kind = "swipe", fingers = 3, direction = "up" },
+                action  = overviewOpen,
+            })
+            pcall(hl.plugin.hyprgrass.gesture, {
+                pattern = { kind = "swipe", fingers = 3, direction = "down" },
+                action  = overviewClose,
             })
         end
     end
