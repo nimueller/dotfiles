@@ -4,8 +4,8 @@ import Quickshell.Wayland
 
 // A window's picture in the overview, where the window is on its workspace
 // (OverviewTile.qml). Click to go to it, drag it onto another workspace to
-// move it there. Floating windows lie above the tiled ones, the last
-// focused on top.
+// move it there, the x closes it. Floating windows lie above the tiled ones,
+// the last focused on top.
 Item {
     id: picture
 
@@ -18,6 +18,7 @@ Item {
     readonly property var entry: Windows.entry(toplevel)
 
     signal clicked
+    signal closeRequested
 
     x: originX
     y: originY
@@ -34,6 +35,10 @@ Item {
             target: picture
             parent: picture.view.contentItem
         }
+    }
+
+    HoverHandler {
+        id: hover
     }
 
     Drag.active: dragging
@@ -85,5 +90,16 @@ Item {
             picture.x = Qt.binding(() => picture.originX);
             picture.y = Qt.binding(() => picture.originY);
         }
+    }
+
+    IconButton {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 6
+        visible: (hover.hovered || Modes.touch) && parent.height > 90 && parent.width > 60
+        opacity: picture.view.progress
+        glyph: Theme.glyph(0xf0156) // 󰅖
+        accent: Theme.red
+        onClicked: picture.closeRequested()
     }
 }

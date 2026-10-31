@@ -927,7 +927,7 @@ ShellRoot {
                     Repeater {
                         model: [
                             { id: "laptop", text: "Laptop", about: "Tap to click, swipe with three fingers between workspaces, keyboard backlight keys, the screen off with the lid closed while another monitor is connected, dimming when idle and suspending after 15 minutes on battery, the battery menu with power profiles and low battery warnings" },
-                            { id: "touch", text: "Touch", about: "A taller bar with bigger buttons, buttons for the launcher, closing the window and the on-screen keyboard (which also shows by itself for text fields), swiping from the screen's edge between workspaces" }
+                            { id: "touch", text: "Touch", about: "A taller bar with bigger buttons, buttons for the launcher, the overview of the workspaces and the on-screen keyboard (which also shows by itself for text fields), swiping from the screen's edge between workspaces" }
                         ]
 
                         delegate: RowLayout {

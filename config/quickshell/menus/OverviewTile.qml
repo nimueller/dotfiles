@@ -4,7 +4,8 @@ import Quickshell.Wayland
 
 // One workspace in the overview (overview.qml): a miniature of it, the
 // wallpaper with the windows' pictures (OverviewWindow.qml) where they are.
-// Takes windows dragged onto it.
+// Takes windows dragged onto it. The x closes all of its windows, after a
+// second press, as not all of them ask first.
 Item {
     id: tile
 
@@ -17,9 +18,16 @@ Item {
     signal activated
     signal dropped(var toplevel)
     signal windowClicked(var toplevel)
+    signal closeWindows(var toplevels)
+
+    property bool closing: false // the first press on the x
 
     width: view.tileWidth
     height: view.tileHeight
+
+    HoverHandler {
+        id: hover
+    }
 
     Item {
         id: frame
@@ -83,6 +91,7 @@ Item {
                 view: tile.view
                 toplevel: modelData
                 onClicked: tile.windowClicked(modelData)
+                onCloseRequested: tile.closeWindows([modelData])
             }
         }
     }
@@ -114,6 +123,34 @@ Item {
             text: tile.title
             font.bold: true
             color: tile.active ? Theme.crust : Theme.text
+        }
+    }
+
+    // On the left: a window's own x is on its right
+    IconButton {
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.margins: 6
+        z: 1
+        visible: tile.toplevels.length > 0 && (tile.closing || hover.hovered || Modes.touch)
+        opacity: tile.view.progress
+        glyph: Theme.glyph(0xf0156) // 󰅖
+        text: tile.closing ? `Close ${tile.toplevels.length === 1 ? "1 window" : `${tile.toplevels.length} windows`}` : ""
+        accent: Theme.red
+        active: tile.closing
+        onClicked: {
+            if (tile.closing) {
+                tile.closing = false;
+                tile.closeWindows(tile.toplevels);
+            } else {
+                tile.closing = true;
+            }
+        }
+
+        Timer {
+            running: tile.closing
+            interval: 3000
+            onTriggered: tile.closing = false
         }
     }
 }

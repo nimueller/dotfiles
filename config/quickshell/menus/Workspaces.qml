@@ -5,9 +5,7 @@ import Quickshell.Hyprland
 // The workspaces of one monitor in a chip: the active one as a lavender
 // pill, a special workspace only while it's shown on this monitor (mauve),
 // urgent ones in peach. Click to switch, the active one for the overview of
-// all workspaces (overview.qml), scroll to move along like SUPER + wheel. In the touch mode a + at the end opens a new, empty workspace:
-// without a keyboard there's no SUPER + number, and a swipe past the last
-// workspace makes a new one only when that has windows.
+// all workspaces (overview.qml), scroll to move along like SUPER + wheel.
 Rectangle {
     id: root
 
@@ -81,29 +79,6 @@ Rectangle {
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = ${button.modelData.id} })`);
                     }
                 }
-            }
-        }
-
-        Rectangle {
-            visible: Modes.touch
-            implicitWidth: Modes.barSize(30, 44, 52)
-            implicitHeight: Modes.barSize(15, 24, 30)
-            radius: 6
-            color: add.pressed ? Theme.surface1 : "transparent"
-
-            BarLabel {
-                anchors.centerIn: parent
-                text: "+"
-                color: Theme.overlay2
-            }
-
-            MouseArea {
-                id: add
-                anchors.fill: parent
-                anchors.topMargin: -8
-                anchors.bottomMargin: -8
-                // the first workspace that doesn't exist yet, on this monitor
-                onClicked: Hyprland.dispatch(`hl.dsp.focus({ workspace = "emptym" })`)
             }
         }
     }

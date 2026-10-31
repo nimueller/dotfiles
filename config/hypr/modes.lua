@@ -18,8 +18,8 @@
 --   On the lock screen too, the same way, with a button of its own there.
 --   Where the hyprgrass plugin is installed (touch screen gestures; not in
 --   the Arch repos, built by hand), three-finger swipes switch workspaces
---   and open the overview as on the touchpad. Without it, a tap on the
---   active workspace in the bar opens the overview.
+--   and open the overview as on the touchpad. Without it, the overview's
+--   button on the bar does.
 local M = { forced = {}, laptop = false, touch = false, detected = {}, touchpadOptions = {} }
 
 -- Forced modes, from local.lua: { laptop = true|false, touch = true|false };

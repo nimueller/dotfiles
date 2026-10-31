@@ -15,8 +15,8 @@ import Quickshell.Widgets
 // privacy, a screen recording, sound, battery, Bluetooth, phone, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
-// otherwise a key: the launcher, closing the window and the on-screen
-// keyboard; in tablet mode it's taller still, and holding a finger on a
+// otherwise a key: the launcher, the overview of the workspaces and the
+// on-screen keyboard; in tablet mode it's taller still, and holding a finger on a
 // chip is a right click (BarChip.qml). On narrow screens (Modes.compactBar) Bluetooth, the keyboard
 // and power are in the system menu instead. The clock moves left of the
 // middle when the right side would reach it.
@@ -99,6 +99,15 @@ PanelWindow {
             onClicked: bar.menu("launcher")
         }
 
+        // Touch: the overview, which is SUPER + W otherwise. New workspaces
+        // and closing windows are in there (overview.qml).
+        BarChip {
+            visible: Modes.touch
+            accent: Theme.lavender
+            text: Theme.glyph(0xf0570) // 󰕰
+            onClicked: Hyprland.dispatch(`hl.dsp.event("quickshell-overview")`)
+        }
+
         Workspaces {
             monitor: bar.monitor
         }
@@ -110,15 +119,6 @@ PanelWindow {
             visible: LocalSettings.windowTitle && !!text
             text: Hyprland.activeToplevel?.title ?? ""
             color: Theme.subtext0
-        }
-
-        // Touch: close the focused window
-        BarChip {
-            visible: Modes.touch && !!Hyprland.activeToplevel
-            plain: true
-            accent: Theme.red
-            text: Theme.glyph(0xf0156) // 󰅖
-            onClicked: Hyprland.dispatch("hl.dsp.window.close()")
         }
     }
 

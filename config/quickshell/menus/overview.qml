@@ -6,7 +6,9 @@ import Quickshell.Wayland
 // Overview of the workspaces: on every monitor its workspaces side by side,
 // each with pictures of its windows where they are. Click (or tap) a window
 // to go to it, a workspace to switch to it, the + for a new one; drag a
-// window onto another workspace (or the +) to move it there. Escape, a click
+// window onto another workspace (or the +) to move it there. The x on a
+// window closes it, the one on a workspace all of its windows, after a
+// second press: the workspace goes when its last window does. Escape, a click
 // next to the workspaces or the same key again close it.
 //
 // Opened with SUPER + W (keybinds.lua), a three-finger swipe up on a touchpad
@@ -84,6 +86,12 @@ ShellRoot {
 
     function focusWorkspace(id, tile) {
         leave(tile, `hl.dsp.focus({ workspace = ${JSON.stringify(id)} })`);
+    }
+
+    function closeWindows(toplevels) {
+        for (const toplevel of toplevels)
+            dispatch(`hl.dsp.window.close({ window = "address:0x${toplevel.address}" })`);
+        refresh.restart();
     }
 
     // `workspace`: an id, or "emptym" for a new one on that monitor
@@ -282,6 +290,7 @@ ShellRoot {
                                     onActivated: root.focusWorkspace(modelData.id, this)
                                     onDropped: toplevel => root.moveWindow(toplevel, modelData.id, win.monitor)
                                     onWindowClicked: toplevel => root.focusWindow(toplevel, this)
+                                    onCloseWindows: toplevels => root.closeWindows(toplevels)
                                 }
                             }
 
