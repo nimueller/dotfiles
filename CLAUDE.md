@@ -31,6 +31,8 @@ New scripts and rewrites follow these rules:
     installed.
   - `system/bluetooth-address.sh` and `system/power-saver-cpu.sh` run as root
     from `/usr/local/lib` at boot, outside of Nix.
+    The exception is `system/touchpad-edge-motion.py`: it has to read binary
+    input events, and its step in `setup.sh` runs after the session packages.
   - `pkgs/scripts/lock-screen.sh` is the lock screen: it stays as it is unless
     it can be tested on a real touch device.
 
