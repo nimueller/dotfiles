@@ -7,8 +7,8 @@ import Quickshell.Wayland
 // each with pictures of its windows where they are. Click (or tap) a window
 // to go to it, a workspace to switch to it, the + for a new one; drag a
 // window onto another workspace (or the +) to move it there. The x on a
-// window closes it, the one on a workspace all of its windows, after a
-// second press: the workspace goes when its last window does. Escape, a click
+// window closes it, "Close workspace" under a workspace all of its windows,
+// after a second press: the workspace goes when its last window does. Escape, a click
 // next to the workspaces or the same key again close it.
 //
 // Opened with SUPER + W (keybinds.lua), a three-finger swipe up on a touchpad
@@ -309,6 +309,7 @@ ShellRoot {
 
                                 Label {
                                     anchors.centerIn: parent
+                                    anchors.verticalCenterOffset: -newTile.footer / 2
                                     text: "+"
                                     font.pixelSize: 32
                                     color: Theme.text

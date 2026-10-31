@@ -4,8 +4,8 @@ import Quickshell.Wayland
 
 // One workspace in the overview (overview.qml): a miniature of it, the
 // wallpaper with the windows' pictures (OverviewWindow.qml) where they are.
-// Takes windows dragged onto it. The x closes all of its windows, after a
-// second press, as not all of them ask first.
+// Takes windows dragged onto it. The button under it closes all of its
+// windows, after a second press, as not all of them ask first.
 Item {
     id: tile
 
@@ -20,10 +20,13 @@ Item {
     signal windowClicked(var toplevel)
     signal closeWindows(var toplevels)
 
-    property bool closing: false // the first press on the x
+    property bool closing: false // the first press on "Close workspace"
+
+    // Room for that button, on every tile so they line up
+    readonly property int footer: 44
 
     width: view.tileWidth
-    height: view.tileHeight
+    height: view.tileHeight + footer
 
     HoverHandler {
         id: hover
@@ -32,7 +35,8 @@ Item {
     Item {
         id: frame
 
-        anchors.fill: parent
+        width: tile.view.tileWidth
+        height: tile.view.tileHeight
         clip: true
 
         // As big as on the screen, so it lines up with the real one, and
@@ -98,7 +102,7 @@ Item {
 
     // Above the windows, and only once it isn't the whole screen any more
     Rectangle {
-        anchors.fill: parent
+        anchors.fill: frame
         anchors.margins: -border.width
         color: "transparent"
         radius: 2
@@ -108,8 +112,8 @@ Item {
     }
 
     Rectangle {
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
+        anchors.left: frame.left
+        anchors.bottom: frame.bottom
         anchors.margins: 8
         width: Math.max(height, number.implicitWidth + 16)
         height: 24
@@ -126,16 +130,14 @@ Item {
         }
     }
 
-    // On the left: a window's own x is on its right
     IconButton {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.margins: 6
-        z: 1
+        anchors.right: frame.right
+        anchors.top: frame.bottom
+        anchors.topMargin: 8
         visible: tile.toplevels.length > 0 && (tile.closing || hover.hovered || Modes.touch)
         opacity: tile.view.progress
         glyph: Theme.glyph(0xf0156) // 󰅖
-        text: tile.closing ? `Close ${tile.toplevels.length === 1 ? "1 window" : `${tile.toplevels.length} windows`}` : ""
+        text: tile.closing ? `Close ${tile.toplevels.length === 1 ? "1 window" : `${tile.toplevels.length} windows`}?` : "Close workspace"
         accent: Theme.red
         active: tile.closing
         onClicked: {
