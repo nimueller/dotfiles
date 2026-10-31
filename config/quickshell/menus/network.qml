@@ -10,7 +10,8 @@ import Quickshell.Io
 // Wi-Fi networks are matched by their SSID, not the profile's name; a
 // saved one whose password stopped working asks for the new one, and
 // enterprise networks (802.1X: user name and password) are set up in the
-// connection editor.
+// connection editor. A saved Wi-Fi network can be shared as a QR code
+// (qrencode), which phone cameras join it with.
 Popup {
     id: popup
 
@@ -31,6 +32,9 @@ Popup {
     property string busy: "" // SSID or VPN uuid being (dis)connected
     property string error: "" // shown on the expanded row
     property string retry: "" // SSID whose saved password didn't work
+    property var shared: null // { ssid, qr, password } of the network shown as a QR code
+
+    onExpandedChanged: shared = null
 
     readonly property var connectivityInfo: ({
             full: ["Online", Theme.green],
@@ -197,6 +201,83 @@ Popup {
                 popup.refresh();
             }
         }
+    }
+
+    // Share a saved network: read its secret from NetworkManager, then turn
+    // it into a Wi-Fi QR code. The image comes back as a data URL, so the
+    // password is never written to a file.
+    function share(network) {
+        error = "";
+        if (shared?.ssid === network.ssid) {
+            shared = null;
+            return;
+        }
+        secrets.ssid = network.ssid;
+        secrets.command = ["nmcli", "-s", "-g", "802-11-wireless.ssid,802-11-wireless.hidden,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,802-11-wireless-security.wep-key0", "connection", "show", "uuid", network.uuid];
+        secrets.running = true;
+    }
+
+    // The WIFI: format phones read: T(ype), S(SID), P(assword), H(idden),
+    // with \ ; , : " escaped
+    function wifiCode(text) {
+        const [ssid, hidden, keyMgmt, psk, wep] = text.replace(/\n$/, "").split("\n").map(l => l.replace(/\\(.)/g, "$1"));
+        const type = keyMgmt === "sae" ? "SAE" : keyMgmt === "wpa-psk" ? "WPA" : keyMgmt === "none" && wep ? "WEP" : "nopass";
+        const password = type === "WPA" || type === "SAE" ? psk : type === "WEP" ? wep : "";
+        if (type !== "nopass" && !password) {
+            error = "NetworkManager doesn't keep this password itself, so it can't be shared";
+            return;
+        }
+        const esc = s => s.replace(/([\\;,:"])/g, "\\$1");
+        let code = `WIFI:T:${type};S:${esc(ssid)};`;
+        if (password)
+            code += `P:${esc(password)};`;
+        if (hidden === "yes")
+            code += "H:true;";
+        qrencode.ssid = secrets.ssid;
+        qrencode.password = password;
+        qrencode.input = code + ";";
+        qrencode.running = true;
+    }
+
+    Process {
+        id: secrets
+
+        property string ssid: ""
+
+        stdout: StdioCollector {
+            onStreamFinished: if (text) popup.wifiCode(text)
+        }
+        stderr: StdioCollector {
+            id: secretsErr
+        }
+        onExited: code => {
+            if (code !== 0)
+                popup.error = secretsErr.text.replace(/^Error:\s*/, "").trim() || "Couldn't read the password";
+        }
+    }
+
+    Process {
+        id: qrencode
+
+        property string ssid: ""
+        property string password: ""
+        property string input: ""
+
+        command: ["sh", "-c", "qrencode -t PNG -s 5 -m 0 -o - | base64 -w0"]
+        stdinEnabled: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text && popup.expanded === qrencode.ssid)
+                    popup.shared = { ssid: qrencode.ssid, qr: `data:image/png;base64,${text.trim()}`, password: qrencode.password };
+                qrencode.password = "";
+            }
+        }
+        onStarted: {
+            write(input);
+            input = "";
+            stdinEnabled = false; // EOF: qrencode reads the text until then
+        }
+        onExited: stdinEnabled = true
     }
 
     Process {
@@ -393,6 +474,7 @@ Popup {
 
             delegate: WifiRow {
                 required property var modelData
+                required property int index
 
                 width: wifiList.width
                 network: modelData
@@ -401,6 +483,11 @@ Popup {
                 askPassword: popup.retry === modelData.ssid
                 address: modelData.active && popup.wifi?.address ? `${popup.wifi.device} · ${popup.wifi.address}` : ""
                 error: popup.expanded === modelData.ssid ? popup.error : ""
+                qr: popup.shared?.ssid === modelData.ssid ? popup.shared.qr : ""
+                password: popup.shared?.ssid === modelData.ssid ? popup.shared.password : ""
+
+                // Keep the QR code in view
+                onQrChanged: if (qr) wifiList.positionViewAtIndex(index, ListView.Contain)
 
                 onClicked: {
                     popup.error = "";
@@ -427,6 +514,7 @@ Popup {
                 }
                 onDisconnectRequested: popup.nmcli(["device", "disconnect", popup.wifi.device])
                 onForgetRequested: popup.nmcli(["connection", "delete", "uuid", modelData.uuid])
+                onShareRequested: popup.share(modelData)
             }
         }
     }

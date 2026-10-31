@@ -254,6 +254,7 @@ in
       hyprpicker
       grim # screenshots (config/quickshell/menus/screenshot.py)
       wf-recorder # and screen recordings
+      qrencode # Wi-Fi QR codes (config/quickshell/menus/network.qml)
       imagemagick
       # The text and QR codes of the screenshot editor and the text of the
       # scanner's PDFs; zbar without its camera apps
