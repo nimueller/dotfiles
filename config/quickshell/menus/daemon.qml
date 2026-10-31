@@ -10,6 +10,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Wayland
 
 // Resident part of the desktop shell (started with Hyprland, see
 // autostart.lua; also D-Bus activated for notifications): the bar on every
@@ -42,6 +43,12 @@ ShellRoot {
     settings.watchFiles: false
 
     Component.onCompleted: Menus.hosted = true
+
+    // Quickshell sets up its buffers with the first ScreencopyView, waiting
+    // for a window's scene graph to start. For one in a menu that wait never
+    // ends, as the windows here are up by then, and the overview's pictures
+    // stay empty without an error. So it's done now, while they come up.
+    ScreencopyView {}
 
     NotificationStore {
         id: notificationStore
