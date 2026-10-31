@@ -27,6 +27,12 @@ hl.window_rule({
 -- pull their workspace forward despite "silent" (workspacerules.lua)
 hl.window_rule({ match = { class = "^brave-browser$" }, focus_on_activate = true })
 
+-- Since Hyprland 0.57, render.cm_auto_hdr offers HDR to fullscreen windows, so
+-- a fullscreen video in the browser switches the monitor to HDR with a modeset.
+-- This rule skips that offer, as before 0.57. Only for the browser, other
+-- fullscreen apps keep cm_auto_hdr.
+hl.window_rule({ match = { class = "^brave-browser$" }, no_auto_hdr = true })
+
 hl.window_rule({ match = { class = "upc.exe" },                             tile = true })
 hl.window_rule({ match = { class = "polkit-gnome-authentication-agent-1" }, pin = true })
 hl.window_rule({ match = { title = "Picture-in-Picture" },                  float = true, pin = true })
