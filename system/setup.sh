@@ -321,7 +321,7 @@ if [ ${#touchpads[@]} -eq 0 ]; then
     echo "No touchpad, skipping"
 elif [ -e "$rules" ]; then
     sudo install -m 755 "$dir/touchpad-edge-motion.py" /usr/local/lib/touchpad-edge-motion
-    sudo systemctl restart "touchpad-edge-motion@${touchpads[0]}.service"
+    sudo systemctl restart "touchpad-edge-motion@*.service"
     echo "A drag already goes on at the edge of the touchpad"
 elif ask "Keep a drag going when the finger reaches the edge of the touchpad?"; then
     sudo install -m 755 "$dir/touchpad-edge-motion.py" /usr/local/lib/touchpad-edge-motion
@@ -338,12 +338,14 @@ PrivateNetwork=yes
 ProtectHome=yes
 ProtectSystem=strict
 UNIT
-    echo 'SUBSYSTEM=="input", KERNEL=="event*", ACTION=="add", ENV{ID_INPUT_TOUCHPAD}=="1", TAG+="systemd", ENV{SYSTEMD_WANTS}+="touchpad-edge-motion@%k.service"' |
+    echo 'SUBSYSTEM=="input", KERNEL=="event*", ACTION!="remove", ENV{ID_INPUT_TOUCHPAD}=="1", TAG+="systemd", ENV{SYSTEMD_WANTS}+="touchpad-edge-motion@%k.service"' |
         sudo tee "$rules" >/dev/null
     sudo udevadm control --reload
     sudo systemctl daemon-reload
-    # The rule is for touchpads to come; this one is here already
+    # The rule is for touchpads to come; those here already need another look
+    # from udev, which starts the service. A change, as an add would make
+    # libinput see them twice.
     for event in "${touchpads[@]}"; do
-        sudo systemctl start "touchpad-edge-motion@$event.service"
+        sudo udevadm trigger --action=change "/dev/input/$event"
     done
 fi
