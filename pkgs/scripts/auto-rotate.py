@@ -6,10 +6,11 @@ transform in Hyprland. Touch input follows the screen's transform.
   auto-rotate
 
 Started by the touch mode (config/hypr/modes.lua) and runs for the session;
-exits at once without a built-in screen or an accelerometer. A config reload
-applies the monitor rules of local.lua again, so the current orientation is
-applied once more after each one (Hyprland's event socket). A transform set
-there (a panel mounted sideways) stays the base the orientation turns from.
+exits at once without a built-in screen, monitor-sensor or an accelerometer.
+A config reload applies the monitor rules of local.lua again, so the current
+orientation is applied once more after each one (Hyprland's event socket). A
+transform set there (a panel mounted sideways) stays the base the orientation
+turns from.
 Built with writePython3Bin (pkgs/default.nix); monitor-sensor and hyprctl
 come from the system.
 """
@@ -77,7 +78,11 @@ def apply(monitor: dict[str, object], transform: int) -> None:
 
 
 def watch_sensor(events: "queue.Queue[str | None]") -> None:
-    sensor = subprocess.Popen(["monitor-sensor", "--accel"], stdout=subprocess.PIPE, text=True)
+    try:
+        sensor = subprocess.Popen(["monitor-sensor", "--accel"], stdout=subprocess.PIPE, text=True)
+    except OSError:  # iio-sensor-proxy isn't installed
+        events.put(None)
+        return
     assert sensor.stdout
     for line in sensor.stdout:
         if "=== No accelerometer" in line:

@@ -1,9 +1,19 @@
 # pyright: strict
+import queue
 import unittest
+from unittest import mock
 
 from helpers import load
 
 rotate = load("pkgs/scripts/auto-rotate.py")
+
+
+class Sensor(unittest.TestCase):
+    def test_without_monitor_sensor_the_loop_ends(self) -> None:
+        events: queue.Queue[str | None] = queue.Queue()
+        with mock.patch.object(rotate.subprocess, "Popen", side_effect=FileNotFoundError):
+            rotate.watch_sensor(events)
+        self.assertIsNone(events.get_nowait())
 
 
 class Orientation(unittest.TestCase):
