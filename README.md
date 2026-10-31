@@ -19,7 +19,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 |---|---|
 | **OS** | Arch Linux, packages via Nix + Home Manager (the session itself from pacman) |
 | **Compositor** | Hyprland, configured in Lua |
-| **Shell UI** | Quickshell: bar, menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, scanner (PDF with OCR, both sides from the feeder), a settings app for the machine |
+| **Shell UI** | Quickshell: bar, menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, scanner (PDF with OCR, both sides from the feeder), disk cleanup, a settings app for the machine |
 | **Lock / idle** | hyprlock and hypridle, hyprpaper for the wallpapers |
 | **Terminal** | kitty, Zsh with Powerlevel10k, zoxide (`j`), direnv with nix-direnv |
 | **Git** | Commits signed with SSH and verified locally, delta as pager, GitHub CLI |
