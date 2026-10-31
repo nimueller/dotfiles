@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Wayland
 
 // A window's picture in the overview, where the window is on its workspace
@@ -11,9 +12,10 @@ Item {
     required property var view // the overview's PanelWindow
     required property var toplevel // HyprlandToplevel
     readonly property var ipc: toplevel.lastIpcObject
-    readonly property real originX: ((ipc?.at?.[0] ?? 0) - (view.monitor?.x ?? 0)) * view.factor
-    readonly property real originY: ((ipc?.at?.[1] ?? 0) - (view.monitor?.y ?? 0)) * view.factor
+    readonly property real originX: ((ipc?.at?.[0] ?? 0) - view.originX) * view.factor
+    readonly property real originY: ((ipc?.at?.[1] ?? 0) - view.originY) * view.factor
     readonly property bool dragging: mouse.drag.active
+    readonly property var entry: Windows.entry(toplevel)
 
     signal clicked
 
@@ -38,32 +40,41 @@ Item {
     Drag.keys: ["overview-window"]
     Drag.hotSpot: Qt.point(width / 2, height / 2)
 
+    // Taken once, in the overview's order (overview.qml)
+    ScreencopyView {
+        anchors.fill: parent
+        captureSource: picture.view.settled && picture.view.pictures >= picture.view.captures.indexOf(picture.toplevel) ? picture.toplevel.wayland : null
+        live: false
+        opacity: hasContent ? 1 : 0
+        onHasContentChanged: if (hasContent)
+            picture.view.pictures++
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 150
+            }
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
-        radius: 4
-        color: Theme.surface0
-        border.width: mouse.containsMouse ? 2 : 1
-        border.color: mouse.containsMouse ? Theme.mauve : Theme.surface2
-        clip: true
+        color: "transparent"
+        border.width: 2
+        border.color: Theme.mauve
+        visible: mouse.containsMouse
+    }
 
-        // Taken once, as the overview opens
-        ScreencopyView {
-            anchors.fill: parent
-            anchors.margins: 1
-            captureSource: picture.toplevel.wayland
-            live: false
-        }
-
-        Label {
-            anchors.centerIn: parent
-            width: parent.width - 8
-            visible: parent.height > 30
-            horizontalAlignment: Text.AlignHCenter
-            text: picture.toplevel.title
-            style: Text.Outline
-            styleColor: Theme.crust
-            font.pixelSize: 11
-        }
+    // Which app it is, as a window this small has nothing to read
+    Image {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 6
+        width: 28
+        height: 28
+        visible: parent.height > 40 && status === Image.Ready
+        opacity: picture.view.progress
+        source: picture.entry?.icon ? Quickshell.iconPath(picture.entry.icon, true) : ""
+        sourceSize: Qt.size(56, 56)
     }
 
     MouseArea {

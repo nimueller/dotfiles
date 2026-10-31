@@ -1,8 +1,10 @@
 import QtQuick
+import Quickshell
+import Quickshell.Wayland
 
-// One workspace in the overview (overview.qml): a frame in the monitor's
-// shape with its windows' pictures (OverviewWindow.qml), its name
-// underneath. Takes windows dragged onto it.
+// One workspace in the overview (overview.qml): a miniature of it, the
+// wallpaper with the windows' pictures (OverviewWindow.qml) where they are.
+// Takes windows dragged onto it.
 Item {
     id: tile
 
@@ -17,18 +19,38 @@ Item {
     signal windowClicked(var toplevel)
 
     width: view.tileWidth
-    height: view.tileHeight + 24
+    height: view.tileHeight
 
-    Rectangle {
+    Item {
         id: frame
 
-        width: tile.view.tileWidth
-        height: tile.view.tileHeight
-        radius: 10
+        anchors.fill: parent
         clip: true
-        color: drop.containsDrag ? Theme.surface1 : mouse.containsMouse ? Theme.surface0 : Theme.mantle
-        border.width: tile.active || drop.containsDrag ? 2 : 1
-        border.color: drop.containsDrag ? Theme.mauve : tile.active ? Theme.lavender : Theme.surface1
+
+        // As big as on the screen, so it lines up with the real one, and
+        // like it starts behind the bar if that's on the left or on top
+        Image {
+            id: wallpaper
+            x: -tile.view.reserved[0] * tile.view.factor
+            y: -tile.view.reserved[1] * tile.view.factor
+            width: tile.view.screen.width * tile.view.factor
+            height: tile.view.screen.height * tile.view.factor
+            source: `file://${Quickshell.env("HOME")}/.config/hypr/wallpapers/MountainDark.jpg`
+            sourceSize.width: tile.view.screen.width * tile.view.screen.devicePixelRatio
+            fillMode: Image.PreserveAspectCrop
+        }
+
+        // The screen, the first frame of the zoom
+        ScreencopyView {
+            x: wallpaper.x
+            y: wallpaper.y
+            width: wallpaper.width
+            height: wallpaper.height
+            captureSource: tile.active ? tile.view.modelData : null
+            live: false
+            onHasContentChanged: if (hasContent)
+                tile.view.ready = true
+        }
 
         MouseArea {
             id: mouse
@@ -63,12 +85,33 @@ Item {
         }
     }
 
-    Label {
-        anchors.horizontalCenter: frame.horizontalCenter
-        anchors.top: frame.bottom
-        anchors.topMargin: 6
-        text: tile.title
-        font.bold: tile.active
-        color: tile.active ? Theme.lavender : Theme.subtext0
+    // Above the windows, and only once it isn't the whole screen any more
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -border.width
+        color: "transparent"
+        radius: 2
+        border.width: 2
+        border.color: drop.containsDrag ? Theme.mauve : tile.active ? Theme.lavender : mouse.containsMouse ? Theme.overlay1 : Theme.alpha(Theme.text, 0.15)
+        opacity: tile.view.progress
+    }
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: 8
+        width: Math.max(height, number.implicitWidth + 16)
+        height: 24
+        radius: 12
+        color: tile.active ? Theme.lavender : Theme.alpha(Theme.crust, 0.8)
+        opacity: tile.view.progress
+
+        Label {
+            id: number
+            anchors.centerIn: parent
+            text: tile.title
+            font.bold: true
+            color: tile.active ? Theme.crust : Theme.text
+        }
     }
 }
