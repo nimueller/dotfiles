@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 
 // Toolbar of the screenshot editor (ShotScreen.qml): drawing tools, colour,
-// stroke size, undo / redo, resolution, then copy, save, copy the text and
-// cancel. Hovering a button names it and its key underneath.
+// stroke size, undo / redo, resolution, then copy, save, copy the text,
+// record a video (with or without sound) and cancel. Hovering a button names it and its key underneath.
 Rectangle {
     id: bar
 
@@ -166,6 +166,24 @@ Rectangle {
             glyph: Theme.glyph(0xf113a) // 󱄺
             onClicked: bar.editor.finish("text")
             onHoveredChanged: bar.say(hovered, "Copy the text or the QR code's content   Ctrl+T")
+        }
+
+        Separator {}
+
+        IconButton {
+            glyph: Theme.glyph(0xf044a) // 󰑊
+            text: "Record"
+            accent: Theme.red
+            active: true
+            onClicked: bar.editor.finish("record")
+            onHoveredChanged: bar.say(hovered, "Record a video to ~/Videos/Screencasts, without the drawings; the bar stops it   Ctrl+R")
+        }
+        IconButton {
+            glyph: Theme.glyph(bar.editor.sound ? 0xf057e : 0xf0581) // 󰕾 / 󰖁
+            active: bar.editor.sound
+            accent: Theme.red
+            onClicked: bar.editor.sound = !bar.editor.sound
+            onHoveredChanged: bar.say(hovered, bar.editor.sound ? "Recording with the sound the speakers play" : "Recording without sound")
         }
         IconButton {
             glyph: Theme.glyph(0xf0156) // 󰅖

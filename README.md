@@ -19,7 +19,7 @@ everything wears [Catppuccin Macchiato](https://catppuccin.com).
 |---|---|
 | **OS** | Arch Linux, packages via Nix + Home Manager (the session itself from pacman) |
 | **Compositor** | Hyprland, configured in Lua |
-| **Shell UI** | Quickshell: bar, menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, scanner (PDF with OCR, both sides from the feeder), a settings app for the machine |
+| **Shell UI** | Quickshell: bar, menus (system, sound, network, Bluetooth, battery, calendar, …), launcher, clipboard history, notifications, on-screen display, screenshot editor, scanner (PDF with OCR, both sides from the feeder), disk cleanup, a settings app for the machine |
 | **Lock / idle** | hyprlock and hypridle, hyprpaper for the wallpapers |
 | **Terminal** | kitty, Zsh with Powerlevel10k, zoxide (`j`), direnv with nix-direnv |
 | **Git** | Commits signed with SSH and verified locally, delta as pager, GitHub CLI |
@@ -111,14 +111,10 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 
 - [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
-- [ ] Turning the screen with the device (iio-sensor-proxy)
 
 Ideas:
 
-- [ ] Media controls (MPRIS) on the bar or in the sound menu: cover, title, play/pause/skip, position
-- [ ] Screen recording in the screenshot tool (area, window or screen), with an indicator on the bar
-- [ ] Launcher: SSH hosts (opens `kitten ssh`), KeePassXC entries through the Secret Service, unit and currency
-  conversion, file search
+- [ ] Launcher: KeePassXC entries through the Secret Service
 - [ ] Backups of the data the dotfiles don't cover (SSH keys, password database, documents, projects), e.g. restic
   with a systemd timer and the last backup in the system menu
 - [ ] KeePassXC's settings from Home Manager, without the database paths

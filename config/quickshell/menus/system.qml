@@ -9,7 +9,8 @@ import Quickshell.Io
 
 // System menu for the bar's distro logo: the system at a glance (host,
 // kernel, the monitors' resolutions, uptime, packages, waiting updates of
-// pacman, the AUR and Flatpak and the age of flake.lock) and the live use of CPU,
+// pacman, the AUR and Flatpak, the last upgrade, security fixes and Arch
+// news among them, and the age of flake.lock) and the live use of CPU,
 // memory, swap, the disks (/ and the home folder's, if that's another
 // partition) and GPU, read every 2 seconds while it's open, and the
 // brightness of the screens (the backlight, or monitors over DDC/CI), switches
@@ -181,6 +182,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 ["Uptime", root.info.uptime ? root.uptime(Number(root.info.uptime)) : ""],
                 ["Packages", root.info.packages ? `${root.info.packages} from pacman` : ""],
                 ["Updates", root.updatesText()],
+                ...(Updates.lastUpgrade !== null ? [["Last upgrade", Updates.lastUpgrade === 0 ? "Today" : `${Updates.lastUpgrade} ${Updates.lastUpgrade === 1 ? "day" : "days"} ago`]] : []),
+                ...(Updates.security.length ? [["Security", Updates.security.map(s => s.package).join(", ")]] : []),
+                ...(Updates.news.length ? [["Arch news", Updates.news.length === 1 ? Updates.news[0].title : `${Updates.news.length} since the last upgrade`]] : []),
                 ...(Updates.flakeAge !== null ? [["flake.lock", Updates.flakeAge === 0 ? "Updated today" : `${Updates.flakeAge} ${Updates.flakeAge === 1 ? "day" : "days"} old${Updates.flakeStale ? " · git pull, then switch" : ""}`]] : [])
             ]
 
@@ -200,7 +204,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     x: 90
                     width: parent.width - 90
                     text: parent.modelData[1]
-                    color: (parent.modelData[0] === "Updates" && Updates.total > 0) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale) ? Theme.peach : Theme.text
+                    color: parent.modelData[0] === "Arch news" ? Theme.red : (parent.modelData[0] === "Updates" && Updates.total > 0) || parent.modelData[0] === "Security" || (parent.modelData[0] === "Last upgrade" && Updates.upgradeStale) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale) ? Theme.peach : Theme.text
                 }
             }
         }
@@ -590,8 +594,20 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             text: "Update"
             accent: Theme.peach
             active: true
+            // With Arch news: those first (updates.qml)
             onClicked: {
-                Updates.update();
+                if (Updates.news.length)
+                    Menus.toggle("updates");
+                else
+                    Updates.update();
+                root.close();
+            }
+        }
+        IconButton {
+            glyph: Theme.glyph(0xf00e2) // 󰃢
+            text: "Clean up"
+            onClicked: {
+                Menus.toggle("cleanup");
                 root.close();
             }
         }

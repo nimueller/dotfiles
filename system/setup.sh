@@ -6,7 +6,9 @@
 #    system upgrade: Arch doesn't support updating only some packages; then,
 #    for a new machine, this machine's other packages (apps.txt, aur.txt)
 # 2. PAM: unlock the `login` keyring with the login password on TTY logins
-#    and at the lock screen, and keep its password in step with `passwd`
+#    and at the lock screen, and keep its password in step with `passwd`;
+#    the lock screen counts its failed tries on its own and then waits only
+#    a minute (pam-hyprlock)
 # 3. login: LightDM logs in by itself and the session locks right away
 #    (config/hypr/autostart.lua), so a Wake-on-LAN boot reaches Sunshine
 # 4. logind: the power button opens the power menu instead of shutting down
@@ -19,6 +21,7 @@
 #    and a CPU cap in power saver where it has no CPU driver (Snapdragon)
 # 9. touch screen: iptsd (touch and pen of Surfaces) for the touch screens
 #    it handles at every boot, where it's installed
+# 10. touchpad: a drag goes on at the edge of the touchpad, on machines with one
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -80,6 +83,15 @@ elif ask "Unlock the keyring with your password when logging in on a TTY or unlo
     pam_line /etc/pam.d/passwd "password   optional     pam_gnome_keyring.so"
     echo "Done. The \`login\` keyring needs your login password as its password; it then"
     echo "unlocks at the next login."
+fi
+
+echo ''
+echo "== Lock screen"
+# pacman keeps a changed /etc/pam.d/hyprlock (a backup file of the package)
+if cmp -s "$dir/pam-hyprlock" /etc/pam.d/hyprlock; then
+    echo "The lock screen already counts its failed tries on its own"
+elif ask "Let the lock screen count its failed tries on its own and wait a minute after 5, instead of locking the account for 10 minutes after 3 (PAM)?"; then
+    sudo install -m 644 "$dir/pam-hyprlock" /etc/pam.d/hyprlock
 fi
 
 echo ''
@@ -291,4 +303,49 @@ else
             sudo udevadm control --reload
         fi
     fi
+fi
+
+echo ''
+echo "== Touchpad"
+# libinput stops a drag where the finger runs out of touchpad, Windows goes on
+# in that direction (touchpad-edge-motion.py). Python, as the session packages
+# are installed by now and a shell can't read input events.
+touchpads=()
+for dev in /dev/input/event*; do
+    if udevadm info --query=property "$dev" 2>/dev/null | grep -q '^ID_INPUT_TOUCHPAD=1$'; then
+        touchpads+=("${dev#/dev/input/}")
+    fi
+done
+rules=/etc/udev/rules.d/90-touchpad-edge-motion.rules
+if [ ${#touchpads[@]} -eq 0 ]; then
+    echo "No touchpad, skipping"
+elif [ -e "$rules" ]; then
+    sudo install -m 755 "$dir/touchpad-edge-motion.py" /usr/local/lib/touchpad-edge-motion
+    sudo systemctl restart "touchpad-edge-motion@*.service"
+    echo "A drag already goes on at the edge of the touchpad"
+elif ask "Keep a drag going when the finger reaches the edge of the touchpad?"; then
+    sudo install -m 755 "$dir/touchpad-edge-motion.py" /usr/local/lib/touchpad-edge-motion
+    sudo tee /etc/systemd/system/touchpad-edge-motion@.service >/dev/null <<'UNIT'
+[Unit]
+Description=Drag at the edge of touchpad %i
+BindsTo=dev-input-%i.device
+After=dev-input-%i.device
+
+[Service]
+ExecStart=/usr/local/lib/touchpad-edge-motion /dev/input/%i
+NoNewPrivileges=yes
+PrivateNetwork=yes
+ProtectHome=yes
+ProtectSystem=strict
+UNIT
+    echo 'SUBSYSTEM=="input", KERNEL=="event*", ACTION!="remove", ENV{ID_INPUT_TOUCHPAD}=="1", TAG+="systemd", ENV{SYSTEMD_WANTS}+="touchpad-edge-motion@%k.service"' |
+        sudo tee "$rules" >/dev/null
+    sudo udevadm control --reload
+    sudo systemctl daemon-reload
+    # The rule is for touchpads to come; those here already need another look
+    # from udev, which starts the service. A change, as an add would make
+    # libinput see them twice.
+    for event in "${touchpads[@]}"; do
+        sudo udevadm trigger --action=change "/dev/input/$event"
+    done
 fi

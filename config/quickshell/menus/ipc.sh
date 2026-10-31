@@ -4,6 +4,7 @@
 #   ipc.sh notifications toggle|dnd|clear
 #   ipc.sh launcher|clipboard toggle
 #   ipc.sh menus toggle <menu>         (toggle.sh <menu>)
+#   ipc.sh updates refresh             (after an update, Updates.qml)
 daemon=$(dirname "$(readlink -f "$0")")/daemon.qml
 qs ipc -p "$daemon" call "$@" >/dev/null 2>&1 && exit 0
 qs -p "$daemon" -n -d >/dev/null 2>&1

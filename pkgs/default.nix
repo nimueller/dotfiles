@@ -84,6 +84,16 @@
     runtimeInputs = [ pkgs.jq ];
     text = builtins.readFile ./scripts/lock-screen.sh;
   };
+  # The media player on the lock screen (config/hypr/hyprlock.conf);
+  # playerctl comes from home-manager/desktop
+  lock-media = pkgs.writers.writePython3Bin "lock-media" { doCheck = false; } (
+    builtins.readFile ./scripts/lock-media.py
+  );
+  # The time left after too many wrong passwords at the lock screen
+  # (config/hypr/hyprlock.conf, system/pam-hyprlock)
+  lock-lockout = pkgs.writers.writePython3Bin "lock-lockout" { doCheck = false; } (
+    builtins.readFile ./scripts/lock-lockout.py
+  );
   # Dims and suspends laptops when idle (config/hypr/hypridle.conf);
   # brightnessctl, busctl and systemctl come from the system
   laptop-idle = pkgs.writeShellApplication {

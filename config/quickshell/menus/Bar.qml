@@ -12,7 +12,7 @@ import Quickshell.Widgets
 
 // The bar at the bottom of a monitor, part of daemon.qml:
 // the distro logo (system menu), waiting updates, workspaces and window title on the left, the clock in the middle, tray,
-// privacy, sound, battery, Bluetooth, phone, network, notifications and power on the right.
+// privacy, a screen recording, sound, battery, Bluetooth, phone, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
 // otherwise a key: the launcher, closing the window and the on-screen
@@ -77,13 +77,18 @@ PanelWindow {
             onClicked: bar.menu("system")
         }
 
-        // Waiting updates (Updates.qml), or a dotfiles checkout whose
-        // flake.lock is weeks old; the system menu has the details
+        // Waiting updates that matter (Updates.critical), or a dotfiles
+        // checkout whose flake.lock is weeks old; the system menu has the
+        // details. Red with Arch news since the last upgrade: a click shows
+        // them first (updates.qml)
         BarChip {
-            visible: Updates.total > 0 || Updates.flakeStale
-            accent: Theme.peach
-            text: `${Theme.glyph(0xf06b0)}  ${Updates.total > 0 ? Updates.total : "flake.lock"}` // 󰚰
-            onClicked: bar.menu("system")
+            readonly property bool news: Updates.critical && Updates.news.length > 0
+
+            visible: Updates.critical || Updates.flakeStale
+            accent: news ? Theme.red : Theme.peach
+            solid: news
+            text: `${Theme.glyph(news ? 0xf0395 : 0xf06b0)}  ${Updates.critical ? Updates.total : "flake.lock"}` // 󰎕 / 󰚰
+            onClicked: bar.menu(news ? "updates" : "system")
         }
 
         // Touch: the launcher, which is SUPER + D otherwise
@@ -224,6 +229,16 @@ PanelWindow {
                 text: Theme.glyph(0xf0379) // 󰍹
                 color: privacy.foreground
             }
+        }
+
+        // Screen recording (screenshot.py, Recording.qml): how long it runs;
+        // click to stop it
+        BarChip {
+            visible: Recording.active
+            solid: true
+            accent: Theme.red
+            text: `${Theme.glyph(0xf044a)}  ${Recording.elapsed}` // 󰑊
+            onClicked: Recording.stop()
         }
 
         // Sound: click for the menu, right click for pavucontrol, scroll for the
