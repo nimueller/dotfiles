@@ -15,8 +15,9 @@ Singleton {
     property string error: ""
     property var queue: [] // ids still to clean
     property string cleaning: "" // id
-    readonly property bool scanning: scanner.running
-    readonly property bool busy: cleaner.running
+    property bool scanAgain: false // the running scan is from before a cleanup
+    // Not cleaner.running: a binding to it still says true in onExited
+    readonly property bool busy: cleaning !== ""
 
     function size(bytes) {
         const gib = 1073741824;
@@ -41,7 +42,10 @@ Singleton {
     function next() {
         if (!queue.length) {
             cleaning = "";
-            refresh();
+            if (scanner.running)
+                scanAgain = true;
+            else
+                scanner.running = true;
             return;
         }
         cleaning = queue[0];
@@ -54,6 +58,12 @@ Singleton {
         id: scanner
 
         command: [Quickshell.shellPath("cleanup.py"), "scan"]
+        onExited: {
+            if (root.scanAgain) {
+                root.scanAgain = false;
+                Qt.callLater(root.refresh);
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -81,7 +91,6 @@ Singleton {
                 }
             }
         }
-        // Only now, when it's no longer running, can the next one start
-        onExited: root.next()
+        onExited: Qt.callLater(root.next)
     }
 }

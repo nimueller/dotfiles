@@ -5,8 +5,8 @@
   cleanup.py scan
   cleanup.py clean <id>
 
-scan prints one JSON object, biggest first, without what's empty or what
-this machine doesn't have:
+scan prints one JSON object, biggest first, without what's next to nothing or
+what this machine doesn't have:
 
   {"free": 24700000000, "items": [{"id": "nix", "title": "Old Nix generations",
    "detail": "…", "bytes": 11500000000, "blocked": ""}]}
@@ -40,6 +40,7 @@ FLATPAK_APPS = HOME / ".var/app"
 GRADLE = [HOME / ".gradle" / name for name in ("caches", "jdks", "wrapper")]
 NIX_PROFILES = HOME / ".local/state/nix/profiles"
 JOURNAL_KEEP = 100 * 1024**2
+WORTH_SHOWING = 1024**2
 UNITS = {"": 1, "B": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4}
 
 
@@ -279,7 +280,7 @@ def scan_place(item: tuple[str, Place]) -> dict[str, str | int] | None:
         size, detail, blocked = place.scan()
     except (OSError, ValueError):
         return None
-    if not size:
+    if size < WORTH_SHOWING:
         return None
     return {"id": key, "title": place.title, "detail": detail, "bytes": size, "blocked": blocked}
 
