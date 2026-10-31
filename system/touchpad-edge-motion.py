@@ -5,15 +5,15 @@
     touchpad-edge-motion /dev/input/eventN
 
 The finger runs out of touchpad long before a selection box is big enough, and
-libinput has no option for it. While the touchpad's button is held and the
-finger sits in the outer few millimetres, this moves the pointer on towards
-that edge until the finger comes back or lets go.
+libinput has no option for it. During a drag, with the touchpad pressed down
+or with a tap and a touch right after it, this moves the pointer on towards
+the edge while the finger sits in the outer few millimetres, until the finger
+comes back or lets go.
 
 Runs as root, one process per touchpad (touchpad-edge-motion@.service, started
 by a udev rule from system/setup.sh): only root may open /dev/uinput. It only
 reads the touchpad, without grabbing it, and moves the pointer through a
-virtual mouse. A drag that starts with a tap has no button to see, so this
-works for drags with the touchpad pressed down.
+virtual mouse.
 """
 
 import fcntl
@@ -27,6 +27,10 @@ from pathlib import Path
 ZONE_MM = 5  # how far in from the edge a finger counts as being at it
 SPEED = 500  # pointer units per second, before the pointer acceleration
 TICK = 0.01  # seconds between steps of the pointer
+# A tapped drag shows no button on the device: it's told by its timing, with
+# libinput's limits (180 ms, 1.3 mm) and a little room for the first one
+TAP_SECONDS = 0.2
+TAP_MOVE_MM = 1.3
 
 EVENT = struct.Struct("qqHHi")  # struct input_event on a 64-bit kernel
 ABSINFO = struct.Struct("6i")
@@ -57,6 +61,10 @@ class Finger:
     y: int = 0
     down: bool = False
     fresh: bool = False  # came down in this report
+    since: float = 0.0
+    start_x: int = 0
+    start_y: int = 0
+    moved: bool = False  # too far for a tap
     ignored: set[str] = field(default_factory=set[str])
 
 
@@ -69,22 +77,32 @@ class Tracker:
     in a corner would move it.
     """
 
-    def __init__(self, width: int, height: int, zone_x: int, zone_y: int, slot: int = 0) -> None:
+    def __init__(self, width: int, height: int, units: int, slot: int = 0) -> None:
         self.width, self.height = width, height
-        self.zone_x, self.zone_y = zone_x, zone_y
+        self.zone = ZONE_MM * units
+        self.tap_move = TAP_MOVE_MM * units
         self.slot = slot
         self.fingers: dict[int, Finger] = {}
         self.pressed = False
-        self.was_pressed = False
+        self.tap_dragging = False
+        self.was_holding = False
+        self.now = 0.0
+        self.tapped_at: float | None = None
+        self.several = False  # more than one finger since the pad was last free
 
-    def event(self, kind: int, code: int, value: int) -> None:
+    def holding(self) -> bool:
+        return self.pressed or self.tap_dragging
+
+    def event(self, kind: int, code: int, value: int, now: float = 0.0) -> None:
+        self.now = now
         if kind == EV_KEY and code == BTN_LEFT:
             self.pressed = value != 0
         elif kind == EV_SYN and code == SYN_REPORT:
             self.report()
         elif kind == EV_SYN and code == SYN_DROPPED:
             # Events got lost, a release perhaps: rather stop than run on
-            self.pressed = False
+            self.pressed = self.tap_dragging = False
+            self.tapped_at = None
             for finger in self.fingers.values():
                 finger.down = False
         elif kind == EV_ABS:
@@ -100,27 +118,58 @@ class Tracker:
         elif code == ABS_MT_POSITION_Y:
             finger.y = value
         elif code == ABS_MT_TRACKING_ID:
-            finger.down = value >= 0
-            finger.fresh = finger.down
+            if value >= 0:
+                self.touched(finger)
+            else:
+                self.lifted(finger)
+
+    def down(self) -> int:
+        return sum(finger.down for finger in self.fingers.values())
+
+    def tapped_just_now(self) -> bool:
+        return self.tapped_at is not None and self.now - self.tapped_at <= TAP_SECONDS
+
+    def touched(self, finger: Finger) -> None:
+        finger.down = finger.fresh = True
+        finger.since = self.now
+        finger.moved = False
+        if self.down() > 1:
+            self.several = True
+        elif self.tapped_just_now():
+            self.tap_dragging = True
+        self.tapped_at = None
+
+    def lifted(self, finger: Finger) -> None:
+        finger.down = False
+        if self.down() > 0:
+            return
+        quick = self.now - finger.since <= TAP_SECONDS
+        was_tap = quick and not finger.moved and not self.several and not self.pressed
+        self.tapped_at = self.now if was_tap else None
+        self.tap_dragging = self.several = False
 
     def edges(self, finger: Finger) -> set[str]:
         found: set[str] = set()
-        if finger.x < self.zone_x:
+        if finger.x < self.zone:
             found.add("left")
-        if finger.x > self.width - self.zone_x:
+        if finger.x > self.width - self.zone:
             found.add("right")
-        if finger.y < self.zone_y:
+        if finger.y < self.zone:
             found.add("top")
-        if finger.y > self.height - self.zone_y:
+        if finger.y > self.height - self.zone:
             found.add("bottom")
         return found
 
     def report(self) -> None:
-        pressing = self.pressed and not self.was_pressed
-        self.was_pressed = self.pressed
+        starting = self.holding() and not self.was_holding
+        self.was_holding = self.holding()
         for finger in self.fingers.values():
             at = self.edges(finger)
-            if finger.fresh or pressing:
+            if finger.fresh:
+                finger.start_x, finger.start_y = finger.x, finger.y
+            elif max(abs(finger.x - finger.start_x), abs(finger.y - finger.start_y)) > self.tap_move:
+                finger.moved = True
+            if finger.fresh or starting:
                 finger.ignored = at
             else:
                 finger.ignored &= at
@@ -128,7 +177,7 @@ class Tracker:
 
     def direction(self) -> tuple[int, int]:
         """Where to push the pointer: -1, 0 or 1 on each axis."""
-        if not self.pressed:
+        if not self.holding():
             return 0, 0
         for finger in self.fingers.values():
             at = self.edges(finger) - finger.ignored
@@ -171,7 +220,7 @@ def run(device: str) -> None:
     _, slot, _ = axis_range(fd, ABS_MT_SLOT)
     # Touchpads without a resolution report: about a hundred units per mm of a 10 cm pad
     units = resolution or width // 100
-    tracker = Tracker(width, height, ZONE_MM * units, ZONE_MM * units, slot)
+    tracker = Tracker(width, height, units, slot)
     mouse = virtual_mouse()
     step = max(round(SPEED * TICK), 1)
     while True:
@@ -182,8 +231,8 @@ def run(device: str) -> None:
                 data = os.read(fd, EVENT.size * 64)
             except OSError:  # unplugged: the udev rule starts a new one for it
                 return
-            for _sec, _usec, kind, code, value in EVENT.iter_unpack(data):
-                tracker.event(kind, code, value)
+            for sec, usec, kind, code, value in EVENT.iter_unpack(data):
+                tracker.event(kind, code, value, sec + usec / 1e6)
         else:
             x, y = tracker.direction()
             move(mouse, x * step, y * step)
