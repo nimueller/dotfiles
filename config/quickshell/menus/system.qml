@@ -604,6 +604,14 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             }
         }
         IconButton {
+            glyph: Theme.glyph(0xf00e2) // 󰃢
+            text: "Clean up"
+            onClicked: {
+                Menus.toggle("cleanup");
+                root.close();
+            }
+        }
+        IconButton {
             glyph: Theme.glyph(0xf0128) // 󰄨
             text: "System monitor"
             onClicked: {
