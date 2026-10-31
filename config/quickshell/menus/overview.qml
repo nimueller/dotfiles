@@ -14,7 +14,8 @@ import Quickshell.Wayland
 // Opened with SUPER + W (keybinds.lua), a three-finger swipe up on a touchpad
 // or a touch screen with hyprgrass (modes.lua), a click on the active
 // workspace in the bar (Workspaces.qml) or `toggle.sh overview`: all of them
-// send hl.dsp.event("quickshell-overview"). The pictures only exist while
+// send hl.dsp.event("quickshell-overview"), which toggles it; the swipes add
+// "open", and "close" for the same swipe down. The pictures only exist while
 // it's open; they are taken once as it opens (ScreencopyView, not live),
 // windows on hidden workspaces included.
 //
@@ -43,17 +44,15 @@ ShellRoot {
     property bool leaving: false
     readonly property int duration: 280
 
-    function toggle() {
-        if (open) {
-            close();
-        } else {
-            target = null;
-            leaving = false;
-            // The windows' positions are only in the IPC data
-            Hyprland.refreshToplevels();
-            Hyprland.refreshMonitors();
-            open = true;
-        }
+    function show() {
+        if (open)
+            return;
+        target = null;
+        leaving = false;
+        // The windows' positions are only in the IPC data
+        Hyprland.refreshToplevels();
+        Hyprland.refreshMonitors();
+        open = true;
     }
 
     // What the overview does on the way out happens behind it: Hyprland's own
@@ -105,8 +104,14 @@ ShellRoot {
     Connections {
         target: Hyprland
         function onRawEvent(event) {
-            if (event.name === "custom" && event.data === "quickshell-overview")
-                root.toggle();
+            if (event.name !== "custom")
+                return;
+            if (event.data === "quickshell-overview")
+                root.open ? root.close() : root.show();
+            else if (event.data === "quickshell-overview open")
+                root.show();
+            else if (event.data === "quickshell-overview close" && root.open)
+                root.close();
         }
     }
 
@@ -166,6 +171,10 @@ ShellRoot {
                 // 0: a tile covers the screen, 1: the overview
                 property real progress: 0
                 readonly property bool settled: progress === 1 && !root.leaving
+                onSettledChanged: if (settled)
+                    arrived = true
+                // From here on the tiles show what's there, not how it was
+                property bool arrived: false
 
                 readonly property var activeTile: tiles.children.find(t => t.active) ?? null
                 readonly property var zoomTile: root.leaving && tiles.children.includes(root.target) ? root.target : activeTile
@@ -174,6 +183,15 @@ ShellRoot {
                 // The first frame has to look like the screen, so the zoom waits
                 // for its capture, but not for long
                 property bool ready: false
+
+                // Hyprland keeps an active workspace that's empty: go to the
+                // one before it, so that it goes when its last window closes
+                function leaveWorkspace(workspace) {
+                    const others = workspaces.filter(w => w !== workspace);
+                    const next = others.filter(w => w.id < workspace.id).pop() ?? others[0];
+                    if (next)
+                        root.dispatch(`hl.dsp.focus({ workspace = ${next.id} })`);
+                }
 
                 function tileFor(id) {
                     return tiles.children.find(t => t.workspace?.id === id) ?? newTile;

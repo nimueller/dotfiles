@@ -5,8 +5,8 @@
 -- reads what's in effect from $XDG_RUNTIME_DIR/dotfiles-modes.json
 -- (quickshell/menus/Modes.qml).
 --
--- Laptop: tap to click, three-finger swipes between workspaces (up: the
---   overview of the workspaces, quickshell/menus/overview.qml), keyboard
+-- Laptop: tap to click, three-finger swipes between workspaces (up and down:
+--   open and close the overview, quickshell/menus/overview.qml), keyboard
 --   backlight keys, and with the lid closed while another monitor is
 --   connected, the built-in screen goes off (logind doesn't suspend then).
 --   The idle dimming and suspend on battery are in hypridle.conf.
@@ -126,8 +126,12 @@ local function dock(closed)
     end
 end
 
-local function overview()
-    hl.dispatch(hl.dsp.event("quickshell-overview"))
+local function overviewOpen()
+    hl.dispatch(hl.dsp.event("quickshell-overview open"))
+end
+
+local function overviewClose()
+    hl.dispatch(hl.dsp.event("quickshell-overview close"))
 end
 
 local function laptop()
@@ -141,7 +145,8 @@ local function laptop()
         },
     })
     hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
-    hl.gesture({ fingers = 3, direction = "up", action = overview })
+    hl.gesture({ fingers = 3, direction = "up", action = overviewOpen })
+    hl.gesture({ fingers = 3, direction = "down", action = overviewClose })
 
     local kbd = "brightnessctl -q -d '*::kbd_backlight' set "
     hl.bind("XF86KbdBrightnessUp",   hl.dsp.exec_cmd(kbd .. "33%+"), { locked = true })
@@ -198,7 +203,11 @@ local function touch()
             -- kind of action mustn't break the config
             pcall(hl.plugin.hyprgrass.gesture, {
                 pattern = { kind = "swipe", fingers = 3, direction = "up" },
-                action  = overview,
+                action  = overviewOpen,
+            })
+            pcall(hl.plugin.hyprgrass.gesture, {
+                pattern = { kind = "swipe", fingers = 3, direction = "down" },
+                action  = overviewClose,
             })
         end
     end

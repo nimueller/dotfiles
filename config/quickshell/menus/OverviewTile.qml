@@ -21,6 +21,10 @@ Item {
     signal closeWindows(var toplevels)
 
     property bool closing: false // the first press on "Close workspace"
+    property bool closed: false // the second
+
+    onToplevelsChanged: if (closed && active && toplevels.length === 0)
+        view.leaveWorkspace(workspace)
 
     // Room for that button, on every tile so they line up
     readonly property int footer: 44
@@ -62,6 +66,8 @@ Item {
             height: wallpaper.height
             captureSource: tile.active ? tile.view.modelData : null
             live: false
+            // Its windows' pictures take over, and can change
+            visible: !tile.view.arrived
             onHasContentChanged: if (hasContent)
                 tile.view.ready = true
         }
@@ -143,6 +149,7 @@ Item {
         onClicked: {
             if (tile.closing) {
                 tile.closing = false;
+                tile.closed = true;
                 tile.closeWindows(tile.toplevels);
             } else {
                 tile.closing = true;
