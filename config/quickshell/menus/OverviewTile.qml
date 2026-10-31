@@ -36,7 +36,9 @@ Item {
             width: tile.view.screen.width * tile.view.factor
             height: tile.view.screen.height * tile.view.factor
             source: `file://${Quickshell.env("HOME")}/.config/hypr/wallpapers/MountainDark.jpg`
-            sourceSize.width: tile.view.screen.width * tile.view.screen.devicePixelRatio
+            // The active tile starts as the screen, this one only ever is a tile
+            sourceSize: Qt.size(960, 640)
+            asynchronous: true
             fillMode: Image.PreserveAspectCrop
         }
 

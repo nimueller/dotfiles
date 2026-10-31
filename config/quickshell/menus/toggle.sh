@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
 #   toggle.sh audio|battery|battery-history|bluetooth|calendar|kdeconnect|network|notifications|overview|power|scan|settings|system|window|launcher|clipboard
-#   toggle.sh daemon --start|--restart   start the resident daemon (Hyprland),
-#                                        or restart it to apply changes
+#   toggle.sh daemon|overview --start|--restart   start a resident process
+#                                        (Hyprland), or restart it to apply
+#                                        changes
 # All of them are part of the resident daemon.qml, so they open without
 # starting quickshell. The menus (<menu>.qml) are only created while open
 # (Menus.qml); the launcher, the clipboard history and the notification
@@ -11,12 +12,16 @@ dir=$(dirname "$(readlink -f "$0")")
 menu=${1:?usage: toggle.sh <menu> [--start]}
 
 case $menu in
-    daemon)
+    overview | daemon)
+        # overview.qml is a process of its own (GPU rendering, see there)
+        if [[ $menu == overview && -z ${2:-} ]]; then
+            exec hyprctl dispatch 'hl.dsp.event("quickshell-overview")' >/dev/null
+        fi
         if [[ $2 == --restart ]]; then
             # From qs: an instance's command line is just /usr/bin/quickshell
-            mapfile -t pids < <(qs list -p "$dir/daemon.qml" 2>/dev/null | awk '/Process ID:/ { print $3 }')
+            mapfile -t pids < <(qs list -p "$dir/$menu.qml" 2>/dev/null | awk '/Process ID:/ { print $3 }')
             alive() { for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && return 0; done; return 1; }
-            qs kill -p "$dir/daemon.qml" >/dev/null 2>&1
+            qs kill -p "$dir/$menu.qml" >/dev/null 2>&1
             # The new instance (-n) won't start while the old one is still
             # there, and a stuck one mustn't block it
             for _ in {1..20}; do
@@ -28,7 +33,7 @@ case $menu in
                 sleep 0.2
             fi
         fi
-        [[ $2 == --start || $2 == --restart ]] && exec qs -p "$dir/daemon.qml" -n -d >/dev/null 2>&1
+        [[ $2 == --start || $2 == --restart ]] && exec qs -p "$dir/$menu.qml" -n -d >/dev/null 2>&1
         exit 1
         ;;
     launcher | clipboard | notifications)

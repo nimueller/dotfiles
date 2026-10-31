@@ -40,20 +40,11 @@ Item {
     Drag.keys: ["overview-window"]
     Drag.hotSpot: Qt.point(width / 2, height / 2)
 
-    // Taken once, in the overview's order (overview.qml)
+    // Taken once, as the overview opens
     ScreencopyView {
         anchors.fill: parent
-        captureSource: picture.view.settled && picture.view.pictures >= picture.view.captures.indexOf(picture.toplevel) ? picture.toplevel.wayland : null
+        captureSource: picture.toplevel.wayland
         live: false
-        opacity: hasContent ? 1 : 0
-        onHasContentChanged: if (hasContent)
-            picture.view.pictures++
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 150
-            }
-        }
     }
 
     Rectangle {

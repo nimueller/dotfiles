@@ -74,7 +74,7 @@ Rectangle {
                     // config, so HyprlandWorkspace.activate() does nothing
                     onClicked: {
                         if (button.active && !button.isSpecial)
-                            Menus.toggle("overview");
+                            Hyprland.dispatch(`hl.dsp.event("quickshell-overview")`);
                         else if (button.isSpecial)
                             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("${label.text}")`);
                         else
