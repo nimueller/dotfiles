@@ -65,7 +65,8 @@ Singleton {
         return notificationRules.find(r => has([app, desktop], r.app) && has([summary, body], r.text))?.action ?? "";
     }
 
-    // The main monitor (notifications): the screen whose model and serial
+    // The main monitor (notifications; xwayland-primary.py for XWayland): the
+    // screen whose model and serial
     // number are in its description, else the one on its port, else the first
     readonly property var mainMonitor: (settings.monitors ?? []).find(m => m.main) ?? null
     readonly property var mainScreen: {

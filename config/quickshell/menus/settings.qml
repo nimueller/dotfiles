@@ -6,7 +6,7 @@ import Quickshell.Io
 
 // Machine Settings: this machine's own settings, which stay out of git.
 // Displays (arrangement, mode, scale, rotation, VRR, HDR, workspaces, the
-// main monitor for notifications), environment
+// main monitor for notifications and XWayland), environment
 // variables (e.g. drivers), autostart programs, the laptop and touch mode
 // (config/hypr/modes.lua: detected, or forced on or off) with the touchpad
 // (right click in the corner or with two fingers, tapping, scrolling and its
