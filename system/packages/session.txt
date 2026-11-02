@@ -29,7 +29,8 @@ gnome-keyring
 # extensions: KDE Connect's "Send to"), calculator key,
 # the network menu's editor and VPN file picker, the system menu's update
 # count, xdg-open, and the drive notifications (quickshell/menus/drives.py:
-# GVfs for drives and phones, used from the system's Python)
+# GVfs for drives and phones, used from the system's Python), XWayland's
+# primary monitor (quickshell/menus/xwayland-primary.py)
 kitty
 nautilus
 nautilus-python
@@ -38,6 +39,7 @@ nm-connection-editor
 zenity
 pacman-contrib
 xdg-utils
+xorg-xrandr
 udisks2
 gvfs-mtp
 python-gobject
