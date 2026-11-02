@@ -8,6 +8,7 @@ require("autostart")
 require("keybinds")
 require("windowrules")
 require("workspacerules")
+require("xwayland")
 
 -- This machine's own settings (monitors, drivers, private autostarts), kept
 -- out of git; see local.example.lua. Loaded last, so it can override.

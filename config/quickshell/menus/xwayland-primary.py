@@ -4,7 +4,7 @@
 
   xwayland-primary.py
 
-Run by Hyprland when it starts, reloads and gets a monitor (autostart.lua).
+Run by Hyprland when it starts, reloads and gets a monitor (xwayland.lua).
 
 Without a primary output, X11 programs take the first in the list as the main
 screen, and the list follows the order the monitors came up in: games then
