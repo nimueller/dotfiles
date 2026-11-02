@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 
 // Month view as a grid of day boxes: the day's forecast (glyph and high) and
-// its appointments as coloured chips. Weeks start on `weekStart` (0 = Sunday,
-// 1 = Monday, 6 = Saturday) with optional ISO week numbers. Click a day to
+// its appointments as coloured chips, those of several days joined into a bar
+// across the boxes. Weeks start on `weekStart` (0 = Sunday, 1 = Monday,
+// 6 = Saturday) with optional ISO week numbers. Click a day to
 // select it, double-click to add an appointment, scroll to change the month.
 // Click the month's name to pick any month and year.
 ColumnLayout {
@@ -15,7 +16,7 @@ ColumnLayout {
     required property date selected
     property int weekStart: 1
     property bool weekNumbers: true
-    property var events: ({}) // "yyyy-MM-dd" -> [{ title, colour, allDay, start }]
+    property var events: ({}) // "yyyy-MM-dd" -> lanes: [{ title, colour, allDay, start, firstDay, lastDay } or null]
     property var forecast: ({}) // "yyyy-MM-dd" -> { code, max, min, rain }
     property var legend: [] // calendars shown: [{ name, color }]
 
@@ -192,6 +193,8 @@ ColumnLayout {
                 readonly property int row: Math.floor(index / 8)
                 readonly property int column: index % 8 // 0: week number
 
+                // A bar's title runs on over the boxes to its right
+                z: 8 - column
                 visible: column > 0 || root.weekNumbers
                 Layout.fillWidth: column > 0
                 Layout.preferredWidth: column === 0 ? 22 : 104
@@ -308,6 +311,7 @@ ColumnLayout {
             readonly property var items: root.events[key] ?? []
             readonly property var weather: root.forecast[key] ?? null
             readonly property int shown: items.length > 3 ? 2 : items.length
+            readonly property int hidden: items.slice(shown).filter(e => e).length
 
             radius: 8
             color: isSelected ? Theme.alpha(Theme.lavender, 0.12) : mouse.containsMouse ? Theme.alpha(Theme.surface0, 0.8) : Theme.alpha(Theme.surface0, inMonth ? 0.4 : 0.15)
@@ -326,6 +330,7 @@ ColumnLayout {
             }
 
             ColumnLayout {
+                id: boxContent
                 anchors.fill: parent
                 anchors.margins: 5
                 spacing: 2
@@ -367,38 +372,67 @@ ColumnLayout {
                 Repeater {
                     model: cell.items.slice(0, cell.shown)
 
-                    delegate: Rectangle {
-                        id: chip
+                    // A lane; empty (null) where an event of several days
+                    // passes through it on other days only
+                    delegate: Item {
+                        id: lane
 
                         required property var modelData
+                        required property int index
 
                         Layout.fillWidth: true
                         Layout.preferredHeight: 16
-                        radius: 4
-                        // All day: solid in the calendar's colour; timed: tinted with a bar
-                        color: modelData.allDay ? modelData.colour : Theme.alpha(modelData.colour, 0.3)
-                        opacity: cell.inMonth ? 1 : 0.5
-                        clip: true
 
                         Rectangle {
-                            visible: !chip.modelData.allDay
-                            width: 3
-                            height: parent.height
-                            color: chip.modelData.colour
-                        }
-                        Label {
+                            id: chip
+
+                            readonly property var event: lane.modelData
+                            readonly property bool continued: !!event && !root.sameDay(cell.day, event.firstDay)
+                            readonly property bool continues: !!event && !root.sameDay(cell.day, event.lastDay)
+                            readonly property bool timed: !!event && !event.allDay
+
+                            visible: !!event
                             anchors.fill: parent
-                            anchors.leftMargin: chip.modelData.allDay ? 5 : 6
-                            anchors.rightMargin: 3
-                            text: chip.modelData.allDay ? chip.modelData.title : `${Qt.formatTime(chip.modelData.start, "HH:mm")} ${chip.modelData.title}`
-                            font.pixelSize: 10
-                            color: chip.modelData.allDay ? Theme.readableOn(chip.modelData.colour) : Theme.text
+                            // Reaches the box's edge and over the gap to the
+                            // next box; the row's ends stay inside the grid
+                            anchors.leftMargin: continued && cell.column > 1 ? -boxContent.anchors.margins : 0
+                            anchors.rightMargin: continues && cell.column < 7 ? -boxContent.anchors.margins - grid.columnSpacing : 0
+                            topLeftRadius: continued ? 0 : 4
+                            bottomLeftRadius: continued ? 0 : 4
+                            topRightRadius: continues ? 0 : 4
+                            bottomRightRadius: continues ? 0 : 4
+                            // All day: solid in the calendar's colour; timed: tinted with a bar
+                            color: !event ? "transparent" : event.allDay ? event.colour : Theme.alpha(event.colour, 0.3)
+                            opacity: cell.inMonth ? 1 : 0.5
+
+                            Rectangle {
+                                visible: chip.timed && !chip.continued
+                                width: 3
+                                height: parent.height
+                                color: chip.event?.colour ?? "transparent"
+                            }
+                            // The title at the bar's start and again in each
+                            // week, as wide as the bar is in this row. Only in
+                            // the two lanes that every box shows: the third
+                            // gives way to "+N more" where a day is full.
+                            Label {
+                                readonly property int span: !chip.event || lane.index > 1 ? 1 : Math.min(Math.round((chip.event.lastDay - cell.day) / 86400000) + 1, 8 - cell.column)
+
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                x: chip.timed ? 6 : 5
+                                width: span * cell.width + (span - 1) * grid.columnSpacing - 2 * boxContent.anchors.margins - x - 3
+                                visible: !chip.continued || cell.column === 1
+                                text: !chip.event ? "" : chip.timed && !chip.continued ? `${Qt.formatTime(chip.event.start, "HH:mm")} ${chip.event.title}` : chip.event.title
+                                font.pixelSize: 10
+                                color: chip.timed || !chip.event ? Theme.text : Theme.readableOn(chip.event.colour)
+                            }
                         }
                     }
                 }
                 Label {
-                    visible: cell.items.length > cell.shown
-                    text: `+${cell.items.length - cell.shown} more`
+                    visible: cell.hidden > 0
+                    text: `+${cell.hidden} more`
                     font.pixelSize: 9
                     color: Theme.overlay1
                     leftPadding: 4
