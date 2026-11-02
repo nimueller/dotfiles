@@ -79,38 +79,54 @@ Popup {
     readonly property date gridEnd: new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + 42)
     readonly property string viewKey: Qt.formatDate(new Date(viewYear, viewMonth, 1), "yyyy-MM")
 
-    readonly property var events: (cache.events?.[viewKey] ?? []).filter(e => colours[e.calendar]).map(e => ({
-                title: e.title,
-                location: e.location,
-                allDay: e.allDay,
-                calendar: e.calendar,
-                colour: e.color || colours[e.calendar], // event colour, else its calendar's
-                alarms: e.alarms ?? [],
-                start: parseTime(e.start, e.allDay),
-                end: parseTime(e.end, e.allDay),
-                href: e.href ?? "",
-                etag: e.etag ?? "",
-                editable: !!e.href && !e.recurring && canWrite[e.calendar]
-            })).sort((a, b) => b.allDay - a.allDay || a.start - b.start)
-    // "yyyy-MM-dd" -> events touching that day
+    readonly property var events: (cache.events?.[viewKey] ?? []).filter(e => colours[e.calendar]).map(e => {
+        const start = parseTime(e.start, e.allDay), end = parseTime(e.end, e.allDay);
+        const firstDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+        const last = new Date(Math.max(+start, end - 1)); // the end is exclusive
+        const lastDay = new Date(last.getFullYear(), last.getMonth(), last.getDate());
+        return {
+            title: e.title,
+            location: e.location,
+            allDay: e.allDay,
+            calendar: e.calendar,
+            colour: e.color || colours[e.calendar], // event colour, else its calendar's
+            alarms: e.alarms ?? [],
+            start,
+            end,
+            firstDay,
+            lastDay,
+            days: Math.round((lastDay - firstDay) / 86400000) + 1,
+            href: e.href ?? "",
+            etag: e.etag ?? "",
+            editable: !!e.href && !e.recurring && canWrite[e.calendar]
+        };
+    }).sort((a, b) => b.allDay - a.allDay || a.start - b.start)
+    // "yyyy-MM-dd" -> lanes of the day box: the events touching that day, null
+    // for a free lane. An event keeps its lane on all its days so that a
+    // multi-day one reads as one bar; the longest go first, they are the
+    // hardest to fit.
     readonly property var byDay: {
-        const out = {};
-        for (const e of events) {
-            const zero = +e.end === +e.start;
-            for (let d = new Date(e.start.getFullYear(), e.start.getMonth(), e.start.getDate()); d < e.end || (zero && +d <= +e.start); d.setDate(d.getDate() + 1)) {
-                if (d >= gridEnd)
-                    break;
-                if (d < gridStart)
-                    continue;
-                const key = Qt.formatDate(d, "yyyy-MM-dd");
-                if (!out[key])
-                    out[key] = [];
-                out[key].push(e);
+        const lanes = {};
+        for (const e of [...events].sort((a, b) => b.days - a.days)) {
+            const keys = [];
+            for (let d = new Date(e.firstDay); d <= e.lastDay && d < gridEnd; d.setDate(d.getDate() + 1))
+                if (d >= gridStart)
+                    keys.push(Qt.formatDate(d, "yyyy-MM-dd"));
+            let lane = 0;
+            while (keys.some(key => lanes[key]?.[lane]))
+                lane++;
+            for (const key of keys) {
+                if (!lanes[key])
+                    lanes[key] = [];
+                lanes[key][lane] = e;
             }
         }
+        const out = {};
+        for (const key in lanes)
+            out[key] = Array.from(lanes[key], e => e ?? null);
         return out;
     }
-    readonly property var dayEvents: byDay[Qt.formatDate(selected, "yyyy-MM-dd")] ?? []
+    readonly property var dayEvents: (byDay[Qt.formatDate(selected, "yyyy-MM-dd")] ?? []).filter(e => e)
     readonly property var forecast: Weather.daily(cache.weather?.data)
     readonly property string syncError: Object.values(syncErrors)[0] ?? ""
 

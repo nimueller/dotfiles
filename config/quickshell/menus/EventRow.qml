@@ -2,12 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 
 // One event of the selected day: calendar colour, time, title, location.
-// One-off Nextcloud events can be edited and deleted (hover; delete asks
-// to confirm).
+// An event of several days shows its whole span: it is one event, so editing
+// or deleting it from any of its days changes all of them. One-off Nextcloud
+// events can be edited and deleted (hover; delete asks to confirm).
 Rectangle {
     id: root
 
-    required property var event // { title, location, allDay, start: Date, end: Date }
+    required property var event // { title, location, allDay, start: Date, end: Date, firstDay: Date, lastDay: Date, days }
     required property date day
     property color colour: Theme.lavender
     property string calendarName: ""
@@ -75,6 +76,13 @@ Rectangle {
             }
             Label {
                 Layout.fillWidth: true
+                visible: root.event.days > 1
+                text: `${Qt.formatDate(root.event.firstDay, "d MMM")} – ${Qt.formatDate(root.event.lastDay, "d MMM")} · ${root.event.days} days`
+                font.pixelSize: 10
+                color: Theme.subtext0
+            }
+            Label {
+                Layout.fillWidth: true
                 visible: !!root.calendarName
                 text: `● ${root.calendarName}`
                 font.pixelSize: 10
@@ -103,7 +111,7 @@ Rectangle {
         IconButton {
             visible: root.editable && (hover.hovered || root.confirming)
             glyph: Theme.glyph(0xf01b4) // 󰆴
-            text: root.confirming ? "Delete?" : ""
+            text: !root.confirming ? "" : root.event.days > 1 ? `Delete ${root.event.days} days?` : "Delete?"
             accent: Theme.red
             active: root.confirming
             onClicked: {
