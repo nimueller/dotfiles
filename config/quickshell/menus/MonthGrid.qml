@@ -193,6 +193,8 @@ ColumnLayout {
                 readonly property int row: Math.floor(index / 8)
                 readonly property int column: index % 8 // 0: week number
 
+                // A bar's title runs on over the boxes to its right
+                z: 8 - column
                 visible: column > 0 || root.weekNumbers
                 Layout.fillWidth: column > 0
                 Layout.preferredWidth: column === 0 ? 22 : 104
@@ -376,6 +378,7 @@ ColumnLayout {
                         id: lane
 
                         required property var modelData
+                        required property int index
 
                         Layout.fillWidth: true
                         Layout.preferredHeight: 16
@@ -401,7 +404,6 @@ ColumnLayout {
                             // All day: solid in the calendar's colour; timed: tinted with a bar
                             color: !event ? "transparent" : event.allDay ? event.colour : Theme.alpha(event.colour, 0.3)
                             opacity: cell.inMonth ? 1 : 0.5
-                            clip: true
 
                             Rectangle {
                                 visible: chip.timed && !chip.continued
@@ -409,11 +411,17 @@ ColumnLayout {
                                 height: parent.height
                                 color: chip.event?.colour ?? "transparent"
                             }
-                            // The title at the bar's start and again in each week
+                            // The title at the bar's start and again in each
+                            // week, as wide as the bar is in this row. Only in
+                            // the two lanes that every box shows: the third
+                            // gives way to "+N more" where a day is full.
                             Label {
-                                anchors.fill: parent
-                                anchors.leftMargin: chip.timed ? 6 : 5
-                                anchors.rightMargin: 3
+                                readonly property int span: !chip.event || lane.index > 1 ? 1 : Math.min(Math.round((chip.event.lastDay - cell.day) / 86400000) + 1, 8 - cell.column)
+
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                x: chip.timed ? 6 : 5
+                                width: span * cell.width + (span - 1) * grid.columnSpacing - 2 * boxContent.anchors.margins - x - 3
                                 visible: !chip.continued || cell.column === 1
                                 text: !chip.event ? "" : chip.timed && !chip.continued ? `${Qt.formatTime(chip.event.start, "HH:mm")} ${chip.event.title}` : chip.event.title
                                 font.pixelSize: 10
