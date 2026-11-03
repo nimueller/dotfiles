@@ -102,9 +102,10 @@ in
     // lib.genAttrs mirrorApps (_: {
       Context.shared = [ "!network" ];
     });
-    # Undeclared apps in the user installation go; the system installation
-    # isn't touched
-    uninstallUnmanaged = true;
+    # Apps installed by hand (e.g. from the mirror through GNOME Software)
+    # stay; one taken out of this list is still uninstalled, nix-flatpak
+    # remembers what it installed. `pkg-sync` lists the undeclared ones
+    uninstallUnmanaged = false;
     # pacman -Syu doesn't update Flatpaks: a daily timer does (browsers
     # need their security updates), switching doesn't wait for downloads
     update = {
