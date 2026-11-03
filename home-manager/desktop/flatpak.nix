@@ -1,8 +1,8 @@
-# GUI apps from Flathub, installed and removed by home-manager switch
-# (nix-flatpak), in the user installation. Preferred over the AUR: sandboxed,
-# reviewed builds, and Flatpak brings the GPU driver matching the host's
-# (also NVIDIA's), which Nix apps on Arch don't get. `pkg-sync` reports what
-# differs from this list.
+# GUI apps from Flathub (and the mirror below), installed and removed by
+# home-manager switch (nix-flatpak), in the user installation. Preferred over
+# the AUR: sandboxed, reviewed builds, and Flatpak brings the GPU driver
+# matching the host's (also NVIDIA's), which Nix apps on Arch don't get.
+# `pkg-sync` reports what differs from this list.
 {
   config,
   lib,
@@ -15,6 +15,20 @@ let
   dotfiles = "~/${lib.removePrefix "${config.home.homeDirectory}/" config.dotfiles}";
   proxy = "${config.dotfiles}/config/keepassxc/keepassxc-proxy.py";
   keepassxcSocket = "xdg-run/app/org.keepassxc.KeePassXC";
+
+  # Apps whose projects only attach a Flatpak bundle to their GitHub
+  # releases, without a remote of their own: a home server mirrors those
+  # bundles into a signed Flatpak repo, so they update like the rest. Its
+  # .flatpakrepo (URL and signing key) is this machine's, not in the repo:
+  #   curl -o ~/.config/flatpak-mirror.flatpakrepo https://<server>/mirror.flatpakrepo
+  # Without that file the remote and these apps are left out of the install
+  # (nix-flatpak goes on with the others). The mirror carries x86_64 builds.
+  # They get no network: they need none, and what they're given can't leave
+  # the machine.
+  mirrorRepo = "${config.xdg.configHome}/flatpak-mirror.flatpakrepo";
+  mirrorApps = lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
+    "ai.storyteller.pdfcraft" # PdfCraft
+  ];
 
   # KeePassXC-Browser: the browsers start the proxy from the dotfiles, which
   # talks to KeePassXC's socket (config/keepassxc/keepassxc-proxy.py)
@@ -43,6 +57,16 @@ in
 {
   services.flatpak = {
     enable = true;
+    remotes = [
+      {
+        name = "flathub";
+        location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
+      }
+    ]
+    ++ lib.optional (mirrorApps != [ ]) {
+      name = "mirror";
+      location = mirrorRepo;
+    };
     packages = [
       "app.zen_browser.zen" # Zen browser
       "com.brave.Browser"
@@ -54,7 +78,11 @@ in
     ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
       "com.vysp3r.ProtonPlus" # Proton versions for Steam and Lutris
       "com.yubico.yubioath" # Yubico Authenticator
-    ];
+    ]
+    ++ map (appId: {
+      inherit appId;
+      origin = "mirror";
+    }) mirrorApps;
     overrides = {
       # Its flags (config/brave-flags.conf: Wayland) and KeePassXC
       "com.brave.Browser".Context.filesystems = [
@@ -70,7 +98,10 @@ in
         ];
         persistent = [ ".mozilla" ];
       };
-    };
+    }
+    // lib.genAttrs mirrorApps (_: {
+      Context.shared = [ "!network" ];
+    });
     # Undeclared apps in the user installation go; the system installation
     # isn't touched
     uninstallUnmanaged = true;
