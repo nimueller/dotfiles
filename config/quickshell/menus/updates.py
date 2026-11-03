@@ -13,7 +13,9 @@ Prints one JSON object:
    "lastUpgrade": 11, "upgradeStale": false}
 
 A count is null when its tool is missing or failed (no AUR helper, no
-Flatpak, checkupdates offline). flakeAge is the age of the dotfiles'
+Flatpak, checkupdates offline). Flatpak's remotes are asked one by one: one
+that can't be reached (a home server's, away from home) only leaves out its
+own apps. flakeAge is the age of the dotfiles'
 flake.lock in days: the time since its newest input was updated, null
 without the file. CI updates it every week, so a lock older than
 FLAKE_STALE_DAYS means this checkout hasn't been pulled (and switched).
@@ -72,6 +74,43 @@ def parse_updates(output: str) -> dict[str, tuple[str, str]]:
         if len(parts) >= 4 and parts[2] == "->":
             updates[parts[0]] = (parts[1], parts[3])
     return updates
+
+
+def parse_remotes(output: str) -> list[tuple[str, str]]:
+    """flatpak remotes --columns=name,options → [(name, "user" or "system")],
+    without disabled ones"""
+    remotes: list[tuple[str, str]] = []
+    for line in output.splitlines():
+        name, _, options = line.partition("\t")
+        flags = options.split(",")
+        installation = next((f for f in flags if f in ("user", "system")), None)
+        if name.strip() and installation and "disabled" not in flags:
+            remotes.append((name.strip(), installation))
+    return remotes
+
+
+def flatpak_updates() -> int | None:
+    """Waiting Flatpak updates of the remotes that answered, null when none did"""
+    listing = subprocess.run(
+        ["flatpak", "remotes", "--columns=name,options"], capture_output=True, text=True, check=False
+    )
+    if listing.returncode != 0:
+        return None
+    running = [
+        subprocess.Popen(
+            ["flatpak", "remote-ls", "--updates", "--columns=application", f"--{installation}", name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        )
+        for name, installation in parse_remotes(listing.stdout)
+    ]
+    counts: list[int] = []
+    for process in running:
+        output, _ = process.communicate()
+        if process.returncode == 0:
+            counts.append(count_lines(output))
+    return sum(counts) if counts else None
 
 
 def flake_age(lock: str, now: float) -> int | None:
@@ -200,9 +239,6 @@ def main(args: list[str]) -> int:
     commands = {
         "pacman": (["checkupdates"], (0, 2)) if shutil.which("checkupdates") else None,
         "aur": ([aur_helper, "-Qua"], (0, 1)) if aur_helper else None,
-        "flatpak": (["flatpak", "remote-ls", "--updates", "--columns=application"], (0,))
-        if shutil.which("flatpak")
-        else None,
     }
     running = {
         name: subprocess.Popen(command[0], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
@@ -212,6 +248,7 @@ def main(args: list[str]) -> int:
     with ThreadPoolExecutor() as pool:
         issues = pool.submit(fetch, ISSUES_URL, "issues.json")
         feed = pool.submit(fetch, NEWS_URL, "news.xml")
+        flatpak = pool.submit(flatpak_updates) if shutil.which("flatpak") else None
 
         result: dict[str, object] = {}
         pacman: dict[str, tuple[str, str]] = {}
@@ -229,6 +266,7 @@ def main(args: list[str]) -> int:
             else:
                 result[name] = count_lines(output)
 
+        result["flatpak"] = flatpak.result() if flatpak else None
         now = time.time()
         upgraded = last_upgrade(read(PACMAN_LOG))
         result["security"] = security_fixes(pacman, issues.result()) if pacman else []
