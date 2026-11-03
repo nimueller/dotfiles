@@ -48,6 +48,22 @@ def item(title: str, link: str, date: str) -> str:
     return f"<item><title>{title}</title><link>{link}</link><pubDate>{date}</pubDate></item>"
 
 
+class ParseRemotes(unittest.TestCase):
+    def test_both_installations(self) -> None:
+        output = "flathub\tsystem\nflathub\tuser\nmirror\tuser,no-enumerate\n"
+        self.assertEqual(
+            updates.parse_remotes(output),
+            [("flathub", "system"), ("flathub", "user"), ("mirror", "user")],
+        )
+
+    def test_disabled_and_blank_lines(self) -> None:
+        self.assertEqual(updates.parse_remotes("old\tuser,disabled\n\n"), [])
+
+    def test_installation_named_elsewhere(self) -> None:
+        # A custom installation (installations.d) isn't asked
+        self.assertEqual(updates.parse_remotes("extra\textra-installation\n"), [])
+
+
 class Critical(unittest.TestCase):
     def test_parse_updates(self) -> None:
         out = "linux 6.19.11-1 -> 6.19.12-1\nfoo 1-1 -> 2-1 [ignored]\n\ngarbage\n"
