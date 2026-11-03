@@ -8,7 +8,8 @@ import Quickshell.Io
 
 // Details of the focused window (SUPER+I, keybinds.lua): title, class, PID
 // and command, workspace, monitor, geometry and state, as Hyprland reports
-// them. Click a row to copy its value; "Copy all" copies Hyprland's JSON.
+// them, and whether the app runs as a Flatpak. Click a row to copy its
+// value; "Copy all" copies Hyprland's JSON.
 Popup {
     id: root
 
@@ -19,6 +20,7 @@ Popup {
     property var win: null // hyprctl activewindow -j; null while loading, {} without a focused window
     property string json: ""
     property string command: ""
+    property var flatpak: null // .flatpak-info as {key: value}; {} for no Flatpak, null while loading
     property string copied: ""
 
     readonly property var entry: win?.class ? DesktopEntries.heuristicLookup(win.class) : null
@@ -40,6 +42,15 @@ Popup {
         return s.join(", ");
     }
 
+    function flatpakText(f) {
+        if (!f)
+            return "";
+        if (!f.name)
+            return "No";
+        const details = [f.branch, f["app-path"] ? (f["app-path"].startsWith("/var/lib/") ? "system" : "user") : ""].filter(d => d);
+        return details.length ? `${f.name} (${details.join(", ")})` : f.name;
+    }
+
     readonly property var rows: !win?.address ? [] : [
         ["Title", win.title],
         ["Class", win.class],
@@ -48,6 +59,7 @@ Popup {
         ["App", entry ? `${entry.name} (${entry.id}.desktop)` : ""],
         ["PID", String(win.pid)],
         ["Command", command],
+        ["Flatpak", flatpakText(flatpak)],
         ["Workspace", win.workspace.name],
         ["Monitor", Hyprland.monitors.values.find(m => m.id === win.monitor)?.name ?? String(win.monitor)],
         ["Position", `${win.at[0]}, ${win.at[1]}`],
@@ -76,8 +88,10 @@ Popup {
                 } catch (e) {
                     root.win = {};
                 }
-                if (root.win?.pid > 0)
+                if (root.win?.pid > 0) {
                     cmdline.running = true;
+                    flatpakInfo.running = true;
+                }
             }
         }
     }
@@ -88,6 +102,28 @@ Popup {
         command: ["sh", "-c", 'tr "\\0" " " < "/proc/$1/cmdline"', "sh", String(root.win?.pid ?? 0)]
         stdout: StdioCollector {
             onStreamFinished: root.command = text.trim()
+        }
+    }
+
+    // Flatpak puts .flatpak-info at the root of its sandbox. Processes that
+    // aren't dumpable hide their root, so fall back to the systemd scope
+    // `flatpak run` starts them in (app-flatpak-<app id>-<instance>.scope).
+    Process {
+        id: flatpakInfo
+        command: ["sh", "-c", 'cat "/proc/$1/root/.flatpak-info" 2>/dev/null || sed -n "s/.*app-flatpak-\\(.*\\)-[0-9]*\\.scope$/name=\\1/p" "/proc/$1/cgroup"', "sh", String(root.win?.pid ?? 0)]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const info = {};
+                for (const line of text.split("\n")) {
+                    // [Application] and [Instance] come first and hold the keys shown here
+                    if (line.startsWith("[Context]"))
+                        break;
+                    const i = line.indexOf("=");
+                    if (i > 0)
+                        info[line.slice(0, i)] = line.slice(i + 1);
+                }
+                root.flatpak = info;
+            }
         }
     }
 
