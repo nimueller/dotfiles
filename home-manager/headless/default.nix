@@ -8,6 +8,12 @@
 let
   signingKey = "~/.ssh/id_rsa_github.pub";
   allowedSigners = "${config.xdg.configHome}/git/allowed_signers";
+  # GitHub's keys for the commits it signs itself (activation below); the
+  # hash pins them, so a new key only comes in with a change here
+  gitHubWebFlowKey = pkgs.fetchurl {
+    url = "https://github.com/web-flow.gpg";
+    hash = "sha256-bor2h/YM8/QDFRyPsbJuleb55CTKYMyPN4e9RGaj74Q=";
+  };
 in
 {
   # Basic Home Manager settings
@@ -222,5 +228,18 @@ in
       printf '%s namespaces="git" %s\n' ${lib.escapeShellArg config.programs.git.settings.user.email} \
         "$(cut -d' ' -f1,2 "$key")" > ${allowedSigners}
     fi
+  '';
+
+  # GitHub signs the commits it makes itself (squash merges, edits in the
+  # web interface) with GPG, so their signatures need its public keys in
+  # the GPG keyring. Without a key of our own to certify them with, only
+  # ultimate owner trust makes them valid: `git log --show-signature` then
+  # says good instead of unknown.
+  home.activation.gitHubWebFlowKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    gpg=${lib.getExe' pkgs.gnupg "gpg"}
+    run $gpg --batch --quiet --import ${gitHubWebFlowKey}
+    $gpg --show-keys --with-colons ${gitHubWebFlowKey} \
+      | ${lib.getExe pkgs.gawk} -F: '$1 == "pub" { pub = 1 } $1 == "fpr" && pub { print $10 ":6:"; pub = 0 }' \
+      | run $gpg --batch --quiet --import-ownertrust
   '';
 }
