@@ -39,7 +39,12 @@ PanelWindow {
         spacing: 8
 
         Repeater {
-            model: root.shown
+            // A ScriptModel keeps the toasts that stay when the list changes;
+            // with the plain array every change rebuilt all of them, which
+            // restarted their countdowns (and could undo one that had run out)
+            model: ScriptModel {
+                values: root.shown
+            }
 
             delegate: NotificationToast {
                 required property int modelData
