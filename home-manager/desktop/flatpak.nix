@@ -23,8 +23,6 @@ let
   #   curl -o ~/.config/flatpak-mirror.flatpakrepo https://<server>/mirror.flatpakrepo
   # Without that file the remote and these apps are left out of the install
   # (nix-flatpak goes on with the others). The mirror carries x86_64 builds.
-  # They get no network: they need none, and what they're given can't leave
-  # the machine.
   mirrorRepo = "${config.xdg.configHome}/flatpak-mirror.flatpakrepo";
   mirrorApps = lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
     "ai.storyteller.pdfcraft" # PdfCraft
@@ -72,6 +70,7 @@ in
       "com.brave.Browser"
       "de.bund.ausweisapp.ausweisapp2" # AusweisApp (eID)
       "org.libreoffice.LibreOffice"
+      "com.github.tchx84.Flatseal" # Permissions of apps not in this list
     ]
     # No aarch64 build on Flathub (Yubico), or no use without Steam,
     # which is x86 only (ProtonPlus)
@@ -84,27 +83,37 @@ in
       origin = "mirror";
     }) mirrorApps;
     overrides = {
+      # No app gets the network unless it's let in here (or in Flatseal),
+      # also ones installed by hand: what an app is given can't leave the
+      # machine. An app's own override wins over this one
+      global.Context.shared = [ "!network" ];
       # Its flags (config/brave-flags.conf: Wayland) and KeePassXC
-      "com.brave.Browser".Context.filesystems = [
-        keepassxcSocket
-        "${dotfiles}/config/brave-flags.conf:ro"
-        "${dotfiles}/config/keepassxc:ro"
-      ];
+      "com.brave.Browser".Context = {
+        shared = [ "network" ];
+        filesystems = [
+          keepassxcSocket
+          "${dotfiles}/config/brave-flags.conf:ro"
+          "${dotfiles}/config/keepassxc:ro"
+        ];
+      };
       # KeePassXC; ~/.mozilla for the proxy's entry, as on the host
       "app.zen_browser.zen".Context = {
+        shared = [ "network" ];
         filesystems = [
           keepassxcSocket
           "${dotfiles}/config/keepassxc:ro"
         ];
         persistent = [ ".mozilla" ];
       };
-    }
-    // lib.genAttrs mirrorApps (_: {
-      Context.shared = [ "!network" ];
-    });
-    # Undeclared apps in the user installation go; the system installation
-    # isn't touched
-    uninstallUnmanaged = true;
+      # The eID server; Proton downloads; extensions and files on servers
+      "de.bund.ausweisapp.ausweisapp2".Context.shared = [ "network" ];
+      "com.vysp3r.ProtonPlus".Context.shared = [ "network" ];
+      "org.libreoffice.LibreOffice".Context.shared = [ "network" ];
+    };
+    # Apps installed by hand (e.g. from the mirror through GNOME Software)
+    # stay; one taken out of this list is still uninstalled, nix-flatpak
+    # remembers what it installed. `pkg-sync` lists the undeclared ones
+    uninstallUnmanaged = false;
     # pacman -Syu doesn't update Flatpaks: a daily timer does (browsers
     # need their security updates), switching doesn't wait for downloads
     update = {
