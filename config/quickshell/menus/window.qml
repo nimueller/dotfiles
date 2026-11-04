@@ -42,13 +42,15 @@ Popup {
         return s.join(", ");
     }
 
-    function flatpakText(f) {
-        if (!f)
+    function flatpakText(info) {
+        if (!info)
             return "";
-        if (!f.name)
+        if (!info.name)
             return "No";
-        const details = [f.branch, f["app-path"] ? (f["app-path"].startsWith("/var/lib/") ? "system" : "user") : ""].filter(d => d);
-        return details.length ? `${f.name} (${details.join(", ")})` : f.name;
+        const appPath = info["app-path"];
+        const installation = appPath ? (appPath.startsWith("/var/lib/") ? "system" : "user") : "";
+        const details = [info.branch, installation].filter(d => d);
+        return details.length ? `${info.name} (${details.join(", ")})` : info.name;
     }
 
     readonly property var rows: !win?.address ? [] : [
