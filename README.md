@@ -120,4 +120,3 @@ Ideas:
 - [ ] KeePassXC's settings from Home Manager, without the database paths
 - [ ] `nix-index` with `comma` (run a program without installing it), `nh` for switches with a diff of the packages
 - [ ] lazygit in Catppuccin, atuin for a shell history synced across machines
-- [ ] Verify GitHub's squash merges locally too (import GitHub's web-flow key)
