@@ -16,20 +16,38 @@ Item {
     function size(m) {
         const [w, h] = (m.mode || "0x0").split("@")[0].split("x").map(Number);
         const rotated = m.transform % 2 === 1;
-        return { w: Math.round((rotated ? h : w) / m.scale), h: Math.round((rotated ? w : h) / m.scale) };
+        return {
+            w: Math.round((rotated ? h : w) / m.scale),
+            h: Math.round((rotated ? w : h) / m.scale)
+        };
     }
 
-    readonly property var shown: monitors.map((m, i) => ({ m, i })).filter(e => e.m.connected && e.m.enabled)
+    readonly property var shown: monitors.map((m, i) => ({
+                m,
+                i
+            })).filter(e => e.m.connected && e.m.enabled)
     readonly property var bounds: {
         let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-        for (const { m } of shown) {
+        for (const {
+            m
+        } of shown) {
             const s = size(m);
             x0 = Math.min(x0, m.x);
             y0 = Math.min(y0, m.y);
             x1 = Math.max(x1, m.x + s.w);
             y1 = Math.max(y1, m.y + s.h);
         }
-        return shown.length ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : { x: 0, y: 0, w: 1, h: 1 };
+        return shown.length ? {
+            x: x0,
+            y: y0,
+            w: x1 - x0,
+            h: y1 - y0
+        } : {
+            x: 0,
+            y: 0,
+            w: 1,
+            h: 1
+        };
     }
     // Room around the layout so a box can be dragged past the others
     readonly property real factor: Math.min(width / (bounds.w * 1.6), height / (bounds.h * 1.6))
@@ -41,7 +59,10 @@ Item {
     function snap(index, x, y) {
         const me = size(monitors[index]), reach = 16 / factor;
         let bestX = x, bestY = y, dx = reach, dy = reach;
-        for (const { m, i } of shown) {
+        for (const {
+            m,
+            i
+        } of shown) {
             if (i === index)
                 continue;
             const o = size(m);
@@ -56,7 +77,10 @@ Item {
                     bestY = cy;
                 }
         }
-        return { x: Math.round(bestX), y: Math.round(bestY) };
+        return {
+            x: Math.round(bestX),
+            y: Math.round(bestY)
+        };
     }
 
     Rectangle {

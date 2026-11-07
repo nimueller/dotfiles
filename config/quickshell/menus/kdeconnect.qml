@@ -15,11 +15,40 @@ Popup {
     cardWidth: 340
 
     readonly property var actions: [
-        { action: "ring", text: "Ring", glyph: 0xf009e, accent: Theme.peach }, // 󰂞
-        { action: "send", text: "Send files", glyph: 0xf0552, accent: Theme.blue }, // 󰕒
-        { action: "clipboard", text: "Send clipboard", glyph: 0xf014c, accent: Theme.mauve }, // 󰅌
-        { action: "browse", text: "Browse files", glyph: 0xf024b, accent: Theme.teal }, // 󰉋
-        { action: "ping", text: "Ping", glyph: 0xf0437, accent: Theme.lavender } // 󰐷
+        {
+            action: "ring",
+            text: "Ring",
+            glyph: 0xf009e,
+            accent: Theme.peach
+        // 󰂞
+        },
+        {
+            action: "send",
+            text: "Send files",
+            glyph: 0xf0552,
+            accent: Theme.blue
+        // 󰕒
+        },
+        {
+            action: "clipboard",
+            text: "Send clipboard",
+            glyph: 0xf014c,
+            accent: Theme.mauve
+        // 󰅌
+        },
+        {
+            action: "browse",
+            text: "Browse files",
+            glyph: 0xf024b,
+            accent: Theme.teal
+        // 󰉋
+        },
+        {
+            action: "ping",
+            text: "Ping",
+            glyph: 0xf0437,
+            accent: Theme.lavender
+        } // 󰐷
     ]
 
     PhoneStatus {
@@ -112,7 +141,11 @@ Popup {
                         radius: 8
                         color: tileMouse.containsMouse ? Theme.alpha(modelData.accent, 0.22) : Theme.surface0
 
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
 
                         RowLayout {
                             anchors.fill: parent

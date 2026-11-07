@@ -111,7 +111,9 @@ ColumnLayout {
                 return;
             try {
                 const lines = JSON.parse(xhr.responseText).features.map(f => describePlace(f.properties));
-                suggestions = [...new Set(lines)].filter(x => x && x !== query).slice(0, 5).map(text => ({ text }));
+                suggestions = [...new Set(lines)].filter(x => x && x !== query).slice(0, 5).map(text => ({
+                            text
+                        }));
             } catch (e) {
                 suggestions = []; // no suggestions, the place can still be typed
             }
@@ -209,14 +211,15 @@ ColumnLayout {
             const count = root.suggestions.length, ctrl = event.modifiers & Qt.ControlModifier;
             if (!count)
                 return;
-            if (event.key === Qt.Key_Down || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N)))
+            if (event.key === Qt.Key_Down || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
                 root.highlighted = (root.highlighted + 1) % count;
-            else if (event.key === Qt.Key_Up || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P)))
+            } else if (event.key === Qt.Key_Up || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
                 root.highlighted = root.highlighted <= 0 ? count - 1 : root.highlighted - 1;
-            else if (event.key === Qt.Key_Escape)
+            } else if (event.key === Qt.Key_Escape) {
                 root.clearSuggestions(); // the second Escape closes the menu
-            else
+            } else {
                 return;
+            }
             event.accepted = true;
         }
     }
@@ -477,7 +480,8 @@ ColumnLayout {
             text: root.busy ? "Saving…" : "Save"
             accent: Theme.mauve
             active: true
-            onClicked: if (!root.busy) root.submit()
+            onClicked: if (!root.busy)
+                root.submit()
         }
     }
 }

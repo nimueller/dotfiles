@@ -103,12 +103,27 @@ PanelWindow {
 
         // Slide up out of the bar
         opacity: 0
-        transform: Translate { id: slide; y: 12 }
+        transform: Translate {
+            id: slide
+            y: 12
+        }
         Component.onCompleted: intro.start()
         ParallelAnimation {
             id: intro
-            NumberAnimation { target: card; property: "opacity"; to: 1; duration: 160; easing.type: Easing.OutCubic }
-            NumberAnimation { target: slide; property: "y"; to: 0; duration: 200; easing.type: Easing.OutCubic }
+            NumberAnimation {
+                target: card
+                property: "opacity"
+                to: 1
+                duration: 160
+                easing.type: Easing.OutCubic
+            }
+            NumberAnimation {
+                target: slide
+                property: "y"
+                to: 0
+                duration: 200
+                easing.type: Easing.OutCubic
+            }
         }
 
         ColumnLayout {

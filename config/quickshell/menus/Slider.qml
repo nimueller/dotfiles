@@ -22,7 +22,11 @@ Item {
         radius: height / 2
         color: Theme.surface0
 
-        Behavior on height { NumberAnimation { duration: 120 } }
+        Behavior on height {
+            NumberAnimation {
+                duration: 120
+            }
+        }
 
         Rectangle {
             width: parent.width * root.value
@@ -30,7 +34,11 @@ Item {
             radius: parent.radius
             color: root.dimmed ? Theme.overlay0 : root.accent
 
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 150
+                }
+            }
         }
     }
 
@@ -44,7 +52,11 @@ Item {
         border.width: 2
         border.color: Theme.base
 
-        Behavior on width { NumberAnimation { duration: 120 } }
+        Behavior on width {
+            NumberAnimation {
+                duration: 120
+            }
+        }
     }
 
     MouseArea {

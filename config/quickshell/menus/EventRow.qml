@@ -38,7 +38,8 @@ Rectangle {
 
     HoverHandler {
         id: hover
-        onHoveredChanged: if (!hovered) root.confirming = false
+        onHoveredChanged: if (!hovered)
+            root.confirming = false
     }
 
     RowLayout {

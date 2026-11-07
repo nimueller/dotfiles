@@ -37,7 +37,11 @@ Rectangle {
     radius: 10
     color: expanded ? Theme.surface0 : Theme.alpha(Theme.surface0, mouse.containsMouse ? 0.8 : 0.5)
 
-    Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on color {
+        ColorAnimation {
+            duration: 120
+        }
+    }
 
     MouseArea {
         id: mouse

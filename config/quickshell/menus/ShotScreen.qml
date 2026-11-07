@@ -132,7 +132,10 @@ PanelWindow {
             x = s.x1 + Math.sign(dx || 1) * d;
             y = s.y1 + Math.sign(dy || 1) * d;
         }
-        pending = Object.assign({}, s, { x2: x, y2: y });
+        pending = Object.assign({}, s, {
+            x2: x,
+            y2: y
+        });
     }
 
     function finishShape() {
@@ -204,7 +207,14 @@ PanelWindow {
 
     function commitText() {
         if (textAt && textInput.text.trim())
-            editor.addShape({ type: "text", x: textAt.x, y: textAt.y, text: textInput.text, color: editor.color, size: textSizes[editor.size] });
+            editor.addShape({
+                type: "text",
+                x: textAt.x,
+                y: textAt.y,
+                text: textInput.text,
+                color: editor.color,
+                size: textSizes[editor.size]
+            });
         textAt = null;
         textInput.text = "";
         keys.forceActiveFocus();
@@ -363,12 +373,15 @@ PanelWindow {
         visible: win.selected
 
         Repeater {
+            // One entry per line: qmlformat would join them into one line
+            // qmlformat off
             model: [
                 Qt.rect(0, 0, win.width, win.sel.y),
                 Qt.rect(0, win.sel.y + win.sel.height, win.width, win.height - win.sel.y - win.sel.height),
                 Qt.rect(0, win.sel.y, win.sel.x, win.sel.height),
                 Qt.rect(win.sel.x + win.sel.width, win.sel.y, win.width - win.sel.x - win.sel.width, win.sel.height)
             ]
+            // qmlformat on
 
             delegate: Rectangle {
                 required property rect modelData
@@ -489,7 +502,10 @@ PanelWindow {
                 win.drag = "move";
             } else if (inside && win.editor.tool === "text") {
                 // The click marks the middle of the first line
-                win.textAt = { x: p.x, y: p.y - win.textSizes[win.editor.size] * 0.65 };
+                win.textAt = {
+                    x: p.x,
+                    y: p.y - win.textSizes[win.editor.size] * 0.65
+                };
                 textInput.text = "";
                 textInput.forceActiveFocus();
             } else if (inside) {
@@ -588,7 +604,17 @@ PanelWindow {
         Keys.onPressed: event => {
             const ctrl = event.modifiers & Qt.ControlModifier, shift = event.modifiers & Qt.ShiftModifier;
             const k = event.key, e = win.editor;
-            const tools = { V: "select", P: "pen", L: "line", A: "arrow", R: "rect", O: "ellipse", M: "marker", T: "text", B: "pixelate" };
+            const tools = {
+                V: "select",
+                P: "pen",
+                L: "line",
+                A: "arrow",
+                R: "rect",
+                O: "ellipse",
+                M: "marker",
+                T: "text",
+                B: "pixelate"
+            };
             const letter = event.text.toUpperCase();
             if (k === Qt.Key_Escape)
                 e.cancel();

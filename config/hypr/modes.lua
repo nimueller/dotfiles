@@ -41,7 +41,9 @@ end
 
 local function read(path)
     local f = io.open(path)
-    if not f then return nil end
+    if not f then
+        return nil
+    end
     local text = f:read("a")
     f:close()
     return text
@@ -49,13 +51,17 @@ end
 
 local function exists(path)
     local f = io.open(path)
-    if f then f:close() end
+    if f then
+        f:close()
+    end
     return f ~= nil
 end
 
 local function shell(cmd)
     local p = io.popen(cmd)
-    if not p then return "" end
+    if not p then
+        return ""
+    end
     local out = p:read("a") or ""
     p:close()
     return out
@@ -64,9 +70,13 @@ end
 -- Bit n of a bitmap in /proc/bus/input/devices: hex words, the last one
 -- holds bits 0-63
 local function bit(map, n)
-    if not map then return false end
+    if not map then
+        return false
+    end
     local words = {}
-    for w in map:gmatch("%x+") do words[#words + 1] = w end
+    for w in map:gmatch("%x+") do
+        words[#words + 1] = w
+    end
     local word = tonumber(words[#words - n // 64] or "0", 16) or 0
     return (word >> (n % 64)) & 1 == 1
 end
@@ -89,13 +99,20 @@ local function hardware()
             if bit(block:match("B: SW=([%x ]+)"), SW_TABLET_MODE) then
                 M.tabletSwitch = block:match('N: Name="(.-)"\n')
             end
-            if bit(block:match("B: PROP=([%x ]+)"), INPUT_PROP_DIRECT) and bit(block:match("B: ABS=([%x ]+)"), ABS_MT_POSITION_X) then
+            if
+                bit(block:match("B: PROP=([%x ]+)"), INPUT_PROP_DIRECT)
+                and bit(block:match("B: ABS=([%x ]+)"), ABS_MT_POSITION_X)
+            then
                 found.touch = true
             end
         end
     end
     -- A battery of the machine's own; a mouse's or a headset's has the scope Device
-    if shell([[for d in /sys/class/power_supply/*; do [ "$(cat "$d/type" 2>/dev/null)" = Battery ] && [ "$(cat "$d/scope" 2>/dev/null)" != Device ] && echo y; done]]):find("y") then
+    if
+        shell(
+            [[for d in /sys/class/power_supply/*; do [ "$(cat "$d/type" 2>/dev/null)" = Battery ] && [ "$(cat "$d/scope" 2>/dev/null)" != Device ] && echo y; done]]
+        ):find("y")
+    then
         found.laptop = true
     end
     return found
@@ -114,15 +131,23 @@ end
 -- A rule for the screen by its description, after (and so over) its rule
 -- in local.lua; opening the lid reloads the config, which brings it back.
 local function dock(closed)
-    if not (closed or lidClosed()) then return end
+    if not (closed or lidClosed()) then
+        return
+    end
     local monitors = hl.get_monitors()
     local other = false
     for _, m in ipairs(monitors) do
-        if not builtIn(m) then other = true end
+        if not builtIn(m) then
+            other = true
+        end
     end
-    if not other then return end
+    if not other then
+        return
+    end
     for _, m in ipairs(monitors) do
-        if builtIn(m) then hl.monitor({ output = "desc:" .. m.description, disabled = true }) end
+        if builtIn(m) then
+            hl.monitor({ output = "desc:" .. m.description, disabled = true })
+        end
     end
 end
 
@@ -138,7 +163,7 @@ local function laptop()
     hl.config({
         input = {
             touchpad = {
-                tap_to_click         = true,
+                tap_to_click = true,
                 disable_while_typing = true,
                 clickfinger_behavior = true, -- two fingers right-click, three middle-click
             },
@@ -149,13 +174,17 @@ local function laptop()
     hl.gesture({ fingers = 3, direction = "down", action = overviewClose })
 
     local kbd = "brightnessctl -q -d '*::kbd_backlight' set "
-    hl.bind("XF86KbdBrightnessUp",   hl.dsp.exec_cmd(kbd .. "33%+"), { locked = true })
+    hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd(kbd .. "33%+"), { locked = true })
     hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd(kbd .. "33%-"), { locked = true })
 
     if M.lid then
-        hl.bind("switch:on:" .. M.lid,  function() dock(true) end,                 { locked = true })
-        hl.bind("switch:off:" .. M.lid, hl.dsp.exec_cmd("hyprctl reload"),         { locked = true })
-        hl.on("monitor.added", function() dock(false) end)
+        hl.bind("switch:on:" .. M.lid, function()
+            dock(true)
+        end, { locked = true })
+        hl.bind("switch:off:" .. M.lid, hl.dsp.exec_cmd("hyprctl reload"), { locked = true })
+        hl.on("monitor.added", function()
+            dock(false)
+        end)
         dock(false) -- a reload while docked
     end
 end
@@ -194,20 +223,20 @@ local function touch()
             hl.config({ plugin = { hyprgrass = { sensitivity = 3.0 } } })
             hl.plugin.hyprgrass.gesture({
                 pattern = { kind = "swipe", fingers = 3, direction = "horizontal" },
-                action  = "workspace",
+                action = "workspace",
                 -- the whole screen's width is one workspace otherwise, and
                 -- a swipe of less than half of it snaps back
-                scale   = 1.6,
+                scale = 1.6,
             })
             -- Not tried on a touch screen yet: a plugin that wants another
             -- kind of action mustn't break the config
             pcall(hl.plugin.hyprgrass.gesture, {
                 pattern = { kind = "swipe", fingers = 3, direction = "up" },
-                action  = overviewOpen,
+                action = overviewOpen,
             })
             pcall(hl.plugin.hyprgrass.gesture, {
                 pattern = { kind = "swipe", fingers = 3, direction = "down" },
-                action  = overviewClose,
+                action = overviewClose,
             })
         end
     end
@@ -243,7 +272,9 @@ local function touch()
         end, { locked = true })
     end
     hl.on("hyprland.start", function()
-        if M.tabletSwitch then tabletMode(false) end
+        if M.tabletSwitch then
+            tabletMode(false)
+        end
         hl.exec_cmd(auto .. (M.tabletSwitch and "false" or "true"))
     end)
 end
@@ -256,12 +287,20 @@ function M.apply()
     M.detected = hardware()
     for _, name in ipairs({ "laptop", "touch" }) do
         local forced = M.forced[name]
-        if forced == nil then M[name] = M.detected[name] else M[name] = forced end
+        if forced == nil then
+            M[name] = M.detected[name]
+        else
+            M[name] = forced
+        end
     end
     M.forced = {}
 
-    if M.laptop then laptop() end
-    if M.touch then touch() end
+    if M.laptop then
+        laptop()
+    end
+    if M.touch then
+        touch()
+    end
     if next(M.touchpadOptions) then
         hl.config({ input = { touchpad = M.touchpadOptions } })
     end
@@ -270,8 +309,15 @@ function M.apply()
     local runtime = os.getenv("XDG_RUNTIME_DIR")
     local f = runtime and io.open(runtime .. "/dotfiles-modes.json", "w")
     if f then
-        f:write(string.format('{"laptop":%s,"touch":%s,"detected":{"laptop":%s,"touch":%s}}\n',
-            json(M.laptop), json(M.touch), json(M.detected.laptop), json(M.detected.touch)))
+        f:write(
+            string.format(
+                '{"laptop":%s,"touch":%s,"detected":{"laptop":%s,"touch":%s}}\n',
+                json(M.laptop),
+                json(M.touch),
+                json(M.detected.laptop),
+                json(M.detected.touch)
+            )
+        )
         f:close()
     end
 end

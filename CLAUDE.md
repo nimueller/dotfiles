@@ -83,8 +83,10 @@ tools come from the flake's devShell, so they have the versions in
 | nixfmt, statix, deadnix | `nix fmt`; statix and deadnix by hand |
 | shellcheck | by hand |
 | ruff, ruff format (`ruff.toml`) | `ruff check --fix .`, `ruff format .` |
+| stylua (`stylua.toml`) | `stylua .` |
 | pyright (`pyrightconfig.json`) | by hand |
 | Python tests (`tests/`) | by hand |
+| qmlformat | `git ls-files -z '*.qml' \| xargs -0 qmlformat -i` |
 | qmllint (syntax only) | by hand |
 
 `.github/check-flake.sh` evaluates the flake and every Home Manager

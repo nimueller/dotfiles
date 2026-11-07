@@ -24,7 +24,11 @@ RowLayout {
         radius: 8
         color: root.muted ? Theme.surface0 : Theme.alpha(root.accent, muteMouse.containsMouse ? 0.25 : 0.15)
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
 
         Label {
             anchors.centerIn: parent

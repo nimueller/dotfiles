@@ -73,7 +73,7 @@ PanelWindow {
         // System menu (system.qml): the system at a glance, Machine Settings
         BarChip {
             accent: Theme.blue
-            text: Theme.glyph(0xf303) // 
+            text: Theme.glyph(0xf303) //
             onClicked: bar.menu("system")
         }
 
@@ -279,7 +279,7 @@ PanelWindow {
 
             visible: !!battery && battery.isLaptopBattery
             accent: charging ? Theme.teal : percent <= 15 ? Theme.red : percent <= 30 ? Theme.yellow : Theme.green
-            text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%${charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` // 
+            text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%${charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` //
             onClicked: bar.menu("battery")
         }
 
@@ -331,7 +331,7 @@ PanelWindow {
 
             visible: !!phone
             accent: phone?.charging ? Theme.teal : charge >= 0 && charge <= 15 ? Theme.red : Theme.green
-            text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c) // 󰄜 
+            text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c) // 󰄜
             onClicked: button => {
                 if (button === Qt.RightButton)
                     bar.phones.run("send", phone);
@@ -426,8 +426,22 @@ PanelWindow {
                 id: pulse
                 loops: 3
                 ParallelAnimation {
-                    NumberAnimation { target: ring; property: "opacity"; from: 0.8; to: 0; duration: 1200; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: ring; property: "scale"; from: 1; to: 1.3; duration: 1200; easing.type: Easing.OutCubic }
+                    NumberAnimation {
+                        target: ring
+                        property: "opacity"
+                        from: 0.8
+                        to: 0
+                        duration: 1200
+                        easing.type: Easing.OutCubic
+                    }
+                    NumberAnimation {
+                        target: ring
+                        property: "scale"
+                        from: 1
+                        to: 1.3
+                        duration: 1200
+                        easing.type: Easing.OutCubic
+                    }
                 }
             }
         }

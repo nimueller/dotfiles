@@ -31,7 +31,11 @@ Rectangle {
     radius: 8
     color: expanded ? Theme.surface0 : mouse.containsMouse ? Theme.alpha(Theme.surface0, 0.6) : "transparent"
 
-    Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on color {
+        ColorAnimation {
+            duration: 120
+        }
+    }
 
     function signalGlyph(s) {
         return Theme.glyph(s > 75 ? 0xf0928 : s > 50 ? 0xf0925 : s > 25 ? 0xf0922 : 0xf091f); // 󰤨 󰤥 󰤢 󰤟
@@ -114,7 +118,8 @@ Rectangle {
                 visible: root.needsPassword
                 masked: true
                 placeholder: "Password"
-                onAccepted: if (text) root.connectRequested(text)
+                onAccepted: if (text)
+                    root.connectRequested(text)
             }
             Item {
                 Layout.fillWidth: true
@@ -209,8 +214,10 @@ Rectangle {
             wrapMode: Text.Wrap
         }
 
-        onVisibleChanged: if (root.expanded && root.needsPassword) password.focusField()
+        onVisibleChanged: if (root.expanded && root.needsPassword)
+            password.focusField()
     }
 
-    onExpandedChanged: if (expanded && needsPassword) password.focusField()
+    onExpandedChanged: if (expanded && needsPassword)
+        password.focusField()
 }

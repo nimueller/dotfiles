@@ -150,8 +150,18 @@ PanelWindow {
 
         opacity: root.shown ? 1 : 0
         scale: root.shown ? 1 : 0.97
-        Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 140
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
 
         ColumnLayout {
             id: content
@@ -275,7 +285,11 @@ PanelWindow {
                             radius: 3
                             color: scrollBar.pressed ? Theme.lavender : scrollBar.hovered ? Theme.overlay1 : Theme.alpha(Theme.overlay1, 0.5)
 
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 120
+                                }
+                            }
                         }
                         background: Item {}
                     }

@@ -28,9 +28,26 @@ Popup {
     property bool profiles: false // power-profiles-daemon runs
 
     readonly property var profileList: [
-        { profile: PowerProfile.PowerSaver, text: "Power saver", glyph: 0xf032a, accent: Theme.green }, // 󰌪
-        { profile: PowerProfile.Balanced, text: "Balanced", glyph: 0xf05d1, accent: Theme.blue }, // 󰗑
-        { profile: PowerProfile.Performance, text: "Performance", glyph: 0xf04c5, accent: Theme.peach } // 󰓅
+        {
+            profile: PowerProfile.PowerSaver,
+            text: "Power saver",
+            glyph: 0xf032a,
+            accent: Theme.green
+        // 󰌪
+        },
+        {
+            profile: PowerProfile.Balanced,
+            text: "Balanced",
+            glyph: 0xf05d1,
+            accent: Theme.blue
+        // 󰗑
+        },
+        {
+            profile: PowerProfile.Performance,
+            text: "Performance",
+            glyph: 0xf04c5,
+            accent: Theme.peach
+        } // 󰓅
     ]
 
     function duration(seconds) {
@@ -204,7 +221,12 @@ Popup {
                 radius: 4
                 color: popup.charging || popup.full ? Theme.teal : popup.percent <= 15 ? Theme.red : popup.percent <= 30 ? Theme.yellow : Theme.green
 
-                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
         }
 
@@ -231,6 +253,8 @@ Popup {
         }
 
         Repeater {
+            // The rows one per line: qmlformat would join them into one line
+            // qmlformat off
             model: {
                 const s = popup.stats;
                 if (!s)
@@ -251,6 +275,7 @@ Popup {
                     ["Full charge lasts", `about ${popup.duration(s.total)}`]
                 ]);
             }
+            // qmlformat on
 
             delegate: RowLayout {
                 required property var modelData
@@ -300,7 +325,11 @@ Popup {
                     border.width: current ? 1 : 0
                     border.color: modelData.accent
 
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
 
                     ColumnLayout {
                         anchors.centerIn: parent

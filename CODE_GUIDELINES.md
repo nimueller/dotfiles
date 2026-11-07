@@ -92,6 +92,13 @@ Prefer more short lines over fewer long ones.
   a matter of taste: nixfmt, ruff format, and stylua for Lua and qmlformat for
   QML. The formatter's output is final; these guidelines decide what it leaves
   open (names, splitting into variables, one argument per line).
+- **Exceptions to a formatter are rare and marked.** Where its output is
+  clearly harder to read, e.g. qmlformat joining a list of one entry per line
+  into a single line, the block is wrapped in the formatter's own markers
+  (`// qmlformat off` … `// qmlformat on`, `-- stylua: ignore start` …
+  `-- stylua: ignore end`), with a comment above that says why. Such a block
+  is a candidate for the cleanup: splitting it into named parts usually makes
+  the exception unnecessary.
 - **Logic that can be tested is tested.** Parsing, arithmetic and file
   handling get unit tests in `tests/` (see `CLAUDE.md`); what needs the
   desktop is tried by hand.

@@ -83,12 +83,15 @@ ColumnLayout {
 
     // Aviation report
     Repeater {
+        // One entry per line: qmlformat would join them into one line
+        // qmlformat off
         model: root.metar ? [
             [0xf059d, root.wind(root.metar)],
             [0xf0208, `Visibility ${root.cavok ? "≥ 10 km" : Weather.visibility(root.metar.visib)}`],
             [0xf029a, `QNH ${root.metar.altim ? Math.round(root.metar.altim) : "–"} hPa`],
             [0xf015f, root.clouds(root.metar)]
         ].concat(root.metar.wxString ? [[0xf0597, `Weather ${root.metar.wxString}`]] : []) : []
+        // qmlformat on
 
         delegate: RowLayout {
             required property var modelData

@@ -16,7 +16,10 @@ Singleton {
 
     property bool laptop: false
     property bool touch: false
-    property var detected: ({ laptop: false, touch: false })
+    property var detected: ({
+            laptop: false,
+            touch: false
+        })
     property bool tablet: false
 
     // A compact bar on narrow screens (below 1700 logical pixels, like a

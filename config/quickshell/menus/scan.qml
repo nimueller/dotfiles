@@ -67,7 +67,10 @@ ShellRoot {
     readonly property string ip: devices.find(d => d.device === device)?.ip ?? ""
 
     function deviceLabel(d) {
-        const backend = ({ airscan: "AirScan", epsonscan2: "Epson Scan 2" })[d.backend] ?? d.backend;
+        const backend = ({
+                airscan: "AirScan",
+                epsonscan2: "Epson Scan 2"
+            })[d.backend] ?? d.backend;
         return backend ? `${d.name} · ${backend}` : d.name;
     }
 
@@ -76,7 +79,13 @@ ShellRoot {
         return /adf|feeder/i.test(s) ? "Feeder" : /auto/i.test(s) ? "Feeder (auto)" : /flatbed/i.test(s) ? "Glass" : s;
     }
     function modeLabel(m) {
-        return ({ Color: "Colour", Gray: "Grey", Grayscale: "Grey", Lineart: "Black & white", Monochrome: "Black & white" })[m] ?? m;
+        return ({
+                Color: "Colour",
+                Gray: "Grey",
+                Grayscale: "Grey",
+                Lineart: "Black & white",
+                Monochrome: "Black & white"
+            })[m] ?? m;
     }
     function pick(list, wanted, fallback) {
         return list.includes(wanted) ? wanted : fallback ?? list[0] ?? "";
@@ -110,9 +119,16 @@ ShellRoot {
         const count = kind === "preview" || !feeder || oneByOne ? ["1"] : [];
         if (kind === "pages" && feeder && (oneByOne || bothSides)) {
             if (!batch)
-                batch = { start: pages.length, fronts: 0, pass: 1, waiting: false };
+                batch = {
+                    start: pages.length,
+                    fronts: 0,
+                    pass: 1,
+                    waiting: false
+                };
             else
-                batch = Object.assign({}, batch, { waiting: false });
+                batch = Object.assign({}, batch, {
+                    waiting: false
+                });
         }
         stopping = false;
         runs++;
@@ -142,20 +158,31 @@ ShellRoot {
             return;
         }
         const got = pages.length - batch.start - (batch.pass === 2 ? batch.fronts : 0);
-        if (!oneByOne && batch.pass === 1 && !got)
+        if (!oneByOne && batch.pass === 1 && !got) {
             batch = null; // nothing in the feeder
-        else if (!oneByOne && batch.pass === 1 && bothSides)
-            batch = Object.assign({}, batch, { fronts: got, pass: 2, waiting: true });
-        else if (!oneByOne)
+        } else if (!oneByOne && batch.pass === 1 && bothSides) {
+            batch = Object.assign({}, batch, {
+                fronts: got,
+                pass: 2,
+                waiting: true
+            });
+        } else if (!oneByOne) {
             finishBatch();
-        else
-            batch = Object.assign({}, batch, { fronts: batch.pass === 1 ? got : batch.fronts, waiting: true });
+        } else {
+            batch = Object.assign({}, batch, {
+                fronts: batch.pass === 1 ? got : batch.fronts,
+                waiting: true
+            });
+        }
     }
 
     // One by one: now the backs
     function startBacks() {
         if (batch && batch.waiting)
-            batch = Object.assign({}, batch, { fronts: pages.length - batch.start, pass: 2 });
+            batch = Object.assign({}, batch, {
+                fronts: pages.length - batch.start,
+                pass: 2
+            });
     }
 
     // The turned stack gives the backs last page first: front 1, back 1, …
@@ -195,7 +222,10 @@ ShellRoot {
     }
 
     function turn(i, by) {
-        pages = pages.map((p, j) => j === i ? { file: p.file, turn: (p.turn + by + 360) % 360 } : p);
+        pages = pages.map((p, j) => j === i ? {
+                file: p.file,
+                turn: (p.turn + by + 360) % 360
+            } : p);
         unsaved = true;
     }
     function move(i, by) {
@@ -234,7 +264,16 @@ ShellRoot {
     property bool loaded: false
     function remember() {
         if (loaded)
-            settingsFile.setText(JSON.stringify({ device, source, mode, dpi, format, ocr, oneByOne, bothSides }, null, 2));
+            settingsFile.setText(JSON.stringify({
+                device,
+                source,
+                mode,
+                dpi,
+                format,
+                ocr,
+                oneByOne,
+                bothSides
+            }, null, 2));
     }
     onOneByOneChanged: remember()
     onBothSidesChanged: remember()
@@ -349,7 +388,12 @@ ShellRoot {
                         root.preview = rest;
                         root.current = -1;
                     } else {
-                        root.pages = [...root.pages, { file: rest, turn: 0 }];
+                        root.pages = [...root.pages,
+                            {
+                                file: rest,
+                                turn: 0
+                            }
+                        ];
                         root.current = root.pages.length - 1;
                         root.unsaved = true;
                     }
@@ -521,7 +565,15 @@ ShellRoot {
                     Dropdown {
                         Layout.fillWidth: true
                         enabled: !root.busy
-                        model: root.devices.length ? root.devices.map(d => ({ text: root.deviceLabel(d), value: d.device })) : [{ text: root.searching ? "Looking for scanners…" : "No scanner found", value: "" }]
+                        model: root.devices.length ? root.devices.map(d => ({
+                                    text: root.deviceLabel(d),
+                                    value: d.device
+                                })) : [
+                            {
+                                text: root.searching ? "Looking for scanners…" : "No scanner found",
+                                value: ""
+                            }
+                        ]
                         current: root.devices.length ? root.device : ""
                         onPicked: value => {
                             if (value && value !== root.device) {
@@ -588,7 +640,10 @@ ShellRoot {
                         }
                         Dropdown {
                             Layout.fillWidth: true
-                            model: (root.options?.resolutions ?? []).map(r => ({ text: `${r} dpi${r === 150 || r === 200 ? " · documents" : r === 300 ? " · documents, text" : r >= 600 ? " · photos" : ""}`, value: r }))
+                            model: (root.options?.resolutions ?? []).map(r => ({
+                                        text: `${r} dpi${r === 150 || r === 200 ? " · documents" : r === 300 ? " · documents, text" : r >= 600 ? " · photos" : ""}`,
+                                        value: r
+                                    }))
                             current: root.dpi
                             onPicked: value => root.dpi = value
                         }
@@ -596,10 +651,18 @@ ShellRoot {
                         // The feeder's two ways
                         Repeater {
                             model: root.feeder ? [
-                                { text: "One page at a time", on: root.oneByOne, flip: () => root.oneByOne = !root.oneByOne,
-                                  hint: "For scanners that pull in every page but hand over only the first, as some do over AirScan. Put in one page; the next scan starts once the next one is in." },
-                                { text: "Both sides", on: root.bothSides, flip: () => root.bothSides = !root.bothSides,
-                                  hint: "The fronts first, then the stack turned over for the backs; the pages are put in order afterwards." }
+                                {
+                                    text: "One page at a time",
+                                    on: root.oneByOne,
+                                    flip: () => root.oneByOne = !root.oneByOne,
+                                    hint: "For scanners that pull in every page but hand over only the first, as some do over AirScan. Put in one page; the next scan starts once the next one is in."
+                                },
+                                {
+                                    text: "Both sides",
+                                    on: root.bothSides,
+                                    flip: () => root.bothSides = !root.bothSides,
+                                    hint: "The fronts first, then the stack turned over for the backs; the pages are put in order afterwards."
+                                }
                             ] : []
 
                             delegate: ColumnLayout {
@@ -689,9 +752,12 @@ ShellRoot {
 
                             Label {
                                 Layout.fillWidth: true
+                                // One case per line: qmlformat would join them into one line
+                                // qmlformat off
                                 text: !root.oneByOne ? `${root.batch?.fronts ?? 0} fronts scanned. Turn the stack over like a book page and put it in again.`
                                     : between.done === 0 && root.batch?.pass === 2 ? `${root.batch.fronts} fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.`
                                     : `${between.done === 1 ? `1 ${between.side}` : `${between.done} ${between.side}s`} scanned. Put in the next one${root.ip ? ", it starts by itself" : ""}.`
+                                // qmlformat on
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
                             }
@@ -743,7 +809,11 @@ ShellRoot {
                                 radius: 2
                                 color: Theme.sapphire
 
-                                Behavior on width { NumberAnimation { duration: 200 } }
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: 200
+                                    }
+                                }
                             }
                         }
                     }
@@ -786,7 +856,20 @@ ShellRoot {
                         RowLayout {
                             spacing: 6
                             Repeater {
-                                model: [{ text: "PDF", value: "pdf" }, { text: "JPEG", value: "jpg" }, { text: "PNG", value: "png" }]
+                                model: [
+                                    {
+                                        text: "PDF",
+                                        value: "pdf"
+                                    },
+                                    {
+                                        text: "JPEG",
+                                        value: "jpg"
+                                    },
+                                    {
+                                        text: "PNG",
+                                        value: "png"
+                                    }
+                                ]
                                 delegate: IconButton {
                                     required property var modelData
                                     text: modelData.text
@@ -943,7 +1026,12 @@ ShellRoot {
                                 const x1 = overlay.clamp(Math.min(overlay.start.x, mouse.x), overlay.width), x2 = overlay.clamp(Math.max(overlay.start.x, mouse.x), overlay.width);
                                 const y1 = overlay.clamp(Math.min(overlay.start.y, mouse.y), overlay.height), y2 = overlay.clamp(Math.max(overlay.start.y, mouse.y), overlay.height);
                                 const m = overlay.mmPerPx;
-                                root.area = { l: x1 * m, t: y1 * m, w: (x2 - x1) * m, h: (y2 - y1) * m };
+                                root.area = {
+                                    l: x1 * m,
+                                    t: y1 * m,
+                                    w: (x2 - x1) * m,
+                                    h: (y2 - y1) * m
+                                };
                             }
                             // A click (or a tiny drag) takes the whole glass again
                             onReleased: if (root.area && (root.area.w < 5 || root.area.h < 5))
@@ -1002,7 +1090,17 @@ ShellRoot {
                         clip: true
                         boundsBehavior: Flickable.StopAtBounds
                         // The preview first, then the pages
-                        model: [...(root.preview ? [{ file: root.preview, turn: 0, index: -1 }] : []), ...root.pages.map((p, i) => ({ file: p.file, turn: p.turn, index: i }))]
+                        model: [...(root.preview ? [
+                                    {
+                                        file: root.preview,
+                                        turn: 0,
+                                        index: -1
+                                    }
+                                ] : []), ...root.pages.map((p, i) => ({
+                                        file: p.file,
+                                        turn: p.turn,
+                                        index: i
+                                    }))]
 
                         delegate: Rectangle {
                             id: thumb
@@ -1064,11 +1162,35 @@ ShellRoot {
 
                                 Repeater {
                                     model: [
-                                        { glyph: 0xf0141, tip: "left", act: () => root.move(thumb.page, -1) }, // 󰅁
-                                        { glyph: 0xf0465, tip: "turn left", act: () => root.turn(thumb.page, -90) }, // 󰑥
-                                        { glyph: 0xf0467, tip: "turn right", act: () => root.turn(thumb.page, 90) }, // 󰑧
-                                        { glyph: 0xf01b4, tip: "remove", act: () => root.remove(thumb.page) }, // 󰆴
-                                        { glyph: 0xf0142, tip: "right", act: () => root.move(thumb.page, 1) } // 󰅂
+                                        {
+                                            glyph: 0xf0141,
+                                            tip: "left",
+                                            act: () => root.move(thumb.page, -1)
+                                        // 󰅁
+                                        },
+                                        {
+                                            glyph: 0xf0465,
+                                            tip: "turn left",
+                                            act: () => root.turn(thumb.page, -90)
+                                        // 󰑥
+                                        },
+                                        {
+                                            glyph: 0xf0467,
+                                            tip: "turn right",
+                                            act: () => root.turn(thumb.page, 90)
+                                        // 󰑧
+                                        },
+                                        {
+                                            glyph: 0xf01b4,
+                                            tip: "remove",
+                                            act: () => root.remove(thumb.page)
+                                        // 󰆴
+                                        },
+                                        {
+                                            glyph: 0xf0142,
+                                            tip: "right",
+                                            act: () => root.move(thumb.page, 1)
+                                        } // 󰅂
                                     ]
 
                                     delegate: Label {

@@ -65,7 +65,11 @@ ColumnLayout {
             radius: 8
             color: root.picking ? Theme.alpha(Theme.lavender, 0.18) : titleMouse.containsMouse ? Theme.surface0 : "transparent"
 
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
 
             Row {
                 id: titleRow
@@ -150,134 +154,138 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: grid.implicitHeight
 
-    GridLayout {
-        id: grid
-
-        width: parent.width
-        opacity: root.picking ? 0 : 1
-        enabled: !root.picking
-        columns: root.weekNumbers ? 8 : 7
-        columnSpacing: 4
-        rowSpacing: 4
-
-        // Weekday names
-        Item {
-            visible: root.weekNumbers
-            Layout.preferredWidth: 22
-            Layout.preferredHeight: 18
-        }
-        Repeater {
-            model: 7
-
-            delegate: Label {
-                required property int index
-                readonly property int weekday: (root.weekStart + index) % 7
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: 18
-                horizontalAlignment: Text.AlignHCenter
-                text: root.dayNames[weekday]
-                font.pixelSize: 10
-                font.bold: true
-                color: weekday === 0 || weekday === 6 ? Theme.overlay1 : Theme.subtext0
-            }
-        }
-
-        Repeater {
-            model: 6 * 8
-
-            delegate: Loader {
-                id: slot
-
-                required property int index
-                readonly property int row: Math.floor(index / 8)
-                readonly property int column: index % 8 // 0: week number
-
-                // A bar's title runs on over the boxes to its right
-                z: 8 - column
-                visible: column > 0 || root.weekNumbers
-                Layout.fillWidth: column > 0
-                Layout.preferredWidth: column === 0 ? 22 : 104
-                Layout.preferredHeight: 92
-                sourceComponent: column === 0 ? weekNumber : dayBox
-            }
-        }
-    }
-
-    // Month/year picker: a year with ‹ › (or scroll) and its twelve months
-    ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 8
-        visible: root.picking
-        spacing: 16
-
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 16
-
-            IconButton {
-                glyph: Theme.glyph(0xf0141) // 󰅁
-                onClicked: root.pickerYear--
-            }
-            Label {
-                text: root.pickerYear
-                font.pixelSize: 26
-                font.bold: true
-                color: root.pickerYear === root.today.getFullYear() ? Theme.lavender : Theme.text
-            }
-            IconButton {
-                glyph: Theme.glyph(0xf0142) // 󰅂
-                onClicked: root.pickerYear++
-            }
-        }
-
         GridLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            columns: 4
-            rowSpacing: 10
-            columnSpacing: 10
+            id: grid
 
+            width: parent.width
+            opacity: root.picking ? 0 : 1
+            enabled: !root.picking
+            columns: root.weekNumbers ? 8 : 7
+            columnSpacing: 4
+            rowSpacing: 4
+
+            // Weekday names
+            Item {
+                visible: root.weekNumbers
+                Layout.preferredWidth: 22
+                Layout.preferredHeight: 18
+            }
             Repeater {
-                model: 12
+                model: 7
 
-                delegate: Rectangle {
-                    id: monthButton
-
+                delegate: Label {
                     required property int index
-                    readonly property bool viewing: root.pickerYear === root.year && index === root.month
-                    readonly property bool current: root.pickerYear === root.today.getFullYear() && index === root.today.getMonth()
+                    readonly property int weekday: (root.weekStart + index) % 7
 
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    radius: 12
-                    color: viewing ? Theme.lavender : monthMouse.containsMouse ? Theme.surface1 : Theme.alpha(Theme.surface0, 0.6)
-                    border.width: current && !viewing ? 1 : 0
-                    border.color: Theme.lavender
+                    Layout.preferredHeight: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    text: root.dayNames[weekday]
+                    font.pixelSize: 10
+                    font.bold: true
+                    color: weekday === 0 || weekday === 6 ? Theme.overlay1 : Theme.subtext0
+                }
+            }
 
-                    Behavior on color { ColorAnimation { duration: 120 } }
+            Repeater {
+                model: 6 * 8
 
-                    Label {
-                        anchors.centerIn: parent
-                        text: Qt.locale().standaloneMonthName(monthButton.index, Locale.LongFormat)
-                        font.pixelSize: 14
-                        font.bold: monthButton.viewing || monthButton.current
-                        color: monthButton.viewing ? Theme.crust : monthButton.current ? Theme.lavender : Theme.text
-                    }
-                    MouseArea {
-                        id: monthMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.picking = false;
-                            root.jump(root.pickerYear, monthButton.index);
+                delegate: Loader {
+                    id: slot
+
+                    required property int index
+                    readonly property int row: Math.floor(index / 8)
+                    readonly property int column: index % 8 // 0: week number
+
+                    // A bar's title runs on over the boxes to its right
+                    z: 8 - column
+                    visible: column > 0 || root.weekNumbers
+                    Layout.fillWidth: column > 0
+                    Layout.preferredWidth: column === 0 ? 22 : 104
+                    Layout.preferredHeight: 92
+                    sourceComponent: column === 0 ? weekNumber : dayBox
+                }
+            }
+        }
+
+        // Month/year picker: a year with ‹ › (or scroll) and its twelve months
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            visible: root.picking
+            spacing: 16
+
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 16
+
+                IconButton {
+                    glyph: Theme.glyph(0xf0141) // 󰅁
+                    onClicked: root.pickerYear--
+                }
+                Label {
+                    text: root.pickerYear
+                    font.pixelSize: 26
+                    font.bold: true
+                    color: root.pickerYear === root.today.getFullYear() ? Theme.lavender : Theme.text
+                }
+                IconButton {
+                    glyph: Theme.glyph(0xf0142) // 󰅂
+                    onClicked: root.pickerYear++
+                }
+            }
+
+            GridLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                columns: 4
+                rowSpacing: 10
+                columnSpacing: 10
+
+                Repeater {
+                    model: 12
+
+                    delegate: Rectangle {
+                        id: monthButton
+
+                        required property int index
+                        readonly property bool viewing: root.pickerYear === root.year && index === root.month
+                        readonly property bool current: root.pickerYear === root.today.getFullYear() && index === root.today.getMonth()
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        radius: 12
+                        color: viewing ? Theme.lavender : monthMouse.containsMouse ? Theme.surface1 : Theme.alpha(Theme.surface0, 0.6)
+                        border.width: current && !viewing ? 1 : 0
+                        border.color: Theme.lavender
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 120
+                            }
+                        }
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: Qt.locale().standaloneMonthName(monthButton.index, Locale.LongFormat)
+                            font.pixelSize: 14
+                            font.bold: monthButton.viewing || monthButton.current
+                            color: monthButton.viewing ? Theme.crust : monthButton.current ? Theme.lavender : Theme.text
+                        }
+                        MouseArea {
+                            id: monthMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.picking = false;
+                                root.jump(root.pickerYear, monthButton.index);
+                            }
                         }
                     }
                 }
             }
         }
-    }
     }
 
     Component {
@@ -318,7 +326,11 @@ ColumnLayout {
             border.width: isSelected ? 1 : 0
             border.color: Theme.alpha(Theme.lavender, 0.7)
 
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
 
             MouseArea {
                 id: mouse

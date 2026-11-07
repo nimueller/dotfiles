@@ -6,10 +6,10 @@
 -- Monitors: `hyprctl monitors all` lists names and descriptions. Match by
 -- description so the rule follows the monitor to any port.
 hl.monitor({
-    output   = "desc:Vendor Model Serial",
-    mode     = "2560x1440@144",
+    output = "desc:Vendor Model Serial",
+    mode = "2560x1440@144",
     position = "0x0",
-    scale    = 1.25,
+    scale = 1.25,
 })
 
 -- Driver variables, e.g. for NVIDIA

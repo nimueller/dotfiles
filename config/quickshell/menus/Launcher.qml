@@ -98,7 +98,10 @@ PanelWindow {
         if (!fileMode)
             found = [];
         if (helper.running)
-            helper.write(JSON.stringify({ id: asked, q: query }) + "\n");
+            helper.write(JSON.stringify({
+                id: asked,
+                q: query
+            }) + "\n");
     }
 
     Process {
@@ -106,7 +109,10 @@ PanelWindow {
         command: ["/usr/bin/python3", Quickshell.shellPath("launcher.py")]
         stdinEnabled: true
         // What was typed while it started
-        onStarted: write(JSON.stringify({ id: root.asked, q: root.query }) + "\n")
+        onStarted: write(JSON.stringify({
+            id: root.asked,
+            q: root.query
+        }) + "\n")
         stdout: SplitParser {
             onRead: line => {
                 let message = {};
@@ -138,9 +144,17 @@ PanelWindow {
         if (emojiMode)
             return emojiResults(query.slice(1).trim().toLowerCase());
         if (fileMode)
-            return found.filter(r => r.kind === "file").map(r => ({ file: r.path, name: r.name, dir: r.dir, folder: r.folder }));
+            return found.filter(r => r.kind === "file").map(r => ({
+                        file: r.path,
+                        name: r.name,
+                        dir: r.dir,
+                        folder: r.folder
+                    }));
         const q = query.trim().toLowerCase();
-        const ranked = apps.map(app => ({ app, score: score(app, q) })).filter(r => r.score >= 0);
+        const ranked = apps.map(app => ({
+                    app,
+                    score: score(app, q)
+                })).filter(r => r.score >= 0);
         ranked.sort((a, b) => b.score - a.score || a.app.name.localeCompare(b.app.name));
         // "ssh " before it's trimmed
         const typed = query.replace(/^\s+/, "").toLowerCase();
@@ -149,11 +163,19 @@ PanelWindow {
         const list = [...(ssh ? hosts : []), ...windowResults(q), ...ranked.map(r => r.app), ...(ssh ? [] : hosts)];
         const result = calculate(query);
         if (result !== null)
-            list.unshift({ result });
+            list.unshift({
+                result
+            });
         for (const r of found.filter(r => r.kind === "convert"))
-            list.unshift({ result: r.value, display: r.text, detail: r.detail });
+            list.unshift({
+                result: r.value,
+                display: r.text,
+                detail: r.detail
+            });
         if (q)
-            list.push({ run: query.trim() });
+            list.push({
+                run: query.trim()
+            });
         return list;
     }
 
@@ -162,7 +184,10 @@ PanelWindow {
     function sshResults(part, ssh) {
         if (!ssh && part.length < 2)
             return [];
-        return sshHosts.filter(h => h.host.toLowerCase().startsWith(part)).map(h => ({ ssh: h.host, detail: h.detail }));
+        return sshHosts.filter(h => h.host.toLowerCase().startsWith(part)).map(h => ({
+                    ssh: h.host,
+                    detail: h.detail
+                }));
     }
 
     function score(app, q) {
@@ -206,10 +231,21 @@ PanelWindow {
             else if (title.includes(q) || app.toLowerCase().includes(q) || (w.lastIpcObject?.class ?? "").toLowerCase().includes(q))
                 s = 400;
             if (s >= 0)
-                ranked.push({ w, entry, app, score: s, recent: w.lastIpcObject?.focusHistoryID ?? 1e9 });
+                ranked.push({
+                    w,
+                    entry,
+                    app,
+                    score: s,
+                    recent: w.lastIpcObject?.focusHistoryID ?? 1e9
+                });
         }
         ranked.sort((a, b) => b.score - a.score || a.recent - b.recent);
-        return ranked.map(r => ({ window: r.w, name: r.w.title || r.app || "Window", app: r.app, icon: r.entry?.icon ?? "" }));
+        return ranked.map(r => ({
+                    window: r.w,
+                    name: r.w.title || r.app || "Window",
+                    app: r.app,
+                    icon: r.entry?.icon ?? ""
+                }));
     }
 
     // "Brave · workspace 1", "KeePassXC · passwords scratchpad"
@@ -247,10 +283,18 @@ PanelWindow {
             else if (name.includes(q) || e.k.includes(q))
                 s = 100;
             if (s >= 0)
-                ranked.push({ e, i, score: s + used });
+                ranked.push({
+                    e,
+                    i,
+                    score: s + used
+                });
         });
         ranked.sort((a, b) => b.score - a.score || a.i - b.i);
-        return ranked.map(r => ({ emoji: r.e.e, name: r.e.n[0].toUpperCase() + r.e.n.slice(1), keywords: r.e.k }));
+        return ranked.map(r => ({
+                    emoji: r.e.e,
+                    name: r.e.n[0].toUpperCase() + r.e.n.slice(1),
+                    keywords: r.e.k
+                }));
     }
 
     // The value of an arithmetic expression, or null for anything else.
@@ -268,11 +312,26 @@ PanelWindow {
         const tokens = src.toLowerCase().replace(/,/g, ".").match(/\d*\.?\d+(?:e[+-]?\d+)?|[a-zπ]+|\*\*|\S/g);
         if (!tokens)
             return null;
-        const constants = { pi: Math.PI, "π": Math.PI, e: Math.E };
+        const constants = {
+            pi: Math.PI,
+            "π": Math.PI,
+            e: Math.E
+        };
         const functions = {
-            sqrt: Math.sqrt, abs: Math.abs, exp: Math.exp, ln: Math.log, log: Math.log10,
-            sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan,
-            round: Math.round, floor: Math.floor, ceil: Math.ceil
+            sqrt: Math.sqrt,
+            abs: Math.abs,
+            exp: Math.exp,
+            ln: Math.log,
+            log: Math.log10,
+            sin: Math.sin,
+            cos: Math.cos,
+            tan: Math.tan,
+            asin: Math.asin,
+            acos: Math.acos,
+            atan: Math.atan,
+            round: Math.round,
+            floor: Math.floor,
+            ceil: Math.ceil
         };
         let pos = 0;
         const peek = () => tokens[pos];
@@ -460,8 +519,18 @@ PanelWindow {
 
         opacity: root.shown ? 1 : 0
         scale: root.shown ? 1 : 0.97
-        Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 140
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
 
         ColumnLayout {
             id: content

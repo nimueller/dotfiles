@@ -143,7 +143,9 @@ Rectangle {
                 text: `${Media.time(root.player?.position ?? 0)} / ${Media.time(root.player?.length ?? 0)}`
                 color: Theme.subtext1
                 font.pixelSize: 11
-                font.features: { "tnum": 1 }
+                font.features: {
+                    "tnum": 1
+                }
             }
         }
 
@@ -165,7 +167,9 @@ Rectangle {
                 text: Media.time(root.player?.position ?? 0)
                 color: Theme.subtext1
                 font.pixelSize: 11
-                font.features: { "tnum": 1 }
+                font.features: {
+                    "tnum": 1
+                }
             }
         }
     }

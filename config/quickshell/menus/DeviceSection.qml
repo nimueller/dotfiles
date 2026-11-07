@@ -36,7 +36,11 @@ ColumnLayout {
         radius: 8
         color: pickerMouse.containsMouse && root.others.length > 0 ? Theme.surface1 : Theme.surface0
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
 
         RowLayout {
             anchors.fill: parent
@@ -85,7 +89,11 @@ ColumnLayout {
             radius: 8
             color: optionMouse.containsMouse ? Theme.alpha(root.accent, 0.15) : "transparent"
 
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 120
+                }
+            }
 
             RowLayout {
                 anchors.fill: parent

@@ -40,7 +40,12 @@ Item {
         const window = Windows.forPid(c.pid);
         const entry = Windows.entry(window);
         const icons = [entry?.icon, c.comm, Windows.launcherEntry(c.pid)?.icon].map(i => i ? Quickshell.iconPath(i, true) : "");
-        return { name: entry?.name || c.comm, icon: icons.find(i => i) ?? "", pid: c.pid, window };
+        return {
+            name: entry?.name || c.comm,
+            icon: icons.find(i => i) ?? "",
+            pid: c.pid,
+            window
+        };
     }))
     readonly property var microphoneUsers: unique(microphones.map(streamUser))
     readonly property var screenUsers: unique(videoStreams.map(streamUser))
@@ -52,7 +57,12 @@ Item {
         const ownPid = parseInt(p["application.process.id"]);
         const window = appId ? Windows.forApp(p["application.icon-name"]) ?? Windows.forApp(appId) : ownPid > 0 ? Windows.forPid(ownPid) : null;
         const pid = appId ? window?.lastIpcObject?.pid : ownPid;
-        return { name: Audio.appName(node), icon: Audio.appIcon(node), pid: pid > 0 ? pid : 0, window };
+        return {
+            name: Audio.appName(node),
+            icon: Audio.appIcon(node),
+            pid: pid > 0 ? pid : 0,
+            window
+        };
     }
 
     function unique(users) {
@@ -74,7 +84,10 @@ Item {
         command: ["sh", "-c", 'set -- /dev/video*; [ -e "$1" ] || exit 0; find /proc/[0-9]*/fd -lname "/dev/video*" 2>/dev/null | cut -d/ -f3 | sort -u | while read -r pid; do echo "$pid $(cat "/proc/$pid/comm")"; done 2>/dev/null']
         stdout: StdioCollector {
             onStreamFinished: {
-                const holders = text.split("\n").filter(l => / ./.test(l)).map(l => ({ pid: parseInt(l), comm: l.slice(l.indexOf(" ") + 1) }));
+                const holders = text.split("\n").filter(l => / ./.test(l)).map(l => ({
+                            pid: parseInt(l),
+                            comm: l.slice(l.indexOf(" ") + 1)
+                        }));
                 root.cameraProcesses = holders.filter(h => h.comm !== "pipewire" && h.comm !== "wireplumber");
                 root.camera = holders.length > 0;
             }
@@ -92,7 +105,11 @@ Item {
     // OSD when a device starts being used. Streams come and go while apps
     // start up: act once a change has lasted a moment, and show nothing for
     // what is already in use when the daemon starts.
-    property var announced: ({ camera: false, microphone: false, screen: false })
+    property var announced: ({
+            camera: false,
+            microphone: false,
+            screen: false
+        })
     property bool started: false
 
     onCameraChanged: settle.restart()
@@ -103,13 +120,25 @@ Item {
         id: settle
         interval: 1000
         onTriggered: {
-            const now = { camera: root.camera, microphone: root.microphone, screen: root.screen };
+            const now = {
+                camera: root.camera,
+                microphone: root.microphone,
+                screen: root.screen
+            };
             const started = ["camera", "microphone", "screen"].filter(k => now[k] && !root.announced[k]);
             root.announced = now;
             if (!root.started || started.length === 0)
                 return;
-            const names = { camera: "Camera", microphone: "Microphone", screen: "Screen" };
-            const users = { camera: root.cameraUsers, microphone: root.microphoneUsers, screen: root.screenUsers };
+            const names = {
+                camera: "Camera",
+                microphone: "Microphone",
+                screen: "Screen"
+            };
+            const users = {
+                camera: root.cameraUsers,
+                microphone: root.microphoneUsers,
+                screen: root.screenUsers
+            };
             const title = started.map((k, i) => i === 0 ? names[k] : names[k].toLowerCase()).join(" and ") + (started.length > 1 ? " are" : " is") + (started.length === 1 && started[0] === "screen" ? " shared" : " in use");
             root.osd.privacy(started[0], title, [...new Set([].concat(...started.map(k => users[k].map(u => u.name))))].join(", "));
         }

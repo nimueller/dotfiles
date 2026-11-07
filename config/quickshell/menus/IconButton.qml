@@ -19,7 +19,11 @@ Rectangle {
     radius: 8
     color: active ? Theme.alpha(accent, hovered ? 0.3 : 0.18) : hovered ? Theme.surface1 : Theme.surface0
 
-    Behavior on color { ColorAnimation { duration: 150 } }
+    Behavior on color {
+        ColorAnimation {
+            duration: 150
+        }
+    }
 
     RowLayout {
         id: row

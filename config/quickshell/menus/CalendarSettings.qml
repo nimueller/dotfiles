@@ -91,12 +91,14 @@ RowLayout {
                 Layout.fillWidth: true
                 placeholder: "Search a city"
                 accent: Theme.lavender
-                onAccepted: if (text) root.searchLocation(text)
+                onAccepted: if (text)
+                    root.searchLocation(text)
             }
             IconButton {
                 glyph: Theme.glyph(0xf0349) // 󰍉
                 text: "Search"
-                onClicked: if (city.text) root.searchLocation(city.text)
+                onClicked: if (city.text)
+                    root.searchLocation(city.text)
             }
         }
         Repeater {
@@ -281,7 +283,8 @@ RowLayout {
                 IconButton {
                     glyph: Theme.glyph(0xf0450) // 󰑐
                     text: root.busy ? "Loading…" : "Reload"
-                    onClicked: if (!root.busy) root.refreshCalendars()
+                    onClicked: if (!root.busy)
+                        root.refreshCalendars()
                 }
                 IconButton {
                     glyph: Theme.glyph(0xf0343) // 󰍃

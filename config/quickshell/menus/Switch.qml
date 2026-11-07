@@ -17,7 +17,11 @@ Rectangle {
     opacity: enabled ? 1 : 0.4
     color: checked ? accent : Theme.surface1
 
-    Behavior on color { ColorAnimation { duration: 150 } }
+    Behavior on color {
+        ColorAnimation {
+            duration: 150
+        }
+    }
 
     Rectangle {
         width: root.height - 6
@@ -27,7 +31,12 @@ Rectangle {
         x: root.checked ? parent.width - width - 3 : 3
         color: root.checked ? Theme.base : Theme.overlay1
 
-        Behavior on x { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on x {
+            NumberAnimation {
+                duration: 150
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
     MouseArea {
