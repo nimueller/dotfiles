@@ -107,7 +107,7 @@ Popup {
             days: Math.round((lastDay - firstDay) / 86400000) + 1,
             href: e.href ?? "",
             etag: e.etag ?? "",
-            editable: !!e.href && !e.recurring && canWrite[e.calendar]
+            editable: !!e.href && !e.recurring && canWrite[e.calendar] === true
         };
     }).sort((a, b) => b.allDay - a.allDay || a.start - b.start)
     // "yyyy-MM-dd" -> lanes of the day box: the events touching that day, null
