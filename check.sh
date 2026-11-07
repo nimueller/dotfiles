@@ -2,7 +2,8 @@
 # The repository's checks, run by CI and by the optional pre-commit hook
 # (git config core.hooksPath .githooks). The tools come from the flake's
 # devShell (flake.nix), so from the nixpkgs in flake.lock; `nix fmt` fixes
-# what nixfmt complains about, `ruff format .` what ruff format does.
+# what nixfmt complains about, `ruff format .` what ruff format does,
+# `stylua .` what stylua does.
 set -uo pipefail
 cd "$(dirname "$(readlink -f "$0")")" || exit 1
 
@@ -37,6 +38,7 @@ step "deadnix" deadnix --fail .
 step "shellcheck" shellcheck install.sh check.sh .github/check-flake.sh .githooks/pre-commit pkgs/scripts/*.sh config/quickshell/menus/*.sh system/*.sh
 step "ruff" ruff check .
 step "ruff format" ruff format --check .
+step "stylua" stylua --check .
 step "pyright" pyright
 step "python tests" python3 -m unittest discover --start-directory tests --top-level-directory tests
 step "qmllint" qml

@@ -1,0 +1,7 @@
+# Lua in this repository: the Hyprland and Neovim configuration (see
+# CODE_GUIDELINES.md). Same width as ruff.toml; indentation and quotes as the
+# files already had them
+column_width = 120
+indent_type = "Spaces"
+indent_width = 4
+quote_style = "AutoPreferDouble"
