@@ -95,7 +95,13 @@ Scope {
                 for (const line of text.split("\n")) {
                     const f = line.trim().split(/\s+/);
                     if (f.length >= 7 && f[2] === "VCP" && parseInt(f[6]) > 0)
-                        found[f[1]] = { bus: f[0], model: f.slice(7).join(" "), value: parseInt(f[5]), max: parseInt(f[6]), time: Date.now() };
+                        found[f[1]] = {
+                            bus: f[0],
+                            model: f.slice(7).join(" "),
+                            value: parseInt(f[5]),
+                            max: parseInt(f[6]),
+                            time: Date.now()
+                        };
                 }
                 root.displays = found;
                 root.save();
@@ -104,7 +110,10 @@ Scope {
     }
 
     function save() {
-        cacheFile.setText(JSON.stringify({ screens: screens, displays: displays }));
+        cacheFile.setText(JSON.stringify({
+            screens: screens,
+            displays: displays
+        }));
     }
 
     Timer {

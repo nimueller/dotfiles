@@ -10,14 +10,50 @@ PanelWindow {
     id: root
 
     readonly property var actions: [
-        { text: "Lock", key: "L", glyph: 0xf033e, accent: Theme.lavender, command: "lock-screen" },
-        { text: "Log out", key: "E", glyph: 0xf0343, accent: Theme.blue, command: "hyprctl dispatch 'hl.dsp.exit()'" },
-        { text: "Suspend", key: "U", glyph: 0xf0904, accent: Theme.mauve, command: "systemctl suspend" },
-        { text: "Reboot", key: "R", glyph: 0xf0709, accent: Theme.peach, command: root.gracefully("Rebooting…", "systemctl reboot") },
-        { text: "Shut down", key: "S", glyph: 0xf0425, accent: Theme.red, command: root.gracefully("Shutting down…", "systemctl poweroff") }
+        {
+            text: "Lock",
+            key: "L",
+            glyph: 0xf033e,
+            accent: Theme.lavender,
+            command: "lock-screen"
+        },
+        {
+            text: "Log out",
+            key: "E",
+            glyph: 0xf0343,
+            accent: Theme.blue,
+            command: "hyprctl dispatch 'hl.dsp.exit()'"
+        },
+        {
+            text: "Suspend",
+            key: "U",
+            glyph: 0xf0904,
+            accent: Theme.mauve,
+            command: "systemctl suspend"
+        },
+        {
+            text: "Reboot",
+            key: "R",
+            glyph: 0xf0709,
+            accent: Theme.peach,
+            command: root.gracefully("Rebooting…", "systemctl reboot")
+        },
+        {
+            text: "Shut down",
+            key: "S",
+            glyph: 0xf0425,
+            accent: Theme.red,
+            command: root.gracefully("Shutting down…", "systemctl poweroff")
+        }
     ].concat(root.streaming ? [
         // Last, so the selection doesn't move when it shows up
-        { text: "Disconnect", key: "D", glyph: 0xf078a, accent: Theme.teal, command: "sunshine-disconnect" }
+        {
+            text: "Disconnect",
+            key: "D",
+            glyph: 0xf078a,
+            accent: Theme.teal,
+            command: "sunshine-disconnect"
+        }
     ] : [])
 
     // A Moonlight client is connected. The stay-awake inhibitor from
@@ -79,7 +115,12 @@ PanelWindow {
         opacity: 0
         Component.onCompleted: opacity = 1
 
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
 
         MouseArea {
             anchors.fill: parent

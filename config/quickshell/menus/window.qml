@@ -53,6 +53,8 @@ Popup {
         return details.length ? `${info.name} (${details.join(", ")})` : info.name;
     }
 
+    // One entry per line: qmlformat would join them into one line
+    // qmlformat off
     readonly property var rows: !win?.address ? [] : [
         ["Title", win.title],
         ["Class", win.class],
@@ -72,6 +74,7 @@ Popup {
         ["Tags", win.tags.join(", ")],
         ["Address", win.address]
     ].filter(r => r[1])
+    // qmlformat on
 
     Timer {
         id: copiedTimer
@@ -171,7 +174,11 @@ Popup {
                 radius: 6
                 color: isCopied ? Theme.alpha(Theme.green, 0.15) : mouse.containsMouse ? Theme.surface0 : "transparent"
 
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 150
+                    }
+                }
 
                 Label {
                     x: 8

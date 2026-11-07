@@ -20,21 +20,35 @@ Rectangle {
     radius: 8
     color: expanded ? Theme.surface0 : mouse.containsMouse ? Theme.alpha(Theme.surface0, 0.6) : "transparent"
 
-    Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on color {
+        ColorAnimation {
+            duration: 120
+        }
+    }
 
     // BlueZ's icon names, by what they're for
     function glyph(icon) {
         const glyphs = {
-            "audio-headset": 0xf02ce, // 󰋎
-            "audio-headphones": 0xf02cb, // 󰋋
-            "audio-card": 0xf04c3, // 󰓃
-            "input-mouse": 0xf037d, // 󰍽
-            "input-keyboard": 0xf030c, // 󰌌
-            "input-gaming": 0xf0297, // 󰊗
-            "input-tablet": 0xf04f7, // 󰓷
-            "phone": 0xf011c, // 󰄜
-            "computer": 0xf0322, // 󰌢
-            "camera-video": 0xf0567, // 󰕧
+            // 󰋎
+            "audio-headset": 0xf02ce,
+            // 󰋋
+            "audio-headphones": 0xf02cb,
+            // 󰓃
+            "audio-card": 0xf04c3,
+            // 󰍽
+            "input-mouse": 0xf037d,
+            // 󰌌
+            "input-keyboard": 0xf030c,
+            // 󰊗
+            "input-gaming": 0xf0297,
+            // 󰓷
+            "input-tablet": 0xf04f7,
+            // 󰄜
+            "phone": 0xf011c,
+            // 󰌢
+            "computer": 0xf0322,
+            // 󰕧
+            "camera-video": 0xf0567,
             "printer": 0xf042a // 󰐪
         };
         return Theme.glyph(glyphs[icon] ?? 0xf00af); // 󰂯

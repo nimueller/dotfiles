@@ -50,7 +50,11 @@ Rectangle {
                 radius: 6
                 color: active ? (isSpecial ? Theme.mauve : Theme.lavender) : modelData.urgent ? Theme.peach : mouse.containsMouse || mouse.pressed ? Theme.surface1 : "transparent"
 
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 200
+                    }
+                }
 
                 BarLabel {
                     id: label

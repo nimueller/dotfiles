@@ -29,7 +29,11 @@ Rectangle {
     radius: 8
     color: solid ? (hovered ? Qt.lighter(accent, 1.08) : accent) : plain ? (hovered ? Theme.surface1 : Theme.surface0) : Theme.alpha(accent, hovered ? 0.25 : 0.15)
 
-    Behavior on color { ColorAnimation { duration: 200 } }
+    Behavior on color {
+        ColorAnimation {
+            duration: 200
+        }
+    }
 
     Row {
         id: row
@@ -44,7 +48,11 @@ Rectangle {
             color: root.foreground
             font.bold: root.bold || root.solid
 
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 200
+                }
+            }
         }
     }
 

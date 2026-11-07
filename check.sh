@@ -3,7 +3,8 @@
 # (git config core.hooksPath .githooks). The tools come from the flake's
 # devShell (flake.nix), so from the nixpkgs in flake.lock; `nix fmt` fixes
 # what nixfmt complains about, `ruff format .` what ruff format does,
-# `stylua .` what stylua does.
+# `stylua .` what stylua does, and
+# `git ls-files -z '*.qml' | xargs -0 qmlformat -i` what qmlformat does.
 set -uo pipefail
 cd "$(dirname "$(readlink -f "$0")")" || exit 1
 
@@ -32,6 +33,19 @@ qml() {
     return "$code"
 }
 
+# qmlformat has no check mode: a file differs from its formatted output
+# shellcheck disable=SC2329 # called through step
+qml_format() {
+    local file status=0
+    while IFS= read -r -d '' file; do
+        if ! qmlformat "$file" | cmp -s - "$file"; then
+            echo "would reformat: $file"
+            status=1
+        fi
+    done < <(git ls-files -z "*.qml")
+    return "$status"
+}
+
 step "nixfmt" bash -c 'git ls-files -z "*.nix" | xargs -0 nixfmt --check'
 step "statix" statix check .
 step "deadnix" deadnix --fail .
@@ -41,6 +55,7 @@ step "ruff format" ruff format --check .
 step "stylua" stylua --check .
 step "pyright" pyright
 step "python tests" python3 -m unittest discover --start-directory tests --top-level-directory tests
+step "qmlformat" qml_format
 step "qmllint" qml
 
 if [ "$status" = 0 ]; then echo "All checks passed"; else echo "Some checks failed"; fi

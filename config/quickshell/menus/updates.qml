@@ -57,7 +57,11 @@ Popup {
                 radius: 6
                 color: mouse.containsMouse ? Theme.surface0 : "transparent"
 
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 150
+                    }
+                }
 
                 Column {
                     id: column

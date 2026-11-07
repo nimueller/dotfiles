@@ -7,7 +7,10 @@ Controls.ComboBox {
     id: root
 
     property var current: null // the value shown as chosen
-    readonly property var entries: (model ?? []).map(e => typeof e === "object" ? e : { text: String(e), value: e })
+    readonly property var entries: (model ?? []).map(e => typeof e === "object" ? e : {
+            text: String(e),
+            value: e
+        })
 
     signal picked(var value)
 

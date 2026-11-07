@@ -26,7 +26,8 @@ Rectangle {
     border.width: 1
     border.color: Theme.alpha(Theme.blue, 0.35)
 
-    Component.onCompleted: if (typing) field.focusField()
+    Component.onCompleted: if (typing)
+        field.focusField()
 
     ColumnLayout {
         id: column

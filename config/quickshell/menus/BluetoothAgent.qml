@@ -17,12 +17,18 @@ Singleton {
 
     function answer(id, ok, value) {
         requests = requests.filter(r => r.id !== id);
-        send({ id: id, ok: ok, value: value ?? "" });
+        send({
+            id: id,
+            ok: ok,
+            value: value ?? ""
+        });
     }
 
     // Be the agent BlueZ asks again, after Blueman's took over
     function makeDefault() {
-        send({ default: true });
+        send({
+            default: true
+        });
     }
 
     function send(message) {

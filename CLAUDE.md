@@ -86,6 +86,7 @@ tools come from the flake's devShell, so they have the versions in
 | stylua (`stylua.toml`) | `stylua .` |
 | pyright (`pyrightconfig.json`) | by hand |
 | Python tests (`tests/`) | by hand |
+| qmlformat | `git ls-files -z '*.qml' \| xargs -0 qmlformat -i` |
 | qmllint (syntax only) | by hand |
 
 `.github/check-flake.sh` evaluates the flake and every Home Manager

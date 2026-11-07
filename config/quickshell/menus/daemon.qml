@@ -40,7 +40,6 @@ ShellRoot {
 
     Component.onCompleted: Menus.hosted = true
 
-
     NotificationStore {
         id: notificationStore
         sharing: privacyStatus.screen // no popups on a shared screen
@@ -119,7 +118,8 @@ ShellRoot {
         id: batteryLog
         running: Modes.laptop
         command: ["/usr/bin/python3", Quickshell.shellPath("battery-log.py")]
-        onExited: if (Modes.laptop) batteryLogRestart.start()
+        onExited: if (Modes.laptop)
+            batteryLogRestart.start()
     }
     Timer {
         id: batteryLogRestart

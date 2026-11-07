@@ -32,7 +32,9 @@ Process {
             try {
                 result = JSON.parse(text);
             } catch (e) {
-                result = { error: "The calendar helper failed" };
+                result = {
+                    error: "The calendar helper failed"
+                };
             }
             if (result.error && call.failed)
                 call.failed(result.error);

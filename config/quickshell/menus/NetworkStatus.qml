@@ -43,7 +43,11 @@ Item {
                 // Escaped colons only occur in the connection name (last field)
                 const devices = text.split("\n").filter(l => l).map(l => {
                     const [type, state, ...rest] = l.split(":");
-                    return { type, state, name: rest.join(":").replace(/\\:/g, ":") };
+                    return {
+                        type,
+                        state,
+                        name: rest.join(":").replace(/\\:/g, ":")
+                    };
                 }).filter(d => d.state === "connected");
                 const device = devices.find(d => d.type === "ethernet") ?? devices.find(d => d.type === "wifi");
                 root.kind = device?.type ?? "";

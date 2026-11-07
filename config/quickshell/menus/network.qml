@@ -192,7 +192,10 @@ Popup {
                 for (const line of text.split("\n").filter(l => l)) {
                     const [kind, uuid, a, b] = line.split("\t");
                     if (kind === "vpn")
-                        info[uuid] = { service: a, data: b };
+                        info[uuid] = {
+                            service: a,
+                            data: b
+                        };
                     else if (a)
                         ssids[a.replace(/\\(.)/g, "$1")] = uuid; // -g escapes colons
                 }
@@ -245,7 +248,8 @@ Popup {
         property string ssid: ""
 
         stdout: StdioCollector {
-            onStreamFinished: if (text) popup.wifiCode(text)
+            onStreamFinished: if (text)
+                popup.wifiCode(text)
         }
         stderr: StdioCollector {
             id: secretsErr
@@ -268,7 +272,11 @@ Popup {
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text && popup.expanded === qrencode.ssid)
-                    popup.shared = { ssid: qrencode.ssid, qr: `data:image/png;base64,${text.trim()}`, password: qrencode.password };
+                    popup.shared = {
+                        ssid: qrencode.ssid,
+                        qr: `data:image/png;base64,${text.trim()}`,
+                        password: qrencode.password
+                    };
                 qrencode.password = "";
             }
         }
@@ -321,7 +329,8 @@ Popup {
         interval: 4000
         running: true
         repeat: true
-        onTriggered: if (!action.running) popup.refresh()
+        onTriggered: if (!action.running)
+            popup.refresh()
     }
 
     Header {
@@ -487,7 +496,8 @@ Popup {
                 password: popup.shared?.ssid === modelData.ssid ? popup.shared.password : ""
 
                 // Keep the QR code in view
-                onQrChanged: if (qr) wifiList.positionViewAtIndex(index, ListView.Contain)
+                onQrChanged: if (qr)
+                    wifiList.positionViewAtIndex(index, ListView.Contain)
 
                 onClicked: {
                     popup.error = "";

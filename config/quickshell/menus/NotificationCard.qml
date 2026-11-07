@@ -21,7 +21,11 @@ Rectangle {
     border.width: critical ? 1 : 0
     border.color: Theme.alpha(Theme.red, 0.6)
 
-    Behavior on color { ColorAnimation { duration: 120 } }
+    Behavior on color {
+        ColorAnimation {
+            duration: 120
+        }
+    }
 
     function age(ms) {
         const s = Math.max(0, Math.floor(ms / 1000));
@@ -104,7 +108,11 @@ Rectangle {
                     color: closeMouse.containsMouse ? Theme.alpha(Theme.red, 0.2) : "transparent"
                     opacity: mouse.containsMouse || closeMouse.containsMouse ? 1 : 0
 
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Label {
                         anchors.centerIn: parent

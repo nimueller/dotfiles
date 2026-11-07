@@ -13,15 +13,60 @@ Rectangle {
     property string hint: ""
 
     readonly property var tools: [
-        { id: "select", glyph: 0xf01be, name: "Move and resize the selection", key: "V" },
-        { id: "pen", glyph: 0xf03eb, name: "Pen", key: "P" },
-        { id: "line", glyph: 0xf0fdf, name: "Line", key: "L" },
-        { id: "arrow", glyph: 0xf005c, name: "Arrow", key: "A" },
-        { id: "rect", glyph: 0xf0763, name: "Rectangle", key: "R" },
-        { id: "ellipse", glyph: 0xf0766, name: "Ellipse", key: "O" },
-        { id: "marker", glyph: 0xf0652, name: "Highlighter", key: "M" },
-        { id: "text", glyph: 0xf0284, name: "Text", key: "T" },
-        { id: "pixelate", glyph: 0xf00b5, name: "Pixelate", key: "B" }
+        {
+            id: "select",
+            glyph: 0xf01be,
+            name: "Move and resize the selection",
+            key: "V"
+        },
+        {
+            id: "pen",
+            glyph: 0xf03eb,
+            name: "Pen",
+            key: "P"
+        },
+        {
+            id: "line",
+            glyph: 0xf0fdf,
+            name: "Line",
+            key: "L"
+        },
+        {
+            id: "arrow",
+            glyph: 0xf005c,
+            name: "Arrow",
+            key: "A"
+        },
+        {
+            id: "rect",
+            glyph: 0xf0763,
+            name: "Rectangle",
+            key: "R"
+        },
+        {
+            id: "ellipse",
+            glyph: 0xf0766,
+            name: "Ellipse",
+            key: "O"
+        },
+        {
+            id: "marker",
+            glyph: 0xf0652,
+            name: "Highlighter",
+            key: "M"
+        },
+        {
+            id: "text",
+            glyph: 0xf0284,
+            name: "Text",
+            key: "T"
+        },
+        {
+            id: "pixelate",
+            glyph: 0xf00b5,
+            name: "Pixelate",
+            key: "B"
+        }
     ]
 
     function say(hovered, text) {

@@ -64,7 +64,12 @@ Singleton {
     }
 
     function flightColour(category) {
-        return ({ VFR: Theme.green, MVFR: Theme.blue, IFR: Theme.red, LIFR: Theme.mauve })[category] ?? Theme.overlay1;
+        return ({
+                VFR: Theme.green,
+                MVFR: Theme.blue,
+                IFR: Theme.red,
+                LIFR: Theme.mauve
+            })[category] ?? Theme.overlay1;
     }
 
     // Visibility in statute miles ("6+" = 6 or more) as km

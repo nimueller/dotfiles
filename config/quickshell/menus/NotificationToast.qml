@@ -46,22 +46,52 @@ Rectangle {
     border.width: 1
     border.color: critical ? Theme.alpha(Theme.red, 0.7) : hovered ? Theme.surface1 : Theme.surface0
 
-    Behavior on border.color { ColorAnimation { duration: 150 } }
+    Behavior on border.color {
+        ColorAnimation {
+            duration: 150
+        }
+    }
 
     // Slide in from the right, fade out to the right
-    transform: Translate { id: slide }
+    transform: Translate {
+        id: slide
+    }
     Component.onCompleted: intro.start()
     ParallelAnimation {
         id: intro
-        NumberAnimation { target: root; property: "opacity"; from: 0; to: 1; duration: 180 }
-        NumberAnimation { target: slide; property: "x"; from: 48; to: 0; duration: 260; easing.type: Easing.OutCubic }
+        NumberAnimation {
+            target: root
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: 180
+        }
+        NumberAnimation {
+            target: slide
+            property: "x"
+            from: 48
+            to: 0
+            duration: 260
+            easing.type: Easing.OutCubic
+        }
     }
     SequentialAnimation {
         id: outro
         property var then: null
         ParallelAnimation {
-            NumberAnimation { target: root; property: "opacity"; to: 0; duration: 160 }
-            NumberAnimation { target: slide; property: "x"; to: 32; duration: 160; easing.type: Easing.InCubic }
+            NumberAnimation {
+                target: root
+                property: "opacity"
+                to: 0
+                duration: 160
+            }
+            NumberAnimation {
+                target: slide
+                property: "x"
+                to: 32
+                duration: 160
+                easing.type: Easing.InCubic
+            }
         }
         ScriptAction {
             script: {
@@ -151,7 +181,11 @@ Rectangle {
                     opacity: root.hovered ? 1 : 0
                     color: closeMouse.containsMouse ? Theme.alpha(Theme.red, 0.2) : Theme.surface0
 
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Label {
                         anchors.centerIn: parent
@@ -242,10 +276,15 @@ Rectangle {
         width: (parent.width - 24) * root.remaining
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0; color: Theme.lavender }
-            GradientStop { position: 1; color: Theme.mauve }
+            GradientStop {
+                position: 0
+                color: Theme.lavender
+            }
+            GradientStop {
+                position: 1
+                color: Theme.mauve
+            }
         }
-
     }
 
     NumberAnimation on remaining {

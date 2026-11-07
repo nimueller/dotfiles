@@ -20,9 +20,26 @@ Popup {
     resident: true
 
     readonly property var sections: [
-        { active: privacy.camera, glyph: Theme.glyph(0xf05a0), title: "Camera", apps: privacy.cameraUsers }, // 󰖠
-        { active: privacy.microphone, glyph: Theme.glyph(0xf036c), title: "Microphone", apps: privacy.microphoneUsers }, // 󰍬
-        { active: privacy.screen, glyph: Theme.glyph(0xf0379), title: "Screen sharing", apps: privacy.screenUsers } // 󰍹
+        {
+            active: privacy.camera,
+            glyph: Theme.glyph(0xf05a0),
+            title: "Camera",
+            apps: privacy.cameraUsers
+        // 󰖠
+        },
+        {
+            active: privacy.microphone,
+            glyph: Theme.glyph(0xf036c),
+            title: "Microphone",
+            apps: privacy.microphoneUsers
+        // 󰍬
+        },
+        {
+            active: privacy.screen,
+            glyph: Theme.glyph(0xf0379),
+            title: "Screen sharing",
+            apps: privacy.screenUsers
+        } // 󰍹
     ]
 
     function focus(window) {
@@ -94,7 +111,11 @@ Popup {
                         radius: 8
                         color: Theme.alpha(Theme.peach, iconMouse.containsMouse ? 0.25 : 0.15)
 
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
 
                         Label {
                             anchors.centerIn: parent

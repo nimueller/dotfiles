@@ -97,7 +97,10 @@ Scope {
     // can still be the old one. Show the flipped last known state at once,
     // then confirm it from the main keyboard (every 80 ms for about a second;
     // if it never matches, e.g. another keyboard changed it, show the real one).
-    property var locks: ({ caps: false, num: false })
+    property var locks: ({
+            caps: false,
+            num: false
+        })
     property string lockWhich: "caps"
     property bool lockExpected: false
     property int lockTries: 0
@@ -132,7 +135,10 @@ Scope {
                 }
                 if (!keyboard)
                     return;
-                root.locks = { caps: keyboard.capsLock, num: keyboard.numLock };
+                root.locks = {
+                    caps: keyboard.capsLock,
+                    num: keyboard.numLock
+                };
                 if (!lockPoll.running)
                     return;
                 const actual = root.locks[root.lockWhich];
@@ -231,10 +237,28 @@ Scope {
             border.color: Theme.surface0
             opacity: root.shown ? 1 : 0
             scale: root.shown ? 1 : 0.92
-            transform: Translate { y: root.shown ? 0 : 12; Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } } }
+            transform: Translate {
+                y: root.shown ? 0 : 12
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 220
+                        easing.type: Easing.OutCubic
+                    }
+                }
+            }
 
-            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-            Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 180
+                    easing.type: Easing.OutCubic
+                }
+            }
+            Behavior on scale {
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutBack
+                }
+            }
 
             RowLayout {
                 id: row
@@ -248,7 +272,11 @@ Scope {
                     radius: 19
                     color: Theme.alpha(pill.accent, 0.15)
 
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
 
                     Label {
                         anchors.centerIn: parent
@@ -256,7 +284,11 @@ Scope {
                         color: pill.accent
                         text: {
                             if (root.kind === "privacy")
-                                return Theme.glyph({ camera: 0xf05a0, microphone: 0xf036c, screen: 0xf0379 }[root.device]); // 󰖠 󰍬 󰍹
+                                return Theme.glyph({
+                                    camera: 0xf05a0,
+                                    microphone: 0xf036c,
+                                    screen: 0xf0379
+                                }[root.device]); // 󰖠 󰍬 󰍹
                             if (root.kind === "awake")
                                 return Theme.glyph(root.muted ? 0xf04b2 : 0xf0176); // 󰒲 / 󰅶
                             if (root.kind === "caps")
@@ -267,7 +299,10 @@ Scope {
                                 return Theme.glyph(root.muted ? 0xf036d : 0xf036c); // 󰍭 / 󰍬
                             if (root.kind === "brightness")
                                 return Theme.glyph(root.value < 0.34 ? 0xf00de : root.value < 0.67 ? 0xf00df : 0xf00e0); // 󰃞 󰃟 󰃠
-                            return Audio.volumeIcon({ volume: root.value, muted: root.muted });
+                            return Audio.volumeIcon({
+                                volume: root.value,
+                                muted: root.muted
+                            });
                         }
                     }
                 }
@@ -323,11 +358,21 @@ Scope {
                         radius: 4
                         gradient: Gradient {
                             orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: root.muted ? Theme.overlay0 : Theme.lavender }
-                            GradientStop { position: 1; color: root.muted ? Theme.overlay0 : Theme.mauve }
+                            GradientStop {
+                                position: 0
+                                color: root.muted ? Theme.overlay0 : Theme.lavender
+                            }
+                            GradientStop {
+                                position: 1
+                                color: root.muted ? Theme.overlay0 : Theme.mauve
+                            }
                         }
 
-                        Behavior on width { NumberAnimation { duration: 90 } }
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: 90
+                            }
+                        }
                     }
                 }
 

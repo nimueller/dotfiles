@@ -25,9 +25,22 @@ Column {
         border.color: root.selected ? root.action.accent : Theme.surface0
         scale: root.selected ? 1.06 : 1
 
-        Behavior on color { ColorAnimation { duration: 150 } }
-        Behavior on border.color { ColorAnimation { duration: 150 } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
+        Behavior on border.color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
+        Behavior on scale {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Label {
             anchors.centerIn: parent
@@ -35,7 +48,11 @@ Column {
             font.pixelSize: 40
             color: mouse.pressed ? Theme.crust : root.selected ? root.action.accent : Theme.text
 
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 150
+                }
+            }
         }
 
         MouseArea {

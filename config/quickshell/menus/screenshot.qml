@@ -78,7 +78,12 @@ ShellRoot {
     property bool loaded: false
     function remember() {
         if (loaded)
-            settingsFile.setText(JSON.stringify({ percent, color, size, sound }, null, 2));
+            settingsFile.setText(JSON.stringify({
+                percent,
+                color,
+                size,
+                sound
+            }, null, 2));
     }
     onPercentChanged: remember()
     onColorChanged: remember()

@@ -25,6 +25,10 @@ Singleton {
         const m = text.trim().toLowerCase().match(/^(\d+)\s*(m|min|h|d|w)?$/);
         if (!m)
             return null;
-        return parseInt(m[1]) * ({ h: 60, d: 1440, w: 10080 }[m[2]] ?? 1);
+        return parseInt(m[1]) * ({
+                h: 60,
+                d: 1440,
+                w: 10080
+            }[m[2]] ?? 1);
     }
 }

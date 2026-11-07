@@ -35,7 +35,10 @@ Singleton {
             return null;
         // pid (comm) state ppid ...; comm may contain spaces and parentheses
         const close = text.lastIndexOf(")");
-        return { comm: text.slice(text.indexOf("(") + 1, close), ppid: parseInt(text.slice(close + 2).split(" ")[1]) };
+        return {
+            comm: text.slice(text.indexOf("(") + 1, close),
+            ppid: parseInt(text.slice(close + 2).split(" ")[1])
+        };
     }
 
     // pid, then its parent, its parent's parent, ... as long as they run the
@@ -46,8 +49,15 @@ Singleton {
         let p = pid, s = stat(p);
         for (; s && s.comm === comm && chain.length < 32; p = s.ppid, s = p > 1 ? stat(p) : null)
             chain.push(p);
-        chains = Object.assign({}, chains, { [pid]: chain });
-        launchers = Object.assign({}, launchers, { [pid]: s && s.comm !== comm ? { pid: p, comm: s.comm } : null });
+        chains = Object.assign({}, chains, {
+            [pid]: chain
+        });
+        launchers = Object.assign({}, launchers, {
+            [pid]: s && s.comm !== comm ? {
+                pid: p,
+                comm: s.comm
+            } : null
+        });
         return chain;
     }
 

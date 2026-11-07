@@ -62,10 +62,17 @@ Popup {
     readonly property var nextcloud: settings.nextcloud ?? null
     readonly property var subscriptions: settings.ics ?? []
     // Every enabled calendar: { id, color, writable }
-    readonly property var sources: [
-        ...(nextcloud?.calendars ?? []).filter(c => c.enabled).map(c => ({ id: c.href, name: c.name, color: c.color, writable: c.writable !== false })),
-        ...subscriptions.filter(s => s.enabled).map(s => ({ id: s.id, name: s.name, color: s.color, writable: false }))
-    ]
+    readonly property var sources: [...(nextcloud?.calendars ?? []).filter(c => c.enabled).map(c => ({
+                    id: c.href,
+                    name: c.name,
+                    color: c.color,
+                    writable: c.writable !== false
+                })), ...subscriptions.filter(s => s.enabled).map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    color: s.color,
+                    writable: false
+                }))]
     readonly property var writable: (nextcloud?.calendars ?? []).filter(c => c.writable !== false)
     readonly property var colours: byId(sources, s => s.color)
     readonly property var canWrite: byId(sources, s => s.writable)
@@ -89,7 +96,8 @@ Popup {
             location: e.location,
             allDay: e.allDay,
             calendar: e.calendar,
-            colour: e.color || colours[e.calendar], // event colour, else its calendar's
+            // event colour, else its calendar's
+            colour: e.color || colours[e.calendar],
             alarms: e.alarms ?? [],
             start,
             end,
@@ -227,8 +235,15 @@ Popup {
         const spec = {
             start: Qt.formatDate(gridStart, "yyyy-MM-dd"),
             end: Qt.formatDate(gridEnd, "yyyy-MM-dd"),
-            nextcloud: nextcloud ? { url: nextcloud.url, user: nextcloud.user, calendars: nextcloud.calendars.filter(c => c.enabled).map(c => c.href) } : null,
-            ics: subscriptions.filter(s => s.enabled).map(s => ({ id: s.id, url: s.url }))
+            nextcloud: nextcloud ? {
+                url: nextcloud.url,
+                user: nextcloud.user,
+                calendars: nextcloud.calendars.filter(c => c.enabled).map(c => c.href)
+            } : null,
+            ics: subscriptions.filter(s => s.enabled).map(s => ({
+                        id: s.id,
+                        url: s.url
+                    }))
         };
         syncing = true;
         eventsCall.run(["events"], JSON.stringify(spec), result => {
@@ -236,17 +251,26 @@ Popup {
             syncErrors = result.errors;
             const events = Object.assign({}, cache.events);
             events[key] = result.events;
-            cache = Object.assign({}, cache, { events });
+            cache = Object.assign({}, cache, {
+                events
+            });
             saveCache();
         }, error => {
             syncing = false;
-            syncErrors = { all: error };
+            syncErrors = {
+                all: error
+            };
         });
     }
 
     function mergeCalendars(found) {
-        const old = byId((nextcloud?.calendars ?? []).map(c => ({ id: c.href, enabled: c.enabled })), c => c.enabled);
-        return found.map(c => Object.assign({}, c, { enabled: old[c.href] ?? true }));
+        const old = byId((nextcloud?.calendars ?? []).map(c => ({
+                    id: c.href,
+                    enabled: c.enabled
+                })), c => c.enabled);
+        return found.map(c => Object.assign({}, c, {
+                enabled: old[c.href] ?? true
+            }));
     }
 
     function account(args, input, done) {
@@ -263,14 +287,24 @@ Popup {
 
     function signIn(url, user, password) {
         account(["login", url, user], `${password}\n`, result => {
-            update({ nextcloud: { url, user, calendars: mergeCalendars(result.calendars) } });
+            update({
+                nextcloud: {
+                    url,
+                    user,
+                    calendars: mergeCalendars(result.calendars)
+                }
+            });
             fetchEvents();
         });
     }
 
     function refreshCalendars() {
         account(["calendars", nextcloud.url, nextcloud.user], "", result => {
-            update({ nextcloud: Object.assign({}, nextcloud, { calendars: mergeCalendars(result.calendars) }) });
+            update({
+                nextcloud: Object.assign({}, nextcloud, {
+                    calendars: mergeCalendars(result.calendars)
+                })
+            });
             fetchEvents();
         });
     }
@@ -285,23 +319,45 @@ Popup {
     }
 
     function toggleCalendar(href) {
-        update({ nextcloud: Object.assign({}, nextcloud, { calendars: nextcloud.calendars.map(c => c.href === href ? Object.assign({}, c, { enabled: !c.enabled }) : c) }) });
+        update({
+            nextcloud: Object.assign({}, nextcloud, {
+                calendars: nextcloud.calendars.map(c => c.href === href ? Object.assign({}, c, {
+                        enabled: !c.enabled
+                    }) : c)
+            })
+        });
         fetchEvents();
     }
 
     function addSubscription(name, url) {
         const id = `ics:${Date.now().toString(36)}`;
-        update({ ics: [...subscriptions, { id, name, url, color: `${palette[subscriptions.length % palette.length]}`, enabled: true }] });
+        update({
+            ics: [...subscriptions,
+                {
+                    id,
+                    name,
+                    url,
+                    color: `${palette[subscriptions.length % palette.length]}`,
+                    enabled: true
+                }
+            ]
+        });
         fetchEvents();
     }
 
     function toggleSubscription(id) {
-        update({ ics: subscriptions.map(s => s.id === id ? Object.assign({}, s, { enabled: !s.enabled }) : s) });
+        update({
+            ics: subscriptions.map(s => s.id === id ? Object.assign({}, s, {
+                    enabled: !s.enabled
+                }) : s)
+        });
         fetchEvents();
     }
 
     function removeSubscription(id) {
-        update({ ics: subscriptions.filter(s => s.id !== id) });
+        update({
+            ics: subscriptions.filter(s => s.id !== id)
+        });
         fetchEvents();
     }
 
@@ -320,7 +376,12 @@ Popup {
     }
 
     function deleteEvent(event) {
-        writeCall.run(["delete", nextcloud.url, nextcloud.user], JSON.stringify({ href: event.href, etag: event.etag }), () => fetchEvents(), error => syncErrors = { delete: error });
+        writeCall.run(["delete", nextcloud.url, nextcloud.user], JSON.stringify({
+            href: event.href,
+            etag: event.etag
+        }), () => fetchEvents(), error => syncErrors = {
+                delete: error
+            });
     }
 
     // Weather ------------------------------------------------------------------
@@ -353,7 +414,14 @@ Popup {
             return;
         weatherError = "";
         get(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=16` + "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day", data => {
-            cache = Object.assign({}, cache, { weather: { at: Date.now(), place: place.name, data, metar: cache.weather?.place === place.name ? cache.weather.metar : null } });
+            cache = Object.assign({}, cache, {
+                weather: {
+                    at: Date.now(),
+                    place: place.name,
+                    data,
+                    metar: cache.weather?.place === place.name ? cache.weather.metar : null
+                }
+            });
             saveCache();
             fetchMetar(place, 1);
         }, () => weatherError = "Couldn't load the weather");
@@ -365,12 +433,18 @@ Popup {
         const dLat = 0.8 * widen, dLon = 1.2 * widen;
         get(`https://aviationweather.gov/api/data/metar?format=json&bbox=${place.lat - dLat},${place.lon - dLon},${place.lat + dLat},${place.lon + dLon}`, data => {
             const fresh = (data ?? []).filter(m => m.temp !== null && m.temp !== undefined && Date.now() / 1000 - m.obsTime < 3 * 3600);
-            const nearest = fresh.map(m => Object.assign({}, m, { distance: Weather.distanceKm(place.lat, place.lon, m.lat, m.lon) })).sort((a, b) => a.distance - b.distance)[0];
+            const nearest = fresh.map(m => Object.assign({}, m, {
+                    distance: Weather.distanceKm(place.lat, place.lon, m.lat, m.lon)
+                })).sort((a, b) => a.distance - b.distance)[0];
             if (!nearest && widen < 3) {
                 fetchMetar(place, widen + 1);
                 return;
             }
-            cache = Object.assign({}, cache, { weather: Object.assign({}, cache.weather, { metar: nearest ?? null }) });
+            cache = Object.assign({}, cache, {
+                weather: Object.assign({}, cache.weather, {
+                    metar: nearest ?? null
+                })
+            });
             saveCache();
         }, () => {}); // keep Open-Meteo's current weather
     }
@@ -391,7 +465,14 @@ Popup {
         locationResults = [];
         // Picked by hand: the calendar's own from now on; the time zone's
         // guess only fills in while the machine has no location
-        update({ location: { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude }, ownLocation: byHand || ownLocation });
+        update({
+            location: {
+                name: [r.name, r.country].filter(x => x).join(", "),
+                lat: r.latitude,
+                lon: r.longitude
+            },
+            ownLocation: byHand || ownLocation
+        });
         fetchWeather(true);
     }
 
@@ -707,18 +788,26 @@ Popup {
         error: popup.accountError || popup.weatherError
         onSearchLocation: query => popup.searchLocation(query, false)
         onPickLocation: place => popup.pickLocation(place, true)
-        onSetOwnLocation: own => popup.update({ ownLocation: own })
+        onSetOwnLocation: own => popup.update({
+                ownLocation: own
+            })
         onOpenMachineSettings: {
             Menus.settingsPage = "location";
             Menus.toggle("settings");
             popup.close();
         }
         onSetWeekStart: day => {
-            popup.update({ weekStart: day });
+            popup.update({
+                weekStart: day
+            });
             popup.fetchEvents();
         }
-        onSetWeekNumbers: on => popup.update({ weekNumbers: on })
-        onSetReminders: on => popup.update({ reminders: on })
+        onSetWeekNumbers: on => popup.update({
+                weekNumbers: on
+            })
+        onSetReminders: on => popup.update({
+                reminders: on
+            })
         onSignIn: (url, user, password) => popup.signIn(url, user, password)
         onSignOut: popup.signOut()
         onRefreshCalendars: popup.refreshCalendars()

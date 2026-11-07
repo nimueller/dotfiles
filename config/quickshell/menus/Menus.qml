@@ -57,7 +57,9 @@ Singleton {
             Qt.callLater(Qt.quit);
             return;
         }
-        closedAt = Object.assign({}, closedAt, { [name]: Date.now() });
+        closedAt = Object.assign({}, closedAt, {
+            [name]: Date.now()
+        });
         Qt.callLater(() => {
             if (loaders[name])
                 loaders[name].active = false;
@@ -71,7 +73,9 @@ Singleton {
             required property string modelData
 
             source: Qt.resolvedUrl(`${modelData}.qml`)
-            Component.onCompleted: root.loaders = Object.assign({}, root.loaders, { [modelData]: this })
+            Component.onCompleted: root.loaders = Object.assign({}, root.loaders, {
+                [modelData]: this
+            })
         }
     }
 }

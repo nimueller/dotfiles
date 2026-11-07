@@ -22,7 +22,20 @@ ShellRoot {
     property var samples: [] // [{ t, percent, energy, power, state }], oldest first
     property var hours: ({}) // apps.json
 
-    readonly property var ranges: [{ text: "24 h", span: 86400 }, { text: "7 days", span: 7 * 86400 }, { text: "30 days", span: 30 * 86400 }]
+    readonly property var ranges: [
+        {
+            text: "24 h",
+            span: 86400
+        },
+        {
+            text: "7 days",
+            span: 7 * 86400
+        },
+        {
+            text: "30 days",
+            span: 30 * 86400
+        }
+    ]
 
     function duration(seconds) {
         const d = Math.floor(seconds / 86400), h = Math.floor(seconds % 86400 / 3600), m = Math.round(seconds % 3600 / 60);
@@ -75,7 +88,14 @@ ShellRoot {
                 continue;
             }
             if (!cur) {
-                cur = { start: s.t, end: s.t, from: s.percent, to: s.percent, awake: 0, energy: 0 };
+                cur = {
+                    start: s.t,
+                    end: s.t,
+                    from: s.percent,
+                    to: s.percent,
+                    awake: 0,
+                    energy: 0
+                };
                 out.push(cur);
             } else {
                 const p = samples[i - 1];
@@ -89,8 +109,8 @@ ShellRoot {
         }
         const last = samples[samples.length - 1];
         return out.filter(x => x.end >= from).reverse().map(x => Object.assign(x, {
-            ongoing: x === out[out.length - 1] && last?.state === "d" && now - last.t <= gap
-        }));
+                ongoing: x === out[out.length - 1] && last?.state === "d" && now - last.t <= gap
+            }));
     }
 
     // CPU time by app on battery within the range (whole hours)
@@ -105,7 +125,11 @@ ShellRoot {
                 total += hours[key].apps[name];
             }
         }
-        return Object.keys(sums).map(name => ({ name: name, cpu: sums[name], share: total ? sums[name] / total : 0 })).sort((a, b) => b.cpu - a.cpu).slice(0, 10);
+        return Object.keys(sums).map(name => ({
+                    name: name,
+                    cpu: sums[name],
+                    share: total ? sums[name] / total : 0
+                })).sort((a, b) => b.cpu - a.cpu).slice(0, 10);
     }
 
     FileView {
@@ -118,7 +142,13 @@ ShellRoot {
             for (const line of text().split("\n")) {
                 const f = line.split(",");
                 if (f.length >= 5)
-                    out.push({ t: Number(f[0]), percent: Number(f[1]), energy: Number(f[2]), power: Number(f[3]), state: f[4] });
+                    out.push({
+                        t: Number(f[0]),
+                        percent: Number(f[1]),
+                        energy: Number(f[2]),
+                        power: Number(f[3]),
+                        state: f[4]
+                    });
             }
             root.now = Date.now() / 1000;
             root.samples = out;
@@ -216,10 +246,26 @@ ShellRoot {
 
                     Repeater {
                         model: [
-                            { label: "On battery", value: root.totals.seconds ? root.duration(root.totals.seconds) : "–", accent: Theme.yellow },
-                            { label: "Average draw", value: root.totals.watts ? `${root.totals.watts.toFixed(1)} W` : "–", accent: Theme.peach },
-                            { label: "Pace", value: root.totals.pace ? `${root.totals.pace.toFixed(1)}% / h` : "–", accent: Theme.blue },
-                            { label: "Full charge lasts", value: root.totals.full ? root.duration(root.totals.full) : "–", accent: Theme.green }
+                            {
+                                label: "On battery",
+                                value: root.totals.seconds ? root.duration(root.totals.seconds) : "–",
+                                accent: Theme.yellow
+                            },
+                            {
+                                label: "Average draw",
+                                value: root.totals.watts ? `${root.totals.watts.toFixed(1)} W` : "–",
+                                accent: Theme.peach
+                            },
+                            {
+                                label: "Pace",
+                                value: root.totals.pace ? `${root.totals.pace.toFixed(1)}% / h` : "–",
+                                accent: Theme.blue
+                            },
+                            {
+                                label: "Full charge lasts",
+                                value: root.totals.full ? root.duration(root.totals.full) : "–",
+                                accent: Theme.green
+                            }
                         ]
 
                         delegate: Rectangle {
@@ -273,7 +319,11 @@ ShellRoot {
                     HistoryChart {
                         Layout.fillWidth: true
                         implicitHeight: 150
-                        samples: root.shown.map(s => ({ t: s.t, v: s.percent, charging: s.state !== "d" }))
+                        samples: root.shown.map(s => ({
+                                    t: s.t,
+                                    v: s.percent,
+                                    charging: s.state !== "d"
+                                }))
                         from: root.from
                         to: root.now
                         color: Theme.green
@@ -290,7 +340,11 @@ ShellRoot {
                     }
                     // On battery only: while charging it's the charger's power
                     HistoryChart {
-                        readonly property var points: root.shown.filter(s => s.state === "d").map(s => ({ t: s.t, v: s.power, charging: false }))
+                        readonly property var points: root.shown.filter(s => s.state === "d").map(s => ({
+                                    t: s.t,
+                                    v: s.power,
+                                    charging: false
+                                }))
 
                         Layout.fillWidth: true
                         implicitHeight: 110

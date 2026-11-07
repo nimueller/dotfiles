@@ -31,8 +31,14 @@ Popup {
     property real cpu: 0 // 0..1
     property var cpuTemp: null // °C
     property var lastCpu: null // [busy, total] of the previous reading
-    property var mem: ({ used: 0, total: 1 })
-    property var swap: ({ used: 0, total: 0 })
+    property var mem: ({
+            used: 0,
+            total: 1
+        })
+    property var swap: ({
+            used: 0,
+            total: 0
+        })
     property var disks: [] // { target, used, total }
     property var gpu: null // { name, load, memUsed, memTotal, temp }
     property var backlight: null // { percent } of the built-in screen (backlight.py), null without one
@@ -128,16 +134,32 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     } else if (f[0].endsWith(":")) {
                         kb[f[0].slice(0, -1)] = Number(f[1]) * 1024;
                     } else if (f[0] === "disk") {
-                        disks.push({ total: Number(f[1]), used: Number(f[2]), target: f.slice(3).join(" ") });
+                        disks.push({
+                            total: Number(f[1]),
+                            used: Number(f[2]),
+                            target: f.slice(3).join(" ")
+                        });
                     } else if (f[0] === "cputemp") {
                         root.cpuTemp = Math.round(Number(f[1]) / 1000);
                     } else if (f[0] === "gpu") {
                         const g = line.slice(4).split(",").map(s => s.trim());
-                        root.gpu = { name: g[0], load: Number(g[1]) / 100, memUsed: Number(g[2]) * 1048576, memTotal: Number(g[3]) * 1048576, temp: Number(g[4]) };
+                        root.gpu = {
+                            name: g[0],
+                            load: Number(g[1]) / 100,
+                            memUsed: Number(g[2]) * 1048576,
+                            memTotal: Number(g[3]) * 1048576,
+                            temp: Number(g[4])
+                        };
                     }
                 }
-                root.mem = { total: kb.MemTotal, used: kb.MemTotal - kb.MemAvailable };
-                root.swap = { total: kb.SwapTotal, used: kb.SwapTotal - kb.SwapFree };
+                root.mem = {
+                    total: kb.MemTotal,
+                    used: kb.MemTotal - kb.MemAvailable
+                };
+                root.swap = {
+                    total: kb.SwapTotal,
+                    used: kb.SwapTotal - kb.SwapFree
+                };
                 root.disks = disks;
             }
         }
@@ -175,6 +197,8 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         rowSpacing: 6
 
         Repeater {
+            // One entry per line: qmlformat would join them into one line
+            // qmlformat off
             model: [
                 ["Host", root.info.host ?? ""],
                 ["Kernel", root.info.kernel ?? ""],
@@ -187,6 +211,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 ...(Updates.news.length ? [["Arch news", Updates.news.length === 1 ? Updates.news[0].title : `${Updates.news.length} since the last upgrade`]] : []),
                 ...(Updates.flakeAge !== null ? [["flake.lock", Updates.flakeAge === 0 ? "Updated today" : `${Updates.flakeAge} ${Updates.flakeAge === 1 ? "day" : "days"} old${Updates.flakeStale ? " · git pull, then switch" : ""}`]] : [])
             ]
+            // qmlformat on
 
             delegate: Item {
                 required property var modelData
@@ -230,7 +255,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             radius: 8
             color: btMouse.containsMouse ? Theme.surface1 : Theme.surface0
 
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: 150
+                }
+            }
 
             MouseArea {
                 id: btMouse
@@ -324,7 +353,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             accent: Theme.peach
             onToggled: {
                 const on = !root.nightLight.on;
-                root.nightLight = { on: on };
+                root.nightLight = {
+                    on: on
+                };
                 Quickshell.execDetached(on ? ["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)] : ["hyprctl", "hyprsunset", "identity"]);
             }
         }
@@ -417,7 +448,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             onStreamFinished: {
                 const [identity, kelvin] = text.trim().split("\n");
                 if (identity === "true" || identity === "false")
-                    root.nightLight = { on: identity === "false" && parseInt(kelvin) < 6000 };
+                    root.nightLight = {
+                        on: identity === "false" && parseInt(kelvin) < 6000
+                    };
             }
         }
     }
@@ -455,7 +488,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         value: root.backlight ? root.backlight.percent / 100 : 0
         onMoved: v => {
             // backlight.py keeps it above dark, like the keys
-            root.backlight = { percent: Math.max(2, Math.round(v * 100)) };
+            root.backlight = {
+                percent: Math.max(2, Math.round(v * 100))
+            };
             Quickshell.execDetached([Quickshell.shellPath("backlight.py"), "set", String(Math.round(v * 100))]);
         }
     }
@@ -526,7 +561,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             onStreamFinished: {
                 const percent = parseInt(text);
                 if (!isNaN(percent))
-                    root.backlight = { percent: percent };
+                    root.backlight = {
+                        percent: percent
+                    };
             }
         }
     }
@@ -643,7 +680,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         opacity: enabled ? 1 : 0.5
         color: toggleMouse.containsMouse && enabled ? Theme.surface1 : Theme.surface0
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
 
         MouseArea {
             id: toggleMouse
@@ -771,7 +812,12 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 radius: 3
                 color: usage.accent
 
-                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 300
+                        easing.type: Easing.OutCubic
+                    }
+                }
             }
         }
     }

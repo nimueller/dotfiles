@@ -37,7 +37,9 @@ ShellRoot {
     property var caps: ({}) // what each connected monitor supports, by port: { vrr, wideColor, hdr }, missing if unknown
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
-    property var bar: ({ windowTitle: false })
+    property var bar: ({
+            windowTitle: false
+        })
     property var location: null // { name, lat, lon }, see LocalSettings.qml
     property var nightLight: LocalSettings.nightLightDefaults // see LocalSettings.qml
     property var nightTimes: null // night-light.py's state, for today's sunset and sunrise
@@ -60,7 +62,24 @@ ShellRoot {
     property int countdown: 0
 
     readonly property var scales: [1, 1.25, 1.333333, 1.5, 1.6, 1.75, 2, 2.5, 3]
-    readonly property var rotations: [{ text: "None", value: 0 }, { text: "90°", value: 1 }, { text: "180°", value: 2 }, { text: "270°", value: 3 }]
+    readonly property var rotations: [
+        {
+            text: "None",
+            value: 0
+        },
+        {
+            text: "90°",
+            value: 1
+        },
+        {
+            text: "180°",
+            value: 2
+        },
+        {
+            text: "270°",
+            value: 3
+        }
+    ]
 
     // local.lua ------------------------------------------------------------------
 
@@ -104,7 +123,21 @@ ShellRoot {
 
     function saved() {
         return {
-            monitors: monitors.map(m => ({ desc: m.desc, name: m.name, enabled: m.enabled, mode: m.mode, x: m.x, y: m.y, scale: m.scale, transform: m.transform, vrr: m.vrr, wideColor: m.wideColor, hdr: m.hdr, workspaces: m.workspaces, main: m.main })),
+            monitors: monitors.map(m => ({
+                        desc: m.desc,
+                        name: m.name,
+                        enabled: m.enabled,
+                        mode: m.mode,
+                        x: m.x,
+                        y: m.y,
+                        scale: m.scale,
+                        transform: m.transform,
+                        vrr: m.vrr,
+                        wideColor: m.wideColor,
+                        hdr: m.hdr,
+                        workspaces: m.workspaces,
+                        main: m.main
+                    })),
             env: env.filter(e => e[0].trim()),
             autostart: autostart.filter(c => c.trim()),
             modes: modes,
@@ -113,7 +146,10 @@ ShellRoot {
             location: location,
             nightLight: nightLight,
             warnings: warnings,
-            notifications: { rules: rules.filter(r => r.app.trim() || r.text.trim()), tracks: trackAction }
+            notifications: {
+                rules: rules.filter(r => r.app.trim() || r.text.trim()),
+                tracks: trackAction
+            }
         };
     }
 
@@ -153,7 +189,11 @@ ShellRoot {
 
     // The saved settings, merged with the monitors connected right now
     function load(live) {
-        let s = { monitors: [], env: [], autostart: [] };
+        let s = {
+            monitors: [],
+            env: [],
+            autostart: []
+        };
         const match = (file.loaded ? file.text() : "").match(/^-- settings: (.*)$/m);
         if (match) {
             try {
@@ -184,10 +224,15 @@ ShellRoot {
         }
         for (const m of s.monitors)
             if (!list.some(l => l.desc === m.desc))
-                list.push(Object.assign({ connected: false, modes: [] }, m));
+                list.push(Object.assign({
+                    connected: false,
+                    modes: []
+                }, m));
         monitors = list;
         env = s.env;
-        bar = Object.assign({ windowTitle: false }, s.bar);
+        bar = Object.assign({
+            windowTitle: false
+        }, s.bar);
         location = s.location ?? null;
         nightLight = Object.assign({}, LocalSettings.nightLightDefaults, s.nightLight);
         modes = s.modes ?? {};
@@ -195,18 +240,26 @@ ShellRoot {
         warnings = LocalSettings.withDefaults(s.warnings);
         autostart = s.autostart;
         trackAction = s.notifications?.tracks ?? "popup";
-        rules = (s.notifications?.rules ?? []).map(r => ({ app: r.app ?? "", text: r.text ?? "", action: r.action ?? "hide" }));
+        rules = (s.notifications?.rules ?? []).map(r => ({
+                    app: r.app ?? "",
+                    text: r.text ?? "",
+                    action: r.action ?? "hide"
+                }));
         selected = Math.max(0, list.findIndex(m => m.connected));
     }
 
     // warn("cpu", { percent: 90 }); a disk level by its index
     function warn(group, props) {
-        warnings = Object.assign({}, warnings, { [group]: Object.assign({}, warnings[group], props) });
+        warnings = Object.assign({}, warnings, {
+            [group]: Object.assign({}, warnings[group], props)
+        });
         dirty = true;
     }
 
     function warnDisk(index, props) {
-        warn("disk", { levels: warnings.disk.levels.map((l, i) => i === index ? Object.assign({}, l, props) : l) });
+        warn("disk", {
+            levels: warnings.disk.levels.map((l, i) => i === index ? Object.assign({}, l, props) : l)
+        });
     }
 
     function searchLocation(query) {
@@ -318,15 +371,15 @@ ShellRoot {
             onStreamFinished: {
                 try {
                     root.before = JSON.parse(text).map(l => ({
-                        desc: l.description,
-                        enabled: !l.disabled,
-                        mode: `${l.width}x${l.height}@${l.refreshRate.toFixed(2)}`,
-                        x: l.x,
-                        y: l.y,
-                        scale: l.scale,
-                        transform: l.transform,
-                        vrr: !!l.vrr
-                    }));
+                                desc: l.description,
+                                enabled: !l.disabled,
+                                mode: `${l.width}x${l.height}@${l.refreshRate.toFixed(2)}`,
+                                x: l.x,
+                                y: l.y,
+                                scale: l.scale,
+                                transform: l.transform,
+                                vrr: !!l.vrr
+                            }));
                 } catch (e) {
                     root.before = [];
                 }
@@ -400,7 +453,11 @@ ShellRoot {
         command: [Quickshell.shellPath("monitor-caps.py")]
         stdout: StdioCollector {
             onStreamFinished: {
-                const keys = { vrr: "vrr", wide: "wideColor", hdr: "hdr" };
+                const keys = {
+                    vrr: "vrr",
+                    wide: "wideColor",
+                    hdr: "hdr"
+                };
                 const caps = {};
                 for (const line of text.trim().split("\n").filter(l => l)) {
                     const [name, ...fields] = line.split(" ");
@@ -497,16 +554,56 @@ ShellRoot {
 
                     Repeater {
                         model: [
-                            { id: "displays", text: "Displays", glyph: 0xf0379 },
-                            { id: "env", text: "Environment", glyph: 0xf0169 },
-                            { id: "autostart", text: "Autostart", glyph: 0xf040a },
-                            { id: "modes", text: "Laptop & touch", glyph: 0xf0322 },
-                            { id: "location", text: "Location", glyph: 0xf034e },
-                            { id: "night", text: "Night light", glyph: 0xf0594 },
-                            { id: "bar", text: "Bar", glyph: 0xf10a9 },
-                            { id: "warnings", text: "Warnings", glyph: 0xf0026 },
-                            { id: "notifications", text: "Notifications", glyph: 0xf009b },
-                            { id: "profile", text: "Profile picture", glyph: 0xf0004 }
+                            {
+                                id: "displays",
+                                text: "Displays",
+                                glyph: 0xf0379
+                            },
+                            {
+                                id: "env",
+                                text: "Environment",
+                                glyph: 0xf0169
+                            },
+                            {
+                                id: "autostart",
+                                text: "Autostart",
+                                glyph: 0xf040a
+                            },
+                            {
+                                id: "modes",
+                                text: "Laptop & touch",
+                                glyph: 0xf0322
+                            },
+                            {
+                                id: "location",
+                                text: "Location",
+                                glyph: 0xf034e
+                            },
+                            {
+                                id: "night",
+                                text: "Night light",
+                                glyph: 0xf0594
+                            },
+                            {
+                                id: "bar",
+                                text: "Bar",
+                                glyph: 0xf10a9
+                            },
+                            {
+                                id: "warnings",
+                                text: "Warnings",
+                                glyph: 0xf0026
+                            },
+                            {
+                                id: "notifications",
+                                text: "Notifications",
+                                glyph: 0xf009b
+                            },
+                            {
+                                id: "profile",
+                                text: "Profile picture",
+                                glyph: 0xf0004
+                            }
                         ]
 
                         delegate: Rectangle {
@@ -600,7 +697,10 @@ ShellRoot {
                         monitors: root.monitors
                         selected: root.selected
                         onPicked: index => root.selected = index
-                        onMoved: (index, x, y) => root.change(index, { x, y })
+                        onMoved: (index, x, y) => root.change(index, {
+                                x,
+                                y
+                            })
                     }
 
                     // The monitors, to pick one (also those switched off or not connected)
@@ -645,7 +745,9 @@ ShellRoot {
                         }
                         Switch {
                             checked: parent.m?.enabled ?? false
-                            onToggled: root.change(root.selected, { enabled: !parent.m.enabled })
+                            onToggled: root.change(root.selected, {
+                                enabled: !parent.m.enabled
+                            })
                         }
                         Label {
                             text: "Rotation"
@@ -655,7 +757,9 @@ ShellRoot {
                             Layout.minimumWidth: 100
                             model: root.rotations
                             current: parent.m?.transform ?? 0
-                            onPicked: value => root.change(root.selected, { transform: value })
+                            onPicked: value => root.change(root.selected, {
+                                    transform: value
+                                })
                         }
 
                         Label {
@@ -666,7 +770,9 @@ ShellRoot {
                             Layout.minimumWidth: 100
                             model: parent.m?.modes ?? []
                             current: (parent.m?.modes ?? []).find(a => root.sameMode(a, parent.m.mode)) ?? null
-                            onPicked: value => root.change(root.selected, { mode: value })
+                            onPicked: value => root.change(root.selected, {
+                                    mode: value
+                                })
                         }
                         Label {
                             text: "Scale"
@@ -674,9 +780,14 @@ ShellRoot {
                         Dropdown {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 100
-                            model: root.scales.map(s => ({ text: `${Math.round(s * 100)} %`, value: s }))
+                            model: root.scales.map(s => ({
+                                        text: `${Math.round(s * 100)} %`,
+                                        value: s
+                                    }))
                             current: root.scales.find(s => Math.abs(s - (parent.m?.scale ?? 1)) < 0.01) ?? null
-                            onPicked: value => root.change(root.selected, { scale: value })
+                            onPicked: value => root.change(root.selected, {
+                                    scale: value
+                                })
                         }
 
                         Label {
@@ -688,7 +799,9 @@ ShellRoot {
                             text: parent.m?.workspaces ?? ""
                             placeholder: "e.g. 1-9"
                             onTextChanged: if (parent.m && text !== parent.m.workspaces)
-                                root.change(root.selected, { workspaces: text })
+                                root.change(root.selected, {
+                                    workspaces: text
+                                })
                         }
                         Label {
                             text: "Main monitor"
@@ -698,7 +811,9 @@ ShellRoot {
                             onToggled: {
                                 // Only one is the main monitor
                                 const on = !parent.m.main;
-                                root.monitors = root.monitors.map((m, i) => Object.assign({}, m, { main: on && i === root.selected }));
+                                root.monitors = root.monitors.map((m, i) => Object.assign({}, m, {
+                                        main: on && i === root.selected
+                                    }));
                                 root.dirty = true;
                             }
                         }
@@ -711,7 +826,9 @@ ShellRoot {
                         Switch {
                             checked: parent.m?.vrr ?? false
                             enabled: checked || root.supports(parent.m, "vrr")
-                            onToggled: root.change(root.selected, { vrr: !parent.m.vrr })
+                            onToggled: root.change(root.selected, {
+                                vrr: !parent.m.vrr
+                            })
                         }
                         Label {
                             text: "Wide colour / HDR"
@@ -722,12 +839,16 @@ ShellRoot {
                             Switch {
                                 checked: parent.parent.m?.wideColor ?? false
                                 enabled: checked || root.supports(parent.parent.m, "wideColor")
-                                onToggled: root.change(root.selected, { wideColor: !parent.parent.m.wideColor })
+                                onToggled: root.change(root.selected, {
+                                    wideColor: !parent.parent.m.wideColor
+                                })
                             }
                             Switch {
                                 checked: parent.parent.m?.hdr ?? false
                                 enabled: checked || root.supports(parent.parent.m, "hdr")
-                                onToggled: root.change(root.selected, { hdr: !parent.parent.m.hdr })
+                                onToggled: root.change(root.selected, {
+                                    hdr: !parent.parent.m.hdr
+                                })
                             }
                         }
 
@@ -926,8 +1047,16 @@ ShellRoot {
 
                     Repeater {
                         model: [
-                            { id: "laptop", text: "Laptop", about: "Tap to click, swipe with three fingers between workspaces, keyboard backlight keys, the screen off with the lid closed while another monitor is connected, dimming when idle and suspending after 15 minutes on battery, the battery menu with power profiles and low battery warnings" },
-                            { id: "touch", text: "Touch", about: "A taller bar with bigger buttons, buttons for the launcher, the overview of the workspaces and the on-screen keyboard (which also shows by itself for text fields), swiping from the screen's edge between workspaces" }
+                            {
+                                id: "laptop",
+                                text: "Laptop",
+                                about: "Tap to click, swipe with three fingers between workspaces, keyboard backlight keys, the screen off with the lid closed while another monitor is connected, dimming when idle and suspending after 15 minutes on battery, the battery menu with power profiles and low battery warnings"
+                            },
+                            {
+                                id: "touch",
+                                text: "Touch",
+                                about: "A taller bar with bigger buttons, buttons for the launcher, the overview of the workspaces and the on-screen keyboard (which also shows by itself for text fields), swiping from the screen's edge between workspaces"
+                            }
                         ]
 
                         delegate: RowLayout {
@@ -960,9 +1089,18 @@ ShellRoot {
                                 Layout.preferredWidth: 190
                                 Layout.alignment: Qt.AlignTop
                                 model: [
-                                    { text: `Auto (${modeRow.detected ? "on" : "off"} here)`, value: "auto" },
-                                    { text: "On", value: true },
-                                    { text: "Off", value: false }
+                                    {
+                                        text: `Auto (${modeRow.detected ? "on" : "off"} here)`,
+                                        value: "auto"
+                                    },
+                                    {
+                                        text: "On",
+                                        value: true
+                                    },
+                                    {
+                                        text: "Off",
+                                        value: false
+                                    }
                                 ]
                                 current: root.modes[modeRow.modelData.id] ?? "auto"
                                 onPicked: value => {
@@ -997,10 +1135,38 @@ ShellRoot {
                         // mode turns on clickfinger_behavior, general.lua
                         // natural_scroll; Hyprland's defaults otherwise)
                         model: [
-                            { id: "clickfinger_behavior", text: "Right click", about: "Pressing down in the bottom right corner (the middle: middle click), or anywhere with two fingers (three: middle click)", def: Modes.laptop, on: "With two fingers", off: "In the corner" },
-                            { id: "tap_to_click", text: "Tap to click", about: "Two fingers right-click, three middle-click", def: true, on: "On", off: "Off" },
-                            { id: "natural_scroll", text: "Natural scrolling", about: "The content follows the fingers, like on a phone", def: true, on: "On", off: "Off" },
-                            { id: "disable_while_typing", text: "Off while typing", about: "For a moment after a key press, against touches with the palm", def: true, on: "On", off: "Off" }
+                            {
+                                id: "clickfinger_behavior",
+                                text: "Right click",
+                                about: "Pressing down in the bottom right corner (the middle: middle click), or anywhere with two fingers (three: middle click)",
+                                def: Modes.laptop,
+                                on: "With two fingers",
+                                off: "In the corner"
+                            },
+                            {
+                                id: "tap_to_click",
+                                text: "Tap to click",
+                                about: "Two fingers right-click, three middle-click",
+                                def: true,
+                                on: "On",
+                                off: "Off"
+                            },
+                            {
+                                id: "natural_scroll",
+                                text: "Natural scrolling",
+                                about: "The content follows the fingers, like on a phone",
+                                def: true,
+                                on: "On",
+                                off: "Off"
+                            },
+                            {
+                                id: "disable_while_typing",
+                                text: "Off while typing",
+                                about: "For a moment after a key press, against touches with the palm",
+                                def: true,
+                                on: "On",
+                                off: "Off"
+                            }
                         ]
 
                         delegate: RowLayout {
@@ -1032,9 +1198,18 @@ ShellRoot {
                                 Layout.preferredWidth: 190
                                 Layout.alignment: Qt.AlignTop
                                 model: [
-                                    { text: `Default (${(touchpadRow.modelData.def ? touchpadRow.modelData.on : touchpadRow.modelData.off).toLowerCase()})`, value: "default" },
-                                    { text: touchpadRow.modelData.on, value: true },
-                                    { text: touchpadRow.modelData.off, value: false }
+                                    {
+                                        text: `Default (${(touchpadRow.modelData.def ? touchpadRow.modelData.on : touchpadRow.modelData.off).toLowerCase()})`,
+                                        value: "default"
+                                    },
+                                    {
+                                        text: touchpadRow.modelData.on,
+                                        value: true
+                                    },
+                                    {
+                                        text: touchpadRow.modelData.off,
+                                        value: false
+                                    }
                                 ]
                                 current: root.touchpad[touchpadRow.modelData.id] ?? "default"
                                 onPicked: value => {
@@ -1179,7 +1354,11 @@ ShellRoot {
                                     // Last: emptying the results destroys this delegate
                                     const r = place.modelData;
                                     city.text = "";
-                                    root.location = { name: [r.name, r.country].filter(x => x).join(", "), lat: r.latitude, lon: r.longitude };
+                                    root.location = {
+                                        name: [r.name, r.country].filter(x => x).join(", "),
+                                        lat: r.latitude,
+                                        lon: r.longitude
+                                    };
                                     root.dirty = true;
                                     root.locationResults = [];
                                 }
@@ -1234,7 +1413,9 @@ ShellRoot {
 
                                 text: modelData[1]
                                 active: root.nightLight.schedule === modelData[0]
-                                onClicked: root.night({ schedule: modelData[0] })
+                                onClicked: root.night({
+                                    schedule: modelData[0]
+                                })
                             }
                         }
                     }
@@ -1253,7 +1434,9 @@ ShellRoot {
                             placeholder: "21:00"
                             border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
                             onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.from)
-                                root.night({ from: root.clockTime(text) })
+                                root.night({
+                                    from: root.clockTime(text)
+                                })
                         }
                         Label {
                             text: "until"
@@ -1264,7 +1447,9 @@ ShellRoot {
                             placeholder: "07:00"
                             border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
                             onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.until)
-                                root.night({ until: root.clockTime(text) })
+                                root.night({
+                                    until: root.clockTime(text)
+                                })
                         }
                         Item {
                             Layout.fillWidth: true
@@ -1322,7 +1507,9 @@ ShellRoot {
                             value: root.nightLight.temperature
                             onEdited: v => {
                                 if (v >= 1000 && v <= 6000)
-                                    root.night({ temperature: Math.round(v) });
+                                    root.night({
+                                        temperature: Math.round(v)
+                                    });
                             }
                         }
                         Label {
@@ -1363,7 +1550,9 @@ ShellRoot {
                         Switch {
                             checked: root.bar.windowTitle
                             onToggled: {
-                                root.bar = Object.assign({}, root.bar, { windowTitle: !root.bar.windowTitle });
+                                root.bar = Object.assign({}, root.bar, {
+                                    windowTitle: !root.bar.windowTitle
+                                });
                                 root.dirty = true;
                             }
                         }
@@ -1395,14 +1584,18 @@ ShellRoot {
 
                         Switch {
                             checked: root.warnings.memory.on
-                            onToggled: root.warn("memory", { on: !root.warnings.memory.on })
+                            onToggled: root.warn("memory", {
+                                on: !root.warnings.memory.on
+                            })
                         }
                         Label {
                             text: "Memory: when less than"
                         }
                         NumberField {
                             value: root.warnings.memory.percent
-                            onEdited: v => root.warn("memory", { percent: v })
+                            onEdited: v => root.warn("memory", {
+                                    percent: v
+                                })
                         }
                         Label {
                             Layout.fillWidth: true
@@ -1416,21 +1609,27 @@ ShellRoot {
 
                         Switch {
                             checked: root.warnings.cpu.on
-                            onToggled: root.warn("cpu", { on: !root.warnings.cpu.on })
+                            onToggled: root.warn("cpu", {
+                                on: !root.warnings.cpu.on
+                            })
                         }
                         Label {
                             text: "CPU: when programs wait for it more than"
                         }
                         NumberField {
                             value: root.warnings.cpu.percent
-                            onEdited: v => root.warn("cpu", { percent: v })
+                            onEdited: v => root.warn("cpu", {
+                                    percent: v
+                                })
                         }
                         Label {
                             text: "% of the time, for"
                         }
                         NumberField {
                             value: root.warnings.cpu.minutes
-                            onEdited: v => root.warn("cpu", { minutes: v })
+                            onEdited: v => root.warn("cpu", {
+                                    minutes: v
+                                })
                         }
                         Label {
                             Layout.fillWidth: true
@@ -1444,7 +1643,9 @@ ShellRoot {
 
                         Switch {
                             checked: root.warnings.disk.on
-                            onToggled: root.warn("disk", { on: !root.warnings.disk.on })
+                            onToggled: root.warn("disk", {
+                                on: !root.warnings.disk.on
+                            })
                         }
                         Label {
                             Layout.fillWidth: true
@@ -1470,14 +1671,18 @@ ShellRoot {
                             }
                             NumberField {
                                 value: modelData.percent
-                                onEdited: v => root.warnDisk(index, { percent: v })
+                                onEdited: v => root.warnDisk(index, {
+                                        percent: v
+                                    })
                             }
                             Label {
                                 text: "% or"
                             }
                             NumberField {
                                 value: modelData.gb
-                                onEdited: v => root.warnDisk(index, { gb: v })
+                                onEdited: v => root.warnDisk(index, {
+                                        gb: v
+                                    })
                             }
                             Label {
                                 Layout.fillWidth: true
@@ -1551,12 +1756,23 @@ ShellRoot {
                             Dropdown {
                                 Layout.preferredWidth: 190
                                 model: [
-                                    { text: "Hide completely", value: "hide" },
-                                    { text: "Only in the center", value: "center" },
-                                    { text: "Only as a popup", value: "popup" }
+                                    {
+                                        text: "Hide completely",
+                                        value: "hide"
+                                    },
+                                    {
+                                        text: "Only in the center",
+                                        value: "center"
+                                    },
+                                    {
+                                        text: "Only as a popup",
+                                        value: "popup"
+                                    }
                                 ]
                                 current: modelData.action
-                                onPicked: value => root.changeRule(index, { action: value })
+                                onPicked: value => root.changeRule(index, {
+                                        action: value
+                                    })
                             }
                             IconButton {
                                 glyph: Theme.glyph(0xf0156) // 󰅖
@@ -1571,7 +1787,13 @@ ShellRoot {
                     IconButton {
                         glyph: Theme.glyph(0xf0415) // 󰐕
                         text: "Add rule"
-                        onClicked: root.rules = [...root.rules, { app: "", text: "", action: "hide" }]
+                        onClicked: root.rules = [...root.rules,
+                            {
+                                app: "",
+                                text: "",
+                                action: "hide"
+                            }
+                        ]
                     }
 
                     // The built-in rule, after the others
@@ -1601,10 +1823,22 @@ ShellRoot {
                             Layout.preferredWidth: 190
                             Layout.alignment: Qt.AlignTop
                             model: [
-                                { text: "Like any other", value: "" },
-                                { text: "Hide completely", value: "hide" },
-                                { text: "Only in the center", value: "center" },
-                                { text: "Only as a popup", value: "popup" }
+                                {
+                                    text: "Like any other",
+                                    value: ""
+                                },
+                                {
+                                    text: "Hide completely",
+                                    value: "hide"
+                                },
+                                {
+                                    text: "Only in the center",
+                                    value: "center"
+                                },
+                                {
+                                    text: "Only as a popup",
+                                    value: "popup"
+                                }
                             ]
                             current: root.trackAction
                             onPicked: value => {
@@ -1635,7 +1869,13 @@ ShellRoot {
                                 glyph: Theme.glyph(0xf0415) // 󰐕
                                 text: modelData
                                 onClicked: {
-                                    root.rules = [...root.rules, { app: modelData, text: "", action: "hide" }];
+                                    root.rules = [...root.rules,
+                                        {
+                                            app: modelData,
+                                            text: "",
+                                            action: "hide"
+                                        }
+                                    ];
                                     root.dirty = true;
                                 }
                             }

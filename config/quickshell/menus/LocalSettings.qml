@@ -26,7 +26,12 @@ Singleton {
     // The night light (night-light.py, which checks the values itself):
     // schedule "sun" (sunset to sunrise), "times" (from, until) or "off"
     // (only by hand); temperature in K
-    readonly property var nightLightDefaults: ({ schedule: "sun", from: "21:00", until: "07:00", temperature: 4500 })
+    readonly property var nightLightDefaults: ({
+            schedule: "sun",
+            from: "21:00",
+            until: "07:00",
+            temperature: 4500
+        })
     readonly property var nightLight: Object.assign({}, nightLightDefaults, settings.nightLight)
 
     // When SystemWatch.qml warns: memory below percent free, the CPU's
@@ -34,9 +39,32 @@ Singleton {
     // folder below percent or gb free (whichever is less) at each level, the
     // last one critical
     readonly property var warningDefaults: ({
-            memory: { on: true, percent: 8 },
-            cpu: { on: true, percent: 80, minutes: 1 },
-            disk: { on: true, levels: [{ percent: 10, gb: 20 }, { percent: 5, gb: 10 }, { percent: 3, gb: 5 }] }
+            memory: {
+                on: true,
+                percent: 8
+            },
+            cpu: {
+                on: true,
+                percent: 80,
+                minutes: 1
+            },
+            disk: {
+                on: true,
+                levels: [
+                    {
+                        percent: 10,
+                        gb: 20
+                    },
+                    {
+                        percent: 5,
+                        gb: 10
+                    },
+                    {
+                        percent: 3,
+                        gb: 5
+                    }
+                ]
+            }
         })
     readonly property var warnings: withDefaults(settings.warnings)
 
@@ -45,7 +73,11 @@ Singleton {
         const disk = Object.assign({}, d.disk, w?.disk);
         if (!Array.isArray(disk.levels) || disk.levels.length !== d.disk.levels.length)
             disk.levels = d.disk.levels;
-        return { memory: Object.assign({}, d.memory, w?.memory), cpu: Object.assign({}, d.cpu, w?.cpu), disk };
+        return {
+            memory: Object.assign({}, d.memory, w?.memory),
+            cpu: Object.assign({}, d.cpu, w?.cpu),
+            disk
+        };
     }
 
     // Rules for notifications (NotificationStore.qml): { app, text, action }.

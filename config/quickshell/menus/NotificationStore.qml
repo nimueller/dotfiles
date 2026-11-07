@@ -259,7 +259,10 @@ Scope {
             try {
                 const saved = JSON.parse(text());
                 root.dnd = saved.dnd ?? false;
-                root.entries = (saved.entries ?? []).map(e => Object.assign({}, e, { key: root.nextKey++, n: null }));
+                root.entries = (saved.entries ?? []).map(e => Object.assign({}, e, {
+                        key: root.nextKey++,
+                        n: null
+                    }));
             } catch (e) {}
         }
     }

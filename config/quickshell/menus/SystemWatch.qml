@@ -120,7 +120,11 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
         for (const line of text.trim().split("\n")) {
             const f = line.trim().split(/\s+/);
             if (f[0] === "disk")
-                disks.push({ free: Number(f[1]), total: Number(f[2]), target: f.slice(3).join(" ") });
+                disks.push({
+                    free: Number(f[1]),
+                    total: Number(f[2]),
+                    target: f.slice(3).join(" ")
+                });
             else
                 v[f[0].replace(/:$/, "")] = f.slice(1).map(Number);
         }
@@ -184,7 +188,9 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             // Fine again only with a margin, so a disk at the limit warns once
             level = warned;
         }
-        diskLevels = Object.assign({}, diskLevels, { [target]: level });
+        diskLevels = Object.assign({}, diskLevels, {
+            [target]: level
+        });
     }
 
     // MemTotal/MemAvailable in kB, the pressures' avg10 (memory, full) and

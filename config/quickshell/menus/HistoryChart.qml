@@ -38,7 +38,10 @@ Item {
         else
             start.setHours(24, 0, 0, 0);
         for (let d = start; d.getTime() / 1000 < to; d = new Date(d.getTime() + step * 1000))
-            out.push({ t: d.getTime() / 1000, text: step < 86400 ? Qt.formatTime(d, "HH:mm") : step === 86400 ? Qt.formatDate(d, "ddd") : Qt.formatDate(d, "d.M.") });
+            out.push({
+                t: d.getTime() / 1000,
+                text: step < 86400 ? Qt.formatTime(d, "HH:mm") : step === 86400 ? Qt.formatDate(d, "ddd") : Qt.formatDate(d, "d.M.")
+            });
         return out;
     }
 
@@ -103,7 +106,9 @@ Item {
                     end();
                     flush();
                     // A new state carries on from the last point
-                    run = p.t - seen.t <= root.gap ? [Object.assign({}, seen, { charging: p.charging })] : [];
+                    run = p.t - seen.t <= root.gap ? [Object.assign({}, seen, {
+                            charging: p.charging
+                        })] : [];
                 } else if (run.length && p.t - run[run.length - 1].t < pixel) {
                     seen = p;
                     continue;
