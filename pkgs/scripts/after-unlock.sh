@@ -11,14 +11,24 @@
 # and the autostarts waiting on it went down with it.
 # The command replaces this script, so it keeps the PID that Hyprland's
 # exec rules (workspace = ...) look for.
-
+command=$1
 # hyprlock starts together with this script: up to a second to show up
-tries=0
-until pgrep -xu "$UID" hyprlock >/dev/null || [ "$tries" -ge 10 ]; do
-    tries=$((tries + 1))
-    sleep 0.1
+show_tries=10
+show_wait=0.1
+unlock_wait=0.2
+
+is_locked() {
+    pgrep -xu "$UID" hyprlock >/dev/null
+}
+
+for _ in $(seq "$show_tries"); do
+    if is_locked; then
+        break
+    fi
+    sleep "$show_wait"
 done
-while pgrep -xu "$UID" hyprlock >/dev/null; do
-    sleep 0.2
+
+while is_locked; do
+    sleep "$unlock_wait"
 done
-exec sh -c "$1"
+exec sh -c "$command"

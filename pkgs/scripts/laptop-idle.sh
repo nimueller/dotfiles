@@ -6,31 +6,73 @@
 #   laptop-idle suspend   suspend, but only on battery
 # Does nothing outside the laptop mode (config/hypr/modes.lua).
 # brightnessctl, busctl and systemctl come from the system.
+usage="usage: laptop-idle dim|undim|suspend"
 runtime=${XDG_RUNTIME_DIR:-/tmp}
+modes=$runtime/dotfiles-modes.json
 dimmed=$runtime/laptop-idle-dimmed
+dim_percent=10
+upower=org.freedesktop.UPower
+upower_path=/org/freedesktop/UPower
 
-grep -q '"laptop":true' "$runtime/dotfiles-modes.json" 2>/dev/null || exit 0
+# modes.lua writes the file; before it has, no mode is on
+is_laptop_mode() {
+    if [ ! -f "$modes" ]; then
+        return 1
+    fi
+    grep -q '"laptop":true' "$modes"
+}
+
+backlight_percent() {
+    brightnessctl -m -c backlight info | cut -d, -f4 | tr -d %
+}
+
+# -s saves the brightness for undim's -r
+dim() {
+    local percent
+    percent=$(backlight_percent)
+    if [ "$percent" -le "$dim_percent" ]; then
+        return 0
+    fi
+    brightnessctl -q -c backlight -s set "$dim_percent%"
+    touch "$dimmed"
+}
+
+undim() {
+    if [ ! -e "$dimmed" ]; then
+        return 0
+    fi
+    rm -f "$dimmed"
+    brightnessctl -q -c backlight -r
+}
+
+is_on_battery() {
+    local on_battery
+    on_battery=$(busctl get-property "$upower" "$upower_path" "$upower" OnBattery)
+    [ "$on_battery" = "b true" ]
+}
+
+suspend_on_battery() {
+    if is_on_battery; then
+        systemctl suspend
+    fi
+}
+
+if ! is_laptop_mode; then
+    exit 0
+fi
 
 case ${1:-} in
     dim)
-        percent=$(brightnessctl -m -c backlight info 2>/dev/null | cut -d, -f4 | tr -d %)
-        if [ "${percent:-0}" -gt 10 ] && brightnessctl -q -c backlight -s set 10%; then
-            touch "$dimmed"
-        fi
+        dim
         ;;
     undim)
-        if [ -e "$dimmed" ]; then
-            rm -f "$dimmed"
-            brightnessctl -q -c backlight -r
-        fi
+        undim
         ;;
     suspend)
-        if [ "$(busctl get-property org.freedesktop.UPower /org/freedesktop/UPower org.freedesktop.UPower OnBattery)" = "b true" ]; then
-            systemctl suspend
-        fi
+        suspend_on_battery
         ;;
     *)
-        echo "usage: laptop-idle dim|undim|suspend" >&2
+        echo "$usage" >&2
         exit 1
         ;;
 esac
