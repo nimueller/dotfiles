@@ -1,3 +1,4 @@
+# pyright: strict
 """Battery log for the battery history (battery-history.qml), run by
 daemon.qml in laptop mode. Once a minute it appends the charge, energy,
 power draw and state to samples.csv, and while on battery it adds up the
@@ -18,135 +19,272 @@ import re
 import signal
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from types import FrameType
+from typing import NamedTuple, NoReturn, TypedDict, cast
 
 INTERVAL = 60
 GAP = 3 * INTERVAL  # longer between two samples: suspended, not counted
 KEEP_DAYS = 30
+DAY = 86400
+HOUR = 3600
 FLUSH = 600
 TICK = os.sysconf("SC_CLK_TCK")
+MICRO = 1_000_000
 STATE = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state") / "battery-history"
 SAMPLES = STATE / "samples.csv"
 APPS = STATE / "apps.json"
+POWER_SUPPLY = Path("/sys/class/power_supply")
+FLATPAK_INSTALLATIONS = [Path("/var/lib/flatpak"), Path.home() / ".local/share/flatpak"]
 INTERPRETERS = {"python", "python3", "node", "bash", "sh", "zsh", "perl", "ruby", "bun", "deno"}
 GENERIC = {"electron", "bwrap", "zypak-helper"}  # named after the parent
+NOT_AN_APP_PARENT = {"Hyprland", "systemd"}
+RENAMED = {"qs": "Quickshell", "quickshell": "Quickshell"}
+KERNEL = "Kernel"
 STATES = {"Charging": "c", "Discharging": "d", "Full": "f", "Not charging": "n"}
+UNKNOWN_STATE = "u"
+DISCHARGING = "d"
+
+# Fields of /proc/<pid>/stat after the command's ")", counted from 0
+STAT_PARENT = 1
+STAT_USER_TIME = 11
+STAT_SYSTEM_TIME = 12
+STAT_START_TIME = 19
+
+FLATPAK_SCOPE = re.compile(r"app-flatpak-(.+?)-\d+\.scope$")
+# app-Hyprland-firefox-1234.scope, app-gnome-org.gnome.Nautilus@x.service
+APP_UNIT = re.compile(r"app-(?:[^-]+-)?(.+?)(?:@[^.]*)?(?:-\d+)?\.(?:scope|service)$")
+VERSION_SUFFIX = re.compile(r"[\d.]+$")
+WHITESPACE = re.compile(rb"\s")
 
 
-def battery():
-    for d in sorted(Path("/sys/class/power_supply").glob("BAT*")):
+@dataclass
+class Battery:
+    percent: int | None
+    energy: float  # Wh
+    power: float  # W
+    state: str  # a letter of STATES
+
+
+class ProcessTime(NamedTuple):
+    start: str  # tells a process from a later one with the same PID
+    ticks: int
+
+
+class Hour(TypedDict):
+    seconds: int
+    apps: dict[str, float]
+
+
+@dataclass
+class Sample:
+    time: float
+    cpu: dict[int, ProcessTime]
+
+
+# ---------- Battery ----------
+
+
+def read_number(folder: Path, name: str) -> int | None:
+    path = folder / name
+    if not path.exists():
+        return None
+    return int(path.read_text())
+
+
+def read_battery(folder: Path) -> Battery:
+    energy = read_number(folder, "energy_now")  # µWh
+    power = read_number(folder, "power_now")  # µW
+    if energy is None:
+        # Some batteries report charge (µAh) and current (µA) instead
+        volts = read_number(folder, "voltage_now") or 0
+        energy = (read_number(folder, "charge_now") or 0) * volts // MICRO
+        power = (read_number(folder, "current_now") or 0) * volts // MICRO
+    status = (folder / "status").read_text().strip()
+    return Battery(
+        percent=read_number(folder, "capacity"),
+        energy=energy / MICRO,
+        power=abs(power or 0) / MICRO,
+        state=STATES.get(status, UNKNOWN_STATE),
+    )
+
+
+def battery() -> Battery | None:
+    """The first battery that can be read."""
+    for folder in sorted(POWER_SUPPLY.glob("BAT*")):
         try:
-            if (d / "type").read_text().strip() != "Battery":
+            if (folder / "type").read_text().strip() != "Battery":
                 continue
-
-            def num(name, d=d):
-                f = d / name
-                return int(f.read_text()) if f.exists() else None
-
-            energy, power = num("energy_now"), num("power_now")
-            if energy is None:  # charge (µAh) and current (µA) instead
-                volts = num("voltage_now") or 0
-                energy = (num("charge_now") or 0) * volts // 1_000_000
-                power = (num("current_now") or 0) * volts // 1_000_000
-            status = (d / "status").read_text().strip()
-            return {
-                "percent": num("capacity"),
-                "energy": energy / 1e6,  # Wh
-                "power": abs(power or 0) / 1e6,  # W
-                "state": STATES.get(status, "u"),
-            }
+            return read_battery(folder)
         except OSError:
             continue
     return None
 
 
-desktop_names = {}
+# ---------- Apps ----------
+
+desktop_names: dict[str, str] = {}
 
 
-def flatpak_name(app_id):
+def desktop_file_name(app_id: str) -> str | None:
+    """The Name= of an installed Flatpak's desktop file."""
+    for installation in FLATPAK_INSTALLATIONS:
+        desktop_file = installation / f"exports/share/applications/{app_id}.desktop"
+        try:
+            lines = desktop_file.read_text().splitlines()
+        except OSError:
+            continue
+        names = [line.removeprefix("Name=") for line in lines if line.startswith("Name=")]
+        return names[0] if names else None
+    return None
+
+
+def flatpak_name(app_id: str) -> str:
     if app_id not in desktop_names:
-        name = app_id.rsplit(".", 1)[-1]
-        for base in ("/var/lib/flatpak", Path.home() / ".local/share/flatpak"):
-            try:
-                for line in (Path(base) / f"exports/share/applications/{app_id}.desktop").read_text().splitlines():
-                    if line.startswith("Name="):
-                        name = line[5:]
-                        break
-                break
-            except OSError:
-                continue
-        desktop_names[app_id] = name
+        fallback = app_id.rsplit(".", 1)[-1]
+        desktop_names[app_id] = desktop_file_name(app_id) or fallback
     return desktop_names[app_id]
 
 
-def app_of(pid, names):
+def unit_app(pid: int) -> str | None:
+    """The app of the systemd scope or service the process runs in."""
+    try:
+        cgroup_path = Path(f"/proc/{pid}/cgroup").read_text().strip()
+    except OSError:
+        return None
+    unit = cgroup_path.rsplit("/", 1)[-1]
+    if match := FLATPAK_SCOPE.match(unit):
+        return flatpak_name(match[1])
+    if match := APP_UNIT.match(unit):
+        # org.gnome.Nautilus -> Nautilus
+        return match[1].rsplit(".", 1)[-1]
+    return None
+
+
+def command_line(pid: int) -> list[bytes]:
+    try:
+        return Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
+    except OSError:
+        return [b""]
+
+
+def program_name(argv: list[bytes]) -> str:
+    """argv[0]'s file name; for an interpreter the script's, when its
+    first argument looks like one."""
+    program = argv[0].decode(errors="replace").split(" ")[0]
+    name = os.path.basename(program)
+    is_interpreter = VERSION_SUFFIX.sub("", name) in INTERPRETERS
+    if not is_interpreter or len(argv) < 2:
+        return name
+    script = argv[1]
+    looks_like_script = script != b"" and not script.startswith(b"-") and not WHITESPACE.search(script)
+    if looks_like_script:
+        return os.path.basename(script.decode(errors="replace"))
+    return name
+
+
+def stat_fields(pid: int) -> list[str]:
+    """The fields of /proc/<pid>/stat after the command, which may itself
+    hold spaces and parentheses."""
+    stat = Path(f"/proc/{pid}/stat").read_text()
+    after_command = stat[stat.rindex(")") + 2 :]
+    return after_command.split()
+
+
+def parent_app(pid: int, names: dict[int, str | None]) -> str | None:
+    try:
+        parent = int(stat_fields(pid)[STAT_PARENT])
+    except (OSError, ValueError):
+        return None
+    app = app_of(parent, names)
+    if app in NOT_AN_APP_PARENT:
+        return None
+    return app
+
+
+def own_app(pid: int, names: dict[int, str | None]) -> str | None:
+    unit = unit_app(pid)
+    if unit is not None:
+        return unit
+    argv = command_line(pid)
+    if argv[0] == b"":
+        # Kernel threads have no command line
+        return KERNEL
+    name = program_name(argv)
+    if name in GENERIC:
+        parent = parent_app(pid, names)
+        if parent:
+            return parent
+    name = name.removeprefix(".").removesuffix("-wrapped")
+    return RENAMED.get(name, name) or None
+
+
+def app_of(pid: int, names: dict[int, str | None]) -> str | None:
+    """The app a process belongs to, cached in names for one sample."""
     if pid not in names:
-        names[pid] = None  # against loops
+        # Set first, so a loop of parents ends
+        names[pid] = None
         names[pid] = own_app(pid, names)
     return names[pid]
 
 
-def own_app(pid, names):
-    try:
-        cgroup = Path(f"/proc/{pid}/cgroup").read_text().strip().rsplit("/", 1)[-1]
-    except OSError:
-        cgroup = ""
-    if m := re.match(r"app-flatpak-(.+?)-\d+\.scope$", cgroup):
-        return flatpak_name(m[1])
-    # app-Hyprland-firefox-1234.scope, app-gnome-org.gnome.Nautilus@x.service
-    if m := re.match(r"app-(?:[^-]+-)?(.+?)(?:@[^.]*)?(?:-\d+)?\.(?:scope|service)$", cgroup):
-        return m[1].rsplit(".", 1)[-1] if "." in m[1] else m[1]
-    try:
-        argv = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
-    except OSError:
-        argv = [b""]
-    if not argv[0]:  # kernel threads have no command line
-        return "Kernel"
-    name = os.path.basename(argv[0].decode(errors="replace").split(" ")[0])
-    if re.sub(r"[\d.]+$", "", name) in INTERPRETERS:
-        if len(argv) > 1 and argv[1] and not argv[1].startswith(b"-") and not re.search(rb"\s", argv[1]):
-            name = os.path.basename(argv[1].decode(errors="replace"))
-    if name in GENERIC:
-        try:
-            stat = Path(f"/proc/{pid}/stat").read_text()
-            parent = app_of(int(stat[stat.rindex(")") + 2 :].split()[1]), names)
-        except (OSError, ValueError):
-            parent = None
-        if parent and parent not in ("Hyprland", "systemd"):
-            return parent
-    name = name.removeprefix(".").removesuffix("-wrapped")
-    return {"qs": "Quickshell", "quickshell": "Quickshell"}.get(name, name) or None
-
-
-def cpu_times():
-    """{pid: (start time, ticks)} of every process."""
-    out = {}
+def cpu_times() -> dict[int, ProcessTime]:
+    """The CPU time of every process."""
+    times: dict[int, ProcessTime] = {}
     for entry in os.scandir("/proc"):
         if not entry.name.isdigit():
             continue
+        pid = int(entry.name)
         try:
-            stat = Path(f"/proc/{entry.name}/stat").read_text()
+            fields = stat_fields(pid)
         except OSError:
             continue
-        f = stat[stat.rindex(")") + 2 :].split()
-        out[int(entry.name)] = (f[19], int(f[11]) + int(f[12]))
-    return out
+        ticks = int(fields[STAT_USER_TIME]) + int(fields[STAT_SYSTEM_TIME])
+        times[pid] = ProcessTime(fields[STAT_START_TIME], ticks)
+    return times
 
 
-def load_apps():
+def seconds_by_app(before: dict[int, ProcessTime], now: dict[int, ProcessTime]) -> dict[str, float]:
+    """The CPU seconds each app used between two samples. A process that
+    is new (or a new one with a reused PID) counts all its time."""
+    used: dict[str, float] = {}
+    names: dict[int, str | None] = {}
+    for pid, process in now.items():
+        previous = before.get(pid)
+        if previous is not None and previous.start == process.start:
+            delta = process.ticks - previous.ticks
+        else:
+            delta = process.ticks
+        if delta <= 0:
+            continue
+        name = app_of(pid, names)
+        if name:
+            used[name] = used.get(name, 0) + delta / TICK
+    return used
+
+
+# ---------- Files ----------
+
+
+def load_apps() -> dict[str, Hour]:
     try:
-        return json.loads(APPS.read_text())
+        return cast(dict[str, Hour], json.loads(APPS.read_text()))
     except (OSError, ValueError):
         return {}
 
 
-def save(path, text):
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(text)
-    tmp.replace(path)
+def save(path: Path, text: str) -> None:
+    temp = path.with_suffix(".tmp")
+    temp.write_text(text)
+    temp.replace(path)
 
 
-def sample_time(line):
+def sample_line(now: float, sample: Battery) -> str:
+    return f"{int(now)},{sample.percent},{sample.energy:.3f},{sample.power:.2f},{sample.state}\n"
+
+
+def sample_time(line: str) -> float:
     """The time of a sample, 0 for a broken line: after a hard power-off
     the last append can be on disk as NUL bytes only."""
     try:
@@ -155,9 +293,10 @@ def sample_time(line):
         return 0
 
 
-def prune(apps):
-    cutoff = time.time() - KEEP_DAYS * 86400
-    for hour in [h for h in apps if int(h) < cutoff - 3600]:
+def prune(apps: dict[str, Hour]) -> None:
+    cutoff = time.time() - KEEP_DAYS * DAY
+    old_hours = [hour for hour in apps if int(hour) < cutoff - HOUR]
+    for hour in old_hours:
         del apps[hour]
     try:
         lines = SAMPLES.read_text().splitlines()
@@ -168,60 +307,89 @@ def prune(apps):
         save(SAMPLES, "".join(f"{line}\n" for line in kept))
 
 
-def main():
-    STATE.mkdir(parents=True, exist_ok=True)
-    apps = load_apps()
-    prune(apps)
-    pruned = time.strftime("%Y-%m-%d")
-    flushed = time.time()
-    dirty = False
-    last = None  # (time, state, cpu times)
+# ---------- The log ----------
 
-    def flush():
-        save(APPS, json.dumps(apps, separators=(",", ":")))
 
-    def stop(*_):
-        if dirty:
-            flush()
+def today() -> str:
+    return time.strftime("%Y-%m-%d")
+
+
+class BatteryLog:
+    def __init__(self) -> None:
+        STATE.mkdir(parents=True, exist_ok=True)
+        self.apps = load_apps()
+        prune(self.apps)
+        self.pruned = today()
+        self.flushed = time.time()
+        self.dirty = False
+        # The last sample on battery, None when charging or unknown
+        self.last: Sample | None = None
+
+    def flush(self) -> None:
+        save(APPS, json.dumps(self.apps, separators=(",", ":")))
+
+    def on_flush_signal(self, _signal: int, _frame: FrameType | None) -> None:
+        self.flush()
+
+    def on_stop_signal(self, _signal: int, _frame: FrameType | None) -> NoReturn:
+        if self.dirty:
+            self.flush()
         sys.exit(0)
 
-    signal.signal(signal.SIGUSR1, lambda *_: flush())
-    signal.signal(signal.SIGTERM, stop)
-    signal.signal(signal.SIGHUP, stop)
-    while True:
-        now = time.time()
-        bat = battery()
-        if bat and bat["percent"] is not None:
-            with SAMPLES.open("a") as f:
-                f.write(f"{int(now)},{bat['percent']},{bat['energy']:.3f},{bat['power']:.2f},{bat['state']}\n")
+    def count_cpu(self, now: float, times: dict[int, ProcessTime]) -> None:
+        """Adds the CPU time since the last sample, unless the machine was
+        suspended in between."""
+        last = self.last
+        if last is None or now - last.time > GAP:
+            return
+        hour_start = str(int(now // HOUR * HOUR))
+        hour = self.apps.setdefault(hour_start, {"seconds": 0, "apps": {}})
+        hour["seconds"] += round(now - last.time)
+        for name, seconds in seconds_by_app(last.cpu, times).items():
+            hour["apps"][name] = round(hour["apps"].get(name, 0) + seconds, 2)
+        self.dirty = True
 
-            if bat["state"] == "d":
-                times = cpu_times()
-                if last and last[1] == "d" and now - last[0] <= GAP:
-                    hour = apps.setdefault(str(int(now // 3600 * 3600)), {"seconds": 0, "apps": {}})
-                    hour["seconds"] += round(now - last[0])
-                    used, names = {}, {}
-                    for pid, (start, ticks) in times.items():
-                        before = last[2].get(pid)
-                        delta = ticks - before[1] if before and before[0] == start else ticks
-                        if delta > 0 and (name := app_of(pid, names)):
-                            used[name] = used.get(name, 0) + delta / TICK
-                    for name, seconds in used.items():
-                        hour["apps"][name] = round(hour["apps"].get(name, 0) + seconds, 2)
-                    dirty = True
-                last = (now, "d", times)
-            else:
-                last = None
+    def record(self, now: float) -> None:
+        sample = battery()
+        if sample is None or sample.percent is None:
+            return
+        with SAMPLES.open("a") as f:
+            f.write(sample_line(now, sample))
+        if sample.state != DISCHARGING:
+            self.last = None
+            return
+        times = cpu_times()
+        self.count_cpu(now, times)
+        self.last = Sample(now, times)
 
-        if time.strftime("%Y-%m-%d") != pruned:
-            prune(apps)
-            pruned = time.strftime("%Y-%m-%d")
-            dirty = True
-        if dirty and time.time() - flushed >= FLUSH:
-            flush()
-            flushed = time.time()
-            dirty = False
-        time.sleep(INTERVAL - time.time() % INTERVAL)
+    def prune_daily(self) -> None:
+        if today() == self.pruned:
+            return
+        prune(self.apps)
+        self.pruned = today()
+        self.dirty = True
+
+    def flush_when_due(self) -> None:
+        if not self.dirty or time.time() - self.flushed < FLUSH:
+            return
+        self.flush()
+        self.flushed = time.time()
+        self.dirty = False
+
+    def run(self) -> NoReturn:
+        while True:
+            self.record(time.time())
+            self.prune_daily()
+            self.flush_when_due()
+            time.sleep(INTERVAL - time.time() % INTERVAL)
+
+
+def main() -> None:
+    log = BatteryLog()
+    signal.signal(signal.SIGUSR1, log.on_flush_signal)
+    signal.signal(signal.SIGTERM, log.on_stop_signal)
+    signal.signal(signal.SIGHUP, log.on_stop_signal)
+    log.run()
 
 
 if __name__ == "__main__":
