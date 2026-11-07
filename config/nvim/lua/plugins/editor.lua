@@ -37,9 +37,19 @@ return {
             -- Highlighting and indentation for every filetype with a parser;
             -- missing parsers are installed the first time they're needed
             local function start(buf, lang)
-                if vim.api.nvim_buf_is_valid(buf) and pcall(vim.treesitter.start, buf, lang) then
+                if not vim.api.nvim_buf_is_valid(buf) then
+                    return
+                end
+                if pcall(vim.treesitter.start, buf, lang) then
                     vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
                 end
+            end
+            local function installAndStart(buf, lang)
+                ts.install(lang):await(function()
+                    vim.schedule(function()
+                        start(buf, lang)
+                    end)
+                end)
             end
             vim.api.nvim_create_autocmd("FileType", {
                 callback = function(args)
@@ -50,19 +60,18 @@ return {
                     if vim.list_contains(ts.get_installed(), lang) then
                         start(args.buf, lang)
                     elseif vim.list_contains(ts.get_available(), lang) then
-                        ts.install(lang):await(function()
-                            vim.schedule(function()
-                                start(args.buf, lang)
-                            end)
-                        end)
+                        installAndStart(args.buf, lang)
                     end
                 end,
             })
 
             -- Incremental selection on Neovim's own an/in (visual mode)
-            vim.keymap.set("n", "<C-space>", "van", { remap = true, desc = "Select the node under the cursor" })
-            vim.keymap.set("x", "<C-space>", "an", { remap = true, desc = "Grow the selection to the parent node" })
-            vim.keymap.set("x", "<M-space>", "in", { remap = true, desc = "Shrink the selection to a child node" })
+            local function selection(mode, key, keys, description)
+                vim.keymap.set(mode, key, keys, { remap = true, desc = description })
+            end
+            selection("n", "<C-space>", "van", "Select the node under the cursor")
+            selection("x", "<C-space>", "an", "Grow the selection to the parent node")
+            selection("x", "<M-space>", "in", "Shrink the selection to a child node")
         end,
     },
 
@@ -72,7 +81,8 @@ return {
         event = { "BufReadPost", "BufNewFile" },
         config = function()
             require("nvim-treesitter-textobjects").setup({
-                select = { lookahead = true }, -- jump forward to the next object, like targets.vim
+                -- Jump forward to the next object, like targets.vim
+                select = { lookahead = true },
                 move = { set_jumps = true },
             })
 
@@ -129,16 +139,12 @@ return {
         },
     },
 
-    -- Easily surround text
+    -- Add, change and delete surrounding pairs; releases, not the main branch
     {
         "kylechui/nvim-surround",
-        version = "*", -- Use for stability; omit to use `main` branch for the latest features
+        version = "*",
         event = { "BufReadPost", "BufNewFile" },
-        config = function()
-            require("nvim-surround").setup({
-                -- Configuration here, or leave empty to use defaults
-            })
-        end,
+        opts = {},
     },
 
     -- Add indentation guides even on blank lines

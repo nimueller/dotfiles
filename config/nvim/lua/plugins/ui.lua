@@ -1,3 +1,10 @@
+-- A key that runs a Telescope picker, with its options
+local function picker(key, command, description)
+    return { key, "<cmd>Telescope " .. command .. "<cr>", desc = description, silent = true }
+end
+
+local dropdown = "theme=dropdown winblend=10 previewer=true"
+
 return {
     -- Make Vim look nice (entire UI reworked)
     {
@@ -65,24 +72,10 @@ return {
                 },
             },
             commands = {
+                -- The file or folder in its default app (xdg-open)
                 system_open = function(state)
                     local node = state.tree:get_node()
-                    local path = node:get_id()
-
-                    if vim.fn.has("unix") == 1 then
-                        vim.fn.jobstart({ "xdg-open", path }, { detach = true })
-                    elseif vim.fn.has("mac") == 1 then
-                        vim.fn.jobstart({ "open", path }, { detach = true })
-                    elseif vim.fn.has("win32") == 1 then
-                        local p
-                        local lastSlashIndex = path:match("^.+()\\[^\\]*$")
-                        if lastSlashIndex then
-                            p = path:sub(1, lastSlashIndex - 1)
-                        else
-                            p = path
-                        end
-                        vim.cmd("silent !start explorer " .. p)
-                    end
+                    vim.ui.open(node:get_id())
                 end,
             },
             event_handlers = {
@@ -102,7 +95,7 @@ return {
         event = "VeryLazy",
         opts = {
             icons = {
-                -- set icon mappings to true if you have a Nerd Font
+                -- Icons for the mappings only with a Nerd Font
                 mappings = vim.g.have_nerd_font,
             },
             spec = {
@@ -135,51 +128,21 @@ return {
         },
         keys = {
             -- General
-            {
-                "<C-f>",
-                "<cmd>Telescope current_buffer_fuzzy_find theme=dropdown winblend=10 previewer=true<cr>",
-                desc = "[/] Fuzzily search in current buffer",
-                silent = true,
-            },
-            {
-                "<C-e>",
-                "<cmd>Telescope oldfiles only_cwd=true theme=dropdown winblend=10 previewer=true<cr>",
-                desc = "Recent files",
-                silent = true,
-            },
-            { "<leader>sf", "<cmd>Telescope find_files<cr>", desc = "[S]earch [F]iles", silent = true },
-            { "<leader>sg", "<cmd>Telescope live_grep<cr>", desc = "[S]earch by [G]rep", silent = true },
-            { "<leader>sw", "<cmd>Telescope grep_string<cr>", desc = "[S]earch current [W]ord", silent = true },
-            { "<leader>sh", "<cmd>Telescope help_tags<cr>", desc = "[S]earch [H]elp", silent = true },
-            { "<leader>sd", "<cmd>Telescope diagnostics<cr>", desc = "[S]earch [D]iagnostics", silent = true },
+            picker("<C-f>", "current_buffer_fuzzy_find " .. dropdown, "[/] Fuzzily search in current buffer"),
+            picker("<C-e>", "oldfiles only_cwd=true " .. dropdown, "Recent files"),
+            picker("<leader>sf", "find_files", "[S]earch [F]iles"),
+            picker("<leader>sg", "live_grep", "[S]earch by [G]rep"),
+            picker("<leader>sw", "grep_string", "[S]earch current [W]ord"),
+            picker("<leader>sh", "help_tags", "[S]earch [H]elp"),
+            picker("<leader>sd", "diagnostics", "[S]earch [D]iagnostics"),
 
             -- Git
-            {
-                "<leader>gs",
-                "<cmd>Telescope git_status theme=dropdown previewer=true<cr>",
-                desc = "[G]it [S]tatus",
-                silent = true,
-            },
+            picker("<leader>gs", "git_status theme=dropdown previewer=true", "[G]it [S]tatus"),
 
             -- LSP
-            {
-                "<leader>sr",
-                "<cmd>Telescope lsp_references theme=cursor<cr>",
-                desc = "[S]earch [R]eferences",
-                silent = true,
-            },
-            {
-                "<leader>si",
-                "<cmd>Telescope lsp_implementations theme=cursor<cr>",
-                desc = "[S]earch [I]mplementations",
-                silent = true,
-            },
-            {
-                "<leader>ss",
-                "<cmd>Telescope lsp_workspace_symbols<cr>",
-                desc = "[S]earch [S]ymbols",
-                silent = true,
-            },
+            picker("<leader>sr", "lsp_references theme=cursor", "[S]earch [R]eferences"),
+            picker("<leader>si", "lsp_implementations theme=cursor", "[S]earch [I]mplementations"),
+            picker("<leader>ss", "lsp_workspace_symbols", "[S]earch [S]ymbols"),
         },
         config = function(_, opts)
             local telescope = require("telescope")
@@ -203,9 +166,6 @@ return {
             }
         end,
     },
-
-    -- Use Telescope for Code Actions
-    "nvim-telescope/telescope-ui-select.nvim",
 
     -- Diagnostics view
     {
@@ -234,9 +194,8 @@ return {
                             local recording_register = vim.fn.reg_recording()
                             if recording_register == "" then
                                 return ""
-                            else
-                                return "Recording @" .. recording_register
                             end
+                            return "Recording @" .. recording_register
                         end,
                     },
                 },
