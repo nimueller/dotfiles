@@ -1,3 +1,4 @@
+# pyright: strict
 """KDE Connect for the bar's phone chip and menu (Bar.qml, kdeconnect.qml),
 over kdeconnectd's D-Bus interface, with the system's Python like drives.py.
 
@@ -15,19 +16,30 @@ over kdeconnectd's D-Bus interface, with the system's Python like drives.py.
 
 import json
 import sys
+from typing import Any, TypedDict
 
 import gi
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib  # noqa: E402
+from notifications import notify  # noqa: E402
 from portal import choose_files  # noqa: E402
 
+APP = "KDE Connect"
 SERVICE = "org.kde.kdeconnect"
 ROOT = "/modules/kdeconnect"
-IFACE = "org.kde.kdeconnect.device"
+DAEMON = "org.kde.kdeconnect.daemon"
+DEVICE = "org.kde.kdeconnect.device"
+PROPERTIES = "org.freedesktop.DBus.Properties"
+NO_TIMEOUT = -1
+MOUNT_TIMEOUT = 30_000  # ms
+UPDATE_DELAY = 300  # ms: one update for a burst of signals
+NO_BATTERY = -1
+NO_SIGNAL = -1
 # Files' sidebar finds this through a desktop entry (pkgs: phones-in-files)
 SIDEBAR_NAME = "io.github.nimueller.dotfiles.Phones"
 SIDEBAR_PATH = "/io/github/nimueller/dotfiles/Phones"
+PROVIDER_PATH = f"{SIDEBAR_PATH}/Provider"
 SIDEBAR_XML = """
 <node>
   <interface name="org.freedesktop.DBus.ObjectManager">
@@ -50,90 +62,134 @@ SIDEBAR_XML = """
 PROVIDER = "org.freedesktop.CloudProviders.Provider"
 ACCOUNT = "org.freedesktop.CloudProviders.Account"
 MANAGER = "org.freedesktop.DBus.ObjectManager"
+ACCOUNT_IDLE = 1
+PERMISSION_HINT = " Allow it on the phone: KDE Connect, the computer, Plugin settings, Filesystem expose."
+
+# A storage folder of a phone: (path in the mount, name)
+Folder = tuple[str, str]
+# A sidebar folder: (label, path), by its object name
+SidebarFolders = dict[str, tuple[str, str]]
+# D-Bus objects: {path: {interface: {property: value}}}
+Objects = dict[str, dict[str, dict[str, GLib.Variant]]]
+
+
+class Device(TypedDict):
+    """A paired device, as the bar and the menu get it."""
+
+    id: str
+    name: str
+    type: str
+    reachable: bool
+    battery: int
+    charging: bool
+    network: str
+    signal: int
+    mounted: bool
+    storage: list[Folder]
+
 
 bus = Gio.bus_get_sync(Gio.BusType.SESSION)
 
 
-def call(path, iface, method, args=None, timeout=-1):
-    reply = bus.call_sync(SERVICE, path, iface, method, args, None, Gio.DBusCallFlags.NONE, timeout, None)
+def call(
+    path: str,
+    interface: str,
+    method: str,
+    arguments: GLib.Variant | None = None,
+    timeout: int = NO_TIMEOUT,
+) -> Any:
+    """A method of kdeconnectd; returns the reply's values as a tuple."""
+    reply = bus.call_sync(SERVICE, path, interface, method, arguments, None, Gio.DBusCallFlags.NONE, timeout, None)
     return reply.unpack()
 
 
-def props(path, iface):
+def properties(path: str, interface: str) -> dict[str, Any]:
+    """All properties of an object, {} when the plugin isn't loaded."""
     try:
-        return call(path, "org.freedesktop.DBus.Properties", "GetAll", GLib.Variant("(s)", (iface,)))[0]
+        (values,) = call(path, PROPERTIES, "GetAll", GLib.Variant("(s)", (interface,)))
     except GLib.Error:
-        return {}  # the plugin isn't loaded
+        return {}
+    return values
 
 
-def device_path(device_id):
+def device_path(device_id: str) -> str:
     return f"{ROOT}/devices/{device_id}"
 
 
-def plugin(device_id, name):
-    return f"{device_path(device_id)}/{name}", f"{IFACE}.{name}"
+def plugin(device_id: str, name: str) -> tuple[str, str]:
+    """A plugin's object path and interface."""
+    return f"{device_path(device_id)}/{name}", f"{DEVICE}.{name}"
 
 
-def storage(device_id):
-    """The phone's folders in its mount, [(path, name)]: none while the phone
-    doesn't let KDE Connect at its files. The mount's top folder itself can't
-    be listed."""
+def storage(device_id: str) -> list[Folder]:
+    """The phone's folders in its mount: none while the phone doesn't let
+    KDE Connect at its files. The mount's top folder itself can't be
+    listed."""
     try:
-        return list(call(*plugin(device_id, "sftp"), "getDirectories")[0].items())
+        (directories,) = call(*plugin(device_id, "sftp"), "getDirectories")
     except GLib.Error:
         return []
+    return list(directories.items())
 
 
-def notify(summary, body="", icon="kdeconnect"):
-    bus.call_sync(
-        "org.freedesktop.Notifications",
-        "/org/freedesktop/Notifications",
-        "org.freedesktop.Notifications",
-        "Notify",
-        GLib.Variant("(susssasa{sv}i)", ("KDE Connect", 0, icon, summary, body, [], {}, -1)),
-        None,
-        Gio.DBusCallFlags.NONE,
-        -1,
-        None,
-    )
-
-
-# Watching -------------------------------------------------------------------
-
-
-def devices():
-    """The paired devices, with what the bar and the menu show."""
+def is_mounted(device_id: str) -> bool:
     try:
-        ids = call(ROOT, "org.kde.kdeconnect.daemon", "devices", GLib.Variant("(bb)", (False, True)))[0]
+        (mounted,) = call(*plugin(device_id, "sftp"), "isMounted")
     except GLib.Error:
-        return []  # kdeconnectd isn't running
-    result = []
-    for device_id in ids:
-        device = props(device_path(device_id), IFACE)
-        battery = props(*plugin(device_id, "battery"))
-        network = props(*plugin(device_id, "connectivity_report"))
-        mounted = False
-        if device.get("isReachable"):
-            try:
-                mounted = call(*plugin(device_id, "sftp"), "isMounted")[0]
-            except GLib.Error:
-                pass
-        folders = storage(device_id) if mounted else []
-        result.append(
-            {
-                "id": device_id,
-                "name": device.get("name", device_id),
-                "type": device.get("type", "phone"),
-                "reachable": device.get("isReachable", False),
-                "battery": battery.get("charge", -1) if battery.get("hasBattery") else -1,
-                "charging": battery.get("isCharging", False),
-                "network": network.get("cellularNetworkType", ""),
-                "signal": network.get("cellularNetworkStrength", -1),
-                "mounted": mounted,
-                "storage": folders,
-            }
-        )
-    return result
+        # No SFTP plugin: nothing to mount
+        return False
+    return mounted
+
+
+# ---------- Watching ----------
+
+
+def device_ids() -> list[str]:
+    """The paired devices, [] while kdeconnectd isn't running."""
+    only_reachable = False
+    only_paired = True
+    try:
+        (ids,) = call(ROOT, DAEMON, "devices", GLib.Variant("(bb)", (only_reachable, only_paired)))
+    except GLib.Error:
+        return []
+    return ids
+
+
+def device(device_id: str) -> Device:
+    info = properties(device_path(device_id), DEVICE)
+    battery = properties(*plugin(device_id, "battery"))
+    network = properties(*plugin(device_id, "connectivity_report"))
+    reachable = info.get("isReachable", False)
+    mounted = reachable and is_mounted(device_id)
+    charge = battery.get("charge", NO_BATTERY) if battery.get("hasBattery") else NO_BATTERY
+    return {
+        "id": device_id,
+        "name": info.get("name", device_id),
+        "type": info.get("type", "phone"),
+        "reachable": reachable,
+        "battery": charge,
+        "charging": battery.get("isCharging", False),
+        "network": network.get("cellularNetworkType", ""),
+        "signal": network.get("cellularNetworkStrength", NO_SIGNAL),
+        "mounted": mounted,
+        "storage": storage(device_id) if mounted else [],
+    }
+
+
+def devices() -> list[Device]:
+    return [device(device_id) for device_id in device_ids()]
+
+
+def account(label: str, path: str) -> dict[str, dict[str, GLib.Variant]]:
+    return {
+        ACCOUNT: {
+            "Name": GLib.Variant("s", label),
+            "Path": GLib.Variant("s", path),
+            "Icon": GLib.Variant("s", "phone-symbolic"),
+            "Status": GLib.Variant("i", ACCOUNT_IDLE),
+            "StatusDetails": GLib.Variant("s", "Connected"),
+        }
+    }
 
 
 class Sidebar:
@@ -141,131 +197,189 @@ class Sidebar:
     the Nextcloud client shows up in Files' sidebar: in its own section, and
     unlike a bookmark it can't be removed there."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         node = Gio.DBusNodeInfo.new_for_xml(SIDEBAR_XML)
-        self.interfaces = {i.name: i for i in node.interfaces}
-        self.objects = {f"{SIDEBAR_PATH}/Provider": {PROVIDER: {"Name": GLib.Variant("s", "KDE Connect")}}}
-        self.registrations = {}
+        self.interfaces = {interface.name: interface for interface in node.interfaces}
+        self.objects: Objects = {PROVIDER_PATH: {PROVIDER: {"Name": GLib.Variant("s", APP)}}}
+        self.registrations: dict[str, int] = {}
         self.register(SIDEBAR_PATH, MANAGER)
-        self.register(f"{SIDEBAR_PATH}/Provider", PROVIDER)
+        self.register(PROVIDER_PATH, PROVIDER)
         Gio.bus_own_name_on_connection(bus, SIDEBAR_NAME, Gio.BusNameOwnerFlags.NONE, None, None)
 
-    def register(self, path, interface):
+    def register(self, path: str, interface: str) -> None:
         self.registrations[path] = bus.register_object(
-            path, self.interfaces[interface], self.method_call, self.get_property, None
+            path,
+            self.interfaces[interface],
+            self.on_method_call,
+            self.on_get_property,
+            None,
         )
 
-    def method_call(self, _bus, _sender, _path, _iface, method, _params, invocation):
+    def on_method_call(
+        self,
+        _bus: Gio.DBusConnection,
+        _sender: str,
+        _path: str,
+        _interface: str,
+        method: str,
+        _parameters: GLib.Variant,
+        invocation: Gio.DBusMethodInvocation,
+    ) -> None:
         if method == "GetManagedObjects":
             invocation.return_value(GLib.Variant("(a{oa{sa{sv}}})", (self.objects,)))
 
-    def get_property(self, _bus, _sender, path, iface, name):
-        return self.objects[path][iface][name]
+    def on_get_property(
+        self,
+        _bus: Gio.DBusConnection,
+        _sender: str,
+        path: str,
+        interface: str,
+        name: str,
+    ) -> GLib.Variant:
+        return self.objects[path][interface][name]
 
-    def show(self, folders):
-        """Show these folders, {object name: (label, path)}, and no others."""
-        wanted = {
-            f"{SIDEBAR_PATH}/Account/{key}": {
-                ACCOUNT: {
-                    "Name": GLib.Variant("s", label),
-                    "Path": GLib.Variant("s", path),
-                    "Icon": GLib.Variant("s", "phone-symbolic"),
-                    "Status": GLib.Variant("i", 1),  # idle
-                    "StatusDetails": GLib.Variant("s", "Connected"),
-                }
-            }
-            for key, (label, path) in folders.items()
-        }
-        accounts = {p: o for p, o in self.objects.items() if ACCOUNT in o}
-        for path, interfaces in accounts.items():
+    def remove_account(self, path: str) -> None:
+        bus.unregister_object(self.registrations.pop(path))
+        del self.objects[path]
+        self.emit("InterfacesRemoved", GLib.Variant("(oas)", (path, [ACCOUNT])))
+
+    def add_account(self, path: str, interfaces: dict[str, dict[str, GLib.Variant]]) -> None:
+        self.objects[path] = interfaces
+        self.register(path, ACCOUNT)
+        self.emit("InterfacesAdded", GLib.Variant("(oa{sa{sv}})", (path, interfaces)))
+
+    def show(self, folders: SidebarFolders) -> None:
+        """Shows these folders and no others."""
+        wanted = {f"{SIDEBAR_PATH}/Account/{key}": account(label, path) for key, (label, path) in folders.items()}
+        shown = {path: interfaces for path, interfaces in self.objects.items() if ACCOUNT in interfaces}
+        for path, interfaces in shown.items():
             if wanted.get(path) != interfaces:
-                bus.unregister_object(self.registrations.pop(path))
-                del self.objects[path]
-                self.emit("InterfacesRemoved", GLib.Variant("(oas)", (path, [ACCOUNT])))
+                self.remove_account(path)
         for path, interfaces in wanted.items():
             if path not in self.objects:
-                self.objects[path] = interfaces
-                self.register(path, ACCOUNT)
-                self.emit("InterfacesAdded", GLib.Variant("(oa{sa{sv}})", (path, interfaces)))
+                self.add_account(path, interfaces)
 
     @staticmethod
-    def emit(signal, params):
-        bus.emit_signal(None, SIDEBAR_PATH, MANAGER, signal, params)
+    def emit(signal: str, parameters: GLib.Variant) -> None:
+        bus.emit_signal(None, SIDEBAR_PATH, MANAGER, signal, parameters)
+
+
+def sidebar_folders(phone: Device) -> SidebarFolders:
+    """A phone's folders for the sidebar: labelled with its name, plus the
+    folder's when it has more than one (an SD card)."""
+    folders = phone["storage"]
+    result: SidebarFolders = {}
+    for index, (path, name) in enumerate(folders):
+        label = phone["name"] if len(folders) == 1 else f"{phone['name']}: {name}"
+        result[f"{phone['id']}_{index}"] = (label, path)
+    return result
 
 
 class Watch:
-    def __init__(self):
-        self.last = None
-        self.mount_tried = set()  # reachable devices that were asked to mount once
-        self.pending = 0
+    def __init__(self) -> None:
+        self.last_line: str | None = None
+        # Reachable devices that were asked to mount once
+        self.mount_tried: set[str] = set()
+        self.pending_update = 0
         self.sidebar = Sidebar()
         # Any change of kdeconnectd: devices, reachability, battery, mounts
-        bus.signal_subscribe(SERVICE, None, None, None, None, Gio.DBusSignalFlags.NONE, self.changed)
+        bus.signal_subscribe(SERVICE, None, None, None, None, Gio.DBusSignalFlags.NONE, self.on_signal)
         Gio.bus_watch_name_on_connection(
-            bus, SERVICE, Gio.BusNameWatcherFlags.NONE, lambda *_: self.changed(), lambda *_: self.changed()
+            bus,
+            SERVICE,
+            Gio.BusNameWatcherFlags.NONE,
+            self.on_name_appeared,
+            self.on_name_vanished,
         )
         self.update()
 
-    @staticmethod
-    def folders(device):
-        """A phone's folders for the sidebar, {object name: (label, path)}:
-        its name, plus the folder's when it has more than one (an SD card)."""
-        folders = device["storage"]
-        return {
-            f"{device['id']}_{i}": (device["name"] if len(folders) == 1 else f"{device['name']}: {name}", path)
-            for i, (path, name) in enumerate(folders)
-        }
+    def on_signal(self, *_signal: object) -> None:
+        self.changed()
 
-    def changed(self, *_):
-        if not self.pending:
-            self.pending = GLib.timeout_add(300, self.update)
+    def on_name_appeared(self, _bus: Gio.DBusConnection, _name: str, _owner: str) -> None:
+        self.changed()
 
-    def update(self):
-        self.pending = 0
-        state = devices()
-        for device in state:
-            if not device["reachable"]:
-                self.mount_tried.discard(device["id"])
-            elif not device["storage"] and device["id"] not in self.mount_tried:
-                # Not mounted, or mounted before the phone allowed access:
-                # once per connection, as it fails again until it does
-                self.mount_tried.add(device["id"])
-                path, iface = plugin(device["id"], "sftp")
-                if device["mounted"]:
-                    call(path, iface, "unmount")
-                bus.call(SERVICE, path, iface, "mount", None, None, Gio.DBusCallFlags.NONE, -1, None, None)
-        self.sidebar.show({k: v for d in state for k, v in self.folders(d).items()})
-        line = json.dumps(state)
-        if line != self.last:
-            self.last = line
+    def on_name_vanished(self, _bus: Gio.DBusConnection, _name: str) -> None:
+        self.changed()
+
+    def changed(self) -> None:
+        if self.pending_update == 0:
+            self.pending_update = GLib.timeout_add(UPDATE_DELAY, self.update)
+
+    def mount_once(self, phone: Device) -> None:
+        """Mounts a phone that is reachable but shows no storage: not
+        mounted, or mounted before the phone allowed access. Once per
+        connection, as it fails again until the phone allows it."""
+        if not phone["reachable"]:
+            self.mount_tried.discard(phone["id"])
+            return
+        if phone["storage"] or phone["id"] in self.mount_tried:
+            return
+        self.mount_tried.add(phone["id"])
+        path, interface = plugin(phone["id"], "sftp")
+        if phone["mounted"]:
+            call(path, interface, "unmount")
+        bus.call(SERVICE, path, interface, "mount", None, None, Gio.DBusCallFlags.NONE, NO_TIMEOUT, None, None)
+
+    def update(self) -> bool:
+        self.pending_update = 0
+        phones = devices()
+        sidebar: SidebarFolders = {}
+        for phone in phones:
+            self.mount_once(phone)
+            sidebar.update(sidebar_folders(phone))
+        self.sidebar.show(sidebar)
+        line = json.dumps(phones)
+        if line != self.last_line:
+            self.last_line = line
             print(line, flush=True)
         return GLib.SOURCE_REMOVE
 
 
-# Actions --------------------------------------------------------------------
+# ---------- Actions ----------
 
 
-def browse(device_id, name):
-    path, iface = plugin(device_id, "sftp")
-    folders = []
-    if call(path, iface, "mountAndWait", timeout=30000)[0]:
-        folders = storage(device_id)
-        if not folders:
-            # Mounted before the phone allowed access: mount again
-            call(path, iface, "unmount")
-            if call(path, iface, "mountAndWait", timeout=30000)[0]:
-                folders = storage(device_id)
+def mount_and_wait(path: str, interface: str) -> bool:
+    (mounted,) = call(path, interface, "mountAndWait", timeout=MOUNT_TIMEOUT)
+    return mounted
+
+
+def mounted_storage(device_id: str) -> list[Folder]:
+    """Mounts the phone and returns its folders; mounts it again when it
+    was mounted before the phone allowed access."""
+    path, interface = plugin(device_id, "sftp")
+    if not mount_and_wait(path, interface):
+        return []
+    folders = storage(device_id)
     if folders:
-        Gio.AppInfo.launch_default_for_uri(GLib.filename_to_uri(folders[0][0], None), None)
+        return folders
+    call(path, interface, "unmount")
+    if not mount_and_wait(path, interface):
+        return []
+    return storage(device_id)
+
+
+def browse(device_id: str, name: str) -> None:
+    folders = mounted_storage(device_id)
+    if folders:
+        first_path, _name = folders[0]
+        Gio.AppInfo.launch_default_for_uri(GLib.filename_to_uri(first_path, None), None)
         return
-    error = call(path, iface, "getMountError")[0] or "The phone didn't share any folders."
-    if "Permissions missing" in error or not folders:
-        error += " Allow it on the phone: KDE Connect, the computer, Plugin settings, Filesystem expose."
-    notify(f"Couldn't open {name}", error, "dialog-error")
+    path, interface = plugin(device_id, "sftp")
+    (error,) = call(path, interface, "getMountError")
+    # Without folders the phone hasn't allowed access, whatever the error says
+    message = (error or "The phone didn't share any folders.") + PERMISSION_HINT
+    notify(bus, APP, f"Couldn't open {name}", message, "dialog-error")
 
 
-def main(action, device_id):
-    name = props(device_path(device_id), IFACE).get("name", "the phone")
+def send_files(device_id: str, name: str) -> None:
+    uris = choose_files(bus, f"Select files to send to {name}", "_Send", multiple=True)
+    if uris:
+        call(*plugin(device_id, "share"), "shareUrls", GLib.Variant("(as)", (uris,)))
+
+
+def run_action(action: str, device_id: str) -> None:
+    name = properties(device_path(device_id), DEVICE).get("name", "the phone")
     if action == "ring":
         call(*plugin(device_id, "findmyphone"), "ring")
     elif action == "ping":
@@ -273,24 +387,33 @@ def main(action, device_id):
     elif action == "clipboard":
         call(*plugin(device_id, "clipboard"), "sendClipboard")
     elif action == "send":
-        uris = choose_files(bus, f"Select files to send to {name}", "_Send", multiple=True)
-        if uris:
-            call(*plugin(device_id, "share"), "shareUrls", GLib.Variant("(as)", (uris,)))
+        send_files(device_id, name)
     elif action == "browse":
         browse(device_id, name)
     else:
         sys.exit(__doc__)
 
 
-if __name__ == "__main__":
-    if sys.argv[1:] == ["watch"]:
-        Watch()
-        GLib.MainLoop().run()
-    elif len(sys.argv) == 3:
-        try:
-            main(*sys.argv[1:])
-        except GLib.Error as e:
-            notify("KDE Connect", e.message, "dialog-error")
-            sys.exit(1)
-    else:
+def watch() -> None:
+    Watch()
+    # pygobject-stubs leave MainLoop.run's return type unknown
+    GLib.MainLoop().run()  # pyright: ignore[reportUnknownMemberType]
+
+
+def main() -> None:
+    arguments = sys.argv[1:]
+    if arguments == ["watch"]:
+        watch()
+        return
+    if len(arguments) != 2:
         sys.exit(__doc__)
+    action, device_id = arguments
+    try:
+        run_action(action, device_id)
+    except GLib.Error as error:
+        notify(bus, APP, APP, error.message, "dialog-error")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

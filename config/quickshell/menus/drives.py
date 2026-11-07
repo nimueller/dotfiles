@@ -1,3 +1,4 @@
+# pyright: strict
 """Notifies when a USB drive, memory card, disc or phone shows up, with Open
 (mounts it and shows it in Files) and Eject. Run by daemon.qml, with the
 system's Python: GVfs's volume monitors (gvfs, gvfs-mtp) only load into the
@@ -7,144 +8,139 @@ system's GLib, the same ones Files uses.
 import gi
 
 gi.require_version("Gio", "2.0")
-from gi.repository import Gio, GLib  # noqa: E402
+from gi.repository import Gio, GLib, GObject  # noqa: E402
+from notifications import close, notify, subscribe  # noqa: E402
 
 APP = "Drives"
+FALLBACK_ICON = "drive-removable-media"
+ERROR_ICON = "dialog-error"
+# "default" is a click on the notification itself
+OPEN_ACTIONS = {"default", "open"}
+EJECT_ACTION = "eject"
+
+
+def icon_name(volume: Gio.Volume) -> str:
+    icon = volume.get_icon()
+    if isinstance(icon, Gio.ThemedIcon):
+        return icon.get_names()[0]
+    return FALLBACK_ICON
+
+
+def was_plugged_in(volume: Gio.Volume) -> bool:
+    """Removable drives and phones (which have no drive); a new partition
+    on an internal disk doesn't count."""
+    drive = volume.get_drive()
+    if drive is None:
+        return True
+    return drive.is_removable() or drive.is_media_removable()
+
+
+def drive_name(volume: Gio.Volume) -> str:
+    """The drive's name when it says more than the volume's, else ""."""
+    drive = volume.get_drive()
+    if drive is None or drive.get_name() == volume.get_name():
+        return ""
+    return drive.get_name()
+
+
+def show_in_files(mount: Gio.Mount) -> None:
+    uri = mount.get_root().get_uri()
+    Gio.AppInfo.launch_default_for_uri(uri, None)
 
 
 class Drives:
-    def __init__(self):
+    def __init__(self) -> None:
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION)
-        self.shown = {}  # notification id → volume
-        self.bus.signal_subscribe(
-            "org.freedesktop.Notifications",
-            "org.freedesktop.Notifications",
-            None,
-            "/org/freedesktop/Notifications",
-            None,
-            Gio.DBusSignalFlags.NONE,
-            self.on_signal,
-        )
+        # The volumes whose notification is still shown, by its id
+        self.shown: dict[int, Gio.Volume] = {}
+        subscribe(self.bus, self.on_action, self.on_closed)
         self.monitor = Gio.VolumeMonitor.get()
         self.monitor.connect("volume-added", self.on_added)
         self.monitor.connect("volume-removed", self.on_removed)
 
-    # Notifications ----------------------------------------------------------
+    # ---------- Notifications ----------
 
-    def notify(self, summary, body, icon, actions=(), replaces=0):
-        reply = self.bus.call_sync(
-            "org.freedesktop.Notifications",
-            "/org/freedesktop/Notifications",
-            "org.freedesktop.Notifications",
-            "Notify",
-            GLib.Variant(
-                "(susssasa{sv}i)",
-                (APP, replaces, icon, summary, body, list(actions), {}, -1),
-            ),
-            GLib.VariantType("(u)"),
-            Gio.DBusCallFlags.NONE,
-            -1,
-        )
-        return reply.unpack()[0]
-
-    def close(self, nid):
-        self.bus.call(
-            "org.freedesktop.Notifications",
-            "/org/freedesktop/Notifications",
-            "org.freedesktop.Notifications",
-            "CloseNotification",
-            GLib.Variant("(u)", (nid,)),
-            None,
-            Gio.DBusCallFlags.NONE,
-            -1,
-        )
-
-    def on_signal(self, _bus, _sender, _path, _iface, signal, params):
-        if signal == "ActionInvoked":
-            nid, action = params.unpack()
-            volume = self.shown.pop(nid, None)
-            if volume is None:
-                return
-            if action in ("default", "open"):
-                self.open(volume, nid)
-            elif action == "eject":
-                self.eject(volume, nid)
-        elif signal == "NotificationClosed":
-            self.shown.pop(params.unpack()[0], None)
-
-    # Volumes ----------------------------------------------------------------
-
-    @staticmethod
-    def icon(volume):
-        icon = volume.get_icon()
-        return icon.get_names()[0] if isinstance(icon, Gio.ThemedIcon) else "drive-removable-media"
-
-    def on_added(self, _monitor, volume):
-        # Only what was plugged in or inserted: removable drives and phones
-        # (no drive); a new partition on an internal disk doesn't count
-        drive = volume.get_drive()
-        if drive and not (drive.is_removable() or drive.is_media_removable()):
+    def on_action(self, notification_id: int, action: str) -> None:
+        volume = self.shown.pop(notification_id, None)
+        if volume is None:
             return
-        name = volume.get_name()
-        body = drive.get_name() if drive and drive.get_name() != name else ""
+        if action in OPEN_ACTIONS:
+            self.open(volume, notification_id)
+        elif action == EJECT_ACTION:
+            self.eject(volume, notification_id)
+
+    def on_closed(self, notification_id: int) -> None:
+        self.shown.pop(notification_id, None)
+
+    def failed(self, volume: Gio.Volume, what: str, error: GLib.Error, notification_id: int) -> None:
+        summary = f"Couldn't {what} {volume.get_name()}"
+        notify(self.bus, APP, summary, error.message, ERROR_ICON, replaces=notification_id)
+
+    # ---------- Volumes ----------
+
+    def on_added(self, _monitor: Gio.VolumeMonitor, volume: Gio.Volume) -> None:
+        if not was_plugged_in(volume):
+            return
         actions = ["default", "Open", "open", "Open"]
-        if volume.can_eject() or volume.get_mount():
-            actions += ["eject", "Eject"]
-        nid = self.notify(f"{name} connected", body, self.icon(volume), actions)
-        self.shown[nid] = volume
+        if volume.can_eject() or volume.get_mount() is not None:
+            actions += [EJECT_ACTION, "Eject"]
+        summary = f"{volume.get_name()} connected"
+        notification_id = notify(self.bus, APP, summary, drive_name(volume), icon_name(volume), actions)
+        self.shown[notification_id] = volume
 
-    def on_removed(self, _monitor, volume):
-        for nid, v in list(self.shown.items()):
-            if v == volume:
-                del self.shown[nid]
-                self.close(nid)
+    def on_removed(self, _monitor: Gio.VolumeMonitor, volume: Gio.Volume) -> None:
+        gone = [notification_id for notification_id, shown in self.shown.items() if shown == volume]
+        for notification_id in gone:
+            del self.shown[notification_id]
+            close(self.bus, notification_id)
 
-    def failed(self, volume, what, error, nid):
-        self.notify(f"Couldn't {what} {volume.get_name()}", error.message, "dialog-error", replaces=nid)
-
-    def open(self, volume, nid):
+    def open(self, volume: Gio.Volume, notification_id: int) -> None:
         mount = volume.get_mount()
-        if mount:
-            self.show(mount)
+        if mount is not None:
+            show_in_files(mount)
             return
 
-        def done(volume, result):
+        def on_mounted(_source: GObject.Object | None, result: Gio.AsyncResult) -> None:
             try:
                 volume.mount_finish(result)
-            except GLib.Error as e:
-                self.failed(volume, "open", e, nid)
+            except GLib.Error as error:
+                self.failed(volume, "open", error, notification_id)
                 return
-            self.show(volume.get_mount())
+            mounted = volume.get_mount()
+            if mounted is not None:
+                show_in_files(mounted)
 
-        volume.mount(Gio.MountMountFlags.NONE, Gio.MountOperation(), None, done)
+        volume.mount(Gio.MountMountFlags.NONE, Gio.MountOperation(), None, on_mounted)
 
-    @staticmethod
-    def show(mount):
-        Gio.AppInfo.launch_default_for_uri(mount.get_root().get_uri(), None)
-
-    def eject(self, volume, nid):
+    def eject(self, volume: Gio.Volume, notification_id: int) -> None:
+        """Ejects the volume, or unmounts it when it can't be ejected."""
         name = volume.get_name()
-        icon = self.icon(volume)
+        icon = icon_name(volume)
         mount = volume.get_mount()
 
-        def done(obj, result):
+        def on_done(source: GObject.Object | None, result: Gio.AsyncResult) -> None:
             try:
-                if obj is volume:
-                    volume.eject_with_operation_finish(result)
+                if isinstance(source, Gio.Mount):
+                    source.unmount_with_operation_finish(result)
                 else:
-                    obj.unmount_with_operation_finish(result)
-            except GLib.Error as e:
-                self.failed(volume, "eject", e, nid)
+                    volume.eject_with_operation_finish(result)
+            except GLib.Error as error:
+                self.failed(volume, "eject", error, notification_id)
                 return
-            self.notify(f"{name} can be removed", "", icon, replaces=nid)
+            notify(self.bus, APP, f"{name} can be removed", "", icon, replaces=notification_id)
 
         operation = Gio.MountOperation()
         if volume.can_eject():
-            volume.eject_with_operation(Gio.MountUnmountFlags.NONE, operation, None, done)
-        elif mount:
-            mount.unmount_with_operation(Gio.MountUnmountFlags.NONE, operation, None, done)
+            volume.eject_with_operation(Gio.MountUnmountFlags.NONE, operation, None, on_done)
+        elif mount is not None:
+            mount.unmount_with_operation(Gio.MountUnmountFlags.NONE, operation, None, on_done)
+
+
+def main() -> None:
+    Drives()
+    # pygobject-stubs leave MainLoop.run's return type unknown
+    GLib.MainLoop().run()  # pyright: ignore[reportUnknownMemberType]
 
 
 if __name__ == "__main__":
-    Drives()
-    GLib.MainLoop().run()
+    main()
