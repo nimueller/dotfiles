@@ -5,13 +5,19 @@
 local buf = vim.api.nvim_get_current_buf()
 local spellers = { codebook = true, ltex = true }
 
+-- A server's diagnostics come in two namespaces: pushed and pulled ones
+local function showDiagnostics(client, on)
+    for _, isPull in ipairs({ false, true }) do
+        local namespace = vim.lsp.diagnostic.get_namespace(client.id, isPull)
+        vim.diagnostic.enable(on, { bufnr = buf, ns_id = namespace })
+    end
+end
+
 local function spelling(on)
     vim.opt_local.spell = on
     for _, client in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
         if spellers[client.name] then
-            for _, pull in ipairs({ false, true }) do
-                vim.diagnostic.enable(on, { bufnr = buf, ns_id = vim.lsp.diagnostic.get_namespace(client.id, pull) })
-            end
+            showDiagnostics(client, on)
         end
     end
 end

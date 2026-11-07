@@ -26,15 +26,6 @@ local function nmap(key, keymap, description)
     map("n", key, keymap, description)
 end
 
----Creates a keymap for insert mode.
----@param keys string
----@param func function | string
----@param desc string | nil
----@return nil
-local function imap(keys, func, desc)
-    map("i", keys, func, desc)
-end
-
 -- Non-Vim keymaps, because I'm used to them...
 vim.keymap.set({ "n", "v" }, "<leader>a", "<ESC>gg0vG$", { silent = true })
 vim.keymap.set("v", "<C-c>", '"+y', { silent = true })

@@ -20,7 +20,38 @@
 --   the Arch repos, built by hand), three-finger swipes switch workspaces
 --   and open the overview as on the touchpad. Without it, the overview's
 --   button on the bar does.
-local M = { forced = {}, laptop = false, touch = false, detected = {}, touchpadOptions = {} }
+local M = {
+    forced = {},
+    laptop = false,
+    touch = false,
+    detected = {},
+    touchpadOptions = {},
+}
+
+local INPUT_DEVICES = "/proc/bus/input/devices"
+local POWER_SUPPLIES = "/sys/class/power_supply"
+local LID_STATES = "/proc/acpi/button/lid/*/state"
+local HYPRGRASS = "/usr/lib/hyprgrass/libhyprgrass.so"
+
+-- Bits of the input device bitmaps (linux/input-event-codes.h)
+local INPUT_PROP_DIRECT = 1
+local SW_LID = 0
+local SW_TABLET_MODE = 1
+local ABS_MT_POSITION_X = 0x35
+
+local ON_LOCK_SCREEN = { locked = true }
+local KEYBOARD_BACKLIGHT = "brightnessctl -q -d '*::kbd_backlight' set "
+local KEYBOARD_BACKLIGHT_STEP = "33%"
+local SCREEN_KEYBOARD_SETTING = "gsettings set org.gnome.desktop.a11y.applications" .. " screen-keyboard-enabled "
+local SCREEN_KEYBOARD = "sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0"
+local HIDE_SCREEN_KEYBOARD = "busctl --user call " .. SCREEN_KEYBOARD .. " SetVisible b false"
+-- Higher is more sensitive, but a finger that touches down after the others
+-- moved 100/sensitivity px cancels the gesture: at 4.0 the third finger
+-- often comes too late, below 3.0 swipes start late
+local HYPRGRASS_SENSITIVITY = 3.0
+-- The whole screen's width is one workspace otherwise, and a swipe of less
+-- than half of it snaps back
+local HYPRGRASS_WORKSPACE_SCALE = 1.6
 
 -- Forced modes, from local.lua: { laptop = true|false, touch = true|false };
 -- a mode that isn't named is detected
@@ -40,113 +71,162 @@ function M.touchpad(options)
 end
 
 local function read(path)
-    local f = io.open(path)
-    if not f then
+    local file = io.open(path)
+    if file == nil then
         return nil
     end
-    local text = f:read("a")
-    f:close()
+    local text = file:read("a")
+    file:close()
     return text
 end
 
 local function exists(path)
-    local f = io.open(path)
-    if f then
-        f:close()
+    local file = io.open(path)
+    if file == nil then
+        return false
     end
-    return f ~= nil
+    file:close()
+    return true
 end
 
-local function shell(cmd)
-    local p = io.popen(cmd)
-    if not p then
+local function shell(command)
+    local process = io.popen(command)
+    if process == nil then
         return ""
     end
-    local out = p:read("a") or ""
-    p:close()
-    return out
+    local output = process:read("a") or ""
+    process:close()
+    return output
+end
+
+-- A file in $XDG_RUNTIME_DIR, for the shell
+local function writeRuntimeFile(name, text)
+    local runtime = os.getenv("XDG_RUNTIME_DIR")
+    if runtime == nil then
+        return
+    end
+    local file = io.open(runtime .. "/" .. name, "w")
+    if file == nil then
+        return
+    end
+    file:write(text)
+    file:close()
 end
 
 -- Bit n of a bitmap in /proc/bus/input/devices: hex words, the last one
 -- holds bits 0-63
 local function bit(map, n)
-    if not map then
+    if map == nil then
         return false
     end
     local words = {}
-    for w in map:gmatch("%x+") do
-        words[#words + 1] = w
+    for word in map:gmatch("%x+") do
+        words[#words + 1] = word
     end
-    local word = tonumber(words[#words - n // 64] or "0", 16) or 0
+    local wordIndex = #words - n // 64
+    local word = tonumber(words[wordIndex] or "0", 16) or 0
     return (word >> (n % 64)) & 1 == 1
 end
 
-local INPUT_PROP_DIRECT = 1
-local SW_LID = 0
-local SW_TABLET_MODE = 1
-local ABS_MT_POSITION_X = 0x35
+-- One device block of /proc/bus/input/devices, as the fields it's checked by
+local function parseDevice(block)
+    return {
+        name = block:match('N: Name="(.-)"\n'),
+        sysfs = block:match("S: Sysfs=(%S+)") or "",
+        switches = block:match("B: SW=([%x ]+)"),
+        properties = block:match("B: PROP=([%x ]+)"),
+        axes = block:match("B: ABS=([%x ]+)"),
+    }
+end
 
--- The kernel's input devices. Virtual ones (Sunshine's mouse and touch
--- screen for a streaming client, ydotool) don't count.
-local function hardware()
-    local found = { laptop = false, touch = false }
-    for block in ((read("/proc/bus/input/devices") or "") .. "\n"):gmatch("(.-)\n\n") do
-        if not (block:match("S: Sysfs=(%S+)") or ""):find("/virtual/") then
-            if bit(block:match("B: SW=([%x ]+)"), SW_LID) then
-                found.laptop = true
-                M.lid = block:match('N: Name="(.-)"\n')
-            end
-            if bit(block:match("B: SW=([%x ]+)"), SW_TABLET_MODE) then
-                M.tabletSwitch = block:match('N: Name="(.-)"\n')
-            end
-            if
-                bit(block:match("B: PROP=([%x ]+)"), INPUT_PROP_DIRECT)
-                and bit(block:match("B: ABS=([%x ]+)"), ABS_MT_POSITION_X)
-            then
-                found.touch = true
-            end
+-- Virtual devices (Sunshine's mouse and touch screen for a streaming
+-- client, ydotool) don't count
+local function inputDevices()
+    local devices = {}
+    local text = (read(INPUT_DEVICES) or "") .. "\n"
+    for block in text:gmatch("(.-)\n\n") do
+        local device = parseDevice(block)
+        if not device.sysfs:find("/virtual/") then
+            devices[#devices + 1] = device
         end
     end
-    -- A battery of the machine's own; a mouse's or a headset's has the scope Device
-    if
-        shell(
-            [[for d in /sys/class/power_supply/*; do [ "$(cat "$d/type" 2>/dev/null)" = Battery ] && [ "$(cat "$d/scope" 2>/dev/null)" != Device ] && echo y; done]]
-        ):find("y")
-    then
+    return devices
+end
+
+local function isTouchScreen(device)
+    local isDirect = bit(device.properties, INPUT_PROP_DIRECT)
+    local hasMultitouch = bit(device.axes, ABS_MT_POSITION_X)
+    return isDirect and hasMultitouch
+end
+
+-- A battery of the machine's own; a mouse's or a headset's has the scope Device
+local function hasOwnBattery()
+    for supply in shell("ls " .. POWER_SUPPLIES):gmatch("[^\n]+") do
+        local path = POWER_SUPPLIES .. "/" .. supply
+        local supplyType = read(path .. "/type") or ""
+        local scope = read(path .. "/scope") or ""
+        if supplyType:match("^Battery") and not scope:match("^Device") then
+            return true
+        end
+    end
+    return false
+end
+
+-- The kernel's input devices and batteries; also remembers the lid and the
+-- tablet mode switch for their binds
+local function hardware()
+    local found = { laptop = false, touch = false }
+    for _, device in ipairs(inputDevices()) do
+        if bit(device.switches, SW_LID) then
+            found.laptop = true
+            M.lid = device.name
+        end
+        if bit(device.switches, SW_TABLET_MODE) then
+            M.tabletSwitch = device.name
+        end
+        if isTouchScreen(device) then
+            found.touch = true
+        end
+    end
+    if hasOwnBattery() then
         found.laptop = true
     end
     return found
 end
 
 -- The laptop's own screen: eDP, or LVDS and DSI on older and ARM machines
-local function builtIn(monitor)
-    return monitor.name:match("^eDP") or monitor.name:match("^LVDS") or monitor.name:match("^DSI")
+local function isBuiltIn(monitor)
+    local name = monitor.name
+    return name:match("^eDP") or name:match("^LVDS") or name:match("^DSI")
 end
 
-local function lidClosed()
-    return shell("cat /proc/acpi/button/lid/*/state 2>/dev/null"):find("closed") ~= nil
+local function isLidClosed()
+    return shell("cat " .. LID_STATES .. " 2>/dev/null"):find("closed") ~= nil
+end
+
+local function hasOtherMonitor(monitors)
+    for _, monitor in ipairs(monitors) do
+        if not isBuiltIn(monitor) then
+            return true
+        end
+    end
+    return false
 end
 
 -- Lid closed and another monitor connected: the built-in screen goes off.
 -- A rule for the screen by its description, after (and so over) its rule
 -- in local.lua; opening the lid reloads the config, which brings it back.
-local function dock(closed)
-    if not (closed or lidClosed()) then
+local function dock(isClosed)
+    if not (isClosed or isLidClosed()) then
         return
     end
     local monitors = hl.get_monitors()
-    local other = false
-    for _, m in ipairs(monitors) do
-        if not builtIn(m) then
-            other = true
-        end
-    end
-    if not other then
+    if not hasOtherMonitor(monitors) then
         return
     end
-    for _, m in ipairs(monitors) do
-        if builtIn(m) then
-            hl.monitor({ output = "desc:" .. m.description, disabled = true })
+    for _, monitor in ipairs(monitors) do
+        if isBuiltIn(monitor) then
+            hl.monitor({ output = "desc:" .. monitor.description, disabled = true })
         end
     end
 end
@@ -159,47 +239,128 @@ local function overviewClose()
     hl.dispatch(hl.dsp.event("quickshell-overview close"))
 end
 
+local function bindKeyboardBacklight()
+    local up = KEYBOARD_BACKLIGHT .. KEYBOARD_BACKLIGHT_STEP .. "+"
+    local down = KEYBOARD_BACKLIGHT .. KEYBOARD_BACKLIGHT_STEP .. "-"
+    hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd(up), ON_LOCK_SCREEN)
+    hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd(down), ON_LOCK_SCREEN)
+end
+
+local function bindLid()
+    hl.bind("switch:on:" .. M.lid, function()
+        dock(true)
+    end, ON_LOCK_SCREEN)
+    hl.bind("switch:off:" .. M.lid, hl.dsp.exec_cmd("hyprctl reload"), ON_LOCK_SCREEN)
+    hl.on("monitor.added", function()
+        dock(false)
+    end)
+    -- A reload while docked
+    dock(false)
+end
+
 local function laptop()
     hl.config({
         input = {
             touchpad = {
                 tap_to_click = true,
                 disable_while_typing = true,
-                clickfinger_behavior = true, -- two fingers right-click, three middle-click
+                -- Two fingers right-click, three middle-click
+                clickfinger_behavior = true,
             },
         },
     })
     hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
     hl.gesture({ fingers = 3, direction = "up", action = overviewOpen })
     hl.gesture({ fingers = 3, direction = "down", action = overviewClose })
-
-    local kbd = "brightnessctl -q -d '*::kbd_backlight' set "
-    hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd(kbd .. "33%+"), { locked = true })
-    hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd(kbd .. "33%-"), { locked = true })
-
+    bindKeyboardBacklight()
     if M.lid then
-        hl.bind("switch:on:" .. M.lid, function()
-            dock(true)
-        end, { locked = true })
-        hl.bind("switch:off:" .. M.lid, hl.dsp.exec_cmd("hyprctl reload"), { locked = true })
-        hl.on("monitor.added", function()
-            dock(false)
-        end)
-        dock(false) -- a reload while docked
+        bindLid()
     end
+end
+
+local function boolText(value)
+    return tostring(value == true)
 end
 
 -- Tablet mode (the switch, see touch()) for the shell
 local function tabletMode(on)
-    local runtime = os.getenv("XDG_RUNTIME_DIR")
-    local f = runtime and io.open(runtime .. "/dotfiles-tablet", "w")
-    if f then
-        f:write(on and "true\n" or "false\n")
-        f:close()
-    end
+    writeRuntimeFile("dotfiles-tablet", boolText(on) .. "\n")
 end
 
-local HYPRGRASS = "/usr/lib/hyprgrass/libhyprgrass.so"
+local function screenKeyboardSetting(on)
+    return SCREEN_KEYBOARD_SETTING .. boolText(on)
+end
+
+-- Hyprland loads the plugin after reading the config, then reads it again;
+-- its functions are there from the second time on. A plugin built for
+-- another Hyprland version doesn't load (with a notification).
+local function touchGestures()
+    if not exists(HYPRGRASS) then
+        return
+    end
+    hl.plugin.load(HYPRGRASS)
+    local hyprgrass = hl.plugin.hyprgrass
+    if not hyprgrass then
+        return
+    end
+    hl.config({ plugin = { hyprgrass = { sensitivity = HYPRGRASS_SENSITIVITY } } })
+    hyprgrass.gesture({
+        pattern = { kind = "swipe", fingers = 3, direction = "horizontal" },
+        action = "workspace",
+        scale = HYPRGRASS_WORKSPACE_SCALE,
+    })
+    -- Not tried on a touch screen yet: a plugin that wants another kind of
+    -- action mustn't break the config
+    pcall(hyprgrass.gesture, {
+        pattern = { kind = "swipe", fingers = 3, direction = "up" },
+        action = overviewOpen,
+    })
+    pcall(hyprgrass.gesture, {
+        pattern = { kind = "swipe", fingers = 3, direction = "down" },
+        action = overviewClose,
+    })
+end
+
+local function bindTabletSwitch()
+    hl.bind("switch:on:" .. M.tabletSwitch, function()
+        tabletMode(true)
+        hl.exec_cmd(screenKeyboardSetting(true))
+    end, ON_LOCK_SCREEN)
+    hl.bind("switch:off:" .. M.tabletSwitch, function()
+        tabletMode(false)
+        hl.exec_cmd(screenKeyboardSetting(false) .. "; " .. HIDE_SCREEN_KEYBOARD)
+    end, ON_LOCK_SCREEN)
+end
+
+-- Text fields bring up the keyboard when this setting is on (squeekboard
+-- follows it; the bar's button calls SetVisible and works either way). Set
+-- only here, not by home-manager, which would turn it on again with every
+-- switch. Without a tablet mode switch it's always on. With one, only in
+-- tablet mode: it starts off, with the keyboard attached; libinput reports a
+-- switch that's already on when Hyprland starts, which turns it on.
+--
+-- The shell reads the switch from $XDG_RUNTIME_DIR/dotfiles-tablet and makes
+-- its menus bigger in tablet mode (quickshell/menus/Popup.qml). Like the
+-- setting, it starts off and the switch turns it on.
+local function screenKeyboard()
+    hl.on("hyprland.start", function()
+        hl.exec_cmd("squeekboard")
+    end)
+    -- Above the lock screen, and it takes touches there: hyprlock has a button
+    -- for it (pkgs/scripts/lock-screen.sh), the keys go to the password field
+    hl.layer_rule({ match = { namespace = "^osk$" }, above_lock = 2 })
+
+    if M.tabletSwitch then
+        bindTabletSwitch()
+    end
+    hl.on("hyprland.start", function()
+        local hasTabletSwitch = M.tabletSwitch ~= nil
+        if hasTabletSwitch then
+            tabletMode(false)
+        end
+        hl.exec_cmd(screenKeyboardSetting(not hasTabletSwitch))
+    end)
+end
 
 local function touch()
     hl.config({
@@ -210,81 +371,11 @@ local function touch()
             hide_on_touch = true,
         },
     })
-
-    -- Hyprland loads the plugin after reading the config, then reads it
-    -- again; its functions are there from the second time on. A plugin built
-    -- for another Hyprland version doesn't load (with a notification).
-    if exists(HYPRGRASS) then
-        hl.plugin.load(HYPRGRASS)
-        if hl.plugin.hyprgrass then
-            -- Higher is more sensitive, but a finger that touches down after the
-            -- others moved 100/sensitivity px cancels the gesture: at 4.0 the
-            -- third finger often comes too late, below 3.0 swipes start late
-            hl.config({ plugin = { hyprgrass = { sensitivity = 3.0 } } })
-            hl.plugin.hyprgrass.gesture({
-                pattern = { kind = "swipe", fingers = 3, direction = "horizontal" },
-                action = "workspace",
-                -- the whole screen's width is one workspace otherwise, and
-                -- a swipe of less than half of it snaps back
-                scale = 1.6,
-            })
-            -- Not tried on a touch screen yet: a plugin that wants another
-            -- kind of action mustn't break the config
-            pcall(hl.plugin.hyprgrass.gesture, {
-                pattern = { kind = "swipe", fingers = 3, direction = "up" },
-                action = overviewOpen,
-            })
-            pcall(hl.plugin.hyprgrass.gesture, {
-                pattern = { kind = "swipe", fingers = 3, direction = "down" },
-                action = overviewClose,
-            })
-        end
-    end
-
-    hl.on("hyprland.start", function()
-        hl.exec_cmd("squeekboard")
-    end)
-    -- Above the lock screen, and it takes touches there: hyprlock has a button
-    -- for it (pkgs/scripts/lock-screen.sh), the keys go to the password field
-    hl.layer_rule({ match = { namespace = "^osk$" }, above_lock = 2 })
-
-    -- Text fields bring up the keyboard when this setting is on (squeekboard
-    -- follows it; the bar's button calls SetVisible and works either way).
-    -- Set only here, not by home-manager, which would turn it on again with
-    -- every switch. Without a tablet mode switch it's always on. With one,
-    -- only in tablet mode: it starts off, with the keyboard attached;
-    -- libinput reports a switch that's already on when Hyprland starts,
-    -- which turns it on.
-    --
-    -- The shell reads the switch from $XDG_RUNTIME_DIR/dotfiles-tablet and
-    -- makes its menus bigger in tablet mode (quickshell/menus/Popup.qml).
-    -- Like the setting, it starts off and the switch turns it on.
-    local auto = "gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled "
-    if M.tabletSwitch then
-        local hide = "busctl --user call sm.puri.OSK0 /sm/puri/OSK0 sm.puri.OSK0 SetVisible b false"
-        hl.bind("switch:on:" .. M.tabletSwitch, function()
-            tabletMode(true)
-            hl.exec_cmd(auto .. "true")
-        end, { locked = true })
-        hl.bind("switch:off:" .. M.tabletSwitch, function()
-            tabletMode(false)
-            hl.exec_cmd(auto .. "false; " .. hide)
-        end, { locked = true })
-    end
-    hl.on("hyprland.start", function()
-        if M.tabletSwitch then
-            tabletMode(false)
-        end
-        hl.exec_cmd(auto .. (M.tabletSwitch and "false" or "true"))
-    end)
+    touchGestures()
+    screenKeyboard()
 end
 
-local function json(on)
-    return on and "true" or "false"
-end
-
-function M.apply()
-    M.detected = hardware()
+local function decideModes()
     for _, name in ipairs({ "laptop", "touch" }) do
         local forced = M.forced[name]
         if forced == nil then
@@ -294,6 +385,22 @@ function M.apply()
         end
     end
     M.forced = {}
+end
+
+local function writeModes()
+    local json = string.format(
+        '{"laptop":%s,"touch":%s,"detected":{"laptop":%s,"touch":%s}}\n',
+        boolText(M.laptop),
+        boolText(M.touch),
+        boolText(M.detected.laptop),
+        boolText(M.detected.touch)
+    )
+    writeRuntimeFile("dotfiles-modes.json", json)
+end
+
+function M.apply()
+    M.detected = hardware()
+    decideModes()
 
     if M.laptop then
         laptop()
@@ -301,25 +408,12 @@ function M.apply()
     if M.touch then
         touch()
     end
-    if next(M.touchpadOptions) then
+    if next(M.touchpadOptions) ~= nil then
         hl.config({ input = { touchpad = M.touchpadOptions } })
     end
     M.touchpadOptions = {}
 
-    local runtime = os.getenv("XDG_RUNTIME_DIR")
-    local f = runtime and io.open(runtime .. "/dotfiles-modes.json", "w")
-    if f then
-        f:write(
-            string.format(
-                '{"laptop":%s,"touch":%s,"detected":{"laptop":%s,"touch":%s}}\n',
-                json(M.laptop),
-                json(M.touch),
-                json(M.detected.laptop),
-                json(M.detected.touch)
-            )
-        )
-        f:close()
-    end
+    writeModes()
 end
 
 return M

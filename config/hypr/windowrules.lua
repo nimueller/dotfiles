@@ -12,7 +12,10 @@ hl.window_rule({
     workspace = "special:music silent",
 })
 hl.window_rule({ match = { class = "discord" }, workspace = "special:chat silent" })
-hl.window_rule({ match = { class = "org.keepassxc.KeePassXC" }, workspace = "special:passwords silent" })
+hl.window_rule({
+    match = { class = "org.keepassxc.KeePassXC" },
+    workspace = "special:passwords silent",
+})
 
 hl.window_rule({
     name = "wine-system-tray",
@@ -51,28 +54,42 @@ hl.window_rule({
     pin = true,
 })
 
--- Machine Settings (config/quickshell/menus/settings.qml)
-hl.window_rule({ match = { title = "^Machine Settings$" }, float = true, size = "860 600", center = true })
-
--- Battery History (config/quickshell/menus/battery-history.qml)
-hl.window_rule({ match = { title = "^Battery History$" }, float = true, size = "760 720", center = true })
-
--- Scanner (config/quickshell/menus/scan.qml)
-hl.window_rule({ match = { title = "^Scanner$" }, float = true, size = "1040 740", center = true })
+-- The windows of the shell, floating and centred at their size:
+-- Machine Settings (config/quickshell/menus/settings.qml), Battery History
+-- (battery-history.qml) and the Scanner (scan.qml)
+local function centredWindow(title, size)
+    hl.window_rule({
+        match = { title = "^" .. title .. "$" },
+        float = true,
+        size = size,
+        center = true,
+    })
+end
+centredWindow("Machine Settings", "860 600")
+centredWindow("Battery History", "760 720")
+centredWindow("Scanner", "1040 740")
 
 -- File chooser (Nautilus, config/xdg-desktop-portal): floating and centred,
 -- also for apps that don't name their window to the portal (Hyprland floats
 -- the others by itself). To Hyprland it's a Nautilus window like the others,
 -- told apart only by its title: what the app asked for, or "Files" without
 -- one; Nautilus' own windows are titled after their folder.
+local chooserVerbs = "(Open|Save|Select|Choose|Export|Import|Upload|Attach|Add|Browse|Pick)\\b.*"
+local chooserTitles = {
+    "Files",
+    chooserVerbs,
+    "File Upload",
+    "Enter name of file.*",
+}
 hl.window_rule({
     name = "file-chooser",
     match = {
         class = "^org\\.gnome\\.Nautilus$",
-        initial_title = "^(Files|(Open|Save|Select|Choose|Export|Import|Upload|Attach|Add|Browse|Pick)\\b.*|File Upload|Enter name of file.*)$",
+        initial_title = "^(" .. table.concat(chooserTitles, "|") .. ")$",
     },
 
     float = true,
-    size = "890 550", -- like with a parent app; without one it opens at its tiled size
+    -- Like with a parent app; without one it opens at its tiled size
+    size = "890 550",
     center = true,
 })

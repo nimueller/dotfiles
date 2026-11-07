@@ -1,9 +1,22 @@
 -- Enable a language server only when it's installed: the dev module
 -- (home-manager/dev) installs them on the desktop, headless machines run
 -- Neovim without them.
+-- A command given as a function starts the server some other way, which
+-- counts as installed
+local function isInstalled(name)
+    local config = vim.lsp.config[name] or {}
+    local command = config.cmd
+    if type(command) == "function" then
+        return true
+    end
+    if type(command) == "table" then
+        return vim.fn.executable(command[1]) == 1
+    end
+    return false
+end
+
 local function enable(name)
-    local cmd = (vim.lsp.config[name] or {}).cmd
-    if type(cmd) == "function" or (type(cmd) == "table" and vim.fn.executable(cmd[1]) == 1) then
+    if isInstalled(name) then
         vim.lsp.enable(name)
     end
 end

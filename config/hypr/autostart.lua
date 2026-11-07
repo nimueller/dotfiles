@@ -1,5 +1,16 @@
 local M = {}
 
+local menus = "~/.config/quickshell/menus/"
+local polkitAgent = "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+local polkitMissing = "notify-send 'Polkit authentication agent not found'"
+    .. " 'Point its path in ~/.config/hypr/autostart.lua to the installed agent.'"
+-- The systemd services of the graphical session (home-manager/desktop) need
+-- the session's environment first
+local sessionEnvironment = "WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE"
+local startSession = "dbus-update-activation-environment --systemd "
+    .. sessionEnvironment
+    .. " && systemctl --user start hyprland-session.target"
+
 -- Start `command` unless a process of ours matches `pattern` (pgrep -f; a
 -- bracket in it keeps the check's own shell from matching)
 local function daemon(pattern, command)
@@ -9,16 +20,15 @@ end
 -- System programs. Also run again after the shutdown was cancelled
 -- (quickshell/menus/shutdown.py): hyprshutdown ends them right away.
 function M.daemons()
-    daemon(
-        "[p]olkit-gnome-authentication-agent-1",
-        "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 || notify-send 'Polkit authentication agent not found' 'Point its path in ~/.config/hypr/autostart.lua to the installed agent.'"
-    )
+    daemon("[p]olkit-gnome-authentication-agent-1", polkitAgent .. " || " .. polkitMissing)
     daemon("[w]l-paste --watch cliphist", "wl-paste --watch cliphist store")
     daemon("^[s]unshine", "sunshine")
-    hl.exec_cmd("~/.config/quickshell/menus/toggle.sh daemon --start") -- bar, launcher, notifications, OSD; only one
-    hl.exec_cmd("~/.config/quickshell/menus/toggle.sh overview --start") -- SUPER + W; only one
+    -- Bar, launcher, notifications, OSD; and SUPER + W. Only one of each.
+    hl.exec_cmd(menus .. "toggle.sh daemon --start")
+    hl.exec_cmd(menus .. "toggle.sh overview --start")
     daemon("^[h]yprpaper", "hyprpaper")
-    daemon("^[h]ypridle", "hypridle") -- lock and screens off when idle, lock before suspend (hypridle.conf)
+    -- Lock and screens off when idle, lock before suspend (hypridle.conf)
+    daemon("^[h]ypridle", "hypridle")
 end
 
 hl.on("hyprland.start", function()
@@ -29,12 +39,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("lock-screen")
 
     M.daemons()
-
-    -- Utilities
-    -- then the systemd services of the graphical session (home-manager/desktop)
-    hl.exec_cmd(
-        "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user start hyprland-session.target"
-    )
+    hl.exec_cmd(startSession)
 
     -- User programs, once unlocked: most keep secrets in the keyring and would
     -- otherwise wait for its own password prompt (Brave doesn't load any page).

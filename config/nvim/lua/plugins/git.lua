@@ -18,7 +18,7 @@ return {
                 changedelete = { text = "~" },
             },
             current_line_blame_opts = {
-                virt_text_pos = "eol", -- 'eol' | 'overlay' | 'right_align'
+                virt_text_pos = "eol",
                 delay = 0,
             },
             on_attach = function(bufnr)
@@ -35,26 +35,20 @@ return {
                     { buffer = bufnr, desc = "[G]it [B]lame", silent = true }
                 )
 
-                -- don't override the built-in and fugitive keymaps
+                -- ]c and [c jump between hunks, except in diff mode, where
+                -- the built-in and fugitive's keymaps keep them
                 local gs = package.loaded.gitsigns
-                vim.keymap.set({ "n", "v" }, "]c", function()
-                    if vim.wo.diff then
-                        return "]c"
-                    end
-                    vim.schedule(function()
-                        gs.next_hunk()
-                    end)
-                    return "<Ignore>"
-                end, { expr = true, buffer = bufnr, desc = "Jump to next hunk" })
-                vim.keymap.set({ "n", "v" }, "[c", function()
-                    if vim.wo.diff then
-                        return "[c"
-                    end
-                    vim.schedule(function()
-                        gs.prev_hunk()
-                    end)
-                    return "<Ignore>"
-                end, { expr = true, buffer = bufnr, desc = "Jump to previous hunk" })
+                local function hunkJump(key, jump, description)
+                    vim.keymap.set({ "n", "v" }, key, function()
+                        if vim.wo.diff then
+                            return key
+                        end
+                        vim.schedule(jump)
+                        return "<Ignore>"
+                    end, { expr = true, buffer = bufnr, desc = description })
+                end
+                hunkJump("]c", gs.next_hunk, "Jump to next hunk")
+                hunkJump("[c", gs.prev_hunk, "Jump to previous hunk")
             end,
         },
     },
