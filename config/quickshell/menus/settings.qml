@@ -34,8 +34,10 @@ ShellRoot {
         }
         Menus.settingsPage = "";
     }
-    property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
-    property var caps: ({}) // what each connected monitor supports, by port: { vrr, wideColor, hdr }, missing if unknown
+    // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
+    property var monitors: []
+    // what each connected monitor supports, by port: { vrr, wideColor, hdr }, missing if unknown
+    property var caps: ({})
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({
@@ -47,7 +49,8 @@ ShellRoot {
     property var locationResults: [] // Open-Meteo's geocoding results
     property string locationError: ""
     property var modes: ({}) // laptop, touch: true | false when forced, missing when detected
-    property var touchpad: ({}) // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
+    // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
+    property var touchpad: ({})
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
     property var rules: [] // notification rules: { app, text, action }, see LocalSettings.qml
     property string trackAction: "popup" // the rule for track announcements, "" for none
@@ -1331,7 +1334,8 @@ ShellRoot {
 
                         Label {
                             Layout.fillWidth: true
-                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set" // 󰍎
+                            // 󰍎
+                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set"
                             color: root.location ? Theme.text : Theme.overlay0
                         }
                         IconButton {

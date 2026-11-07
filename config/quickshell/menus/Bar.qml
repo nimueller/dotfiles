@@ -88,7 +88,8 @@ PanelWindow {
             visible: Updates.critical || Updates.flakeStale
             accent: news ? Theme.red : Theme.peach
             solid: news
-            text: `${Theme.glyph(news ? 0xf0395 : 0xf06b0)}  ${Updates.critical ? Updates.total : "flake.lock"}` // 󰎕 / 󰚰
+            // 󰎕 / 󰚰
+            text: `${Theme.glyph(news ? 0xf0395 : 0xf06b0)}  ${Updates.critical ? Updates.total : "flake.lock"}`
             onClicked: bar.menu(news ? "updates" : "system")
         }
 
@@ -302,7 +303,8 @@ PanelWindow {
                 }
                 return Theme.green;
             }
-            text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%${charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` //
+            //
+            text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%${charging ? ` ${Theme.glyph(0xf0e7)}` : ""}`
             onClicked: bar.menu("battery")
         }
 
@@ -328,7 +330,8 @@ PanelWindow {
                     return Theme.glyph(0xf00b2); // 󰂲
                 }
                 if (device) {
-                    return `${Theme.glyph(0xf00b1)}  ${device.name.length > 14 ? device.name.slice(0, 13) + "…" : device.name}${device.batteryAvailable ? ` ${Math.round(device.battery * 100)}%` : ""}`; // 󰂱
+                    // 󰂱
+                    return `${Theme.glyph(0xf00b1)}  ${device.name.length > 14 ? device.name.slice(0, 13) + "…" : device.name}${device.batteryAvailable ? ` ${Math.round(device.battery * 100)}%` : ""}`;
                 }
                 return connected.length ? `${Theme.glyph(0xf00b1)}  ${connected.length}` : Theme.glyph(0xf00af); // 󰂯
             }
@@ -365,7 +368,8 @@ PanelWindow {
                 }
                 return Theme.green;
             }
-            text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c) // 󰄜
+            // 󰄜
+            text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c)
             onClicked: button => {
                 if (button === Qt.RightButton) {
                     bar.phones.run("send", phone);

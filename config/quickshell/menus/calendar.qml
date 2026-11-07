@@ -28,7 +28,8 @@ Popup {
     readonly property string helper: Quickshell.shellPath("calendar-dav.py")
     readonly property var palette: [Theme.peach, Theme.teal, Theme.pink, Theme.yellow, Theme.green, Theme.maroon, Theme.sky]
 
-    property var settings: ({}) // { location, ownLocation, weekStart, weekNumbers, nextcloud: { url, user, calendars }, ics: [...] }
+    // { location, ownLocation, weekStart, weekNumbers, nextcloud: { url, user, calendars }, ics: [...] }
+    property var settings: ({})
     property var cache: ({}) // { weather: { at, place, data }, events: { "yyyy-MM": [...] } }
     property bool editing: false
     property bool creating: false

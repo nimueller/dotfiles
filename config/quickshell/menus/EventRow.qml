@@ -101,7 +101,8 @@ Rectangle {
             Label {
                 Layout.fillWidth: true
                 visible: (root.event.alarms ?? []).length > 0
-                text: `${Theme.glyph(0xf009a)} ${(root.event.alarms ?? []).map(m => Reminders.describe(m)).join(", ")}` // 󰂚
+                // 󰂚
+                text: `${Theme.glyph(0xf009a)} ${(root.event.alarms ?? []).map(m => Reminders.describe(m)).join(", ")}`
                 font.pixelSize: 10
                 color: Theme.overlay1
             }
