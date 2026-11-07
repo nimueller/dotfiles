@@ -6,10 +6,24 @@
 #   ipc.sh menus toggle <menu>         (toggle.sh <menu>)
 #   ipc.sh updates refresh             (after an update, Updates.qml)
 daemon=$(dirname "$(readlink -f "$0")")/daemon.qml
-qs ipc -p "$daemon" call "$@" >/dev/null 2>&1 && exit 0
+# A new daemon takes a moment before it answers: up to two seconds
+start_tries=20
+start_wait=0.1
+
+# Fails while the daemon isn't running, which is what the callers check
+call() {
+    qs ipc -p "$daemon" call "$@" >/dev/null 2>&1
+}
+
+if call "$@"; then
+    exit 0
+fi
+
 qs -p "$daemon" -n -d >/dev/null 2>&1
-for _ in {1..20}; do
-    qs ipc -p "$daemon" call "$@" >/dev/null 2>&1 && exit 0
-    sleep 0.1
+for _ in $(seq "$start_tries"); do
+    if call "$@"; then
+        exit 0
+    fi
+    sleep "$start_wait"
 done
 exit 1
