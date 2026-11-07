@@ -49,7 +49,21 @@ Rectangle {
                 implicitWidth: Math.max(Modes.barSize(30, 44, 52), label.implicitWidth + 22)
                 implicitHeight: Modes.barSize(15, 24, 30)
                 radius: 6
-                color: active ? (isSpecial ? Theme.mauve : Theme.lavender) : modelData.urgent ? Theme.peach : mouse.containsMouse || mouse.pressed ? Theme.surface1 : "transparent"
+                color: {
+                    if (active) {
+                        if (isSpecial) {
+                            return Theme.mauve;
+                        }
+                        return Theme.lavender;
+                    }
+                    if (modelData.urgent) {
+                        return Theme.peach;
+                    }
+                    if (mouse.containsMouse || mouse.pressed) {
+                        return Theme.surface1;
+                    }
+                    return "transparent";
+                }
 
                 Behavior on color {
                     ColorAnimation {
@@ -62,7 +76,15 @@ Rectangle {
                     anchors.centerIn: parent
                     text: button.isSpecial ? button.modelData.name.replace("special:", "") : button.modelData.name
                     font.bold: button.active
-                    color: button.active || button.modelData.urgent ? Theme.crust : mouse.containsMouse ? Theme.text : Theme.overlay2
+                    color: {
+                        if (button.active || button.modelData.urgent) {
+                            return Theme.crust;
+                        }
+                        if (mouse.containsMouse) {
+                            return Theme.text;
+                        }
+                        return Theme.overlay2;
+                    }
                 }
 
                 MouseArea {

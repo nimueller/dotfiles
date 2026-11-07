@@ -114,7 +114,15 @@ Rectangle {
         IconButton {
             visible: root.editable && (hover.hovered || root.confirming)
             glyph: Theme.glyph(0xf01b4) // 󰆴
-            text: !root.confirming ? "" : root.event.days > 1 ? `Delete ${root.event.days} days?` : "Delete?"
+            text: {
+                if (!root.confirming) {
+                    return "";
+                }
+                if (root.event.days > 1) {
+                    return `Delete ${root.event.days} days?`;
+                }
+                return "Delete?";
+            }
             accent: Theme.red
             active: root.confirming
             onClicked: {

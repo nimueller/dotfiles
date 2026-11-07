@@ -289,7 +289,15 @@ PanelWindow {
                         contentItem: Rectangle {
                             implicitWidth: 6
                             radius: 3
-                            color: scrollBar.pressed ? Theme.lavender : scrollBar.hovered ? Theme.overlay1 : Theme.alpha(Theme.overlay1, 0.5)
+                            color: {
+                                if (scrollBar.pressed) {
+                                    return Theme.lavender;
+                                }
+                                if (scrollBar.hovered) {
+                                    return Theme.overlay1;
+                                }
+                                return Theme.alpha(Theme.overlay1, 0.5);
+                            }
 
                             Behavior on color {
                                 ColorAnimation {

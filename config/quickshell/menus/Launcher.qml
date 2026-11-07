@@ -631,7 +631,15 @@ PanelWindow {
                     readonly property int count: root.results.filter(r => r.run === undefined && r.result === undefined && r.window === undefined && r.ssh === undefined).length
                     readonly property int windows: root.results.filter(r => r.window !== undefined).length
 
-                    text: root.emojiMode ? `${count} emoji` : root.fileMode ? `${count} ${count === 1 ? "file" : "files"}` : `${windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : ""}${count} ${count === 1 ? "app" : "apps"}`
+                    text: {
+                        if (root.emojiMode) {
+                            return `${count} emoji`;
+                        }
+                        if (root.fileMode) {
+                            return `${count} ${count === 1 ? "file" : "files"}`;
+                        }
+                        return `${windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : ""}${count} ${count === 1 ? "app" : "apps"}`;
+                    }
                     font.pixelSize: 11
                     color: Theme.overlay0
                 }
@@ -683,7 +691,21 @@ PanelWindow {
                     readonly property bool isApp: !isCommand && !isResult && !isEmoji && !isWindow && !isSsh && !isFile
                     readonly property string icon: isApp || isWindow ? Quickshell.iconPath(modelData.icon, true) : ""
                     readonly property bool current: ListView.isCurrentItem
-                    readonly property color accent: isCommand ? Theme.green : isResult ? Theme.peach : isSsh ? Theme.teal : isFile ? Theme.blue : Theme.lavender
+                    readonly property color accent: {
+                        if (isCommand) {
+                            return Theme.green;
+                        }
+                        if (isResult) {
+                            return Theme.peach;
+                        }
+                        if (isSsh) {
+                            return Theme.teal;
+                        }
+                        if (isFile) {
+                            return Theme.blue;
+                        }
+                        return Theme.lavender;
+                    }
 
                     width: list.width
                     height: root.rowHeight
@@ -719,7 +741,21 @@ PanelWindow {
 
                                 Label {
                                     anchors.centerIn: parent
-                                    text: row.isCommand ? Theme.glyph(0xf018d) : row.isResult ? Theme.glyph(0xf00ec) : row.isSsh ? Theme.glyph(0xf048b) : row.isFile ? Theme.glyph(row.modelData.folder ? 0xf024b : 0xf0214) : row.modelData.name[0].toUpperCase() // 󰆍 󰃬 󰒋 󰈔 󰉋
+                                    text: {
+                                        if (row.isCommand) {
+                                            return Theme.glyph(0xf018d);
+                                        }
+                                        if (row.isResult) {
+                                            return Theme.glyph(0xf00ec);
+                                        }
+                                        if (row.isSsh) {
+                                            return Theme.glyph(0xf048b);
+                                        }
+                                        if (row.isFile) {
+                                            return Theme.glyph(row.modelData.folder ? 0xf024b : 0xf0214);
+                                        }
+                                        return row.modelData.name[0].toUpperCase();
+                                    } // 󰆍 󰃬 󰒋 󰈔 󰉋
                                     font.pixelSize: row.isApp || row.isWindow ? 14 : 16
                                     font.bold: true
                                     color: row.accent
@@ -733,7 +769,18 @@ PanelWindow {
 
                             Label {
                                 Layout.fillWidth: true
-                                text: row.isCommand ? `Run “${row.modelData.run}”` : row.isResult ? `= ${row.modelData.display ?? row.modelData.result}` : row.isSsh ? `ssh ${row.modelData.ssh}` : row.modelData.name
+                                text: {
+                                    if (row.isCommand) {
+                                        return `Run “${row.modelData.run}”`;
+                                    }
+                                    if (row.isResult) {
+                                        return `= ${row.modelData.display ?? row.modelData.result}`;
+                                    }
+                                    if (row.isSsh) {
+                                        return `ssh ${row.modelData.ssh}`;
+                                    }
+                                    return row.modelData.name;
+                                }
                                 elide: Text.ElideRight
                                 font.pixelSize: 13
                                 font.bold: row.current
@@ -742,7 +789,30 @@ PanelWindow {
                             Label {
                                 Layout.fillWidth: true
                                 visible: !!text
-                                text: row.isCommand ? (row.modelData.run.startsWith("ssh ") ? "Open in terminal" : "Run as a command") : row.isResult ? (row.modelData.detail ?? "Copy the result") : row.isSsh ? (row.modelData.detail || "SSH host") : row.isFile ? row.modelData.dir : row.isEmoji ? row.modelData.keywords : row.isWindow ? root.windowPlace(row.modelData) : row.modelData.comment || row.modelData.genericName
+                                text: {
+                                    if (row.isCommand) {
+                                        if (row.modelData.run.startsWith("ssh ")) {
+                                            return "Open in terminal";
+                                        }
+                                        return "Run as a command";
+                                    }
+                                    if (row.isResult) {
+                                        return row.modelData.detail ?? "Copy the result";
+                                    }
+                                    if (row.isSsh) {
+                                        return row.modelData.detail || "SSH host";
+                                    }
+                                    if (row.isFile) {
+                                        return row.modelData.dir;
+                                    }
+                                    if (row.isEmoji) {
+                                        return row.modelData.keywords;
+                                    }
+                                    if (row.isWindow) {
+                                        return root.windowPlace(row.modelData);
+                                    }
+                                    return row.modelData.comment || row.modelData.genericName;
+                                }
                                 font.pixelSize: 11
                                 color: Theme.overlay1
                             }

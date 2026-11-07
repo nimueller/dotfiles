@@ -181,7 +181,15 @@ Popup {
                 width: parent.width
                 implicitHeight: Math.max(26, value.implicitHeight + 8)
                 radius: 6
-                color: isCopied ? Theme.alpha(Theme.green, 0.15) : mouse.containsMouse ? Theme.surface0 : "transparent"
+                color: {
+                    if (isCopied) {
+                        return Theme.alpha(Theme.green, 0.15);
+                    }
+                    if (mouse.containsMouse) {
+                        return Theme.surface0;
+                    }
+                    return "transparent";
+                }
 
                 Behavior on color {
                     ColorAnimation {

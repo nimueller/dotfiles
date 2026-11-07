@@ -131,7 +131,15 @@ PopupWindow {
                         active: entryItem.modelData.enabled
                         submenu: entryItem.modelData.hasChildren
                         // Check boxes and radio buttons
-                        glyph: entryItem.modelData.buttonType === QsMenuButtonType.None ? "" : entryItem.modelData.checkState === Qt.Checked ? Theme.glyph(entryItem.modelData.buttonType === QsMenuButtonType.RadioButton ? 0xf043e : 0xf0132) : Theme.glyph(entryItem.modelData.buttonType === QsMenuButtonType.RadioButton ? 0xf043d : 0xf0131) // 󰐾 󰄲 / 󰐽 󰄱
+                        glyph: {
+                            if (entryItem.modelData.buttonType === QsMenuButtonType.None) {
+                                return "";
+                            }
+                            if (entryItem.modelData.checkState === Qt.Checked) {
+                                return Theme.glyph(entryItem.modelData.buttonType === QsMenuButtonType.RadioButton ? 0xf043e : 0xf0132);
+                            }
+                            return Theme.glyph(entryItem.modelData.buttonType === QsMenuButtonType.RadioButton ? 0xf043d : 0xf0131);
+                        } // 󰐾 󰄲 / 󰐽 󰄱
                         onTriggered: {
                             if (entryItem.modelData.hasChildren) {
                                 root.stack = [...root.stack, entryItem.modelData];
@@ -189,7 +197,15 @@ PopupWindow {
             Label {
                 Layout.fillWidth: true
                 text: menuRow.text.replace(/&(?!&)/g, "") // drop mnemonic markers
-                color: menuRow.active ? (rowMouse.containsMouse ? Theme.text : Theme.subtext1) : Theme.overlay0
+                color: {
+                    if (menuRow.active) {
+                        if (rowMouse.containsMouse) {
+                            return Theme.text;
+                        }
+                        return Theme.subtext1;
+                    }
+                    return Theme.overlay0;
+                }
             }
             Label {
                 visible: menuRow.submenu

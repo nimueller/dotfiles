@@ -116,7 +116,18 @@ Item {
         color: "transparent"
         radius: 2
         border.width: 2
-        border.color: drop.containsDrag ? Theme.mauve : tile.active ? Theme.lavender : mouse.containsMouse ? Theme.overlay1 : Theme.alpha(Theme.text, 0.15)
+        border.color: {
+            if (drop.containsDrag) {
+                return Theme.mauve;
+            }
+            if (tile.active) {
+                return Theme.lavender;
+            }
+            if (mouse.containsMouse) {
+                return Theme.overlay1;
+            }
+            return Theme.alpha(Theme.text, 0.15);
+        }
         opacity: tile.view.progress
     }
 

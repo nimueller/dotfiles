@@ -642,7 +642,15 @@ ShellRoot {
                             Layout.fillWidth: true
                             implicitHeight: 32
                             radius: 8
-                            color: current ? Theme.alpha(Theme.lavender, 0.15) : tabMouse.containsMouse ? Theme.surface0 : "transparent"
+                            color: {
+                                if (current) {
+                                    return Theme.alpha(Theme.lavender, 0.15);
+                                }
+                                if (tabMouse.containsMouse) {
+                                    return Theme.surface0;
+                                }
+                                return "transparent";
+                            }
 
                             Row {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -1464,7 +1472,15 @@ ShellRoot {
                             Layout.preferredWidth: 64
                             text: root.nightLight.from
                             placeholder: "21:00"
-                            border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
+                            border.color: {
+                                if (!root.clockTime(text)) {
+                                    return Theme.red;
+                                }
+                                if (focused) {
+                                    return accent;
+                                }
+                                return Theme.surface1;
+                            }
                             onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.from) {
                                 root.night({
                                     from: root.clockTime(text)
@@ -1478,7 +1494,15 @@ ShellRoot {
                             Layout.preferredWidth: 64
                             text: root.nightLight.until
                             placeholder: "07:00"
-                            border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
+                            border.color: {
+                                if (!root.clockTime(text)) {
+                                    return Theme.red;
+                                }
+                                if (focused) {
+                                    return accent;
+                                }
+                                return Theme.surface1;
+                            }
                             onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.until) {
                                 root.night({
                                     until: root.clockTime(text)
@@ -1520,7 +1544,18 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             visible: !!parent.place
-                            text: parent.current ? (parent.t.from ? `Today: on from ${parent.t.from} (sunset) until ${parent.t.until} (sunrise)` : parent.t.night ? "Today: on all day, the sun doesn't rise" : "Today: off all day, the sun doesn't set") : "Today's times show here once it's saved."
+                            text: {
+                                if (parent.current) {
+                                    if (parent.t.from) {
+                                        return `Today: on from ${parent.t.from} (sunset) until ${parent.t.until} (sunrise)`;
+                                    }
+                                    if (parent.t.night) {
+                                        return "Today: on all day, the sun doesn't rise";
+                                    }
+                                    return "Today: off all day, the sun doesn't set";
+                                }
+                                return "Today's times show here once it's saved.";
+                            }
                             color: parent.current ? Theme.text : Theme.overlay1
                         }
                         IconButton {

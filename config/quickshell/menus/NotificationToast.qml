@@ -20,9 +20,25 @@ Rectangle {
     readonly property bool critical: entry.urgency === 2
     // The window that sent it (Windows.qml): by the sender's process, else by app
     readonly property var window: (entry.pid ? Windows.forPid(entry.pid) : null) ?? Windows.forApp(entry.desktop)
-    readonly property color accent: critical ? Theme.red : entry.urgency === 0 ? Theme.overlay2 : Theme.lavender
+    readonly property color accent: {
+        if (critical) {
+            return Theme.red;
+        }
+        if (entry.urgency === 0) {
+            return Theme.overlay2;
+        }
+        return Theme.lavender;
+    }
     // Seconds, from the app (it gives milliseconds) or by urgency
-    readonly property real timeout: critical ? 0 : n && n.expireTimeout > 0 ? n.expireTimeout / 1000 : [5, 8, 0][entry.urgency]
+    readonly property real timeout: {
+        if (critical) {
+            return 0;
+        }
+        if (n && n.expireTimeout > 0) {
+            return n.expireTimeout / 1000;
+        }
+        return [5, 8, 0][entry.urgency];
+    }
     readonly property var progress: n?.hints?.value ?? null
     // Plain data: the action objects die with their notification
     readonly property var actions: (n?.actions ?? []).filter(a => a.identifier !== "default").map(a => ({
@@ -45,7 +61,15 @@ Rectangle {
     radius: 14
     color: Theme.crust
     border.width: 1
-    border.color: critical ? Theme.alpha(Theme.red, 0.7) : hovered ? Theme.surface1 : Theme.surface0
+    border.color: {
+        if (critical) {
+            return Theme.alpha(Theme.red, 0.7);
+        }
+        if (hovered) {
+            return Theme.surface1;
+        }
+        return Theme.surface0;
+    }
 
     Behavior on border.color {
         ColorAnimation {

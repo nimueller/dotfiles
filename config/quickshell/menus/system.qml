@@ -231,7 +231,15 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     x: 90
                     width: parent.width - 90
                     text: parent.modelData[1]
-                    color: parent.modelData[0] === "Arch news" ? Theme.red : (parent.modelData[0] === "Updates" && Updates.total > 0) || parent.modelData[0] === "Security" || (parent.modelData[0] === "Last upgrade" && Updates.upgradeStale) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale) ? Theme.peach : Theme.text
+                    color: {
+                        if (parent.modelData[0] === "Arch news") {
+                            return Theme.red;
+                        }
+                        if ((parent.modelData[0] === "Updates" && Updates.total > 0) || parent.modelData[0] === "Security" || (parent.modelData[0] === "Last upgrade" && Updates.upgradeStale) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale)) {
+                            return Theme.peach;
+                        }
+                        return Theme.text;
+                    }
                 }
             }
         }
@@ -349,7 +357,13 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 if (!t?.from) {
                     return root.nightLight.on ? "On" : "Off";
                 }
-                return root.nightLight.on ? `Until ${t.until}` : t.night ? "Off tonight" : `From ${t.from}`;
+                if (root.nightLight.on) {
+                    return `Until ${t.until}`;
+                }
+                if (t.night) {
+                    return "Off tonight";
+                }
+                return `From ${t.from}`;
             }
             checked: root.nightLight?.on ?? false
             enabled: !!root.nightLight

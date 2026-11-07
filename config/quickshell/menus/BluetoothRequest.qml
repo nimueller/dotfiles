@@ -13,7 +13,15 @@ Rectangle {
     readonly property string name: request.name || request.address
     readonly property bool typing: kind === "pin" || kind === "passkey"
     readonly property string value: field.text.trim()
-    readonly property bool valid: kind === "pin" ? value.length >= 1 && value.length <= 16 : kind === "passkey" ? /^\d{1,6}$/.test(value) : true
+    readonly property bool valid: {
+        if (kind === "pin") {
+            return value.length >= 1 && value.length <= 16;
+        }
+        if (kind === "passkey") {
+            return /^\d{1,6}$/.test(value);
+        }
+        return true;
+    }
 
     function accept() {
         if (valid) {
@@ -121,7 +129,15 @@ Rectangle {
                 Layout.fillWidth: true
             }
             IconButton {
-                text: root.kind === "display" ? "Hide" : root.kind === "service" ? "Deny" : "Cancel"
+                text: {
+                    if (root.kind === "display") {
+                        return "Hide";
+                    }
+                    if (root.kind === "service") {
+                        return "Deny";
+                    }
+                    return "Cancel";
+                }
                 onClicked: BluetoothAgent.answer(root.request.id, false)
             }
             IconButton {

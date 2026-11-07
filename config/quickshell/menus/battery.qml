@@ -20,7 +20,15 @@ Popup {
     cardWidth: 340
 
     readonly property var battery: UPower.displayDevice
-    readonly property real percent: battery ? (battery.percentage <= 1 ? battery.percentage * 100 : battery.percentage) : 0
+    readonly property real percent: {
+        if (battery) {
+            if (battery.percentage <= 1) {
+                return battery.percentage * 100;
+            }
+            return battery.percentage;
+        }
+        return 0;
+    }
     readonly property int batteryState: battery?.state ?? UPowerDeviceState.Unknown
     readonly property bool charging: batteryState === UPowerDeviceState.Charging
     readonly property bool full: batteryState === UPowerDeviceState.FullyCharged || (batteryState === UPowerDeviceState.PendingCharge && percent >= 95)
@@ -124,7 +132,13 @@ Popup {
     // 80-90 % at about 0.6 and 90-100 % at about 0.27 of the pace below 80 %),
     // so add up the time percent by percent from the pace now
     function chargeFactor(p) {
-        return p < 80 ? 1 : p < 90 ? 0.6 : 0.27;
+        if (p < 80) {
+            return 1;
+        }
+        if (p < 90) {
+            return 0.6;
+        }
+        return 0.27;
     }
     function untilFull(pace) {
         const base = pace / chargeFactor(percent);
@@ -168,7 +182,15 @@ Popup {
 
     Header {
         glyph: Theme.glyph(popup.charging ? 0xf0084 : 0xf0079) // 󰂄 / 󰁹
-        accent: popup.charging || popup.full ? Theme.teal : popup.percent <= 15 ? Theme.red : Theme.green
+        accent: {
+            if (popup.charging || popup.full) {
+                return Theme.teal;
+            }
+            if (popup.percent <= 15) {
+                return Theme.red;
+            }
+            return Theme.green;
+        }
         title: "Battery"
         badge: UPower.onBattery ? "On battery" : "Plugged in"
         badgeColor: UPower.onBattery ? Theme.yellow : Theme.teal
@@ -226,7 +248,18 @@ Popup {
                 width: parent.width * Math.min(1, popup.percent / 100)
                 height: parent.height
                 radius: 4
-                color: popup.charging || popup.full ? Theme.teal : popup.percent <= 15 ? Theme.red : popup.percent <= 30 ? Theme.yellow : Theme.green
+                color: {
+                    if (popup.charging || popup.full) {
+                        return Theme.teal;
+                    }
+                    if (popup.percent <= 15) {
+                        return Theme.red;
+                    }
+                    if (popup.percent <= 30) {
+                        return Theme.yellow;
+                    }
+                    return Theme.green;
+                }
 
                 Behavior on width {
                     NumberAnimation {
@@ -328,7 +361,15 @@ Popup {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Modes.touch ? 64 : 54
                     radius: 8
-                    color: current ? Theme.alpha(modelData.accent, 0.2) : tileMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                    color: {
+                        if (current) {
+                            return Theme.alpha(modelData.accent, 0.2);
+                        }
+                        if (tileMouse.containsMouse) {
+                            return Theme.surface1;
+                        }
+                        return Theme.surface0;
+                    }
                     border.width: current ? 1 : 0
                     border.color: modelData.accent
 
@@ -407,7 +448,15 @@ Popup {
                 }
                 Label {
                     text: `${Math.round(other.charge)}%`
-                    color: other.charge <= 15 ? Theme.red : other.charge <= 30 ? Theme.yellow : Theme.green
+                    color: {
+                        if (other.charge <= 15) {
+                            return Theme.red;
+                        }
+                        if (other.charge <= 30) {
+                            return Theme.yellow;
+                        }
+                        return Theme.green;
+                    }
                 }
             }
         }

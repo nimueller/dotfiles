@@ -96,10 +96,25 @@ PanelWindow {
     function pointerAt(p) {
         const e = edgesAt(p);
         if (e) {
-            return e.l && e.t || e.r && e.b ? Qt.SizeFDiagCursor : e.r && e.t || e.l && e.b ? Qt.SizeBDiagCursor : e.l || e.r ? Qt.SizeHorCursor : Qt.SizeVerCursor;
+            if (e.l && e.t || e.r && e.b) {
+                return Qt.SizeFDiagCursor;
+            }
+            if (e.r && e.t || e.l && e.b) {
+                return Qt.SizeBDiagCursor;
+            }
+            if (e.l || e.r) {
+                return Qt.SizeHorCursor;
+            }
+            return Qt.SizeVerCursor;
         }
         if (selected && contains(sel, p)) {
-            return editor.tool === "select" ? Qt.SizeAllCursor : editor.tool === "text" ? Qt.IBeamCursor : Qt.CrossCursor;
+            if (editor.tool === "select") {
+                return Qt.SizeAllCursor;
+            }
+            if (editor.tool === "text") {
+                return Qt.IBeamCursor;
+            }
+            return Qt.CrossCursor;
         }
         return Qt.CrossCursor;
     }
@@ -614,7 +629,15 @@ PanelWindow {
         visible: win.selected && win.drag !== "new" && win.drag !== "move" && win.drag !== "resize"
         x: Math.max(8, Math.min(win.sel.x + (win.sel.width - width) / 2, win.width - width - 8))
         // Below the selection, else above it, else inside at the bottom (room for the hint underneath)
-        y: below + height + 34 <= win.height ? below : above >= 8 ? above : win.sel.y + win.sel.height - height - 40
+        y: {
+            if (below + height + 34 <= win.height) {
+                return below;
+            }
+            if (above >= 8) {
+                return above;
+            }
+            return win.sel.y + win.sel.height - height - 40;
+        }
     }
 
     Item {

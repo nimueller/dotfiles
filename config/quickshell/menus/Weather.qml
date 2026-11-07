@@ -54,7 +54,13 @@ Singleton {
             if (/DZ/.test(wx)) {
                 return 53;
             }
-            return wx.includes("+") ? 65 : wx.includes("-") ? 61 : 63;
+            if (wx.includes("+")) {
+                return 65;
+            }
+            if (wx.includes("-")) {
+                return 61;
+            }
+            return 63;
         }
         if (/FG|BR|HZ|FU/.test(wx)) {
             return 45;

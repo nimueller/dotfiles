@@ -33,7 +33,13 @@ Singleton {
     // A size of the bar for the mode: with a mouse, touch, tablet (touch
     // with the keyboard folded away, so only fingers)
     function barSize(normal, touchSize, tabletSize) {
-        return tablet ? tabletSize : touch ? touchSize : normal;
+        if (tablet) {
+            return tabletSize;
+        }
+        if (touch) {
+            return touchSize;
+        }
+        return normal;
     }
 
     FileView {

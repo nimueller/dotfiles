@@ -233,7 +233,15 @@ Scope {
         Rectangle {
             id: pill
 
-            readonly property color accent: root.kind === "privacy" ? Theme.peach : root.muted ? Theme.overlay0 : Theme.lavender
+            readonly property color accent: {
+                if (root.kind === "privacy") {
+                    return Theme.peach;
+                }
+                if (root.muted) {
+                    return Theme.overlay0;
+                }
+                return Theme.lavender;
+            }
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
@@ -325,12 +333,31 @@ Scope {
                 // by whom) and an On/Off pill (not for privacy)
                 Column {
                     visible: root.toggle
-                    Layout.preferredWidth: root.kind === "privacy" ? 300 : root.kind === "awake" ? 240 : 150
+                    Layout.preferredWidth: {
+                        if (root.kind === "privacy") {
+                            return 300;
+                        }
+                        if (root.kind === "awake") {
+                            return 240;
+                        }
+                        return 150;
+                    }
                     spacing: 2
 
                     Label {
                         width: parent.width
-                        text: root.kind === "caps" ? "Caps Lock" : root.kind === "num" ? "Num Lock" : root.kind === "privacy" ? root.title : "Stay awake"
+                        text: {
+                            if (root.kind === "caps") {
+                                return "Caps Lock";
+                            }
+                            if (root.kind === "num") {
+                                return "Num Lock";
+                            }
+                            if (root.kind === "privacy") {
+                                return root.title;
+                            }
+                            return "Stay awake";
+                        }
                         font.pixelSize: 13
                         font.bold: true
                     }

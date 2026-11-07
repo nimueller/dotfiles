@@ -76,7 +76,16 @@ ShellRoot {
 
     function sourceLabel(s) {
         // Epson's "Auto": the feeder if there are pages in it, else the glass
-        return /adf|feeder/i.test(s) ? "Feeder" : /auto/i.test(s) ? "Feeder (auto)" : /flatbed/i.test(s) ? "Glass" : s;
+        if (/adf|feeder/i.test(s)) {
+            return "Feeder";
+        }
+        if (/auto/i.test(s)) {
+            return "Feeder (auto)";
+        }
+        if (/flatbed/i.test(s)) {
+            return "Glass";
+        }
+        return s;
     }
     function modeLabel(m) {
         return ({
@@ -721,7 +730,15 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             visible: !root.feeder || !root.oneByOne
-                            text: root.feeder ? "All pages in the feeder are scanned." : root.area ? `Area ${(root.area.w / 10).toFixed(1)} × ${(root.area.h / 10).toFixed(1)} cm, from the preview` : "The whole glass. Drag over the preview to scan only a part of it."
+                            text: {
+                                if (root.feeder) {
+                                    return "All pages in the feeder are scanned.";
+                                }
+                                if (root.area) {
+                                    return `Area ${(root.area.w / 10).toFixed(1)} × ${(root.area.h / 10).toFixed(1)} cm, from the preview`;
+                                }
+                                return "The whole glass. Drag over the preview to scan only a part of it.";
+                            }
                             wrapMode: Text.WordWrap
                             elide: Text.ElideNone
                             color: Theme.subtext0
@@ -745,7 +762,15 @@ ShellRoot {
                         IconButton {
                             Layout.fillWidth: true
                             glyph: Theme.glyph(root.scanning ? 0xf04db : 0xf06ab) // 󰓛 / 󰚫
-                            text: root.scanning ? "Stop" : root.pages.length ? "Scan another page" : "Scan"
+                            text: {
+                                if (root.scanning) {
+                                    return "Stop";
+                                }
+                                if (root.pages.length) {
+                                    return "Scan another page";
+                                }
+                                return "Scan";
+                            }
                             accent: root.scanning ? Theme.red : Theme.sapphire
                             active: true
                             enabled: !root.saving
@@ -765,7 +790,15 @@ ShellRoot {
                             id: between
 
                             readonly property int done: root.batch ? root.pages.length - root.batch.start - (root.batch.pass === 2 ? root.batch.fronts : 0) : 0
-                            readonly property string side: root.bothSides ? (root.batch?.pass === 2 ? "back" : "front") : "page"
+                            readonly property string side: {
+                                if (root.bothSides) {
+                                    if (root.batch?.pass === 2) {
+                                        return "back";
+                                    }
+                                    return "front";
+                                }
+                                return "page";
+                            }
 
                             anchors.fill: parent
                             anchors.margins: 10
@@ -775,9 +808,15 @@ ShellRoot {
                                 Layout.fillWidth: true
                                 // One case per line: qmlformat would join them into one line
                                 // qmlformat off
-                                text: !root.oneByOne ? `${root.batch?.fronts ?? 0} fronts scanned. Turn the stack over like a book page and put it in again.`
-                                    : between.done === 0 && root.batch?.pass === 2 ? `${root.batch.fronts} fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.`
-                                    : `${between.done === 1 ? `1 ${between.side}` : `${between.done} ${between.side}s`} scanned. Put in the next one${root.ip ? ", it starts by itself" : ""}.`
+                                text: {
+                                    if (!root.oneByOne) {
+                                        return `${root.batch?.fronts ?? 0} fronts scanned. Turn the stack over like a book page and put it in again.`;
+                                    }
+                                    if (between.done === 0 && root.batch?.pass === 2) {
+                                        return `${root.batch.fronts} fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.`;
+                                    }
+                                    return `${between.done === 1 ? `1 ${between.side}` : `${between.done} ${between.side}s`} scanned. Put in the next one${root.ip ? ", it starts by itself" : ""}.`;
+                                }
                                 // qmlformat on
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
@@ -814,7 +853,18 @@ ShellRoot {
 
                         Label {
                             Layout.fillWidth: true
-                            text: root.asking ? "Asking the scanner…" : root.scanning === "preview" ? "Preview…" : root.feeder ? `Page ${root.scannedNow + 1}…` : "Scanning…"
+                            text: {
+                                if (root.asking) {
+                                    return "Asking the scanner…";
+                                }
+                                if (root.scanning === "preview") {
+                                    return "Preview…";
+                                }
+                                if (root.feeder) {
+                                    return `Page ${root.scannedNow + 1}…`;
+                                }
+                                return "Scanning…";
+                            }
                             color: Theme.subtext0
                             font.pixelSize: 11
                         }
@@ -926,7 +976,15 @@ ShellRoot {
                         IconButton {
                             Layout.fillWidth: true
                             glyph: Theme.glyph(0xf0193) // 󰆓
-                            text: root.saving ? (root.format === "pdf" && root.ocr ? "Reading the text…" : "Saving…") : `Save to ${root.folder.replace(root.home, "~")}`
+                            text: {
+                                if (root.saving) {
+                                    if (root.format === "pdf" && root.ocr) {
+                                        return "Reading the text…";
+                                    }
+                                    return "Saving…";
+                                }
+                                return `Save to ${root.folder.replace(root.home, "~")}`;
+                            }
                             accent: Theme.green
                             active: true
                             enabled: !root.busy
@@ -1077,7 +1135,15 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
-                            text: !root.options ? "" : root.feeder ? "Put the pages in the feeder and scan." : "Put the page on the glass. A preview shows it, to scan only a part of it."
+                            text: {
+                                if (!root.options) {
+                                    return "";
+                                }
+                                if (root.feeder) {
+                                    return "Put the pages in the feeder and scan.";
+                                }
+                                return "Put the page on the glass. A preview shows it, to scan only a part of it.";
+                            }
                             wrapMode: Text.WordWrap
                             elide: Text.ElideNone
                             color: Theme.subtext0
@@ -1135,7 +1201,15 @@ ShellRoot {
                             width: 110
                             height: strip.height
                             radius: 10
-                            color: shown ? Theme.alpha(Theme.sapphire, 0.18) : hovered ? Theme.surface0 : "transparent"
+                            color: {
+                                if (shown) {
+                                    return Theme.alpha(Theme.sapphire, 0.18);
+                                }
+                                if (hovered) {
+                                    return Theme.surface0;
+                                }
+                                return "transparent";
+                            }
                             border.width: shown ? 1 : 0
                             border.color: Theme.sapphire
 
@@ -1223,7 +1297,15 @@ ShellRoot {
                                         horizontalAlignment: Text.AlignHCenter
                                         text: Theme.glyph(modelData.glyph)
                                         font.pixelSize: 13
-                                        color: tool.containsMouse ? (modelData.glyph === 0xf01b4 ? Theme.red : Theme.text) : Theme.overlay1
+                                        color: {
+                                            if (tool.containsMouse) {
+                                                if (modelData.glyph === 0xf01b4) {
+                                                    return Theme.red;
+                                                }
+                                                return Theme.text;
+                                            }
+                                            return Theme.overlay1;
+                                        }
 
                                         MouseArea {
                                             id: tool

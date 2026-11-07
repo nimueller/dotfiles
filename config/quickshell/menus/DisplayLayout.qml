@@ -125,7 +125,15 @@ Item {
             color: current ? Theme.alpha(Theme.lavender, 0.22) : Theme.surface0
             border.width: current ? 2 : 1
             border.color: current ? Theme.lavender : Theme.surface2
-            z: dragging ? 2 : current ? 1 : 0
+            z: {
+                if (dragging) {
+                    return 2;
+                }
+                if (current) {
+                    return 1;
+                }
+                return 0;
+            }
 
             Column {
                 anchors.centerIn: parent

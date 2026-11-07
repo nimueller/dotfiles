@@ -17,7 +17,15 @@ ColumnLayout {
     readonly property var current: weather?.current ?? null
     readonly property bool night: current ? current.is_day === 0 : false
     readonly property var today: Weather.daily(weather)[weather?.daily?.time?.[0]] ?? null
-    readonly property var now: metar ? Weather.describe(Weather.metarCode(metar), night) : current ? Weather.describe(current.weather_code, night) : null
+    readonly property var now: {
+        if (metar) {
+            return Weather.describe(Weather.metarCode(metar), night);
+        }
+        if (current) {
+            return Weather.describe(current.weather_code, night);
+        }
+        return null;
+    }
     readonly property real temp: metar ? metar.temp : current?.temperature_2m ?? 0
     readonly property bool cavok: (metar?.rawOb ?? "").includes("CAVOK")
 
@@ -77,7 +85,15 @@ ColumnLayout {
             }
             Label {
                 Layout.fillWidth: true
-                text: root.metar ? `Dew point ${root.metar.dewp}°  ·  ${Weather.humidity(root.metar.temp, root.metar.dewp)}% humidity` : root.now ? root.now[1] : ""
+                text: {
+                    if (root.metar) {
+                        return `Dew point ${root.metar.dewp}°  ·  ${Weather.humidity(root.metar.temp, root.metar.dewp)}% humidity`;
+                    }
+                    if (root.now) {
+                        return root.now[1];
+                    }
+                    return "";
+                }
                 color: Theme.subtext0
             }
         }

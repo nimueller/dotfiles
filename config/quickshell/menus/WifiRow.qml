@@ -29,7 +29,15 @@ Rectangle {
 
     implicitHeight: column.implicitHeight + 12
     radius: 8
-    color: expanded ? Theme.surface0 : mouse.containsMouse ? Theme.alpha(Theme.surface0, 0.6) : "transparent"
+    color: {
+        if (expanded) {
+            return Theme.surface0;
+        }
+        if (mouse.containsMouse) {
+            return Theme.alpha(Theme.surface0, 0.6);
+        }
+        return "transparent";
+    }
 
     Behavior on color {
         ColorAnimation {
@@ -92,7 +100,15 @@ Rectangle {
             }
             Label {
                 visible: root.busy || root.network.active || root.network.known
-                text: root.busy ? "Connecting…" : root.network.active ? "Connected" : "Saved"
+                text: {
+                    if (root.busy) {
+                        return "Connecting…";
+                    }
+                    if (root.network.active) {
+                        return "Connected";
+                    }
+                    return "Saved";
+                }
                 font.pixelSize: 10
                 color: root.network.active ? Theme.green : Theme.overlay1
             }

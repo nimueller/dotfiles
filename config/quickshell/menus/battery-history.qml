@@ -39,7 +39,16 @@ ShellRoot {
 
     function duration(seconds) {
         const d = Math.floor(seconds / 86400), h = Math.floor(seconds % 86400 / 3600), m = Math.round(seconds % 3600 / 60);
-        return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : seconds < 60 ? `${Math.round(seconds)} s` : `${m} min`;
+        if (d) {
+            return `${d} d ${h} h`;
+        }
+        if (h) {
+            return `${h} h ${m} min`;
+        }
+        if (seconds < 60) {
+            return `${Math.round(seconds)} s`;
+        }
+        return `${m} min`;
     }
 
     // From the first sample in the range on
@@ -413,7 +422,15 @@ ShellRoot {
                                     width: parent.width * app.modelData.cpu / root.apps[0].cpu
                                     height: parent.height
                                     radius: 3
-                                    color: app.index === 0 ? Theme.peach : app.index < 3 ? Theme.yellow : Theme.overlay1
+                                    color: {
+                                        if (app.index === 0) {
+                                            return Theme.peach;
+                                        }
+                                        if (app.index < 3) {
+                                            return Theme.yellow;
+                                        }
+                                        return Theme.overlay1;
+                                    }
                                 }
                             }
                         }

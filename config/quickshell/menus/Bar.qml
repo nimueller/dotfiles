@@ -278,11 +278,30 @@ PanelWindow {
         // the power profiles
         BarChip {
             readonly property var battery: UPower.displayDevice
-            readonly property real percent: battery ? (battery.percentage <= 1 ? battery.percentage * 100 : battery.percentage) : 0
+            readonly property real percent: {
+                if (battery) {
+                    if (battery.percentage <= 1) {
+                        return battery.percentage * 100;
+                    }
+                    return battery.percentage;
+                }
+                return 0;
+            }
             readonly property bool charging: battery?.state === UPowerDeviceState.Charging || battery?.state === UPowerDeviceState.FullyCharged || battery?.state === UPowerDeviceState.PendingCharge
 
             visible: !!battery && battery.isLaptopBattery
-            accent: charging ? Theme.teal : percent <= 15 ? Theme.red : percent <= 30 ? Theme.yellow : Theme.green
+            accent: {
+                if (charging) {
+                    return Theme.teal;
+                }
+                if (percent <= 15) {
+                    return Theme.red;
+                }
+                if (percent <= 30) {
+                    return Theme.yellow;
+                }
+                return Theme.green;
+            }
             text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%${charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` //
             onClicked: bar.menu("battery")
         }
@@ -337,7 +356,15 @@ PanelWindow {
             readonly property int charge: phone?.battery ?? -1
 
             visible: !!phone
-            accent: phone?.charging ? Theme.teal : charge >= 0 && charge <= 15 ? Theme.red : Theme.green
+            accent: {
+                if (phone?.charging) {
+                    return Theme.teal;
+                }
+                if (charge >= 0 && charge <= 15) {
+                    return Theme.red;
+                }
+                return Theme.green;
+            }
             text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c) // 󰄜
             onClicked: button => {
                 if (button === Qt.RightButton) {
@@ -355,7 +382,15 @@ PanelWindow {
             readonly property int signal: bar.network?.signal ?? 100
 
             accent: kind ? Theme.sapphire : Theme.red
-            text: kind === "wifi" ? `${Theme.glyph(signal > 75 ? 0xf0928 : signal > 50 ? 0xf0925 : signal > 25 ? 0xf0922 : 0xf091f)}  ${name.length > 18 ? name.slice(0, 17) + "…" : name}` : kind === "ethernet" ? `${Theme.glyph(0xf0e8)}  Connected` : "⚠ Disconnected" // 󰤨 󰤥 󰤢 󰤟
+            text: {
+                if (kind === "wifi") {
+                    return `${Theme.glyph(signal > 75 ? 0xf0928 : signal > 50 ? 0xf0925 : signal > 25 ? 0xf0922 : 0xf091f)}  ${name.length > 18 ? name.slice(0, 17) + "…" : name}`;
+                }
+                if (kind === "ethernet") {
+                    return `${Theme.glyph(0xf0e8)}  Connected`;
+                }
+                return "⚠ Disconnected";
+            } // 󰤨 󰤥 󰤢 󰤟
             onClicked: bar.menu("network")
         }
 
@@ -370,7 +405,15 @@ PanelWindow {
 
             solid: !dnd && count > 0
             plain: dnd || count === 0
-            accent: dnd ? Theme.overlay0 : count > 0 ? Theme.lavender : Theme.overlay2
+            accent: {
+                if (dnd) {
+                    return Theme.overlay0;
+                }
+                if (count > 0) {
+                    return Theme.lavender;
+                }
+                return Theme.overlay2;
+            }
             onClicked: button => {
                 if (button === Qt.RightButton) {
                     bar.store.setDnd(!bar.store.dnd);

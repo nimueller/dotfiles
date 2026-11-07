@@ -360,7 +360,15 @@ ColumnLayout {
                 width: reminderLabel.implicitWidth + 16
                 height: 22
                 radius: 11
-                color: on ? Theme.alpha(Theme.mauve, 0.25) : reminderMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                color: {
+                    if (on) {
+                        return Theme.alpha(Theme.mauve, 0.25);
+                    }
+                    if (reminderMouse.containsMouse) {
+                        return Theme.surface1;
+                    }
+                    return Theme.surface0;
+                }
                 border.width: on ? 1 : 0
                 border.color: Theme.mauve
 
@@ -429,7 +437,15 @@ ColumnLayout {
                 width: choiceRow.implicitWidth + 16
                 height: 24
                 radius: 12
-                color: chosen ? Theme.alpha(modelData.color, 0.25) : choiceMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                color: {
+                    if (chosen) {
+                        return Theme.alpha(modelData.color, 0.25);
+                    }
+                    if (choiceMouse.containsMouse) {
+                        return Theme.surface1;
+                    }
+                    return Theme.surface0;
+                }
                 border.width: chosen ? 1 : 0
                 border.color: modelData.color
 

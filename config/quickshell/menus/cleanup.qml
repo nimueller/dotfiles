@@ -86,7 +86,15 @@ Popup {
                 }
                 IconButton {
                     visible: !entry.modelData.blocked
-                    text: entry.cleaning ? "Clearing…" : root.confirming === entry.modelData.id ? "Sure?" : "Clear"
+                    text: {
+                        if (entry.cleaning) {
+                            return "Clearing…";
+                        }
+                        if (root.confirming === entry.modelData.id) {
+                            return "Sure?";
+                        }
+                        return "Clear";
+                    }
                     accent: Theme.red
                     active: entry.cleaning || root.confirming === entry.modelData.id
                     onClicked: if (!Cleanup.busy) {
