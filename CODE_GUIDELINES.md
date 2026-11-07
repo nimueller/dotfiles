@@ -89,9 +89,10 @@ Prefer more short lines over fewer long ones.
 ## 6. Tools and tests
 
 - **Every language has a formatter**, run by `check.sh`, so that layout isn't
-  a matter of taste: nixfmt, ruff format, and stylua for Lua and qmlformat for
-  QML. The formatter's output is final; these guidelines decide what it leaves
-  open (names, splitting into variables, one argument per line).
+  a matter of taste: nixfmt, ruff format, shfmt for Bash and Zsh
+  (`.editorconfig`), stylua for Lua and qmlformat for QML. The formatter's
+  output is final; these guidelines decide what it leaves open (names,
+  splitting into variables, one argument per line).
 - **Exceptions to a formatter are rare and marked.** Where its output is
   clearly harder to read, e.g. qmlformat joining a list of one entry per line
   into a single line, the block is wrapped in the formatter's own markers

@@ -10,29 +10,48 @@ set -u
 
 dest=org.freedesktop.UPower.PowerProfiles
 path=/org/freedesktop/UPower/PowerProfiles
+cpufreq=/sys/devices/system/cpu/cpufreq
+cap_percent=70
+
+active_profile() {
+    local reply
+    reply=$(busctl --system get-property "$dest" "$path" "$dest" ActiveProfile) || return 1
+    reply=${reply#s \"}
+    echo "${reply%\"}"
+}
+
+# The highest available frequency of a CPU cluster within the cap
+capped_frequency() {
+    local policy=$1 max limit pick frequency
+    max=$(<"$policy/cpuinfo_max_freq")
+    limit=$((max * cap_percent / 100))
+    pick=$(<"$policy/cpuinfo_min_freq")
+    for frequency in $(<"$policy/scaling_available_frequencies"); do
+        if ((frequency <= limit && frequency > pick)); then
+            pick=$frequency
+        fi
+    done
+    echo "$pick"
+}
 
 apply() {
-    local profile policy max limit pick f
-    profile=$(busctl --system get-property "$dest" "$path" "$dest" ActiveProfile 2>/dev/null) || return
-    profile=${profile#s \"}
-    profile=${profile%\"}
-    for policy in /sys/devices/system/cpu/cpufreq/policy*; do
-        max=$(<"$policy/cpuinfo_max_freq")
-        pick=$max
+    local profile policy pick maxima
+    profile=$(active_profile) || return 1
+    for policy in "$cpufreq"/policy*; do
         if [[ $profile == power-saver ]]; then
-            # The highest available frequency within the limit
-            limit=$((max * 70 / 100))
-            pick=$(<"$policy/cpuinfo_min_freq")
-            for f in $(<"$policy/scaling_available_frequencies"); do
-                ((f <= limit && f > pick)) && pick=$f
-            done
+            pick=$(capped_frequency "$policy")
+        else
+            pick=$(<"$policy/cpuinfo_max_freq")
         fi
         echo "$pick" >"$policy/scaling_max_freq"
     done
-    echo "$profile: $(cat /sys/devices/system/cpu/cpufreq/policy*/scaling_max_freq | tr '\n' ' ')"
+    maxima=$(cat "$cpufreq"/policy*/scaling_max_freq | tr '\n' ' ')
+    echo "$profile: $maxima"
 }
 
 apply
 gdbus monitor --system --dest "$dest" --object-path "$path" | while read -r line; do
-    [[ $line == *ActiveProfile* ]] && apply
+    if [[ $line == *ActiveProfile* ]]; then
+        apply
+    fi
 done

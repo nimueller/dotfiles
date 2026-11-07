@@ -1,28 +1,39 @@
 # shellcheck shell=bash
 # Built with writeShellApplication (pkgs/default.nix), which adds the shebang
-echo "📄 New LaTeX document"
-read -r -p "Filename (without .tex) [main]: " fileName
-fileName=${fileName:-main}
-read -r -p "Title []: " title
-title=${title:-}
-read -r -p "Author [Nico]: " author
-author=${author:-Nico}
+# Starts a LaTeX document in the current directory: <name>.tex from a
+# template, a .latexmkrc that edit-tex builds it with, and a .gitignore for
+# the build directory. Asks for the name, the title and the author.
+#   init-tex
+default_name=main
+default_author=Nico
+build_dir=.build
 
-date=$(date +"%d.%m.%Y")
-texfile="${fileName:-main}.tex"
+# ask "question" default -> the answer, or the default for an empty one
+ask() {
+    local question=$1 default=$2 answer
+    read -r -p "$question [$default]: " answer
+    echo "${answer:-$default}"
+}
 
-if [ -f "$texfile" ]; then
-    read -r -p "⚠️ The file $texfile already exists. Replace it? [y/N] " replace
-
-    if [ "$replace" != "y" ] && [ "$replace" != "yes" ]; then
-        echo "Not replacing $texfile"
-        exit 1
+# Stops unless the user says yes to replacing an existing file
+confirm_replace() {
+    local file=$1 replace
+    if [ ! -f "$file" ]; then
+        return 0
     fi
-fi
+    read -r -p "⚠️ The file $file already exists. Replace it? [y/N] " replace
+    if [ "$replace" = "y" ] || [ "$replace" = "yes" ]; then
+        return 0
+    fi
+    echo "Not replacing $file"
+    exit 1
+}
 
-
-### Main LaTeX file
-cat > "$texfile" <<EOF
+# write_document file title author
+write_document() {
+    local date
+    date=$(date +"%d.%m.%Y")
+    cat >"$1" <<EOF
 \\documentclass[12pt,a4paper]{article}
 
 % --- Pakete ---
@@ -45,8 +56,8 @@ cat > "$texfile" <<EOF
     citecolor=blue
 }
 
-\\title{$title}
-\\author{$author}
+\\title{$2}
+\\author{$3}
 \\date{$date}
 
 \\begin{document}
@@ -56,23 +67,34 @@ Hier beginnt dein Text...
 
 \\end{document}
 EOF
+}
 
-
-### latexmk config
-cat > .latexmkrc <<EOF
+write_latexmkrc() {
+    local texfile=$1
+    cat >.latexmkrc <<EOF
 @default_files = ('$texfile');
-\$aux_dir = '.build';
+\$aux_dir = '$build_dir';
 \$out_dir = '.';
 \$pdf_mode = 1;
 \$pdf_previewer = 'start evince';
 EOF
+}
 
-### gitignore (if Git is ever used)
-cat > .gitignore <<EOF
-.build/
-EOF
+# For when the document ever goes into Git
+write_gitignore() {
+    echo "$build_dir/" >.gitignore
+}
 
-mkdir -p '.build'
+echo "📄 New LaTeX document"
+name=$(ask "Filename (without .tex)" "$default_name")
+title=$(ask "Title" "")
+author=$(ask "Author" "$default_author")
+texfile=$name.tex
+
+confirm_replace "$texfile"
+write_document "$texfile" "$title" "$author"
+write_latexmkrc "$texfile"
+write_gitignore
+mkdir -p "$build_dir"
 
 echo "✅ Created $texfile"
-

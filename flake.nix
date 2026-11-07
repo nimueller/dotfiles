@@ -60,8 +60,8 @@
       );
 
       # The tools of check.sh (`nix develop` for a shell with them): linters
-      # for Nix, shell, Python, Lua and QML, and a Python with the libraries the
-      # helpers import, so pyright knows their types
+      # and formatters for Nix, shell, Python, Lua and QML, and a Python with
+      # the libraries the helpers import, so pyright knows their types
       devShells = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
         system:
         let
@@ -77,6 +77,7 @@
               ruff
               pyright
               stylua
+              shfmt
               quickshell
               qt6.qtdeclarative
               (python3.withPackages (ps: [
