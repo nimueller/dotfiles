@@ -39,7 +39,16 @@ ShellRoot {
 
     function duration(seconds) {
         const d = Math.floor(seconds / 86400), h = Math.floor(seconds % 86400 / 3600), m = Math.round(seconds % 3600 / 60);
-        return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : seconds < 60 ? `${Math.round(seconds)} s` : `${m} min`;
+        if (d) {
+            return `${d} d ${h} h`;
+        }
+        if (h) {
+            return `${h} h ${m} min`;
+        }
+        if (seconds < 60) {
+            return `${Math.round(seconds)} s`;
+        }
+        return `${m} min`;
     }
 
     // From the first sample in the range on
@@ -47,10 +56,11 @@ ShellRoot {
         let lo = 0, hi = samples.length;
         while (lo < hi) {
             const mid = (lo + hi) >> 1;
-            if (samples[mid].t < from)
+            if (samples[mid].t < from) {
                 lo = mid + 1;
-            else
+            } else {
                 hi = mid;
+            }
         }
         return lo;
     }
@@ -118,8 +128,9 @@ ShellRoot {
         const sums = {};
         let total = 0;
         for (const key in hours) {
-            if (Number(key) + 3600 <= from)
+            if (Number(key) + 3600 <= from) {
                 continue;
+            }
             for (const name in hours[key].apps) {
                 sums[name] = (sums[name] ?? 0) + hours[key].apps[name];
                 total += hours[key].apps[name];
@@ -141,7 +152,7 @@ ShellRoot {
             const out = [];
             for (const line of text().split("\n")) {
                 const f = line.split(",");
-                if (f.length >= 5)
+                if (f.length >= 5) {
                     out.push({
                         t: Number(f[0]),
                         percent: Number(f[1]),
@@ -149,6 +160,7 @@ ShellRoot {
                         power: Number(f[3]),
                         state: f[4]
                     });
+                }
             }
             root.now = Date.now() / 1000;
             root.samples = out;
@@ -176,8 +188,9 @@ ShellRoot {
         implicitWidth: 760
         implicitHeight: 720
         color: Theme.base
-        onVisibleChanged: if (!visible)
-            Menus.close("battery-history")
+        onVisibleChanged: if (!visible) {
+            Menus.close("battery-history");
+        }
 
         WindowClose {
             anchors.top: parent.top
@@ -409,7 +422,15 @@ ShellRoot {
                                     width: parent.width * app.modelData.cpu / root.apps[0].cpu
                                     height: parent.height
                                     radius: 3
-                                    color: app.index === 0 ? Theme.peach : app.index < 3 ? Theme.yellow : Theme.overlay1
+                                    color: {
+                                        if (app.index === 0) {
+                                            return Theme.peach;
+                                        }
+                                        if (app.index < 3) {
+                                            return Theme.yellow;
+                                        }
+                                        return Theme.overlay1;
+                                    }
                                 }
                             }
                         }

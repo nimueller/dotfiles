@@ -18,7 +18,15 @@ Rectangle {
 
     implicitHeight: column.implicitHeight + 12
     radius: 8
-    color: expanded ? Theme.surface0 : mouse.containsMouse ? Theme.alpha(Theme.surface0, 0.6) : "transparent"
+    color: {
+        if (expanded) {
+            return Theme.surface0;
+        }
+        if (mouse.containsMouse) {
+            return Theme.alpha(Theme.surface0, 0.6);
+        }
+        return "transparent";
+    }
 
     Behavior on color {
         ColorAnimation {
@@ -98,13 +106,46 @@ Rectangle {
                 visible: root.device.connected && root.device.batteryAvailable
                 text: `${Theme.glyph([0xf008e, 0xf007b, 0xf007d, 0xf007f, 0xf0081, 0xf0079][Math.min(5, Math.floor(charge / 20))])} ${charge}%` // 󰂎…󰁹
                 font.pixelSize: 10
-                color: charge <= 15 ? Theme.red : charge <= 30 ? Theme.yellow : Theme.green
+                color: {
+                    if (charge <= 15) {
+                        return Theme.red;
+                    }
+                    if (charge <= 30) {
+                        return Theme.yellow;
+                    }
+                    return Theme.green;
+                }
             }
             Label {
-                text: root.device.pairing ? "Pairing…" : root.device.state === BluetoothDeviceState.Connecting ? "Connecting…" : root.device.state === BluetoothDeviceState.Disconnecting ? "Disconnecting…" : root.device.connected ? "Connected" : root.known ? "" : "Pair"
+                text: {
+                    if (root.device.pairing) {
+                        return "Pairing…";
+                    }
+                    if (root.device.state === BluetoothDeviceState.Connecting) {
+                        return "Connecting…";
+                    }
+                    if (root.device.state === BluetoothDeviceState.Disconnecting) {
+                        return "Disconnecting…";
+                    }
+                    if (root.device.connected) {
+                        return "Connected";
+                    }
+                    if (root.known) {
+                        return "";
+                    }
+                    return "Pair";
+                }
                 visible: !!text
                 font.pixelSize: 10
-                color: root.device.connected ? Theme.green : root.known ? Theme.overlay1 : Theme.blue
+                color: {
+                    if (root.device.connected) {
+                        return Theme.green;
+                    }
+                    if (root.known) {
+                        return Theme.overlay1;
+                    }
+                    return Theme.blue;
+                }
             }
             // Forget, behind the arrow
             IconButton {

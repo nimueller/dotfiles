@@ -103,8 +103,9 @@ Popup {
 
     // "12 from pacman · 2 from the AUR", "Up to date"
     function updatesText() {
-        if (!Updates.checked)
+        if (!Updates.checked) {
             return "Checking…";
+        }
         const parts = [[Updates.pacman, "pacman"], [Updates.aur, "the AUR"], [Updates.flatpak, "Flatpak"]].filter(([n]) => n > 0).map(([n, from]) => `${n} from ${from}`);
         return parts.length ? parts.join(" · ") : "Up to date";
     }
@@ -128,8 +129,9 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     if (f[0] === "cpu") {
                         const n = f.slice(1).map(Number);
                         const total = n.reduce((a, b) => a + b, 0), busy = total - n[3] - n[4];
-                        if (root.lastCpu && total > root.lastCpu[1])
+                        if (root.lastCpu && total > root.lastCpu[1]) {
                             root.cpu = (busy - root.lastCpu[0]) / (total - root.lastCpu[1]);
+                        }
                         root.lastCpu = [busy, total];
                     } else if (f[0].endsWith(":")) {
                         kb[f[0].slice(0, -1)] = Number(f[1]) * 1024;
@@ -229,7 +231,15 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     x: 90
                     width: parent.width - 90
                     text: parent.modelData[1]
-                    color: parent.modelData[0] === "Arch news" ? Theme.red : (parent.modelData[0] === "Updates" && Updates.total > 0) || parent.modelData[0] === "Security" || (parent.modelData[0] === "Last upgrade" && Updates.upgradeStale) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale) ? Theme.peach : Theme.text
+                    color: {
+                        if (parent.modelData[0] === "Arch news") {
+                            return Theme.red;
+                        }
+                        if ((parent.modelData[0] === "Updates" && Updates.total > 0) || parent.modelData[0] === "Security" || (parent.modelData[0] === "Last upgrade" && Updates.upgradeStale) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale)) {
+                            return Theme.peach;
+                        }
+                        return Theme.text;
+                    }
                 }
             }
         }
@@ -276,7 +286,16 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 spacing: 8
 
                 Label {
-                    text: Theme.glyph(!bluetooth.on ? 0xf00b2 : bluetooth.connected.length ? 0xf00b1 : 0xf00af) // 󰂲 󰂱 󰂯
+                    // 󰂲 󰂱 󰂯
+                    text: {
+                        if (!bluetooth.on) {
+                            return Theme.glyph(0xf00b2);
+                        }
+                        if (bluetooth.connected.length) {
+                            return Theme.glyph(0xf00b1);
+                        }
+                        return Theme.glyph(0xf00af);
+                    }
                     color: bluetooth.on ? Theme.blue : Theme.overlay1
                 }
                 Label {
@@ -287,11 +306,13 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                     text: {
-                        if (!bluetooth.on)
+                        if (!bluetooth.on) {
                             return "Off";
+                        }
                         const d = bluetooth.device;
-                        if (d)
+                        if (d) {
                             return `${d.name}${d.batteryAvailable ? ` · ${Math.round(d.battery * 100)} %` : ""}`;
+                        }
                         return bluetooth.connected.length ? `${bluetooth.connected.length} connected` : "On";
                     }
                     color: Theme.subtext0
@@ -338,12 +359,20 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             glyph: 0xf0594 // 󰖔
             title: "Night light"
             detail: {
-                if (!root.nightLight)
+                if (!root.nightLight) {
                     return "Unavailable";
+                }
                 const t = root.nightTimes;
-                if (!t?.from)
+                if (!t?.from) {
                     return root.nightLight.on ? "On" : "Off";
-                return root.nightLight.on ? `Until ${t.until}` : t.night ? "Off tonight" : `From ${t.from}`;
+                }
+                if (root.nightLight.on) {
+                    return `Until ${t.until}`;
+                }
+                if (t.night) {
+                    return "Off tonight";
+                }
+                return `From ${t.from}`;
             }
             checked: root.nightLight?.on ?? false
             enabled: !!root.nightLight
@@ -385,14 +414,18 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 font.bold: true
                 text: {
                     const t = nightColumn.t;
-                    if (!t)
+                    if (!t) {
                         return "No schedule: night-light.py isn't running";
-                    if (t.schedule === "off")
+                    }
+                    if (t.schedule === "off") {
                         return "Only by hand";
-                    if (!t.from)
+                    }
+                    if (!t.from) {
                         return t.night ? "On all day: the sun doesn't rise today" : "Off all day: the sun doesn't set today";
-                    if (t.place)
+                    }
+                    if (t.place) {
                         return `On from ${t.from} (sunset) until ${t.until} (sunrise)`;
+                    }
                     return `On from ${t.from} until ${t.until}`;
                 }
             }
@@ -404,19 +437,21 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 color: Theme.subtext0
                 text: {
                     const t = nightColumn.t;
-                    if (!t)
+                    if (!t) {
                         return "";
+                    }
                     let why;
-                    if (t.schedule === "times")
+                    if (t.schedule === "times") {
                         why = "The times set in Machine Settings.";
-                    else if (t.schedule === "off")
+                    } else if (t.schedule === "off") {
                         why = "It doesn't turn on by itself: set so in Machine Settings.";
-                    else if (t.placeFrom === "machine")
+                    } else if (t.placeFrom === "machine") {
                         why = `Today's sunset and sunrise in ${t.place}, this computer's location in Machine Settings.`;
-                    else if (t.placeFrom === "calendar")
+                    } else if (t.placeFrom === "calendar") {
                         why = `Today's sunset and sunrise in ${t.place}, the calendar's weather location: Machine Settings has no location.`;
-                    else
+                    } else {
                         why = "Fixed times, as no location is set to work out the sunset and sunrise.";
+                    }
                     return `${why} Warmer colours at ${t.temperature ?? root.nightTemperature} K.`;
                 }
             }
@@ -447,10 +482,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         stdout: StdioCollector {
             onStreamFinished: {
                 const [identity, kelvin] = text.trim().split("\n");
-                if (identity === "true" || identity === "false")
+                if (identity === "true" || identity === "false") {
                     root.nightLight = {
                         on: identity === "false" && parseInt(kelvin) < 6000
                     };
+                }
             }
         }
     }
@@ -560,10 +596,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         stdout: StdioCollector {
             onStreamFinished: {
                 const percent = parseInt(text);
-                if (!isNaN(percent))
+                if (!isNaN(percent)) {
                     root.backlight = {
                         percent: percent
                     };
+                }
             }
         }
     }
@@ -633,10 +670,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
             active: true
             // With Arch news: those first (updates.qml)
             onClicked: {
-                if (Updates.news.length)
+                if (Updates.news.length) {
                     Menus.toggle("updates");
-                else
+                } else {
                     Updates.update();
+                }
                 root.close();
             }
         }

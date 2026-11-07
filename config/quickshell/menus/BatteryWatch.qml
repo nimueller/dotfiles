@@ -11,9 +11,28 @@ Scope {
     id: root
 
     readonly property var battery: UPower.displayDevice
-    readonly property real percent: battery ? (battery.percentage <= 1 ? battery.percentage * 100 : battery.percentage) : 100
+    readonly property real percent: {
+        if (battery) {
+            if (battery.percentage <= 1) {
+                return battery.percentage * 100;
+            }
+            return battery.percentage;
+        }
+        return 100;
+    }
     readonly property bool discharging: Modes.laptop && !!battery && battery.isLaptopBattery && battery.state === UPowerDeviceState.Discharging
-    readonly property int level: !discharging ? 0 : percent <= 5 ? 2 : percent <= 15 ? 1 : 0
+    readonly property int level: {
+        if (!discharging) {
+            return 0;
+        }
+        if (percent <= 5) {
+            return 2;
+        }
+        if (percent <= 15) {
+            return 1;
+        }
+        return 0;
+    }
     property int warned: 0
     property int nid: 0
 

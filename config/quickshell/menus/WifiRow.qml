@@ -29,7 +29,15 @@ Rectangle {
 
     implicitHeight: column.implicitHeight + 12
     radius: 8
-    color: expanded ? Theme.surface0 : mouse.containsMouse ? Theme.alpha(Theme.surface0, 0.6) : "transparent"
+    color: {
+        if (expanded) {
+            return Theme.surface0;
+        }
+        if (mouse.containsMouse) {
+            return Theme.alpha(Theme.surface0, 0.6);
+        }
+        return "transparent";
+    }
 
     Behavior on color {
         ColorAnimation {
@@ -38,7 +46,7 @@ Rectangle {
     }
 
     function signalGlyph(s) {
-        return Theme.glyph(s > 75 ? 0xf0928 : s > 50 ? 0xf0925 : s > 25 ? 0xf0922 : 0xf091f); // 󰤨 󰤥 󰤢 󰤟
+        return Theme.wifiGlyph(s);
     }
 
     MouseArea {
@@ -92,7 +100,15 @@ Rectangle {
             }
             Label {
                 visible: root.busy || root.network.active || root.network.known
-                text: root.busy ? "Connecting…" : root.network.active ? "Connected" : "Saved"
+                text: {
+                    if (root.busy) {
+                        return "Connecting…";
+                    }
+                    if (root.network.active) {
+                        return "Connected";
+                    }
+                    return "Saved";
+                }
                 font.pixelSize: 10
                 color: root.network.active ? Theme.green : Theme.overlay1
             }
@@ -118,8 +134,9 @@ Rectangle {
                 visible: root.needsPassword
                 masked: true
                 placeholder: "Password"
-                onAccepted: if (text)
-                    root.connectRequested(text)
+                onAccepted: if (text) {
+                    root.connectRequested(text);
+                }
             }
             Item {
                 Layout.fillWidth: true
@@ -153,8 +170,9 @@ Rectangle {
                 accent: Theme.sapphire
                 active: true
                 onClicked: {
-                    if (!root.needsPassword || password.text)
+                    if (!root.needsPassword || password.text) {
                         root.connectRequested(password.text);
+                    }
                 }
             }
             IconButton {
@@ -214,10 +232,12 @@ Rectangle {
             wrapMode: Text.Wrap
         }
 
-        onVisibleChanged: if (root.expanded && root.needsPassword)
-            password.focusField()
+        onVisibleChanged: if (root.expanded && root.needsPassword) {
+            password.focusField();
+        }
     }
 
-    onExpandedChanged: if (expanded && needsPassword)
-        password.focusField()
+    onExpandedChanged: if (expanded && needsPassword) {
+        password.focusField();
+    }
 }

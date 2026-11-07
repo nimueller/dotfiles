@@ -46,6 +46,20 @@ Singleton {
     }
 
     // Nerd Font glyph by code point, e.g. glyph(0xf057e)
+    // A Wi-Fi signal (0 to 100) as one of four bars: 󰤨 󰤥 󰤢 󰤟
+    function wifiGlyph(signal) {
+        if (signal > 75) {
+            return glyph(0xf0928);
+        }
+        if (signal > 50) {
+            return glyph(0xf0925);
+        }
+        if (signal > 25) {
+            return glyph(0xf0922);
+        }
+        return glyph(0xf091f);
+    }
+
     function glyph(cp) {
         return String.fromCodePoint(cp);
     }

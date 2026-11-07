@@ -52,8 +52,9 @@ Popup {
         target: popup.privacy
 
         function onActiveChanged() {
-            if (!popup.privacy.active && popup.shown)
+            if (!popup.privacy.active && popup.shown) {
                 popup.close();
+            }
         }
     }
 

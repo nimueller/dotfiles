@@ -33,34 +33,42 @@ Singleton {
     // "GPU ... Digital Stereo (HDMI) [Some Monitor]" -> "Some Monitor",
     // "Some Headset ... Receiver Analog Stereo" -> "Some Headset ... Receiver"
     function deviceName(node) {
-        if (!node)
+        if (!node) {
             return "No device";
+        }
         const desc = (node.description || node.nickname || node.name).replace(/[\x00-\x1f]/g, "");
         const bracket = desc.match(/\[(.+)\]\s*$/);
-        if (bracket)
+        if (bracket) {
             return bracket[1];
+        }
         return desc.replace(/\s+(Analog|Digital|Pro)?\s*(Stereo|Mono|Surround[\s\d.]*)(\s*\(.*\))?$/i, "") || desc;
     }
 
     function deviceIcon(node) {
         const p = node?.properties ?? {};
         const hint = `${p["device.form-factor"] ?? ""} ${node?.name ?? ""} ${node?.description ?? ""}`.toLowerCase();
-        if (hint.includes("bluez"))
+        if (hint.includes("bluez")) {
             return Theme.glyph(0xf00b0); // 󰂰
-        if (hint.includes("hdmi") || hint.includes("displayport"))
+        }
+        if (hint.includes("hdmi") || hint.includes("displayport")) {
             return Theme.glyph(0xf0379); // 󰍹
-        if (hint.includes("headset") || hint.includes("headphone") || hint.includes("hs80"))
+        }
+        if (hint.includes("headset") || hint.includes("headphone") || hint.includes("hs80")) {
             return Theme.glyph(0xf02cb); // 󰋋
+        }
         return node?.isSink ? Theme.glyph(0xf04c3) : Theme.glyph(0xf036c); // 󰓃 / 󰍬
     }
 
     function volumeIcon(audio) {
-        if (!audio || audio.muted || audio.volume <= 0)
+        if (!audio || audio.muted || audio.volume <= 0) {
             return Theme.glyph(0xf075f); // 󰝟
-        if (audio.volume < 0.34)
+        }
+        if (audio.volume < 0.34) {
             return Theme.glyph(0xf057f); // 󰕿
-        if (audio.volume < 0.67)
+        }
+        if (audio.volume < 0.67) {
             return Theme.glyph(0xf0580); // 󰖀
+        }
         return Theme.glyph(0xf057e); // 󰕾
     }
 
@@ -81,8 +89,9 @@ Singleton {
         const id = n.properties["client.id"];
         return id && !n.properties["application.process.id"] && !(id in clients);
     })
-    onClientsMissingChanged: if (clientsMissing)
-        clientDump.running = true
+    onClientsMissingChanged: if (clientsMissing) {
+        clientDump.running = true;
+    }
 
     Process {
         id: clientDump
@@ -94,9 +103,11 @@ Singleton {
                     objects = JSON.parse(text);
                 } catch (e) {}
                 const map = {};
-                for (const o of objects)
-                    if (o.type === "PipeWire:Interface:Client")
+                for (const o of objects) {
+                    if (o.type === "PipeWire:Interface:Client") {
                         map[o.id] = o.info?.props ?? {};
+                    }
+                }
                 clients = map;
             }
         }
@@ -135,8 +146,9 @@ Singleton {
         const candidates = [owner(node)?.icon, p["application.icon-name"], p["application.process.binary"], name, `${name}-browser`, name.replace(/\s+/g, "-"), pid > 0 ? Windows.launcherEntry(pid)?.icon : ""];
         for (const c of candidates) {
             const path = c ? Quickshell.iconPath(c, true) : "";
-            if (path)
+            if (path) {
                 return path;
+            }
         }
         return "";
     }
@@ -145,12 +157,14 @@ Singleton {
     // that were ever moved by hand (e.g. in pavucontrol) are pinned to that
     // device by WirePlumber and would otherwise ignore the new default.
     function setDefault(node) {
-        if (node.isSink)
+        if (node.isSink) {
             Pipewire.preferredDefaultAudioSink = node;
-        else
+        } else {
             Pipewire.preferredDefaultAudioSource = node;
-        for (const stream of node.isSink ? streams : recordings)
+        }
+        for (const stream of node.isSink ? streams : recordings) {
             Quickshell.execDetached(["pw-metadata", String(stream.id), "target.object", node.name]);
+        }
     }
 
     // When the shell itself last changed a volume or mute (bar, menus, OSD
@@ -159,15 +173,17 @@ Singleton {
     property real localChange: 0
 
     function setVolume(node, v) {
-        if (!node?.audio)
+        if (!node?.audio) {
             return;
+        }
         localChange = Date.now();
         node.audio.volume = Math.max(0, Math.min(1, v));
     }
 
     function setMuted(node, muted) {
-        if (!node?.audio)
+        if (!node?.audio) {
             return;
+        }
         localChange = Date.now();
         node.audio.muted = muted;
     }

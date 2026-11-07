@@ -20,8 +20,9 @@ Popup {
     Component.onCompleted: Updates.refresh()
 
     function open(links) {
-        for (const link of links)
+        for (const link of links) {
             Quickshell.execDetached(["xdg-open", link]);
+        }
         root.close();
     }
 

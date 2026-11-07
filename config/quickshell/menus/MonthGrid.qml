@@ -63,7 +63,15 @@ ColumnLayout {
             implicitWidth: titleRow.implicitWidth + 16
             implicitHeight: 28
             radius: 8
-            color: root.picking ? Theme.alpha(Theme.lavender, 0.18) : titleMouse.containsMouse ? Theme.surface0 : "transparent"
+            color: {
+                if (root.picking) {
+                    return Theme.alpha(Theme.lavender, 0.18);
+                }
+                if (titleMouse.containsMouse) {
+                    return Theme.surface0;
+                }
+                return "transparent";
+            }
 
             Behavior on color {
                 ColorAnimation {
@@ -255,7 +263,15 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: 12
-                        color: viewing ? Theme.lavender : monthMouse.containsMouse ? Theme.surface1 : Theme.alpha(Theme.surface0, 0.6)
+                        color: {
+                            if (viewing) {
+                                return Theme.lavender;
+                            }
+                            if (monthMouse.containsMouse) {
+                                return Theme.surface1;
+                            }
+                            return Theme.alpha(Theme.surface0, 0.6);
+                        }
                         border.width: current && !viewing ? 1 : 0
                         border.color: Theme.lavender
 
@@ -270,7 +286,15 @@ ColumnLayout {
                             text: Qt.locale().standaloneMonthName(monthButton.index, Locale.LongFormat)
                             font.pixelSize: 14
                             font.bold: monthButton.viewing || monthButton.current
-                            color: monthButton.viewing ? Theme.crust : monthButton.current ? Theme.lavender : Theme.text
+                            color: {
+                                if (monthButton.viewing) {
+                                    return Theme.crust;
+                                }
+                                if (monthButton.current) {
+                                    return Theme.lavender;
+                                }
+                                return Theme.text;
+                            }
                         }
                         MouseArea {
                             id: monthMouse
@@ -322,7 +346,15 @@ ColumnLayout {
             readonly property int hidden: items.slice(shown).filter(e => e).length
 
             radius: 8
-            color: isSelected ? Theme.alpha(Theme.lavender, 0.12) : mouse.containsMouse ? Theme.alpha(Theme.surface0, 0.8) : Theme.alpha(Theme.surface0, inMonth ? 0.4 : 0.15)
+            color: {
+                if (isSelected) {
+                    return Theme.alpha(Theme.lavender, 0.12);
+                }
+                if (mouse.containsMouse) {
+                    return Theme.alpha(Theme.surface0, 0.8);
+                }
+                return Theme.alpha(Theme.surface0, inMonth ? 0.4 : 0.15);
+            }
             border.width: isSelected ? 1 : 0
             border.color: Theme.alpha(Theme.lavender, 0.7)
 
@@ -363,7 +395,18 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: cell.day.getDate()
                             font.bold: cell.isToday || cell.isSelected
-                            color: cell.isToday ? Theme.crust : !cell.inMonth ? Theme.surface2 : cell.isSelected ? Theme.lavender : Theme.text
+                            color: {
+                                if (cell.isToday) {
+                                    return Theme.crust;
+                                }
+                                if (!cell.inMonth) {
+                                    return Theme.surface2;
+                                }
+                                if (cell.isSelected) {
+                                    return Theme.lavender;
+                                }
+                                return Theme.text;
+                            }
                         }
                     }
                     Item {
@@ -414,7 +457,15 @@ ColumnLayout {
                             topRightRadius: continues ? 0 : 4
                             bottomRightRadius: continues ? 0 : 4
                             // All day: solid in the calendar's colour; timed: tinted with a bar
-                            color: !event ? "transparent" : event.allDay ? event.colour : Theme.alpha(event.colour, 0.3)
+                            color: {
+                                if (!event) {
+                                    return "transparent";
+                                }
+                                if (event.allDay) {
+                                    return event.colour;
+                                }
+                                return Theme.alpha(event.colour, 0.3);
+                            }
                             opacity: cell.inMonth ? 1 : 0.5
 
                             Rectangle {
@@ -435,7 +486,15 @@ ColumnLayout {
                                 x: chip.timed ? 6 : 5
                                 width: span * cell.width + (span - 1) * grid.columnSpacing - 2 * boxContent.anchors.margins - x - 3
                                 visible: !chip.continued || cell.column === 1
-                                text: !chip.event ? "" : chip.timed && !chip.continued ? `${Qt.formatTime(chip.event.start, "HH:mm")} ${chip.event.title}` : chip.event.title
+                                text: {
+                                    if (!chip.event) {
+                                        return "";
+                                    }
+                                    if (chip.timed && !chip.continued) {
+                                        return `${Qt.formatTime(chip.event.start, "HH:mm")} ${chip.event.title}`;
+                                    }
+                                    return chip.event.title;
+                                }
                                 font.pixelSize: 10
                                 color: chip.timed || !chip.event ? Theme.text : Theme.readableOn(chip.event.colour)
                             }
@@ -460,10 +519,11 @@ ColumnLayout {
         target: null
         onWheel: event => {
             const step = event.angleDelta.y > 0 ? -1 : 1;
-            if (root.picking)
+            if (root.picking) {
                 root.pickerYear += step;
-            else
+            } else {
                 root.shift(step);
+            }
         }
     }
 }

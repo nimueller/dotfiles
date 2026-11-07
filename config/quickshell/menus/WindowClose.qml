@@ -15,7 +15,15 @@ Rectangle {
     implicitWidth: 16
     implicitHeight: 16
     radius: width / 2
-    color: pressed ? "#eea2ae" : Window.active ? Theme.red : Qt.rgba(239 / 255, 241 / 255, 245 / 255, 0.3)
+    color: {
+        if (pressed) {
+            return "#eea2ae";
+        }
+        if (Window.active) {
+            return Theme.red;
+        }
+        return Qt.rgba(239 / 255, 241 / 255, 245 / 255, 0.3);
+    }
 
     // Shade while pressed
     Rectangle {

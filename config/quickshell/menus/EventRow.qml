@@ -23,8 +23,9 @@ Rectangle {
     }
 
     readonly property string when: {
-        if (event.allDay)
+        if (event.allDay) {
             return "All day";
+        }
         const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
         const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
         const from = event.start < dayStart ? "…" : clock(event.start);
@@ -38,8 +39,9 @@ Rectangle {
 
     HoverHandler {
         id: hover
-        onHoveredChanged: if (!hovered)
-            root.confirming = false
+        onHoveredChanged: if (!hovered) {
+            root.confirming = false;
+        }
     }
 
     RowLayout {
@@ -112,12 +114,21 @@ Rectangle {
         IconButton {
             visible: root.editable && (hover.hovered || root.confirming)
             glyph: Theme.glyph(0xf01b4) // 󰆴
-            text: !root.confirming ? "" : root.event.days > 1 ? `Delete ${root.event.days} days?` : "Delete?"
+            text: {
+                if (!root.confirming) {
+                    return "";
+                }
+                if (root.event.days > 1) {
+                    return `Delete ${root.event.days} days?`;
+                }
+                return "Delete?";
+            }
             accent: Theme.red
             active: root.confirming
             onClicked: {
-                if (root.confirming)
+                if (root.confirming) {
                     root.deleteRequested();
+                }
                 root.confirming = !root.confirming;
             }
         }

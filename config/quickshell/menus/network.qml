@@ -62,12 +62,13 @@ Popup {
     function fields(line) {
         const out = [""];
         for (let i = 0; i < line.length; i++) {
-            if (line[i] === "\\" && i + 1 < line.length)
+            if (line[i] === "\\" && i + 1 < line.length) {
                 out[out.length - 1] += line[++i];
-            else if (line[i] === ":")
+            } else if (line[i] === ":") {
                 out.push("");
-            else
+            } else {
                 out[out.length - 1] += line[i];
+            }
         }
         return out;
     }
@@ -76,10 +77,11 @@ Popup {
         const sections = {};
         let current = null;
         for (const line of text.split("\n")) {
-            if (line.startsWith("@"))
+            if (line.startsWith("@")) {
                 sections[current = line.slice(1)] = [];
-            else if (current && line)
+            } else if (current && line) {
                 sections[current].push(line);
+            }
         }
 
         connectivity = (sections.conn ?? [""])[0];
@@ -89,8 +91,9 @@ Popup {
 
         const addresses = {};
         try {
-            for (const iface of JSON.parse((sections.addr ?? []).join("\n")))
+            for (const iface of JSON.parse((sections.addr ?? []).join("\n"))) {
                 addresses[iface.ifname] = iface.addr_info?.[0]?.local ?? "";
+            }
         } catch (e) {}
         const speeds = {};
         for (const line of sections.speed ?? []) {
@@ -112,13 +115,15 @@ Popup {
         const connections = (sections.connections ?? []).map(fields); // NAME,UUID,TYPE,STATE,DEVICE
         // Profiles by SSID; by name for those saved since the menu opened
         const byName = {};
-        for (const f of connections.filter(f => f[2].includes("wireless")))
+        for (const f of connections.filter(f => f[2].includes("wireless"))) {
             byName[f[0]] = f[1];
+        }
         const bySsid = {};
         for (const f of (sections.wifi ?? []).map(fields)) {
             const [inUse, signal, security, ssid] = f;
-            if (!ssid)
+            if (!ssid) {
                 continue;
+            }
             const n = {
                 ssid,
                 signal: parseInt(signal) || 0,
@@ -129,18 +134,25 @@ Popup {
             };
             n.known = !!n.uuid;
             const prev = bySsid[ssid];
-            if (!prev || n.active || (!prev.active && n.signal > prev.signal))
+            if (!prev || n.active || (!prev.active && n.signal > prev.signal)) {
                 bySsid[ssid] = n;
+            }
         }
         networks = Object.values(bySsid).sort((a, b) => b.active - a.active || b.known - a.known || b.signal - a.signal);
 
         vpns = connections.filter(f => f[2] === "vpn" || f[2] === "wireguard").map(([name, uuid, type, state, device]) => {
             const info = vpnInfo[uuid] ?? {};
             const service = (info.service ?? "").split(".").pop();
+            let kind = service || "VPN";
+            if (type === "wireguard") {
+                kind = "WireGuard";
+            } else if (service === "openvpn") {
+                kind = "OpenVPN";
+            }
             return {
                 name,
                 uuid,
-                kind: type === "wireguard" ? "WireGuard" : service === "openvpn" ? "OpenVPN" : service || "VPN",
+                kind,
                 state,
                 address: type === "wireguard" ? addresses[device] ?? "" : "",
                 // Secrets the profile doesn't store itself (agent-owned or
@@ -191,13 +203,14 @@ Popup {
                 const info = {}, ssids = {};
                 for (const line of text.split("\n").filter(l => l)) {
                     const [kind, uuid, a, b] = line.split("\t");
-                    if (kind === "vpn")
+                    if (kind === "vpn") {
                         info[uuid] = {
                             service: a,
                             data: b
                         };
-                    else if (a)
+                    } else if (a) {
                         ssids[a.replace(/\\(.)/g, "$1")] = uuid; // -g escapes colons
+                    }
                 }
                 popup.vpnInfo = info;
                 popup.wifiProfiles = ssids;
@@ -224,18 +237,30 @@ Popup {
     // with \ ; , : " escaped
     function wifiCode(text) {
         const [ssid, hidden, keyMgmt, psk, wep] = text.replace(/\n$/, "").split("\n").map(l => l.replace(/\\(.)/g, "$1"));
-        const type = keyMgmt === "sae" ? "SAE" : keyMgmt === "wpa-psk" ? "WPA" : keyMgmt === "none" && wep ? "WEP" : "nopass";
-        const password = type === "WPA" || type === "SAE" ? psk : type === "WEP" ? wep : "";
+        let type = "nopass";
+        let password = "";
+        if (keyMgmt === "sae") {
+            type = "SAE";
+            password = psk;
+        } else if (keyMgmt === "wpa-psk") {
+            type = "WPA";
+            password = psk;
+        } else if (keyMgmt === "none" && wep) {
+            type = "WEP";
+            password = wep;
+        }
         if (type !== "nopass" && !password) {
             error = "NetworkManager doesn't keep this password itself, so it can't be shared";
             return;
         }
         const esc = s => s.replace(/([\\;,:"])/g, "\\$1");
         let code = `WIFI:T:${type};S:${esc(ssid)};`;
-        if (password)
+        if (password) {
             code += `P:${esc(password)};`;
-        if (hidden === "yes")
+        }
+        if (hidden === "yes") {
             code += "H:true;";
+        }
         qrencode.ssid = secrets.ssid;
         qrencode.password = password;
         qrencode.input = code + ";";
@@ -248,15 +273,17 @@ Popup {
         property string ssid: ""
 
         stdout: StdioCollector {
-            onStreamFinished: if (text)
-                popup.wifiCode(text)
+            onStreamFinished: if (text) {
+                popup.wifiCode(text);
+            }
         }
         stderr: StdioCollector {
             id: secretsErr
         }
         onExited: code => {
-            if (code !== 0)
+            if (code !== 0) {
                 popup.error = secretsErr.text.replace(/^Error:\s*/, "").trim() || "Couldn't read the password";
+            }
         }
     }
 
@@ -271,12 +298,13 @@ Popup {
         stdinEnabled: true
         stdout: StdioCollector {
             onStreamFinished: {
-                if (text && popup.expanded === qrencode.ssid)
+                if (text && popup.expanded === qrencode.ssid) {
                     popup.shared = {
                         ssid: qrencode.ssid,
                         qr: `data:image/png;base64,${text.trim()}`,
                         password: qrencode.password
                     };
+                }
                 qrencode.password = "";
             }
         }
@@ -306,15 +334,18 @@ Popup {
             input = "";
             if (code !== 0) {
                 popup.error = actionErr.text.replace(/^Error:\s*/, "").trim() || "Something went wrong";
-                if (popup.busy)
+                if (popup.busy) {
                     popup.expanded = popup.busy;
+                }
                 // A saved Wi-Fi network that didn't connect: ask for its password
                 const n = popup.networks.find(n => n.ssid === popup.busy);
-                if (n?.secure && !n.enterprise)
+                if (n?.secure && !n.enterprise) {
                     popup.retry = n.ssid;
+                }
             } else if (popup.busy) {
-                if (popup.busy === popup.retry)
+                if (popup.busy === popup.retry) {
                     popup.retry = "";
+                }
                 popup.expanded = "";
             }
             popup.busy = "";
@@ -329,8 +360,9 @@ Popup {
         interval: 4000
         running: true
         repeat: true
-        onTriggered: if (!action.running)
-            popup.refresh()
+        onTriggered: if (!action.running) {
+            popup.refresh();
+        }
     }
 
     Header {
@@ -409,11 +441,18 @@ Popup {
                             color: Theme.overlay1
                             text: {
                                 const d = wiredRow.modelData;
-                                if (wiredRow.unplugged)
+                                if (wiredRow.unplugged) {
                                     return `${d.device} · cable unplugged`;
-                                if (!wiredRow.connected)
+                                }
+                                if (!wiredRow.connected) {
                                     return `${d.device} · ${d.state}`;
-                                const speed = d.speed >= 1000 ? `${d.speed / 1000} Gb/s` : d.speed ? `${d.speed} Mb/s` : "";
+                                }
+                                let speed = "";
+                                if (d.speed >= 1000) {
+                                    speed = `${d.speed / 1000} Gb/s`;
+                                } else if (d.speed) {
+                                    speed = `${d.speed} Mb/s`;
+                                }
                                 return [d.device, d.address, speed].filter(x => x).join(" · ");
                             }
                         }
@@ -496,27 +535,30 @@ Popup {
                 password: popup.shared?.ssid === modelData.ssid ? popup.shared.password : ""
 
                 // Keep the QR code in view
-                onQrChanged: if (qr)
-                    wifiList.positionViewAtIndex(index, ListView.Contain)
+                onQrChanged: if (qr) {
+                    wifiList.positionViewAtIndex(index, ListView.Contain);
+                }
 
                 onClicked: {
                     popup.error = "";
-                    if (!modelData.active && !modelData.known && !modelData.secure)
+                    if (!modelData.active && !modelData.known && !modelData.secure) {
                         popup.nmcli(["device", "wifi", "connect", modelData.ssid], modelData.ssid);
-                    else
+                    } else {
                         popup.expanded = popup.expanded === modelData.ssid ? "" : modelData.ssid;
+                    }
                 }
                 onConnectRequested: password => {
                     // A new password for a saved network goes in through stdin
                     // (passwd-file), and NetworkManager keeps it
-                    if (modelData.known && password)
+                    if (modelData.known && password) {
                         popup.nmcli(["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"], modelData.ssid, `802-11-wireless-security.psk:${password}\n`);
-                    else if (modelData.known)
+                    } else if (modelData.known) {
                         popup.nmcli(["connection", "up", "uuid", modelData.uuid], modelData.ssid);
-                    else if (password)
+                    } else if (password) {
                         popup.nmcli(["device", "wifi", "connect", modelData.ssid, "password", password], modelData.ssid);
-                    else
+                    } else {
                         popup.nmcli(["device", "wifi", "connect", modelData.ssid], modelData.ssid);
+                    }
                 }
                 onSetupRequested: {
                     Quickshell.execDetached(["nm-connection-editor", "--create", "--type=802-11-wireless"]);
@@ -627,8 +669,9 @@ Popup {
                 }
                 onConnectRequested: (password, code) => {
                     let secrets = `vpn.secrets.password:${password}\n`;
-                    if (code)
+                    if (code) {
                         secrets += `vpn.secrets.challenge-response:${code}\n`;
+                    }
                     popup.nmcli(["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"], modelData.uuid, secrets);
                 }
                 onEditRequested: {

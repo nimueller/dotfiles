@@ -29,19 +29,37 @@ Item {
     }
 
     // Labels along the time axis: every few hours for a day, else days
+    // A tick's label: the time within a day, else the weekday or the date
+    function tickLabel(date, step) {
+        if (step < 86400) {
+            return Qt.formatTime(date, "HH:mm");
+        }
+        if (step === 86400) {
+            return Qt.formatDate(date, "ddd");
+        }
+        return Qt.formatDate(date, "d.M.");
+    }
+
     readonly property var ticks: {
         const span = to - from, out = [];
-        const step = span <= 2 * 86400 ? 6 * 3600 : span <= 10 * 86400 ? 86400 : 5 * 86400;
+        let step = 5 * 86400;
+        if (span <= 2 * 86400) {
+            step = 6 * 3600;
+        } else if (span <= 10 * 86400) {
+            step = 86400;
+        }
         const start = new Date(from * 1000);
-        if (step < 86400)
+        if (step < 86400) {
             start.setMinutes(0, 0, 0), start.setHours(Math.ceil(start.getHours() / 6) * 6);
-        else
+        } else {
             start.setHours(24, 0, 0, 0);
-        for (let d = start; d.getTime() / 1000 < to; d = new Date(d.getTime() + step * 1000))
+        }
+        for (let d = start; d.getTime() / 1000 < to; d = new Date(d.getTime() + step * 1000)) {
             out.push({
                 t: d.getTime() / 1000,
-                text: step < 86400 ? Qt.formatTime(d, "HH:mm") : step === 86400 ? Qt.formatDate(d, "ddd") : Qt.formatDate(d, "d.M.")
+                text: tickLabel(d, step)
             });
+        }
         return out;
     }
 
@@ -81,8 +99,9 @@ Item {
                     const c = run[0].charging ? root.chargeColor : root.color;
                     ctx.beginPath();
                     ctx.moveTo(root.xOf(run[0].t), root.plotBottom);
-                    for (const p of run)
+                    for (const p of run) {
                         ctx.lineTo(root.xOf(p.t), root.yOf(p.v));
+                    }
                     ctx.lineTo(root.xOf(run[run.length - 1].t), root.plotBottom);
                     ctx.closePath();
                     ctx.fillStyle = Theme.alpha(c, 0.15);
@@ -96,12 +115,14 @@ Item {
             };
             let seen = null; // the last sample, drawn or not
             const end = () => {
-                if (seen && run[run.length - 1] !== seen)
+                if (seen && run[run.length - 1] !== seen) {
                     run.push(seen);
+                }
             };
             for (const p of s) {
-                if (p.t < root.from - root.gap)
+                if (p.t < root.from - root.gap) {
                     continue;
+                }
                 if (seen && (p.t - seen.t > root.gap || p.charging !== seen.charging)) {
                     end();
                     flush();
@@ -161,13 +182,15 @@ Item {
             let lo = 0, hi = s.length - 1;
             while (lo < hi) {
                 const mid = (lo + hi) >> 1;
-                if (s[mid].t < t)
+                if (s[mid].t < t) {
                     lo = mid + 1;
-                else
+                } else {
                     hi = mid;
+                }
             }
-            if (lo > 0 && Math.abs(s[lo - 1].t - t) < Math.abs(s[lo].t - t))
+            if (lo > 0 && Math.abs(s[lo - 1].t - t) < Math.abs(s[lo].t - t)) {
                 lo--;
+            }
             root.hovered = s.length && event.x >= root.plotLeft && Math.abs(s[lo].t - t) <= root.gap ? lo : -1;
         }
     }

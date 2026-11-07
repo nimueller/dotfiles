@@ -21,8 +21,9 @@ Item {
         stdout: StdioCollector {
             onStreamFinished: {
                 const line = text.split("\n").find(l => l.startsWith("*:"));
-                if (line)
+                if (line) {
                     root.signal = parseInt(line.slice(2)) || 0;
+                }
             }
         }
     }

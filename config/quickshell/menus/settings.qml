@@ -29,8 +29,9 @@ ShellRoot {
 
     property string page: "displays"
     Component.onCompleted: {
-        if (Menus.settingsPage)
+        if (Menus.settingsPage) {
             page = Menus.settingsPage;
+        }
         Menus.settingsPage = "";
     }
     property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
@@ -97,14 +98,18 @@ ShellRoot {
             f.push("disabled = true");
         } else {
             f.push(`mode = ${luaString(m.mode)}`, `position = "${m.x}x${m.y}"`, `scale = ${m.scale}`);
-            if (m.transform)
+            if (m.transform) {
                 f.push(`transform = ${m.transform}`);
-            if (m.vrr)
+            }
+            if (m.vrr) {
                 f.push("vrr = 1");
-            if (m.wideColor)
+            }
+            if (m.wideColor) {
                 f.push("supports_wide_color = 1");
-            if (m.hdr)
+            }
+            if (m.hdr) {
                 f.push("supports_hdr = 1");
+            }
         }
         return `hl.monitor({ ${f.join(", ")} })`;
     }
@@ -114,9 +119,11 @@ ShellRoot {
         const list = [];
         for (const part of (text || "").split(",")) {
             const [a, b] = part.split("-").map(s => parseInt(s.trim()));
-            if (!isNaN(a))
-                for (let w = a; w <= (isNaN(b) ? a : b) && w - a < 100; w++)
+            if (!isNaN(a)) {
+                for (let w = a; w <= (isNaN(b) ? a : b) && w - a < 100; w++) {
                     list.push(w);
+                }
+            }
         }
         return list;
     }
@@ -156,24 +163,31 @@ ShellRoot {
     function block() {
         const s = saved();
         const lines = ["-- BEGIN settings: written by Machine Settings, change them there", `-- settings: ${JSON.stringify(s)}`];
-        if (s.monitors.length)
+        if (s.monitors.length) {
             lines.push("", "-- Displays", ...s.monitors.map(monitorLua));
+        }
         // Workspaces on their monitor; the first opens there by default
         const rules = [];
-        for (const m of s.monitors.filter(m => m.enabled))
+        for (const m of s.monitors.filter(m => m.enabled)) {
             workspaceList(m.workspaces).forEach((w, i) => rules.push(`hl.workspace_rule({ workspace = "${w}", monitor = ${luaString("desc:" + m.desc)}${i === 0 ? ", default = true" : ""} })`));
-        if (rules.length)
+        }
+        if (rules.length) {
             lines.push("", "-- Workspaces", ...rules);
-        if (s.env.length)
+        }
+        if (s.env.length) {
             lines.push("", "-- Environment", ...s.env.map(([k, v]) => `hl.env(${luaString(k.trim())}, ${luaString(v)})`));
+        }
         const forced = Object.entries(s.modes).map(([k, v]) => `${k} = ${v}`);
-        if (forced.length)
+        if (forced.length) {
             lines.push("", "-- Laptop and touch mode, forced (modes.lua)", `require("modes").set({ ${forced.join(", ")} })`);
+        }
         const touchpad = Object.entries(s.touchpad).map(([k, v]) => `${k} = ${v}`);
-        if (touchpad.length)
+        if (touchpad.length) {
             lines.push("", "-- Touchpad (modes.lua applies it after the modes)", `require("modes").touchpad({ ${touchpad.join(", ")} })`);
-        if (s.autostart.length)
+        }
+        if (s.autostart.length) {
             lines.push("", "-- Autostart", 'hl.on("hyprland.start", function()', ...s.autostart.map(c => `    hl.exec_cmd(${luaString("after-unlock " + shellQuote(c.trim()))})`), "end)");
+        }
         lines.push("-- END settings");
         return lines.join("\n");
     }
@@ -222,12 +236,14 @@ ShellRoot {
                 modes: l.availableModes.map(a => a.replace(/Hz$/, ""))
             });
         }
-        for (const m of s.monitors)
-            if (!list.some(l => l.desc === m.desc))
+        for (const m of s.monitors) {
+            if (!list.some(l => l.desc === m.desc)) {
                 list.push(Object.assign({
                     connected: false,
                     modes: []
                 }, m));
+            }
+        }
         monitors = list;
         env = s.env;
         bar = Object.assign({
@@ -266,14 +282,17 @@ ShellRoot {
         locationError = "";
         const xhr = new XMLHttpRequest();
         xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE)
+            if (xhr.readyState !== XMLHttpRequest.DONE) {
                 return;
+            }
             try {
-                if (xhr.status !== 200)
+                if (xhr.status !== 200) {
                     throw new Error();
+                }
                 locationResults = JSON.parse(xhr.responseText).results ?? [];
-                if (!locationResults.length)
+                if (!locationResults.length) {
                     locationError = `No place called “${query}” found`;
+                }
             } catch (e) {
                 locationError = "Couldn't reach the location search";
             }
@@ -306,22 +325,25 @@ ShellRoot {
         Layout.preferredWidth: 56
         text: String(value)
         // Typing ends the binding: follow loads and Defaults by hand
-        onValueChanged: if (parseFloat(text.replace(",", ".")) !== value)
-            text = String(value)
+        onValueChanged: if (parseFloat(text.replace(",", ".")) !== value) {
+            text = String(value);
+        }
         onTextChanged: {
             const v = parseFloat(text.replace(",", "."));
-            if (!isNaN(v) && v >= 0 && v !== value)
+            if (!isNaN(v) && v >= 0 && v !== value) {
                 edited(v);
+            }
         }
     }
 
     // The touchpad's scrolling speed, null for the default; tried right away
     function scrollFactor(f) {
         const t = Object.assign({}, touchpad);
-        if (f === null || f === 1)
+        if (f === null || f === 1) {
             delete t.scroll_factor;
-        else
+        } else {
             t.scroll_factor = f;
+        }
         touchpad = t;
         dirty = true;
         scrollTried = true;
@@ -394,8 +416,9 @@ ShellRoot {
         repeat: true
         running: root.countdown > 0
         onTriggered: {
-            if (--root.countdown === 0)
+            if (--root.countdown === 0) {
                 root.revert();
+            }
         }
     }
 
@@ -464,8 +487,9 @@ ShellRoot {
                     caps[name] = {};
                     for (const f of fields) {
                         const [k, v] = f.split("=");
-                        if (keys[k])
+                        if (keys[k]) {
                             caps[name][keys[k]] = v === "1";
+                        }
                     }
                 }
                 root.caps = caps;
@@ -498,15 +522,17 @@ ShellRoot {
             }
         }
         stderr: StdioCollector {
-            onStreamFinished: if (text.trim())
-                root.status = `Couldn't change the profile picture: ${text.trim().split("\n").pop()}`
+            onStreamFinished: if (text.trim()) {
+                root.status = `Couldn't change the profile picture: ${text.trim().split("\n").pop()}`;
+            }
         }
     }
 
     // A scrolling speed tried but not saved: the config's again
     function quit() {
-        if (scrollTried)
+        if (scrollTried) {
             Quickshell.execDetached(["hyprctl", "reload"]);
+        }
         Menus.close("settings");
     }
 
@@ -519,8 +545,9 @@ ShellRoot {
         implicitWidth: 860
         implicitHeight: 600
         color: Theme.base
-        onVisibleChanged: if (!visible)
-            root.quit()
+        onVisibleChanged: if (!visible) {
+            root.quit();
+        }
 
         WindowClose {
             anchors.top: parent.top
@@ -615,7 +642,15 @@ ShellRoot {
                             Layout.fillWidth: true
                             implicitHeight: 32
                             radius: 8
-                            color: current ? Theme.alpha(Theme.lavender, 0.15) : tabMouse.containsMouse ? Theme.surface0 : "transparent"
+                            color: {
+                                if (current) {
+                                    return Theme.alpha(Theme.lavender, 0.15);
+                                }
+                                if (tabMouse.containsMouse) {
+                                    return Theme.surface0;
+                                }
+                                return "transparent";
+                            }
 
                             Row {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -798,10 +833,11 @@ ShellRoot {
                             Layout.minimumWidth: 100
                             text: parent.m?.workspaces ?? ""
                             placeholder: "e.g. 1-9"
-                            onTextChanged: if (parent.m && text !== parent.m.workspaces)
+                            onTextChanged: if (parent.m && text !== parent.m.workspaces) {
                                 root.change(root.selected, {
                                     workspaces: text
-                                })
+                                });
+                            }
                         }
                         Label {
                             text: "Main monitor"
@@ -1105,10 +1141,11 @@ ShellRoot {
                                 current: root.modes[modeRow.modelData.id] ?? "auto"
                                 onPicked: value => {
                                     const m = Object.assign({}, root.modes);
-                                    if (value === "auto")
+                                    if (value === "auto") {
                                         delete m[modeRow.modelData.id];
-                                    else
+                                    } else {
                                         m[modeRow.modelData.id] = value;
+                                    }
                                     root.modes = m;
                                     root.dirty = true;
                                 }
@@ -1214,10 +1251,11 @@ ShellRoot {
                                 current: root.touchpad[touchpadRow.modelData.id] ?? "default"
                                 onPicked: value => {
                                     const t = Object.assign({}, root.touchpad);
-                                    if (value === "default")
+                                    if (value === "default") {
                                         delete t[touchpadRow.modelData.id];
-                                    else
+                                    } else {
                                         t[touchpadRow.modelData.id] = value;
+                                    }
                                     root.touchpad = t;
                                     root.dirty = true;
                                 }
@@ -1315,14 +1353,16 @@ ShellRoot {
                             id: city
                             Layout.fillWidth: true
                             placeholder: "Search a city"
-                            onAccepted: if (text)
-                                root.searchLocation(text)
+                            onAccepted: if (text) {
+                                root.searchLocation(text);
+                            }
                         }
                         IconButton {
                             glyph: Theme.glyph(0xf0349) // 󰍉
                             text: "Search"
-                            onClicked: if (city.text)
-                                root.searchLocation(city.text)
+                            onClicked: if (city.text) {
+                                root.searchLocation(city.text);
+                            }
                         }
                     }
 
@@ -1432,11 +1472,20 @@ ShellRoot {
                             Layout.preferredWidth: 64
                             text: root.nightLight.from
                             placeholder: "21:00"
-                            border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
-                            onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.from)
+                            border.color: {
+                                if (!root.clockTime(text)) {
+                                    return Theme.red;
+                                }
+                                if (focused) {
+                                    return accent;
+                                }
+                                return Theme.surface1;
+                            }
+                            onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.from) {
                                 root.night({
                                     from: root.clockTime(text)
-                                })
+                                });
+                            }
                         }
                         Label {
                             text: "until"
@@ -1445,11 +1494,20 @@ ShellRoot {
                             Layout.preferredWidth: 64
                             text: root.nightLight.until
                             placeholder: "07:00"
-                            border.color: !root.clockTime(text) ? Theme.red : focused ? accent : Theme.surface1
-                            onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.until)
+                            border.color: {
+                                if (!root.clockTime(text)) {
+                                    return Theme.red;
+                                }
+                                if (focused) {
+                                    return accent;
+                                }
+                                return Theme.surface1;
+                            }
+                            onTextChanged: if (root.clockTime(text) && root.clockTime(text) !== root.nightLight.until) {
                                 root.night({
                                     until: root.clockTime(text)
-                                })
+                                });
+                            }
                         }
                         Item {
                             Layout.fillWidth: true
@@ -1475,8 +1533,9 @@ ShellRoot {
                             elide: Text.ElideNone
                             text: {
                                 const where = parent.place;
-                                if (!where)
+                                if (!where) {
                                     return "No location is set, so it can't work out the sunset and sunrise: it turns on at 19:00 and off at 07:00. Set a location to follow the sun.";
+                                }
                                 const whose = root.location ? "this computer's location (the Location page)" : "the calendar's weather location, as this computer has none (the Location page)";
                                 return `It turns on at sunset and off at sunrise in ${where}, ${whose}. They're worked out every day from the place's coordinates, so they move with the seasons.`;
                             }
@@ -1485,7 +1544,18 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             visible: !!parent.place
-                            text: parent.current ? (parent.t.from ? `Today: on from ${parent.t.from} (sunset) until ${parent.t.until} (sunrise)` : parent.t.night ? "Today: on all day, the sun doesn't rise" : "Today: off all day, the sun doesn't set") : "Today's times show here once it's saved."
+                            text: {
+                                if (parent.current) {
+                                    if (parent.t.from) {
+                                        return `Today: on from ${parent.t.from} (sunset) until ${parent.t.until} (sunrise)`;
+                                    }
+                                    if (parent.t.night) {
+                                        return "Today: on all day, the sun doesn't rise";
+                                    }
+                                    return "Today: off all day, the sun doesn't set";
+                                }
+                                return "Today's times show here once it's saved.";
+                            }
                             color: parent.current ? Theme.text : Theme.overlay1
                         }
                         IconButton {
@@ -1506,10 +1576,11 @@ ShellRoot {
                             Layout.preferredWidth: 64
                             value: root.nightLight.temperature
                             onEdited: v => {
-                                if (v >= 1000 && v <= 6000)
+                                if (v >= 1000 && v <= 6000) {
                                     root.night({
                                         temperature: Math.round(v)
                                     });
+                                }
                             }
                         }
                         Label {

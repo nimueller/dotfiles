@@ -24,13 +24,15 @@ Rectangle {
 
     onExpandedChanged: {
         confirmRemove = false;
-        if (askPassword)
+        if (askPassword) {
             password.focusField();
+        }
     }
 
     function connectWithFields() {
-        if (password.text)
+        if (password.text) {
             root.connectRequested(password.text, code.text);
+        }
     }
 
     implicitHeight: column.implicitHeight + 16
@@ -95,7 +97,12 @@ Rectangle {
                     font.pixelSize: 10
                     color: Theme.overlay1
                     text: {
-                        const state = root.activating ? "connecting…" : root.active ? "connected" : "off";
+                        let state = "off";
+                        if (root.activating) {
+                            state = "connecting…";
+                        } else if (root.active) {
+                            state = "connected";
+                        }
                         return [root.vpn.kind, state, root.active ? root.vpn.address : ""].filter(x => x).join(" · ");
                     }
                 }
@@ -145,8 +152,9 @@ Rectangle {
                 accent: Theme.red
                 active: root.confirmRemove
                 onClicked: {
-                    if (root.confirmRemove)
+                    if (root.confirmRemove) {
                         root.removeRequested();
+                    }
                     root.confirmRemove = !root.confirmRemove;
                 }
             }

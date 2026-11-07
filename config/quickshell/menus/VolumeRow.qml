@@ -52,8 +52,9 @@ RowLayout {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                if (root.node?.audio)
+                if (root.node?.audio) {
                     Audio.setMuted(root.node, !root.node.audio.muted);
+                }
             }
         }
     }

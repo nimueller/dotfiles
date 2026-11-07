@@ -45,24 +45,27 @@ PanelWindow {
     }
 
     function toggle() {
-        if (shown)
+        if (shown) {
             hide();
-        else
+        } else {
             show();
+        }
     }
 
     // Copy the entry, then paste it into the window that gets the focus back
     // once the picker is gone (paste.sh). Works for images too.
     function pick(entry) {
-        if (!entry)
+        if (!entry) {
             return;
+        }
         hide();
         Quickshell.execDetached(["sh", "-c", 'printf "%s\\n" "$1" | cliphist decode | "$2"', "sh", entry.line, Quickshell.shellPath("paste.sh")]);
     }
 
     function remove(entry) {
-        if (!entry)
+        if (!entry) {
             return;
+        }
         edit.command = ["sh", "-c", 'printf "%s\\n" "$1" | cliphist delete', "sh", entry.line];
         edit.running = true;
     }
@@ -85,8 +88,9 @@ PanelWindow {
         target: Hyprland
 
         function onRawEvent(event) {
-            if (event.name === "custom" && event.data === "quickshell-clipboard")
+            if (event.name === "custom" && event.data === "quickshell-clipboard") {
                 root.toggle();
+            }
         }
     }
 
@@ -208,22 +212,23 @@ PanelWindow {
 
                     Keys.onPressed: event => {
                         const ctrl = event.modifiers & Qt.ControlModifier;
-                        if (event.key === Qt.Key_Escape)
+                        if (event.key === Qt.Key_Escape) {
                             root.hide();
-                        else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N)))
+                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
                             list.incrementCurrentIndex();
-                        else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P)))
+                        } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
                             list.decrementCurrentIndex();
-                        else if (event.key === Qt.Key_PageDown)
+                        } else if (event.key === Qt.Key_PageDown) {
                             list.currentIndex = Math.min(list.count - 1, list.currentIndex + root.rows);
-                        else if (event.key === Qt.Key_PageUp)
+                        } else if (event.key === Qt.Key_PageUp) {
                             list.currentIndex = Math.max(0, list.currentIndex - root.rows);
-                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             root.pick(root.results[list.currentIndex]);
-                        else if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier))
+                        } else if (event.key === Qt.Key_Delete && (event.modifiers & Qt.ShiftModifier)) {
                             root.remove(root.results[list.currentIndex]);
-                        else
+                        } else {
                             return;
+                        }
                         event.accepted = true;
                     }
                 }
@@ -235,10 +240,11 @@ PanelWindow {
                     accent: Theme.red
                     active: root.confirmWipe
                     onClicked: {
-                        if (root.confirmWipe)
+                        if (root.confirmWipe) {
                             root.wipe();
-                        else
+                        } else {
                             root.confirmWipe = true;
+                        }
                     }
                 }
             }
@@ -283,7 +289,15 @@ PanelWindow {
                         contentItem: Rectangle {
                             implicitWidth: 6
                             radius: 3
-                            color: scrollBar.pressed ? Theme.lavender : scrollBar.hovered ? Theme.overlay1 : Theme.alpha(Theme.overlay1, 0.5)
+                            color: {
+                                if (scrollBar.pressed) {
+                                    return Theme.lavender;
+                                }
+                                if (scrollBar.hovered) {
+                                    return Theme.overlay1;
+                                }
+                                return Theme.alpha(Theme.overlay1, 0.5);
+                            }
 
                             Behavior on color {
                                 ColorAnimation {
@@ -321,13 +335,15 @@ PanelWindow {
                             id: decode
                             command: ["sh", "-c", 'mkdir -p "$(dirname "$2")"; [ -s "$2" ] || { printf "%s\\n" "$1" | cliphist decode > "$2.part" && mv "$2.part" "$2"; }', "sh", row.modelData.line, row.modelData.file]
                             onExited: code => {
-                                if (code === 0)
+                                if (code === 0) {
                                     thumbnail.source = `file://${row.modelData.file}`;
+                                }
                             }
                         }
                         Component.onCompleted: {
-                            if (modelData.image)
+                            if (modelData.image) {
                                 decode.running = true;
+                            }
                         }
 
                         RowLayout {

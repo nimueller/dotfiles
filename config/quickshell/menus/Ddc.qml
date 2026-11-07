@@ -57,8 +57,9 @@ Scope {
 
     // One ddcutil at a time: re-reads first, then the latest values
     function flush() {
-        if (ddc.running)
+        if (ddc.running) {
             return;
+        }
         const read = Object.keys(steps)[0];
         if (read !== undefined) {
             ddc.reading = read;
@@ -68,8 +69,9 @@ Scope {
             return;
         }
         const name = Object.keys(pending)[0];
-        if (name === undefined)
+        if (name === undefined) {
             return;
+        }
         ddc.reading = "";
         ddc.command = ["ddcutil", "--bus", displays[name].bus, "--noverify", "setvcp", "10", String(pending[name])];
         delete pending[name];
@@ -94,7 +96,7 @@ Scope {
                 const found = {};
                 for (const line of text.split("\n")) {
                     const f = line.trim().split(/\s+/);
-                    if (f.length >= 7 && f[2] === "VCP" && parseInt(f[6]) > 0)
+                    if (f.length >= 7 && f[2] === "VCP" && parseInt(f[6]) > 0) {
                         found[f[1]] = {
                             bus: f[0],
                             model: f.slice(7).join(" "),
@@ -102,6 +104,7 @@ Scope {
                             max: parseInt(f[6]),
                             time: Date.now()
                         };
+                    }
                 }
                 root.displays = found;
                 root.save();
@@ -158,8 +161,9 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 const name = ddc.reading;
-                if (!name)
+                if (!name) {
                     return;
+                }
                 const d = root.displays[name];
                 const f = text.trim().split(/\s+/); // VCP 10 C <current> <max>
                 const percent = root.steps[name] ?? 0;
@@ -170,8 +174,9 @@ Scope {
                     return;
                 }
                 // Moved in the menu while reading: that value wins
-                if (d.time > ddc.started && !percent)
+                if (d.time > ddc.started && !percent) {
                     return;
+                }
                 d.value = parseInt(f[3]);
                 d.max = parseInt(f[4]);
                 d.time = Date.now();

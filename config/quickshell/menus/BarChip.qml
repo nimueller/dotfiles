@@ -27,7 +27,21 @@ Rectangle {
     implicitWidth: row.implicitWidth + 2 * padding
     implicitHeight: Modes.barSize(19, 30, 36)
     radius: 8
-    color: solid ? (hovered ? Qt.lighter(accent, 1.08) : accent) : plain ? (hovered ? Theme.surface1 : Theme.surface0) : Theme.alpha(accent, hovered ? 0.25 : 0.15)
+    color: {
+        if (solid) {
+            if (hovered) {
+                return Qt.lighter(accent, 1.08);
+            }
+            return accent;
+        }
+        if (plain) {
+            if (hovered) {
+                return Theme.surface1;
+            }
+            return Theme.surface0;
+        }
+        return Theme.alpha(accent, hovered ? 0.25 : 0.15);
+    }
 
     Behavior on color {
         ColorAnimation {
@@ -73,8 +87,9 @@ Rectangle {
         // A held press doesn't click as well
         onPressAndHold: event => root.clicked(Modes.touch ? Qt.RightButton : event.button)
         onWheel: event => {
-            if (event.angleDelta.y !== 0)
+            if (event.angleDelta.y !== 0) {
                 root.scrolled(event.angleDelta.y > 0 ? 1 : -1);
+            }
         }
     }
 }

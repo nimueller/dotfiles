@@ -17,7 +17,15 @@ Rectangle {
     implicitWidth: text ? row.implicitWidth + 20 : implicitHeight
     implicitHeight: Modes.touch ? 36 : 28
     radius: 8
-    color: active ? Theme.alpha(accent, hovered ? 0.3 : 0.18) : hovered ? Theme.surface1 : Theme.surface0
+    color: {
+        if (active) {
+            return Theme.alpha(accent, hovered ? 0.3 : 0.18);
+        }
+        if (hovered) {
+            return Theme.surface1;
+        }
+        return Theme.surface0;
+    }
 
     Behavior on color {
         ColorAnimation {
@@ -32,13 +40,29 @@ Rectangle {
 
         Label {
             text: root.glyph
-            color: root.active ? root.accent : root.hovered ? Theme.text : Theme.overlay2
+            color: {
+                if (root.active) {
+                    return root.accent;
+                }
+                if (root.hovered) {
+                    return Theme.text;
+                }
+                return Theme.overlay2;
+            }
         }
         Label {
             visible: !!root.text
             text: root.text
             font.pixelSize: 11
-            color: root.active ? root.accent : root.hovered ? Theme.text : Theme.subtext0
+            color: {
+                if (root.active) {
+                    return root.accent;
+                }
+                if (root.hovered) {
+                    return Theme.text;
+                }
+                return Theme.subtext0;
+            }
         }
     }
 

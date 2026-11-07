@@ -41,8 +41,9 @@ ColumnLayout {
         alarms = [15];
         problem = "";
         clearSuggestions();
-        if (!calendars.some(c => c.href === calendar))
+        if (!calendars.some(c => c.href === calendar)) {
             calendar = calendars[0]?.href ?? "";
+        }
         title.focusField();
     }
 
@@ -66,8 +67,9 @@ ColumnLayout {
 
     function parseDate(text) {
         let m = text.trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-        if (m)
+        if (m) {
             return new Date(+m[1], +m[2] - 1, +m[3]);
+        }
         m = text.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
         return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
     }
@@ -107,8 +109,9 @@ ColumnLayout {
         const bias = near ? `&lat=${near.lat}&lon=${near.lon}` : "";
         const xhr = new XMLHttpRequest();
         xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE || search !== searches)
+            if (xhr.readyState !== XMLHttpRequest.DONE || search !== searches) {
                 return;
+            }
             try {
                 const lines = JSON.parse(xhr.responseText).features.map(f => describePlace(f.properties));
                 suggestions = [...new Set(lines)].filter(x => x && x !== query).slice(0, 5).map(text => ({
@@ -125,15 +128,15 @@ ColumnLayout {
     function submit() {
         const from = parseDate(startDate.text), to = parseDate(endDate.text || startDate.text);
         const t1 = parseTime(startTime.text), t2 = parseTime(endTime.text);
-        if (!title.text.trim())
+        if (!title.text.trim()) {
             problem = "Give it a title";
-        else if (!from || !to)
+        } else if (!from || !to) {
             problem = "Write dates as 2026-10-11 or 11.10.2026";
-        else if (!allDay && (!t1 || !t2))
+        } else if (!allDay && (!t1 || !t2)) {
             problem = "Write times as 9:00 or 14:30";
-        else if (!calendar)
+        } else if (!calendar) {
             problem = "No writable Nextcloud calendar";
-        else {
+        } else {
             const start = new Date(from.getFullYear(), from.getMonth(), from.getDate(), allDay ? 0 : t1[0], allDay ? 0 : t1[1]);
             const end = new Date(to.getFullYear(), to.getMonth(), to.getDate(), allDay ? 0 : t2[0], allDay ? 0 : t2[1]);
             if (end < start) {
@@ -164,17 +167,19 @@ ColumnLayout {
     function focusNext(step) {
         const fields = [title, place, startDate, startTime, endDate, endTime, customAlarm].filter(f => f.visible);
         const at = fields.findIndex(f => f.focused);
-        if (place.focused)
+        if (place.focused) {
             clearSuggestions();
+        }
         fields[at < 0 ? 0 : (at + step + fields.length) % fields.length].focusField();
     }
     Keys.onPressed: event => {
-        if (event.key === Qt.Key_Backtab)
+        if (event.key === Qt.Key_Backtab) {
             focusNext(-1);
-        else if (event.key === Qt.Key_Tab)
+        } else if (event.key === Qt.Key_Tab) {
             focusNext(1);
-        else
+        } else {
             return;
+        }
         event.accepted = true;
     }
 
@@ -209,8 +214,9 @@ ColumnLayout {
         onTyped: placeTimer.restart()
         onKeyPressed: event => {
             const count = root.suggestions.length, ctrl = event.modifiers & Qt.ControlModifier;
-            if (!count)
+            if (!count) {
                 return;
+            }
             if (event.key === Qt.Key_Down || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
                 root.highlighted = (root.highlighted + 1) % count;
             } else if (event.key === Qt.Key_Up || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
@@ -354,7 +360,15 @@ ColumnLayout {
                 width: reminderLabel.implicitWidth + 16
                 height: 22
                 radius: 11
-                color: on ? Theme.alpha(Theme.mauve, 0.25) : reminderMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                color: {
+                    if (on) {
+                        return Theme.alpha(Theme.mauve, 0.25);
+                    }
+                    if (reminderMouse.containsMouse) {
+                        return Theme.surface1;
+                    }
+                    return Theme.surface0;
+                }
                 border.width: on ? 1 : 0
                 border.color: Theme.mauve
 
@@ -397,8 +411,9 @@ ColumnLayout {
                     return;
                 }
                 root.problem = "";
-                if (!root.alarms.includes(m))
+                if (!root.alarms.includes(m)) {
                     root.toggleAlarm(m);
+                }
                 customAlarm.text = "";
             }
         }
@@ -422,7 +437,15 @@ ColumnLayout {
                 width: choiceRow.implicitWidth + 16
                 height: 24
                 radius: 12
-                color: chosen ? Theme.alpha(modelData.color, 0.25) : choiceMouse.containsMouse ? Theme.surface1 : Theme.surface0
+                color: {
+                    if (chosen) {
+                        return Theme.alpha(modelData.color, 0.25);
+                    }
+                    if (choiceMouse.containsMouse) {
+                        return Theme.surface1;
+                    }
+                    return Theme.surface0;
+                }
                 border.width: chosen ? 1 : 0
                 border.color: modelData.color
 
@@ -480,8 +503,9 @@ ColumnLayout {
             text: root.busy ? "Saving…" : "Save"
             accent: Theme.mauve
             active: true
-            onClicked: if (!root.busy)
-                root.submit()
+            onClicked: if (!root.busy) {
+                root.submit();
+            }
         }
     }
 }

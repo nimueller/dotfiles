@@ -114,7 +114,18 @@ Popup {
 
                     visible: device.modelData.reachable && charge >= 0
                     text: `${Theme.glyph(device.modelData.charging ? 0xf0084 : [0xf008e, 0xf007b, 0xf007d, 0xf007f, 0xf0081, 0xf0079][Math.min(5, Math.floor(charge / 20))])}  ${charge}%` // 󰂄 / 󰂎…󰁹
-                    color: device.modelData.charging ? Theme.teal : charge <= 15 ? Theme.red : charge <= 30 ? Theme.yellow : Theme.green
+                    color: {
+                        if (device.modelData.charging) {
+                            return Theme.teal;
+                        }
+                        if (charge <= 15) {
+                            return Theme.red;
+                        }
+                        if (charge <= 30) {
+                            return Theme.yellow;
+                        }
+                        return Theme.green;
+                    }
                 }
             }
 

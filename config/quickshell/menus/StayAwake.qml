@@ -28,7 +28,21 @@ Scope {
     // Game windows: Steam (and Proton) games, Wine programs, gamescope
     readonly property var game: ToplevelManager.toplevels.values.find(t => /^steam_app_|\.exe$|^gamescope$/i.test(t.appId ?? "")) ?? null
 
-    readonly property string reason: sunshine ? "Sunshine is streaming" : Awake.manual ? "Until you turn it off" : game ? game.title || "A game is running" : video ? [video.identity, video.trackTitle].filter(s => s).join(": ") : ""
+    readonly property string reason: {
+        if (sunshine) {
+            return "Sunshine is streaming";
+        }
+        if (Awake.manual) {
+            return "Until you turn it off";
+        }
+        if (game) {
+            return game.title || "A game is running";
+        }
+        if (video) {
+            return [video.identity, video.trackTitle].filter(s => s).join(": ");
+        }
+        return "";
+    }
     readonly property bool wanted: reason !== ""
 
     // Playback flickers (buffering, ads, the next track): act on a change only
@@ -44,13 +58,15 @@ Scope {
         id: settle
         interval: 2000
         onTriggered: {
-            if (root.wanted === root.active && (!root.wanted || root.reason === root.shownReason))
+            if (root.wanted === root.active && (!root.wanted || root.reason === root.shownReason)) {
                 return;
+            }
             const changed = root.wanted !== root.active;
             root.active = root.wanted;
             root.shownReason = root.reason;
-            if (root.started && changed)
+            if (root.started && changed) {
                 root.osd.awake(root.active, root.active ? root.reason : "The screen locks when idle again");
+            }
         }
     }
 
@@ -106,7 +122,8 @@ Scope {
     }
 
     function event(name, state) {
-        if (name === "sunshine")
+        if (name === "sunshine") {
             sunshine = state === "on";
+        }
     }
 }

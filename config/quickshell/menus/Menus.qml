@@ -36,14 +36,16 @@ Singleton {
             return;
         }
         const loader = loaders[name];
-        if (!loader)
+        if (!loader) {
             return;
+        }
         if (loader.active) {
             // Popups fade their focus out first (Popup.qml)
-            if (typeof loader.item?.close === "function")
+            if (typeof loader.item?.close === "function") {
                 loader.item.close();
-            else
+            } else {
                 close(name);
+            }
         } else if (Date.now() - (closedAt[name] ?? 0) > 400) {
             // A click on the bar icon of an open menu first closes it through
             // the focus grab, then toggles: that one mustn't reopen it
@@ -61,8 +63,9 @@ Singleton {
             [name]: Date.now()
         });
         Qt.callLater(() => {
-            if (loaders[name])
+            if (loaders[name]) {
                 loaders[name].active = false;
+            }
         });
     }
 

@@ -161,18 +161,19 @@ PanelWindow {
         focus: true
         Keys.onPressed: event => {
             const n = root.actions.length;
-            if (event.key === Qt.Key_Escape)
+            if (event.key === Qt.Key_Escape) {
                 Menus.close("power");
-            else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab || event.key === Qt.Key_H)
+            } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Backtab || event.key === Qt.Key_H) {
                 root.selected = (root.selected + n - 1) % n;
-            else if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab || event.key === Qt.Key_J)
+            } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Tab || event.key === Qt.Key_J) {
                 root.selected = (root.selected + 1) % n;
-            else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)
+            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
                 root.run(root.actions[root.selected]);
-            else {
+            } else {
                 const action = root.actions.find(a => a.key === event.text.toUpperCase());
-                if (action)
+                if (action) {
                     root.run(action);
+                }
             }
         }
     }

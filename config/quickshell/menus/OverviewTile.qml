@@ -23,8 +23,9 @@ Item {
     property bool closing: false // the first press on "Close workspace"
     property bool closed: false // the second
 
-    onToplevelsChanged: if (closed && active && toplevels.length === 0)
-        view.leaveWorkspace(workspace)
+    onToplevelsChanged: if (closed && active && toplevels.length === 0) {
+        view.leaveWorkspace(workspace);
+    }
 
     // Room for that button, on every tile so they line up
     readonly property int footer: 44
@@ -68,8 +69,9 @@ Item {
             live: false
             // Its windows' pictures take over, and can change
             visible: !tile.view.arrived
-            onHasContentChanged: if (hasContent)
-                tile.view.ready = true
+            onHasContentChanged: if (hasContent) {
+                tile.view.ready = true;
+            }
         }
 
         MouseArea {
@@ -87,8 +89,9 @@ Item {
             // A window onto its own workspace stays
             onDropped: event => {
                 const toplevel = event.source.toplevel;
-                if (toplevel.workspace !== tile.workspace)
+                if (toplevel.workspace !== tile.workspace) {
                     tile.dropped(toplevel);
+                }
             }
         }
 
@@ -113,7 +116,18 @@ Item {
         color: "transparent"
         radius: 2
         border.width: 2
-        border.color: drop.containsDrag ? Theme.mauve : tile.active ? Theme.lavender : mouse.containsMouse ? Theme.overlay1 : Theme.alpha(Theme.text, 0.15)
+        border.color: {
+            if (drop.containsDrag) {
+                return Theme.mauve;
+            }
+            if (tile.active) {
+                return Theme.lavender;
+            }
+            if (mouse.containsMouse) {
+                return Theme.overlay1;
+            }
+            return Theme.alpha(Theme.text, 0.15);
+        }
         opacity: tile.view.progress
     }
 

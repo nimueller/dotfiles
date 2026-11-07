@@ -36,8 +36,9 @@ Scope {
     Component.onCompleted: limitsText = JSON.stringify(limits)
     onLimitsChanged: {
         const text = JSON.stringify(limits);
-        if (text !== limitsText)
+        if (text !== limitsText) {
             reset();
+        }
         limitsText = text;
     }
 
@@ -86,10 +87,11 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
         // The notification's id right away, then the action once it's closed
         stdout: SplitParser {
             onRead: line => {
-                if (/^\d+$/.test(line))
+                if (/^\d+$/.test(line)) {
                     alert.nid = Number(line);
-                else if (line === "show")
+                } else if (line === "show") {
                     Quickshell.execDetached(["sh", "-c", alert.show]);
+                }
             }
         }
         onExited: {
@@ -119,24 +121,28 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
         const disks = [];
         for (const line of text.trim().split("\n")) {
             const f = line.trim().split(/\s+/);
-            if (f[0] === "disk")
+            if (f[0] === "disk") {
                 disks.push({
                     free: Number(f[1]),
                     total: Number(f[2]),
                     target: f.slice(3).join(" ")
                 });
-            else
+            } else {
                 v[f[0].replace(/:$/, "")] = f.slice(1).map(Number);
+            }
         }
         // Wait for the unlock, and then tell again what's still wrong
         const wasLocked = locked;
         locked = "locked" in v;
-        if (locked)
+        if (locked) {
             return;
-        if (wasLocked)
+        }
+        if (wasLocked) {
             reset();
-        if (!v.MemTotal)
+        }
+        if (!v.MemTotal) {
             return;
+        }
 
         const available = v.MemAvailable[0] / v.MemTotal[0];
         const stalled = v.memory?.[0] ?? 0;
@@ -150,10 +156,11 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
         }
 
         const cpu = v.cpu?.[0] ?? 0;
-        if (cpu < limits.cpu.percent)
+        if (cpu < limits.cpu.percent) {
             cpuSince = 0;
-        else if (!cpuSince)
+        } else if (!cpuSince) {
             cpuSince = Date.now();
+        }
         if (!limits.cpu.on) {
             cpuAlert = false;
         } else if (!cpuAlert && cpuSince && Date.now() - cpuSince >= limits.cpu.minutes * 60000) {
@@ -163,26 +170,35 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             cpuAlert = false;
         }
 
-        for (const d of disks)
+        for (const d of disks) {
             checkDisk(d.target, d.free, d.total);
+        }
     }
 
     function checkDisk(target, free, total) {
         const levels = limits.disk.levels.length;
         const warned = diskLevels[target] ?? 0;
         let level = 0;
-        for (let i = levels; i > 0 && !level; i--)
-            if (free < diskLimit(i, total))
+        for (let i = levels; i > 0 && !level; i--) {
+            if (free < diskLimit(i, total)) {
                 level = i;
+            }
+        }
         if (!limits.disk.on) {
             level = 0;
         } else if (level > warned) {
             const critical = level === levels;
             const name = target === "/" ? "The system disk" : "The home disk";
-            const summary = critical ? `${name} is full` : level > 1 ? `${name} is almost full` : `${name} is filling up`;
+            let summary = `${name} is filling up`;
+            if (critical) {
+                summary = `${name} is full`;
+            } else if (level > 1) {
+                summary = `${name} is almost full`;
+            }
             const dir = shellQuote(target);
-            if (!diskNotes[target])
+            if (!diskNotes[target]) {
                 diskNotes[target] = diskNote.createObject(root);
+            }
             diskNotes[target].send(critical ? "critical" : "normal", "drive-harddisk", summary, `${size(free)} (${Math.round(100 * free / total)} %) free on ${target}.`, "", `for t in gdu ncdu; do command -v $t >/dev/null && exec kitty --class disk-usage -e $t -x ${dir}; done; exec nautilus ${dir}`);
         } else if (level < warned && free <= diskLimit(warned, total) + 2 * gib) {
             // Fine again only with a margin, so a disk at the limit warns once

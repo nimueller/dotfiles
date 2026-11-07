@@ -39,10 +39,11 @@ PanelWindow {
     // Resident menus: a click on the bar icon first closes the menu through
     // the focus grab, so ignore the toggle that follows right after
     function toggle() {
-        if (shown)
+        if (shown) {
             close();
-        else if (Date.now() - closedAt > 400)
+        } else if (Date.now() - closedAt > 400) {
             shown = true;
+        }
     }
 
     onShownChanged: {

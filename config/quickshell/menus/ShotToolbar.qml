@@ -70,10 +70,11 @@ Rectangle {
     ]
 
     function say(hovered, text) {
-        if (hovered)
+        if (hovered) {
             hint = text;
-        else if (hint === text)
+        } else if (hint === text) {
             hint = "";
+        }
     }
 
     implicitWidth: row.implicitWidth + 16

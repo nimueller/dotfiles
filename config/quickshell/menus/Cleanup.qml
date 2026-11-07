@@ -21,19 +21,22 @@ Singleton {
 
     function size(bytes) {
         const gib = 1073741824;
-        if (bytes >= 10 * gib)
+        if (bytes >= 10 * gib) {
             return `${Math.round(bytes / gib)} GB`;
+        }
         return bytes >= gib ? `${(bytes / gib).toFixed(1)} GB` : `${Math.round(bytes / 1048576)} MB`;
     }
 
     function refresh() {
-        if (!busy)
+        if (!busy) {
             scanner.running = true;
+        }
     }
 
     function clean(ids) {
-        if (busy)
+        if (busy) {
             return;
+        }
         error = "";
         queue = ids;
         next();
@@ -42,10 +45,11 @@ Singleton {
     function next() {
         if (!queue.length) {
             cleaning = "";
-            if (scanner.running)
+            if (scanner.running) {
                 scanAgain = true;
-            else
+            } else {
                 scanner.running = true;
+            }
             return;
         }
         cleaning = queue[0];
@@ -84,8 +88,9 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    if (JSON.parse(text).error)
+                    if (JSON.parse(text).error) {
                         root.error = JSON.parse(text).error;
+                    }
                 } catch (e) {
                     root.error = "The cleanup failed";
                 }

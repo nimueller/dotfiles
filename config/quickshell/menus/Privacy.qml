@@ -55,7 +55,12 @@ Item {
         const p = Audio.props(node);
         const appId = p["pipewire.access.portal.app_id"];
         const ownPid = parseInt(p["application.process.id"]);
-        const window = appId ? Windows.forApp(p["application.icon-name"]) ?? Windows.forApp(appId) : ownPid > 0 ? Windows.forPid(ownPid) : null;
+        let window = null;
+        if (appId) {
+            window = Windows.forApp(p["application.icon-name"]) ?? Windows.forApp(appId);
+        } else if (ownPid > 0) {
+            window = Windows.forPid(ownPid);
+        }
         const pid = appId ? window?.lastIpcObject?.pid : ownPid;
         return {
             name: Audio.appName(node),
@@ -127,8 +132,9 @@ Item {
             };
             const started = ["camera", "microphone", "screen"].filter(k => now[k] && !root.announced[k]);
             root.announced = now;
-            if (!root.started || started.length === 0)
+            if (!root.started || started.length === 0) {
                 return;
+            }
             const names = {
                 camera: "Camera",
                 microphone: "Microphone",

@@ -31,24 +31,45 @@ Popup {
         copiedTimer.restart();
     }
 
+    function layoutState(w) {
+        if (w.fullscreen === 2) {
+            return "Fullscreen";
+        }
+        if (w.fullscreen === 1) {
+            return "Maximized";
+        }
+        if (w.floating) {
+            return "Floating";
+        }
+        return "Tiled";
+    }
+
     function state(w) {
-        const s = [w.fullscreen === 2 ? "Fullscreen" : w.fullscreen === 1 ? "Maximized" : w.floating ? "Floating" : "Tiled"];
-        if (w.pinned)
+        const s = [layoutState(w)];
+        if (w.pinned) {
             s.push("pinned");
-        if (w.grouped?.length)
+        }
+        if (w.grouped?.length) {
             s.push(`grouped (${w.grouped.length})`);
-        if (w.inhibitingIdle)
+        }
+        if (w.inhibitingIdle) {
             s.push("keeps the screen awake");
+        }
         return s.join(", ");
     }
 
     function flatpakText(info) {
-        if (!info)
+        if (!info) {
             return "";
-        if (!info.name)
+        }
+        if (!info.name) {
             return "No";
+        }
         const appPath = info["app-path"];
-        const installation = appPath ? (appPath.startsWith("/var/lib/") ? "system" : "user") : "";
+        let installation = "";
+        if (appPath) {
+            installation = appPath.startsWith("/var/lib/") ? "system" : "user";
+        }
         const details = [info.branch, installation].filter(d => d);
         return details.length ? `${info.name} (${details.join(", ")})` : info.name;
     }
@@ -121,11 +142,13 @@ Popup {
                 const info = {};
                 for (const line of text.split("\n")) {
                     // [Application] and [Instance] come first and hold the keys shown here
-                    if (line.startsWith("[Context]"))
+                    if (line.startsWith("[Context]")) {
                         break;
+                    }
                     const i = line.indexOf("=");
-                    if (i > 0)
+                    if (i > 0) {
                         info[line.slice(0, i)] = line.slice(i + 1);
+                    }
                 }
                 root.flatpak = info;
             }
@@ -137,10 +160,12 @@ Popup {
         accent: Theme.sapphire
         // Long titles shortened to leave room for the button; the Title row has all of it
         title: {
-            if (root.win === null)
+            if (root.win === null) {
                 return "Window";
-            if (!root.win.address)
+            }
+            if (!root.win.address) {
                 return "No focused window";
+            }
             const t = root.win.title || root.win.class;
             return t.length > 48 ? `${t.slice(0, 47)}…` : t;
         }
@@ -172,7 +197,15 @@ Popup {
                 width: parent.width
                 implicitHeight: Math.max(26, value.implicitHeight + 8)
                 radius: 6
-                color: isCopied ? Theme.alpha(Theme.green, 0.15) : mouse.containsMouse ? Theme.surface0 : "transparent"
+                color: {
+                    if (isCopied) {
+                        return Theme.alpha(Theme.green, 0.15);
+                    }
+                    if (mouse.containsMouse) {
+                        return Theme.surface0;
+                    }
+                    return "transparent";
+                }
 
                 Behavior on color {
                     ColorAnimation {

@@ -66,6 +66,20 @@ ShellRoot {
     readonly property bool busy: !!scanning || saving || !!batch
     readonly property string ip: devices.find(d => d.device === device)?.ip ?? ""
 
+    // What a resolution is good for, after it in the list
+    function resolutionUse(dpi) {
+        if (dpi === 150 || dpi === 200) {
+            return " · documents";
+        }
+        if (dpi === 300) {
+            return " · documents, text";
+        }
+        if (dpi >= 600) {
+            return " · photos";
+        }
+        return "";
+    }
+
     function deviceLabel(d) {
         const backend = ({
                 airscan: "AirScan",
@@ -76,7 +90,16 @@ ShellRoot {
 
     function sourceLabel(s) {
         // Epson's "Auto": the feeder if there are pages in it, else the glass
-        return /adf|feeder/i.test(s) ? "Feeder" : /auto/i.test(s) ? "Feeder (auto)" : /flatbed/i.test(s) ? "Glass" : s;
+        if (/adf|feeder/i.test(s)) {
+            return "Feeder";
+        }
+        if (/auto/i.test(s)) {
+            return "Feeder (auto)";
+        }
+        if (/flatbed/i.test(s)) {
+            return "Glass";
+        }
+        return s;
     }
     function modeLabel(m) {
         return ({
@@ -101,8 +124,9 @@ ShellRoot {
         options = null;
         preview = "";
         area = null;
-        if (!device)
+        if (!device) {
             return;
+        }
         asking = true;
         error = "";
         optionsProc.command = [helper, "options", device];
@@ -110,25 +134,27 @@ ShellRoot {
     }
 
     function startScan(kind) {
-        if (scanning || saving || !options || batch && !batch.waiting)
+        if (scanning || saving || !options || batch && !batch.waiting) {
             return;
+        }
         const full = [0, 0, options.width, options.height];
         const a = kind === "pages" && area && !feeder ? [area.l, area.t, area.w, area.h] : full;
         const res = kind === "preview" ? Math.min(...options.resolutions) : dpi;
         const src = kind === "preview" ? options.sources.find(s => !/adf|feeder|auto/i.test(s)) ?? source : source;
         const count = kind === "preview" || !feeder || oneByOne ? ["1"] : [];
         if (kind === "pages" && feeder && (oneByOne || bothSides)) {
-            if (!batch)
+            if (!batch) {
                 batch = {
                     start: pages.length,
                     fronts: 0,
                     pass: 1,
                     waiting: false
                 };
-            else
+            } else {
                 batch = Object.assign({}, batch, {
                     waiting: false
                 });
+            }
         }
         stopping = false;
         runs++;
@@ -178,29 +204,34 @@ ShellRoot {
 
     // One by one: now the backs
     function startBacks() {
-        if (batch && batch.waiting)
+        if (batch && batch.waiting) {
             batch = Object.assign({}, batch, {
                 fronts: pages.length - batch.start,
                 pass: 2
             });
+        }
     }
 
     // The turned stack gives the backs last page first: front 1, back 1, …
     function finishBatch() {
         const b = batch;
         batch = null;
-        if (!b || b.pass !== 2)
+        if (!b || b.pass !== 2) {
             return;
+        }
         const fronts = pages.slice(b.start, b.start + b.fronts);
         const backs = pages.slice(b.start + b.fronts).reverse();
-        if (!backs.length)
+        if (!backs.length) {
             return;
+        }
         const merged = [];
         for (let i = 0; i < Math.max(fronts.length, backs.length); i++) {
-            if (i < fronts.length)
+            if (i < fronts.length) {
                 merged.push(fronts[i]);
-            if (i < backs.length)
+            }
+            if (i < backs.length) {
                 merged.push(backs[i]);
+            }
         }
         pages = [...pages.slice(0, b.start), ...merged];
         current = b.start;
@@ -208,8 +239,9 @@ ShellRoot {
     }
 
     function save() {
-        if (busy || !pages.length)
+        if (busy || !pages.length) {
             return;
+        }
         const stamp = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd_HH-mm-ss");
         const base = (nameField.text.trim() || `Scan_${stamp}`).replace(/\//g, "-");
         const ext = format === "pdf" ? "pdf" : format;
@@ -230,13 +262,15 @@ ShellRoot {
     }
     function move(i, by) {
         const j = i + by;
-        if (j < 0 || j >= pages.length)
+        if (j < 0 || j >= pages.length) {
             return;
+        }
         const list = pages.slice();
         [list[i], list[j]] = [list[j], list[i]];
         pages = list;
-        if (current === i)
+        if (current === i) {
             current = j;
+        }
         unsaved = true;
     }
     function remove(i) {
@@ -263,7 +297,7 @@ ShellRoot {
 
     property bool loaded: false
     function remember() {
-        if (loaded)
+        if (loaded) {
             settingsFile.setText(JSON.stringify({
                 device,
                 source,
@@ -274,6 +308,7 @@ ShellRoot {
                 oneByOne,
                 bothSides
             }, null, 2));
+        }
     }
     onOneByOneChanged: remember()
     onBothSidesChanged: remember()
@@ -318,8 +353,9 @@ ShellRoot {
         stdout: StdioCollector {
             onStreamFinished: {
                 const dir = text.trim();
-                if (dir && dir !== root.home)
+                if (dir && dir !== root.home) {
                     root.folder = `${dir}/Scans`;
+                }
             }
         }
     }
@@ -340,8 +376,9 @@ ShellRoot {
                     root.options = null;
                     return;
                 }
-                if (wanted.device !== root.device)
+                if (wanted.device !== root.device) {
                     root.device = wanted.device;
+                }
                 root.loadOptions();
             }
         }
@@ -362,7 +399,13 @@ ShellRoot {
                 }
                 root.source = root.pick(o.sources, root.source, o.source);
                 root.mode = root.pick(o.modes, root.mode, o.mode);
-                root.dpi = o.resolutions.includes(root.dpi) ? root.dpi : o.resolutions.includes(300) ? 300 : o.resolution ?? o.resolutions[0];
+                let dpi = o.resolution ?? o.resolutions[0];
+                if (o.resolutions.includes(root.dpi)) {
+                    dpi = root.dpi;
+                } else if (o.resolutions.includes(300)) {
+                    dpi = 300;
+                }
+                root.dpi = dpi;
                 root.options = o;
             }
         }
@@ -383,8 +426,9 @@ ShellRoot {
                     root.scannedNow++;
                     root.progress = 0;
                     if (root.scanning === "preview") {
-                        if (root.preview)
+                        if (root.preview) {
                             Quickshell.execDetached(["rm", "-f", root.preview]);
+                        }
                         root.preview = rest;
                         root.current = -1;
                     } else {
@@ -405,16 +449,19 @@ ShellRoot {
         onExited: (code, status) => {
             // The feeder running out ends every scan from it
             const errors = scanProc.errors.filter(e => !(root.scannedNow && /feeder is empty/.test(e)));
-            if (!root.scannedNow)
+            if (!root.scannedNow) {
                 root.error = errors[errors.length - 1] ?? (root.scanning ? "Stopped" : "");
-            else if (errors.length)
+            } else if (errors.length) {
                 root.error = errors[errors.length - 1];
-            if (root.scanning === "pages" && root.scannedNow && !root.batch)
+            }
+            if (root.scanning === "pages" && root.scannedNow && !root.batch) {
                 root.status = root.scannedNow === 1 ? "1 page scanned" : `${root.scannedNow} pages scanned`;
+            }
             const kind = root.scanning;
             root.scanning = "";
-            if (kind === "pages" && root.batch)
+            if (kind === "pages" && root.batch) {
                 root.scanned();
+            }
         }
     }
 
@@ -494,8 +541,9 @@ ShellRoot {
         implicitWidth: 1040
         implicitHeight: 740
         color: Theme.base
-        onVisibleChanged: if (!visible)
-            root.close(true)
+        onVisibleChanged: if (!visible) {
+            root.close(true);
+        }
 
         WindowClose {
             anchors.top: parent.top
@@ -512,12 +560,13 @@ ShellRoot {
             focus: true
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Escape) {
-                    if (root.scanning || root.batch)
+                    if (root.scanning || root.batch) {
                         root.stopScan();
-                    else if (root.confirmClose)
+                    } else if (root.confirmClose) {
                         root.confirmClose = false;
-                    else
+                    } else {
                         root.close(false);
+                    }
                 } else if (event.key === Qt.Key_S && event.modifiers & Qt.ControlModifier) {
                     root.save();
                 } else if (event.key === Qt.Key_Delete && root.current >= 0) {
@@ -557,8 +606,9 @@ ShellRoot {
                             glyph: Theme.glyph(0xf0450) // 󰑐
                             accent: Theme.sapphire
                             active: root.searching
-                            onClicked: if (!root.searching && !root.busy)
-                                root.searchDevices()
+                            onClicked: if (!root.searching && !root.busy) {
+                                root.searchDevices();
+                            }
                         }
                     }
 
@@ -641,7 +691,7 @@ ShellRoot {
                         Dropdown {
                             Layout.fillWidth: true
                             model: (root.options?.resolutions ?? []).map(r => ({
-                                        text: `${r} dpi${r === 150 || r === 200 ? " · documents" : r === 300 ? " · documents, text" : r >= 600 ? " · photos" : ""}`,
+                                        text: `${r} dpi${root.resolutionUse(r)}`,
                                         value: r
                                     }))
                             current: root.dpi
@@ -700,7 +750,15 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             visible: !root.feeder || !root.oneByOne
-                            text: root.feeder ? "All pages in the feeder are scanned." : root.area ? `Area ${(root.area.w / 10).toFixed(1)} × ${(root.area.h / 10).toFixed(1)} cm, from the preview` : "The whole glass. Drag over the preview to scan only a part of it."
+                            text: {
+                                if (root.feeder) {
+                                    return "All pages in the feeder are scanned.";
+                                }
+                                if (root.area) {
+                                    return `Area ${(root.area.w / 10).toFixed(1)} × ${(root.area.h / 10).toFixed(1)} cm, from the preview`;
+                                }
+                                return "The whole glass. Drag over the preview to scan only a part of it.";
+                            }
                             wrapMode: Text.WordWrap
                             elide: Text.ElideNone
                             color: Theme.subtext0
@@ -724,7 +782,15 @@ ShellRoot {
                         IconButton {
                             Layout.fillWidth: true
                             glyph: Theme.glyph(root.scanning ? 0xf04db : 0xf06ab) // 󰓛 / 󰚫
-                            text: root.scanning ? "Stop" : root.pages.length ? "Scan another page" : "Scan"
+                            text: {
+                                if (root.scanning) {
+                                    return "Stop";
+                                }
+                                if (root.pages.length) {
+                                    return "Scan another page";
+                                }
+                                return "Scan";
+                            }
                             accent: root.scanning ? Theme.red : Theme.sapphire
                             active: true
                             enabled: !root.saving
@@ -744,7 +810,15 @@ ShellRoot {
                             id: between
 
                             readonly property int done: root.batch ? root.pages.length - root.batch.start - (root.batch.pass === 2 ? root.batch.fronts : 0) : 0
-                            readonly property string side: root.bothSides ? (root.batch?.pass === 2 ? "back" : "front") : "page"
+                            readonly property string side: {
+                                if (root.bothSides) {
+                                    if (root.batch?.pass === 2) {
+                                        return "back";
+                                    }
+                                    return "front";
+                                }
+                                return "page";
+                            }
 
                             anchors.fill: parent
                             anchors.margins: 10
@@ -754,9 +828,15 @@ ShellRoot {
                                 Layout.fillWidth: true
                                 // One case per line: qmlformat would join them into one line
                                 // qmlformat off
-                                text: !root.oneByOne ? `${root.batch?.fronts ?? 0} fronts scanned. Turn the stack over like a book page and put it in again.`
-                                    : between.done === 0 && root.batch?.pass === 2 ? `${root.batch.fronts} fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.`
-                                    : `${between.done === 1 ? `1 ${between.side}` : `${between.done} ${between.side}s`} scanned. Put in the next one${root.ip ? ", it starts by itself" : ""}.`
+                                text: {
+                                    if (!root.oneByOne) {
+                                        return `${root.batch?.fronts ?? 0} fronts scanned. Turn the stack over like a book page and put it in again.`;
+                                    }
+                                    if (between.done === 0 && root.batch?.pass === 2) {
+                                        return `${root.batch.fronts} fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.`;
+                                    }
+                                    return `${between.done === 1 ? `1 ${between.side}` : `${between.done} ${between.side}s`} scanned. Put in the next one${root.ip ? ", it starts by itself" : ""}.`;
+                                }
                                 // qmlformat on
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
@@ -793,7 +873,18 @@ ShellRoot {
 
                         Label {
                             Layout.fillWidth: true
-                            text: root.asking ? "Asking the scanner…" : root.scanning === "preview" ? "Preview…" : root.feeder ? `Page ${root.scannedNow + 1}…` : "Scanning…"
+                            text: {
+                                if (root.asking) {
+                                    return "Asking the scanner…";
+                                }
+                                if (root.scanning === "preview") {
+                                    return "Preview…";
+                                }
+                                if (root.feeder) {
+                                    return `Page ${root.scannedNow + 1}…`;
+                                }
+                                return "Scanning…";
+                            }
                             color: Theme.subtext0
                             font.pixelSize: 11
                         }
@@ -905,7 +996,15 @@ ShellRoot {
                         IconButton {
                             Layout.fillWidth: true
                             glyph: Theme.glyph(0xf0193) // 󰆓
-                            text: root.saving ? (root.format === "pdf" && root.ocr ? "Reading the text…" : "Saving…") : `Save to ${root.folder.replace(root.home, "~")}`
+                            text: {
+                                if (root.saving) {
+                                    if (root.format === "pdf" && root.ocr) {
+                                        return "Reading the text…";
+                                    }
+                                    return "Saving…";
+                                }
+                                return `Save to ${root.folder.replace(root.home, "~")}`;
+                            }
                             accent: Theme.green
                             active: true
                             enabled: !root.busy
@@ -1034,8 +1133,9 @@ ShellRoot {
                                 };
                             }
                             // A click (or a tiny drag) takes the whole glass again
-                            onReleased: if (root.area && (root.area.w < 5 || root.area.h < 5))
-                                root.area = null
+                            onReleased: if (root.area && (root.area.w < 5 || root.area.h < 5)) {
+                                root.area = null;
+                            }
                         }
                     }
 
@@ -1055,7 +1155,15 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
-                            text: !root.options ? "" : root.feeder ? "Put the pages in the feeder and scan." : "Put the page on the glass. A preview shows it, to scan only a part of it."
+                            text: {
+                                if (!root.options) {
+                                    return "";
+                                }
+                                if (root.feeder) {
+                                    return "Put the pages in the feeder and scan.";
+                                }
+                                return "Put the page on the glass. A preview shows it, to scan only a part of it.";
+                            }
                             wrapMode: Text.WordWrap
                             elide: Text.ElideNone
                             color: Theme.subtext0
@@ -1113,7 +1221,15 @@ ShellRoot {
                             width: 110
                             height: strip.height
                             radius: 10
-                            color: shown ? Theme.alpha(Theme.sapphire, 0.18) : hovered ? Theme.surface0 : "transparent"
+                            color: {
+                                if (shown) {
+                                    return Theme.alpha(Theme.sapphire, 0.18);
+                                }
+                                if (hovered) {
+                                    return Theme.surface0;
+                                }
+                                return "transparent";
+                            }
                             border.width: shown ? 1 : 0
                             border.color: Theme.sapphire
 
@@ -1201,7 +1317,15 @@ ShellRoot {
                                         horizontalAlignment: Text.AlignHCenter
                                         text: Theme.glyph(modelData.glyph)
                                         font.pixelSize: 13
-                                        color: tool.containsMouse ? (modelData.glyph === 0xf01b4 ? Theme.red : Theme.text) : Theme.overlay1
+                                        color: {
+                                            if (tool.containsMouse) {
+                                                if (modelData.glyph === 0xf01b4) {
+                                                    return Theme.red;
+                                                }
+                                                return Theme.text;
+                                            }
+                                            return Theme.overlay1;
+                                        }
 
                                         MouseArea {
                                             id: tool

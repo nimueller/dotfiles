@@ -45,8 +45,9 @@ ShellRoot {
     readonly property int duration: 280
 
     function show() {
-        if (open)
+        if (open) {
             return;
+        }
         target = null;
         leaving = false;
         // The windows' positions are only in the IPC data
@@ -58,8 +59,9 @@ ShellRoot {
     // What the overview does on the way out happens behind it: Hyprland's own
     // workspace animation would only show as a second one afterwards
     function leave(tile, command) {
-        if (leaving)
+        if (leaving) {
             return;
+        }
         target = tile ?? null;
         leaving = true;
         if (command) {
@@ -88,15 +90,17 @@ ShellRoot {
     }
 
     function closeWindows(toplevels) {
-        for (const toplevel of toplevels)
+        for (const toplevel of toplevels) {
             dispatch(`hl.dsp.window.close({ window = "address:0x${toplevel.address}" })`);
+        }
         refresh.restart();
     }
 
     // `workspace`: an id, or "emptym" for a new one on that monitor
     function moveWindow(toplevel, workspace, monitor) {
-        if (workspace === "emptym")
+        if (workspace === "emptym") {
             dispatch(`hl.dsp.focus({ monitor = "${monitor.name}" })`);
+        }
         dispatch(`hl.dsp.window.move({ workspace = ${JSON.stringify(workspace)}, window = "address:0x${toplevel.address}" })`);
         refresh.restart();
     }
@@ -104,14 +108,16 @@ ShellRoot {
     Connections {
         target: Hyprland
         function onRawEvent(event) {
-            if (event.name !== "custom")
+            if (event.name !== "custom") {
                 return;
-            if (event.data === "quickshell-overview")
+            }
+            if (event.data === "quickshell-overview") {
                 root.open ? root.close() : root.show();
-            else if (event.data === "quickshell-overview open")
+            } else if (event.data === "quickshell-overview open") {
                 root.show();
-            else if (event.data === "quickshell-overview close" && root.open)
+            } else if (event.data === "quickshell-overview close" && root.open) {
                 root.close();
+            }
         }
     }
 
@@ -171,8 +177,9 @@ ShellRoot {
                 // 0: a tile covers the screen, 1: the overview
                 property real progress: 0
                 readonly property bool settled: progress === 1 && !root.leaving
-                onSettledChanged: if (settled)
-                    arrived = true
+                onSettledChanged: if (settled) {
+                    arrived = true;
+                }
                 // From here on the tiles show what's there, not how it was
                 property bool arrived: false
 
@@ -189,8 +196,9 @@ ShellRoot {
                 function leaveWorkspace(workspace) {
                     const others = workspaces.filter(w => w !== workspace);
                     const next = others.filter(w => w.id < workspace.id).pop() ?? others[0];
-                    if (next)
+                    if (next) {
                         root.dispatch(`hl.dsp.focus({ workspace = ${next.id} })`);
+                    }
                 }
 
                 function tileFor(id) {
@@ -260,10 +268,11 @@ ShellRoot {
                         focus: true
                         Keys.onPressed: event => {
                             const n = event.text === "0" ? 10 : parseInt(event.text);
-                            if (event.key === Qt.Key_Escape)
+                            if (event.key === Qt.Key_Escape) {
                                 root.close();
-                            else if (n >= 1 && n <= 10)
+                            } else if (n >= 1 && n <= 10) {
                                 root.focusWorkspace(n, win.tileFor(n));
+                            }
                         }
                     }
 

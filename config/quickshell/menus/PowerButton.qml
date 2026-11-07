@@ -20,7 +20,15 @@ Column {
         width: 120
         height: 120
         radius: width / 2
-        color: mouse.pressed ? root.action.accent : root.selected ? Qt.tint(Theme.base, Theme.alpha(root.action.accent, 0.15)) : Theme.base
+        color: {
+            if (mouse.pressed) {
+                return root.action.accent;
+            }
+            if (root.selected) {
+                return Qt.tint(Theme.base, Theme.alpha(root.action.accent, 0.15));
+            }
+            return Theme.base;
+        }
         border.width: 2
         border.color: root.selected ? root.action.accent : Theme.surface0
         scale: root.selected ? 1.06 : 1
@@ -46,7 +54,15 @@ Column {
             anchors.centerIn: parent
             text: Theme.glyph(root.action.glyph)
             font.pixelSize: 40
-            color: mouse.pressed ? Theme.crust : root.selected ? root.action.accent : Theme.text
+            color: {
+                if (mouse.pressed) {
+                    return Theme.crust;
+                }
+                if (root.selected) {
+                    return root.action.accent;
+                }
+                return Theme.text;
+            }
 
             Behavior on color {
                 ColorAnimation {

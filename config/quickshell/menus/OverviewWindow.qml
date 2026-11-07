@@ -83,8 +83,9 @@ Item {
         drag.threshold: 8
         onClicked: picture.clicked()
         onReleased: {
-            if (!picture.dragging)
+            if (!picture.dragging) {
                 return;
+            }
             picture.Drag.drop();
             // Back to its place until Hyprland reports the move
             picture.x = Qt.binding(() => picture.originX);
