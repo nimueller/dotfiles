@@ -7,7 +7,8 @@ checks that run the same locally and in CI.
 ## Code guidelines
 
 `CODE_GUIDELINES.md` is binding for every source file: readability first,
-Clean Code, vertical over horizontal code, blocks always spelled out. Follow
+Clean Code, explicit over implicit, vertical over horizontal code, blocks
+always spelled out, formatters and tests. Follow
 it, also where the surrounding code doesn't yet; only a review that explicitly
 says otherwise overrides a rule, and only for that case.
 
@@ -63,9 +64,10 @@ New scripts and rewrites follow these rules:
     `shell=True` (unless running a command the caller passed as a string, as
     `shutdown.py` does);
   - `pathlib.Path` for files, `os.environ.get(...) or default` for XDG paths.
-- New scripts start with `# pyright: strict` and have type annotations; the
-  older helpers are checked in pyright's standard mode
-  (`pyrightconfig.json`).
+- Every script starts with `# pyright: strict` and has type annotations
+  (`CODE_GUIDELINES.md`); the older helpers that don't yet are checked in
+  pyright's standard mode (`pyrightconfig.json`) until they're brought in
+  line.
 - Comments say why, not what, and the interface a script offers to QML or Lua
   (its arguments and output) stays documented in its docstring. When renaming
   a script, update every caller (`grep -rn name.sh`), including comments.
