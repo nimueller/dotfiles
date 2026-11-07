@@ -1,3 +1,4 @@
+# pyright: strict
 """Compares two vulnix --json scans and prints a Markdown pull request comment:
 the vulnerabilities a flake.lock update fixes and the ones it brings in.
 
@@ -11,60 +12,86 @@ those cancel out here.
 
 import json
 import sys
+from dataclasses import dataclass, field
+from typing import Any
 
 MAX_ROWS = 100
+# CVSS v3 severities: (lowest score, icon), from the highest down
+SEVERITIES = [(9.0, "🔴"), (7.0, "🟠"), (4.0, "🟡"), (0.0, "⚪")]
+
+# (package, CVE)
+Key = tuple[str, str]
 
 
-def load(path):
-    """{(package, CVE): (version, score)}"""
-    found = {}
+@dataclass
+class Finding:
+    versions: set[str] = field(default_factory=set[str])
+    score: float | None = None
+
+
+@dataclass
+class Row:
+    score: float | None
+    cve: str
+    package: str
+    versions: str
+
+
+def load(path: str) -> dict[Key, Finding]:
     with open(path) as f:
-        for entry in json.load(f):
-            scores = entry.get("cvssv3_basescore") or {}
-            for cve in entry["affected_by"]:
-                if cve in entry.get("whitelisted", []):
-                    continue
-                key = (entry["pname"], cve)
-                versions = found.get(key, (set(), None))[0]
-                versions.add(entry["version"])
-                found[key] = (versions, scores.get(cve))
+        entries: list[dict[str, Any]] = json.load(f)
+    found: dict[Key, Finding] = {}
+    for entry in entries:
+        scores: dict[str, float] = entry.get("cvssv3_basescore") or {}
+        whitelisted: list[str] = entry.get("whitelisted", [])
+        for cve in entry["affected_by"]:
+            if cve in whitelisted:
+                continue
+            finding = found.setdefault((entry["pname"], cve), Finding())
+            finding.versions.add(entry["version"])
+            finding.score = scores.get(cve)
     return found
 
 
-def score_cell(score):
+def rows_only_in(scan: dict[Key, Finding], other: dict[Key, Finding]) -> list[Row]:
+    rows: list[Row] = []
+    for key in scan.keys() - other.keys():
+        package, cve = key
+        finding = scan[key]
+        versions = ", ".join(sorted(finding.versions))
+        rows.append(Row(finding.score, cve, package, versions))
+    return rows
+
+
+def score_cell(score: float | None) -> str:
     if score is None:
         return "–"
-    icon = "🔴" if score >= 9 else "🟠" if score >= 7 else "🟡" if score >= 4 else "⚪"
+    icon = next(icon for lowest, icon in SEVERITIES if score >= lowest)
     return f"{icon} {score:.1f}"
 
 
-def table(rows, version_header):
-    rows = sorted(rows, key=lambda r: (-(r[0] or 0), r[2], r[1]))
+def table(rows: list[Row], version_header: str) -> str:
+    """The highest scores first; ties by package, then CVE."""
+    ordered = sorted(rows, key=lambda row: (-(row.score or 0), row.package, row.cve))
     lines = [
         f"| Score | CVE | Package | {version_header} |",
         "|---|---|---|---|",
     ]
-    for score, cve, package, version in rows[:MAX_ROWS]:
-        link = f"[{cve}](https://nvd.nist.gov/vuln/detail/{cve})"
-        lines.append(f"| {score_cell(score)} | {link} | {package} | {version} |")
-    if len(rows) > MAX_ROWS:
-        lines.append(f"\n…and {len(rows) - MAX_ROWS} more (lowest scores).")
+    for row in ordered[:MAX_ROWS]:
+        link = f"[{row.cve}](https://nvd.nist.gov/vuln/detail/{row.cve})"
+        lines.append(f"| {score_cell(row.score)} | {link} | {row.package} | {row.versions} |")
+    hidden = len(ordered) - MAX_ROWS
+    if hidden > 0:
+        lines.append(f"\n…and {hidden} more (lowest scores).")
     return "\n".join(lines)
 
 
-def main():
+def main() -> None:
     old_path, new_path, config = sys.argv[1:4]
-    old, new = load(old_path), load(new_path)
-
-    fixed = []
-    for key in old.keys() - new.keys():
-        package, cve = key
-        fixed.append((old[key][1], cve, package, ", ".join(sorted(old[key][0]))))
-
-    added = []
-    for key in new.keys() - old.keys():
-        package, cve = key
-        added.append((new[key][1], cve, package, ", ".join(sorted(new[key][0]))))
+    old = load(old_path)
+    new = load(new_path)
+    fixed = rows_only_in(old, new)
+    added = rows_only_in(new, old)
 
     print(f"## 🛡️ Vulnerability scan: `{config}`\n")
     print(f"**{len(fixed)} fixed, {len(added)} new** ({len(new)} known vulnerabilities in total after this update)\n")

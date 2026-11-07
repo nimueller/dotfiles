@@ -1,3 +1,4 @@
+# pyright: strict
 """BlueZ pairing agent for the Bluetooth menu (BluetoothAgent.qml,
 bluetooth.qml), with the system's Python like drives.py. BlueZ asks it
 whenever a pairing or connection needs someone: a code to show or type, a
@@ -16,6 +17,8 @@ another one (Blueman's) took over.
 
 import json
 import sys
+from dataclasses import dataclass
+from typing import Any
 
 import gi
 
@@ -38,7 +41,14 @@ XML = """
   </interface>
 </node>
 """
+BLUEZ = "org.bluez"
 DEVICE = "org.bluez.Device1"
+AGENT_MANAGER = "org.bluez.AgentManager1"
+PROPERTIES = "org.freedesktop.DBus.Properties"
+REJECTED = "org.bluez.Error.Rejected"
+CANCELED = "org.bluez.Error.Canceled"
+CAPABILITY = "KeyboardDisplay"
+NO_TIMEOUT = -1
 # What a device connects for, by the UUID's 16-bit part
 SERVICES = {
     "110a": "audio",
@@ -58,218 +68,343 @@ SERVICES = {
     "112f": "contacts",
     "1132": "messages",
 }
+UNKNOWN_SERVICE = "a service"
 # Shown codes get no answer to tell when they're over
 DISPLAY_TIMEOUT = 60
+MAX_PIN_LENGTH = 16
+MAX_PASSKEY = 999_999
+
+# Kinds of questions
+PIN = "pin"
+PASSKEY = "passkey"
+CONFIRM = "confirm"
+AUTHORIZE = "authorize"
+SERVICE = "service"
+DISPLAY = "display"
 
 bus = Gio.bus_get_sync(Gio.BusType.SYSTEM)
 
 
-def out(message):
+@dataclass
+class Request:
+    # None for a shown code: BlueZ waits for no answer
+    invocation: Gio.DBusMethodInvocation | None
+    kind: str
+    device: str  # its object path
+
+
+def out(message: dict[str, object]) -> None:
     print(json.dumps(message), flush=True)
 
 
-def device_props(path):
+def log(message: str) -> None:
+    print(f"bluetooth-agent: {message}", file=sys.stderr)
+
+
+def device_properties(path: str) -> dict[str, Any]:
+    """The device's properties, {} when it's gone."""
     try:
         reply = bus.call_sync(
-            "org.bluez",
+            BLUEZ,
             path,
-            "org.freedesktop.DBus.Properties",
+            PROPERTIES,
             "GetAll",
             GLib.Variant("(s)", (DEVICE,)),
             None,
             Gio.DBusCallFlags.NONE,
-            -1,
+            NO_TIMEOUT,
             None,
         )
-        return reply.unpack()[0]
     except GLib.Error:
         return {}
+    (properties,) = reply.unpack()
+    return properties
 
 
-def set_trusted(path):
+def set_trusted(path: str) -> None:
     try:
         bus.call_sync(
-            "org.bluez",
+            BLUEZ,
             path,
-            "org.freedesktop.DBus.Properties",
+            PROPERTIES,
             "Set",
             GLib.Variant("(ssv)", (DEVICE, "Trusted", GLib.Variant("b", True))),
             None,
             Gio.DBusCallFlags.NONE,
-            -1,
+            NO_TIMEOUT,
             None,
         )
-    except GLib.Error:
-        pass
+    except GLib.Error as error:
+        # The connection is let in either way; untrusted, BlueZ asks again
+        # next time
+        log(f"couldn't trust {path}: {error.message}")
+
+
+def six_digits(number: int) -> str:
+    return f"{number:06d}"
+
+
+def service_name(uuid: str) -> str:
+    """0000110b-0000-1000-8000-00805f9b34fb -> "audio"."""
+    short_uuid = uuid[4:8].lower()
+    return SERVICES.get(short_uuid, UNKNOWN_SERVICE)
+
+
+def is_valid_answer(kind: str, value: str) -> bool:
+    if kind == PIN:
+        return 1 <= len(value) <= MAX_PIN_LENGTH
+    if kind == PASSKEY:
+        return value.isdigit() and int(value) <= MAX_PASSKEY
+    return True
+
+
+def is_pairing_over(changed: dict[str, Any]) -> bool:
+    """Whether a device's changed properties end a shown code."""
+    is_paired = bool(changed.get("Paired") or changed.get("Bonded"))
+    is_disconnected = changed.get("Connected") is False
+    return is_paired or is_disconnected
 
 
 class Agent:
-    def __init__(self):
+    def __init__(self, loop: GLib.MainLoop) -> None:
+        self.loop = loop
         self.next_id = 1
-        self.pending = {}  # id → (invocation or None, kind, device path)
-        self.bluez = None  # bluetoothd's unique name, the only one to listen to
+        self.pending: dict[int, Request] = {}
+        # bluetoothd's unique name, the only one to listen to
+        self.bluez: str | None = None
         node = Gio.DBusNodeInfo.new_for_xml(XML)
-        bus.register_object(PATH, node.interfaces[0], self.method_call, None, None)
-        Gio.bus_watch_name_on_connection(bus, "org.bluez", Gio.BusNameWatcherFlags.NONE, self.appeared, self.vanished)
+        bus.register_object(PATH, node.interfaces[0], self.on_method_call, None, None)
+        Gio.bus_watch_name_on_connection(
+            bus,
+            BLUEZ,
+            Gio.BusNameWatcherFlags.NONE,
+            self.on_bluez_appeared,
+            self.on_bluez_vanished,
+        )
         # Shown codes are over once the device is paired
         bus.signal_subscribe(
-            "org.bluez",
-            "org.freedesktop.DBus.Properties",
+            BLUEZ,
+            PROPERTIES,
             "PropertiesChanged",
             None,
             DEVICE,
             Gio.DBusSignalFlags.NONE,
-            self.device_changed,
+            self.on_device_changed,
         )
         channel = GLib.IOChannel.unix_new(sys.stdin.fileno())
-        GLib.io_add_watch(channel, GLib.PRIORITY_DEFAULT, GLib.IOCondition.IN | GLib.IOCondition.HUP, self.read)
+        conditions = GLib.IOCondition.IN | GLib.IOCondition.HUP
+        # pygobject-stubs leave io_add_watch's parameters unknown
+        GLib.io_add_watch(channel, GLib.PRIORITY_DEFAULT, conditions, self.on_input)  # pyright: ignore[reportUnknownMemberType]
 
-    # BlueZ -------------------------------------------------------------------
+    # ---------- BlueZ ----------
 
-    def appeared(self, _bus, _name, owner):
+    def call_manager(self, method: str, arguments: GLib.Variant) -> None:
+        bus.call_sync(
+            BLUEZ,
+            "/org/bluez",
+            AGENT_MANAGER,
+            method,
+            arguments,
+            None,
+            Gio.DBusCallFlags.NONE,
+            NO_TIMEOUT,
+            None,
+        )
+
+    def on_bluez_appeared(self, _bus: Gio.DBusConnection, _name: str, owner: str) -> None:
         """bluetoothd (re)started: register, and as the agent it asks."""
         self.bluez = owner
         try:
-            self.manager("RegisterAgent", GLib.Variant("(os)", (PATH, "KeyboardDisplay")))
-        except GLib.Error as e:
-            if "AlreadyExists" not in e.message:
-                print(f"bluetooth-agent: {e.message}", file=sys.stderr)
+            self.call_manager("RegisterAgent", GLib.Variant("(os)", (PATH, CAPABILITY)))
+        except GLib.Error as error:
+            if "AlreadyExists" not in error.message:
+                log(error.message)
                 return
         self.make_default()
 
-    def vanished(self, *_):
+    def on_bluez_vanished(self, _bus: Gio.DBusConnection | None = None, _name: str = "") -> None:
         self.bluez = None
         for request_id in list(self.pending):
             self.finish(request_id)
 
-    def manager(self, method, args):
-        bus.call_sync(
-            "org.bluez", "/org/bluez", "org.bluez.AgentManager1", method, args, None, Gio.DBusCallFlags.NONE, -1, None
-        )
-
-    def make_default(self):
-        if not self.bluez:
+    def make_default(self) -> None:
+        if self.bluez is None:
             return
         try:
-            self.manager("RequestDefaultAgent", GLib.Variant("(o)", (PATH,)))
-        except GLib.Error as e:
-            print(f"bluetooth-agent: {e.message}", file=sys.stderr)
+            self.call_manager("RequestDefaultAgent", GLib.Variant("(o)", (PATH,)))
+        except GLib.Error as error:
+            log(error.message)
 
-    def method_call(self, _bus, sender, _path, _iface, method, params, invocation):
+    def on_method_call(
+        self,
+        _bus: Gio.DBusConnection,
+        sender: str,
+        _path: str,
+        _interface: str,
+        method: str,
+        parameters: GLib.Variant,
+        invocation: Gio.DBusMethodInvocation,
+    ) -> None:
         if sender != self.bluez:
-            invocation.return_dbus_error("org.bluez.Error.Rejected", "Only BlueZ asks the agent")
+            invocation.return_dbus_error(REJECTED, "Only BlueZ asks the agent")
             return
-        args = params.unpack()
+        arguments = parameters.unpack()
         if method == "Release":
-            self.vanished()
+            self.on_bluez_vanished()
             invocation.return_value(None)
         elif method == "Cancel":
-            for request_id, (pending, _, _) in list(self.pending.items()):
-                if pending:
-                    pending.return_dbus_error("org.bluez.Error.Canceled", "Canceled")
-                self.finish(request_id)
+            self.cancel_all()
             invocation.return_value(None)
         elif method == "RequestPinCode":
-            self.ask(invocation, "pin", args[0])
+            (device,) = arguments
+            self.ask(invocation, PIN, device)
         elif method == "RequestPasskey":
-            self.ask(invocation, "passkey", args[0])
+            (device,) = arguments
+            self.ask(invocation, PASSKEY, device)
         elif method == "RequestConfirmation":
-            self.ask(invocation, "confirm", args[0], code=f"{args[1]:06d}")
+            device, passkey = arguments
+            self.ask(invocation, CONFIRM, device, code=six_digits(passkey))
         elif method == "RequestAuthorization":
-            self.ask(invocation, "authorize", args[0])
+            (device,) = arguments
+            self.ask(invocation, AUTHORIZE, device)
         elif method == "AuthorizeService":
-            path, uuid = args
-            props = device_props(path)
-            # Paired here, so already let in once; BlueZ only asks for the
-            # ones that aren't trusted
-            if props.get("Paired") or props.get("Bonded"):
-                invocation.return_value(None)
-            else:
-                self.ask(invocation, "service", path, service=SERVICES.get(uuid[4:8].lower(), "a service"))
+            device, uuid = arguments
+            self.authorize_service(invocation, device, uuid)
         elif method == "DisplayPinCode":
-            self.show(args[0], args[1], 0)
+            device, pin = arguments
+            self.show(device, pin, 0)
             invocation.return_value(None)
         elif method == "DisplayPasskey":
-            self.show(args[0], f"{args[1]:06d}", args[2])
+            device, passkey, entered = arguments
+            self.show(device, six_digits(passkey), entered)
             invocation.return_value(None)
 
-    def ask(self, invocation, kind, path, request_id=None, **extra):
+    def cancel_all(self) -> None:
+        for request_id, request in list(self.pending.items()):
+            if request.invocation is not None:
+                request.invocation.return_dbus_error(CANCELED, "Canceled")
+            self.finish(request_id)
+
+    def authorize_service(self, invocation: Gio.DBusMethodInvocation, device: str, uuid: str) -> None:
+        properties = device_properties(device)
+        # Paired here, so already let in once; BlueZ only asks for the ones
+        # that aren't trusted
+        if properties.get("Paired") or properties.get("Bonded"):
+            invocation.return_value(None)
+            return
+        self.ask(invocation, SERVICE, device, service=service_name(uuid))
+
+    def ask(
+        self,
+        invocation: Gio.DBusMethodInvocation | None,
+        kind: str,
+        device: str,
+        request_id: int | None = None,
+        **extra: object,
+    ) -> int:
+        """Sends the question to the menu; a new one, or again with the
+        same id."""
         if request_id is None:
             request_id = self.next_id
             self.next_id += 1
-        self.pending[request_id] = (invocation, kind, path)
-        props = device_props(path)
-        address = props.get("Address", "")
-        out({"id": request_id, "kind": kind, "address": address, "name": props.get("Alias", address), **extra})
+        self.pending[request_id] = Request(invocation, kind, device)
+        properties = device_properties(device)
+        address = properties.get("Address", "")
+        name = properties.get("Alias", address)
+        out({"id": request_id, "kind": kind, "address": address, "name": name, **extra})
         return request_id
 
-    def show(self, path, code, entered):
-        """A code to type on the device; again, same id, for every key typed
-        there."""
-        same = [i for i, (_, kind, p) in self.pending.items() if kind == "display" and p == path]
-        if same:
-            self.ask(None, "display", path, same[0], code=code, entered=entered)
+    def shown_codes(self, device: str) -> list[int]:
+        return [
+            request_id
+            for request_id, request in self.pending.items()
+            if request.kind == DISPLAY and request.device == device
+        ]
+
+    def show(self, device: str, code: str, entered: int) -> None:
+        """A code to type on the device; again, with the same id, for every
+        key typed there."""
+        shown = self.shown_codes(device)
+        if shown:
+            self.ask(None, DISPLAY, device, shown[0], code=code, entered=entered)
             return
-        request_id = self.ask(None, "display", path, code=code, entered=entered)
+        request_id = self.ask(None, DISPLAY, device, code=code, entered=entered)
         GLib.timeout_add_seconds(DISPLAY_TIMEOUT, self.finish, request_id)
 
-    def device_changed(self, _bus, _sender, path, _iface, _signal, params):
-        changed = params.unpack()[1]
-        if changed.get("Paired") or changed.get("Bonded") or changed.get("Connected") is False:
-            for request_id, (_, kind, p) in list(self.pending.items()):
-                if kind == "display" and p == path:
-                    self.finish(request_id)
+    def on_device_changed(
+        self,
+        _bus: Gio.DBusConnection,
+        _sender: str | None,
+        path: str,
+        _interface: str,
+        _signal: str,
+        parameters: GLib.Variant,
+    ) -> None:
+        _interface_name, changed, _invalidated = parameters.unpack()
+        if not is_pairing_over(changed):
+            return
+        for request_id in self.shown_codes(path):
+            self.finish(request_id)
 
-    def finish(self, request_id):
-        if self.pending.pop(request_id, None):
+    def finish(self, request_id: int) -> bool:
+        """Tells the menu a question is over. Also a timeout's callback."""
+        if self.pending.pop(request_id, None) is not None:
             out({"done": request_id})
         return GLib.SOURCE_REMOVE
 
-    # The menu ----------------------------------------------------------------
+    # ---------- The menu ----------
 
-    def read(self, channel, condition):
-        status, line, _, _ = channel.read_line()
+    def on_input(self, channel: GLib.IOChannel, _condition: GLib.IOCondition) -> bool:
+        status, line, _length, _terminator = channel.read_line()
         # The menu's gone: BlueZ forgets the agent along with the connection
         if status == GLib.IOStatus.EOF:
-            loop.quit()
+            self.loop.quit()
             return False
         try:
             self.answer(json.loads(line))
-        except (ValueError, TypeError, KeyError, AttributeError) as e:
-            print(f"bluetooth-agent: bad answer {line!r}: {e}", file=sys.stderr)
+        except (ValueError, TypeError, KeyError, AttributeError) as error:
+            log(f"bad answer {line!r}: {error}")
         return True
 
-    def answer(self, message):
+    def answer(self, message: dict[str, Any]) -> None:
         if message.get("default"):
             self.make_default()
             return
-        request_id = message["id"]
-        if request_id not in self.pending:
-            return  # over already
-        invocation, kind, path = self.pending[request_id]
-        value = str(message.get("value", "")).strip()
-        ok = bool(message.get("ok"))
-        if ok and kind == "pin" and not 1 <= len(value) <= 16:
-            ok = False
-        if ok and kind == "passkey" and not (value.isdigit() and int(value) <= 999999):
-            ok = False
-        self.finish(request_id)
-        if not invocation:
+        request_id: int = message["id"]
+        request = self.pending.get(request_id)
+        if request is None:
+            # Over already
             return
-        if not ok:
-            invocation.return_dbus_error("org.bluez.Error.Rejected", "Rejected")
-        elif kind == "pin":
+        value = str(message.get("value", "")).strip()
+        is_accepted = bool(message.get("ok")) and is_valid_answer(request.kind, value)
+        self.finish(request_id)
+        self.reply(request, is_accepted, value)
+
+    @staticmethod
+    def reply(request: Request, is_accepted: bool, value: str) -> None:
+        """Answers BlueZ, unless it waits for no answer (a shown code)."""
+        invocation = request.invocation
+        if invocation is None:
+            return
+        if not is_accepted:
+            invocation.return_dbus_error(REJECTED, "Rejected")
+        elif request.kind == PIN:
             invocation.return_value(GLib.Variant("(s)", (value,)))
-        elif kind == "passkey":
+        elif request.kind == PASSKEY:
             invocation.return_value(GLib.Variant("(u)", (int(value),)))
         else:
             # Let in for good: it isn't asked again
-            if kind == "service":
-                set_trusted(path)
+            if request.kind == SERVICE:
+                set_trusted(request.device)
             invocation.return_value(None)
 
 
-if __name__ == "__main__":
+def main() -> None:
     loop = GLib.MainLoop()
-    Agent()
-    loop.run()
+    Agent(loop)
+    # pygobject-stubs leave MainLoop.run's return type unknown
+    loop.run()  # pyright: ignore[reportUnknownMemberType]
+
+
+if __name__ == "__main__":
+    main()
