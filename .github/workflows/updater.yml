@@ -108,12 +108,16 @@ jobs:
           path: new
       - name: 🔡 Install Nix
         uses: cachix/install-nix-action@v31
-      # vulnix exits with 2 when it finds something
       - name: 🛡️ Scan before and after the update
         run: |
           scan() {
+            local code=0
             nix build "./$1#homeConfigurations.$CONFIG.activationPackage" -o "$1-result"
-            nix run --inputs-from ./new nixpkgs#vulnix -- -C --json "$1-result" > "$1.json" || [ $? -eq 2 ]
+            nix run --inputs-from ./new nixpkgs#vulnix -- -C --json "$1-result" >"$1.json" || code=$?
+            # vulnix exits with 2 when it finds something
+            if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
+              return "$code"
+            fi
           }
           scan old
           rm old-result

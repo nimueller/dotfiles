@@ -31,8 +31,9 @@ void *g_dbus_proxy_new_for_bus_sync(int bus_type, int flags, void *info, const c
                                     void **error) {
     void *(*real)(int, int, void *, const char *, const char *, const char *, void *, void **) =
         dlsym(RTLD_NEXT, "g_dbus_proxy_new_for_bus_sync");
-    if (name && strcmp(name, PORTAL) == 0)
+    if (name && strcmp(name, PORTAL) == 0) {
         flags |= G_DBUS_PROXY_FLAGS_DO_NOT_AUTO_START;
+    }
     return real(bus_type, flags, info, name, path, iface, cancellable, error);
 }
 
@@ -42,8 +43,9 @@ void *g_dbus_connection_call_sync(void *connection, const char *bus_name, const 
                                   void **error) {
     void *(*real)(void *, const char *, const char *, const char *, const char *, void *, void *,
                   int, int, void *, void **) = dlsym(RTLD_NEXT, "g_dbus_connection_call_sync");
-    if (bus_name && strcmp(bus_name, PORTAL) == 0)
+    if (bus_name && strcmp(bus_name, PORTAL) == 0) {
         flags |= G_DBUS_CALL_FLAGS_NO_AUTO_START;
+    }
     return real(connection, bus_name, path, iface, method, parameters, reply_type, flags, timeout,
                 cancellable, error);
 }
@@ -57,10 +59,15 @@ long __isoc23_strtol(const char *s, char **end, int base) {
     long (*real)(const char *, char **, int) = dlsym(RTLD_NEXT, "__isoc23_strtol");
     static struct link_map *nautilus;
     Dl_info caller;
-    if (!nautilus)
+    if (!nautilus) {
         dlinfo(dlopen(NULL, RTLD_LAZY), RTLD_DI_LINKMAP, &nautilus);
-    if (base == 16 && dladdr(__builtin_return_address(0), &caller) &&
-        (ElfW(Addr))caller.dli_fbase == nautilus->l_addr) {
+    }
+    if (base != 16) {
+        return real(s, end, base);
+    }
+    // Only Nautilus' own hex numbers, not those of the libraries it uses
+    int is_known = dladdr(__builtin_return_address(0), &caller);
+    if (is_known && (ElfW(Addr))caller.dli_fbase == nautilus->l_addr) {
         errno = EINVAL;
         return 0;
     }

@@ -68,25 +68,38 @@ jobs:
             gh pr comment "$PR" --body "Not merged: $1 ($RUN_URL)"
             exit 1
           }
-          read -r head base ref < <(gh pr view "$PR" --json headRefOid,baseRefName,headRefName -q '"\(.headRefOid) \(.baseRefName) \(.headRefName)"')
+          fields='"\(.headRefOid) \(.baseRefName) \(.headRefName)"'
+          read -r head base ref < <(gh pr view "$PR" --json headRefOid,baseRefName,headRefName -q "$fields")
           # "check flake" runs below on the commit that gets squashed
           others='[.[] | select(.workflow != "check flake")]'
           # An hour at most; checks of a fresh push may take a moment to show up
           start=$SECONDS
+          is_failed='.bucket == "fail" or .bucket == "cancel"'
           while :; do
+            # gh exits non-zero while checks are pending or failed, and
+            # without any checks yet: the list (or none) is what counts
             checks=$(gh pr checks "$PR" --json name,bucket,workflow 2>/dev/null || true)
-            [ -n "$checks" ] || checks='[]'
-            failed=$(jq -r "$others | map(select(.bucket == \"fail\" or .bucket == \"cancel\") | .name) | join(\", \")" <<<"$checks")
-            [ -z "$failed" ] || fail "checks failed: $failed."
+            if [ -z "$checks" ]; then
+              checks='[]'
+            fi
+            failed=$(jq -r "$others | map(select($is_failed) | .name) | join(\", \")" <<<"$checks")
+            if [ -n "$failed" ]; then
+              fail "checks failed: $failed."
+            fi
             pending=$(jq "$others | map(select(.bucket == \"pending\")) | length" <<<"$checks")
-            if [ "$pending" = 0 ] && { [ "$(jq length <<<"$checks")" -gt 0 ] || [ $((SECONDS - start)) -ge 120 ]; }; then
+            count=$(jq length <<<"$checks")
+            waited=$((SECONDS - start))
+            if [ "$pending" = 0 ] && { [ "$count" -gt 0 ] || [ "$waited" -ge 120 ]; }; then
               break
             fi
-            [ $((SECONDS - start)) -lt 3600 ] || fail "the checks didn't finish within an hour."
+            if [ "$waited" -ge 3600 ]; then
+              fail "the checks didn't finish within an hour."
+            fi
             sleep 30
           done
-          [ "$(gh pr view "$PR" --json headRefOid -q .headRefOid)" = "$head" ] ||
+          if [ "$(gh pr view "$PR" --json headRefOid -q .headRefOid)" != "$head" ]; then
             fail "new commits arrived while waiting for the checks; comment again."
+          fi
           {
             echo "head=$head"
             echo "base=$base"
@@ -132,10 +145,14 @@ jobs:
             ./check.sh || fail "check.sh failed on the commit to squash."
             .github/check-flake.sh || fail "the flake check failed on the commit to squash."
             # The base moved on during the checks: once more
-            [ "$(git ls-remote origin "refs/heads/$BASE" | cut -f1)" = "$base_sha" ] || continue
+            if [ "$(git ls-remote origin "refs/heads/$BASE" | cut -f1)" != "$base_sha" ]; then
+              continue
+            fi
             # The pull request may need a moment to see a pushed rebase
             for _ in $(seq 30); do
-              [ "$(gh pr view "$PR" --json headRefOid -q .headRefOid)" = "$sha" ] && break
+              if [ "$(gh pr view "$PR" --json headRefOid -q .headRefOid)" = "$sha" ]; then
+                break
+              fi
               sleep 2
             done
             gh pr merge "$PR" --squash --match-head-commit "$sha" ||
@@ -164,6 +181,8 @@ jobs:
               git push -q --force-with-lease="$ref:$sha" origin "HEAD:refs/heads/$ref"; then
               gh pr comment "$num" --body "#$PR was squashed onto \`$BASE\`; this branch is rebased onto it now. Its \"check flake\" checks don't rerun for this push; \`@claude lgtm\` runs them itself."
             else
+              # Only a failed rebase has something to abort; a failed push
+              # leaves none
               git rebase --abort 2>/dev/null || true
               gh pr comment "$num" --body "#$PR was squashed onto \`$BASE\`, but rebasing this branch onto it failed; rebase it yourself: \`git rebase --onto origin/$BASE $upstream $ref\` ($RUN_URL)"
             fi

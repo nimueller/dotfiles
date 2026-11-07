@@ -80,7 +80,8 @@ Prefer more short lines over fewer long ones.
 - **The body never shares the line with its condition**, in any language:
   - Python: no `if x: return`, no `for ...: ...` on one line.
   - Bash: no `if ...; then ...; fi` on one line, and no `test && command` or
-    `test || command` as an `if`. `|| exit 1` and `|| return 1` right after a
+    `test || command` as an `if`. `|| exit 1`, `|| return 1` and
+    `|| fail "why"` (a function that stops with that message) right after a
     command, to stop on its failure, are the one exception.
   - Lua: no `if ... then ... end` on one line.
 - **No one-liners that hide several steps:** no arrow functions with several
