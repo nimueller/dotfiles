@@ -4,6 +4,13 @@ Notes for anyone changing these dotfiles, human or AI. Everything here has to
 stay maintainable by hand: plain tools, no generated code nobody can read, and
 checks that run the same locally and in CI.
 
+## Code guidelines
+
+`CODE_GUIDELINES.md` is binding for every source file: readability first,
+Clean Code, vertical over horizontal code, blocks always spelled out. Follow
+it, also where the surrounding code doesn't yet; only a review that explicitly
+says otherwise overrides a rule, and only for that case.
+
 ## Layout
 
 | Path | What it holds |
