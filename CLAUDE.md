@@ -65,9 +65,11 @@ New scripts and rewrites follow these rules:
     `shutdown.py` does);
   - `pathlib.Path` for files, `os.environ.get(...) or default` for XDG paths.
 - Every script starts with `# pyright: strict` and has type annotations
-  (`CODE_GUIDELINES.md`); the older helpers that don't yet are checked in
-  pyright's standard mode (`pyrightconfig.json`) until they're brought in
-  line.
+  (`CODE_GUIDELINES.md`); `pyrightconfig.json` checks in strict mode, too.
+  Where pygobject-stubs leave a GLib/Gio function untyped, that one call
+  gets `# pyright: ignore[reportUnknownMemberType]` with a comment above it.
+- The GLib helpers share `portal.py` (the file chooser) and
+  `notifications.py` (notifications with actions over D-Bus).
 - Comments say why, not what, and the interface a script offers to QML or Lua
   (its arguments and output) stays documented in its docstring. When renaming
   a script, update every caller (`grep -rn name.sh`), including comments.

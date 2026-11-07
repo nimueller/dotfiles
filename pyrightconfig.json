@@ -1,6 +1,6 @@
 {
   "include": ["config", "pkgs", ".github", "tests", "system"],
   "pythonVersion": "3.14",
-  "typeCheckingMode": "standard",
+  "typeCheckingMode": "strict",
   "reportMissingModuleSource": "none"
 }
