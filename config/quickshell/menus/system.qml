@@ -286,7 +286,16 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 spacing: 8
 
                 Label {
-                    text: Theme.glyph(!bluetooth.on ? 0xf00b2 : bluetooth.connected.length ? 0xf00b1 : 0xf00af) // 󰂲 󰂱 󰂯
+                    // 󰂲 󰂱 󰂯
+                    text: {
+                        if (!bluetooth.on) {
+                            return Theme.glyph(0xf00b2);
+                        }
+                        if (bluetooth.connected.length) {
+                            return Theme.glyph(0xf00b1);
+                        }
+                        return Theme.glyph(0xf00af);
+                    }
                     color: bluetooth.on ? Theme.blue : Theme.overlay1
                 }
                 Label {

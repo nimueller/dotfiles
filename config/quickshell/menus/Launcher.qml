@@ -267,9 +267,34 @@ PanelWindow {
     }
 
     // "Brave · workspace 1", "KeePassXC · passwords scratchpad"
+    // What Enter does with the selected result, for the hint line
+    function enterAction(item) {
+        if (emojiMode) {
+            return "paste";
+        }
+        if (item?.result !== undefined) {
+            return "copy";
+        }
+        if (item?.window !== undefined) {
+            return "go to window";
+        }
+        if (item?.ssh !== undefined) {
+            return "connect";
+        }
+        if (item?.file !== undefined) {
+            return "open";
+        }
+        return "launch";
+    }
+
     function windowPlace(item) {
         const ws = item.window.workspace?.name ?? "";
-        const place = ws.startsWith("special:") ? `${ws.slice(8)} scratchpad` : ws ? `workspace ${ws}` : "";
+        let place = "";
+        if (ws.startsWith("special:")) {
+            place = `${ws.slice(8)} scratchpad`;
+        } else if (ws) {
+            place = `workspace ${ws}`;
+        }
         return [item.app, place].filter(x => x).join(" · ");
     }
 
@@ -377,7 +402,13 @@ PanelWindow {
             while (["*", "/", "%", "×", "÷"].includes(peek())) {
                 const op = tokens[pos++];
                 const r = unary();
-                v = op === "/" || op === "÷" ? v / r : op === "%" ? v % r : v * r;
+                if (op === "/" || op === "÷") {
+                    v = v / r;
+                } else if (op === "%") {
+                    v = v % r;
+                } else {
+                    v = v * r;
+                }
             }
             return v;
         };
@@ -841,7 +872,7 @@ PanelWindow {
                 horizontalAlignment: Text.AlignHCenter
                 readonly property var item: root.results[list.currentIndex]
 
-                text: `↑↓  select     ⏎  ${root.emojiMode ? "paste" : item?.result !== undefined ? "copy" : item?.window !== undefined ? "go to window" : item?.ssh !== undefined ? "connect" : item?.file !== undefined ? "open" : "launch"}     esc  close`
+                text: `↑↓  select     ⏎  ${root.enterAction(item)}     esc  close`
                 font.pixelSize: 10
                 color: Theme.overlay0
             }

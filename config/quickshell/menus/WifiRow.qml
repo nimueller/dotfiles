@@ -46,7 +46,7 @@ Rectangle {
     }
 
     function signalGlyph(s) {
-        return Theme.glyph(s > 75 ? 0xf0928 : s > 50 ? 0xf0925 : s > 25 ? 0xf0922 : 0xf091f); // 󰤨 󰤥 󰤢 󰤟
+        return Theme.wifiGlyph(s);
     }
 
     MouseArea {

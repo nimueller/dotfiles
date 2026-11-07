@@ -143,10 +143,16 @@ Popup {
         vpns = connections.filter(f => f[2] === "vpn" || f[2] === "wireguard").map(([name, uuid, type, state, device]) => {
             const info = vpnInfo[uuid] ?? {};
             const service = (info.service ?? "").split(".").pop();
+            let kind = service || "VPN";
+            if (type === "wireguard") {
+                kind = "WireGuard";
+            } else if (service === "openvpn") {
+                kind = "OpenVPN";
+            }
             return {
                 name,
                 uuid,
-                kind: type === "wireguard" ? "WireGuard" : service === "openvpn" ? "OpenVPN" : service || "VPN",
+                kind,
                 state,
                 address: type === "wireguard" ? addresses[device] ?? "" : "",
                 // Secrets the profile doesn't store itself (agent-owned or
@@ -231,8 +237,18 @@ Popup {
     // with \ ; , : " escaped
     function wifiCode(text) {
         const [ssid, hidden, keyMgmt, psk, wep] = text.replace(/\n$/, "").split("\n").map(l => l.replace(/\\(.)/g, "$1"));
-        const type = keyMgmt === "sae" ? "SAE" : keyMgmt === "wpa-psk" ? "WPA" : keyMgmt === "none" && wep ? "WEP" : "nopass";
-        const password = type === "WPA" || type === "SAE" ? psk : type === "WEP" ? wep : "";
+        let type = "nopass";
+        let password = "";
+        if (keyMgmt === "sae") {
+            type = "SAE";
+            password = psk;
+        } else if (keyMgmt === "wpa-psk") {
+            type = "WPA";
+            password = psk;
+        } else if (keyMgmt === "none" && wep) {
+            type = "WEP";
+            password = wep;
+        }
         if (type !== "nopass" && !password) {
             error = "NetworkManager doesn't keep this password itself, so it can't be shared";
             return;
@@ -431,7 +447,12 @@ Popup {
                                 if (!wiredRow.connected) {
                                     return `${d.device} · ${d.state}`;
                                 }
-                                const speed = d.speed >= 1000 ? `${d.speed / 1000} Gb/s` : d.speed ? `${d.speed} Mb/s` : "";
+                                let speed = "";
+                                if (d.speed >= 1000) {
+                                    speed = `${d.speed / 1000} Gb/s`;
+                                } else if (d.speed) {
+                                    speed = `${d.speed} Mb/s`;
+                                }
                                 return [d.device, d.address, speed].filter(x => x).join(" · ");
                             }
                         }

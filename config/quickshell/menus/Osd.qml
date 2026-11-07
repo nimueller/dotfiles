@@ -319,7 +319,14 @@ Scope {
                                 return Theme.glyph(root.muted ? 0xf036d : 0xf036c); // 󰍭 / 󰍬
                             }
                             if (root.kind === "brightness") {
-                                return Theme.glyph(root.value < 0.34 ? 0xf00de : root.value < 0.67 ? 0xf00df : 0xf00e0); // 󰃞 󰃟 󰃠
+                                // 󰃞 󰃟 󰃠
+                                if (root.value < 0.34) {
+                                    return Theme.glyph(0xf00de);
+                                }
+                                if (root.value < 0.67) {
+                                    return Theme.glyph(0xf00df);
+                                }
+                                return Theme.glyph(0xf00e0);
                             }
                             return Audio.volumeIcon({
                                 volume: root.value,

@@ -675,8 +675,8 @@ PanelWindow {
                 e.undo();
             } else if (win.selected && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down].includes(k)) {
                 const step = shift ? 10 : 1, s = win.sel;
-                const dx = k === Qt.Key_Left ? -step : k === Qt.Key_Right ? step : 0;
-                const dy = k === Qt.Key_Up ? -step : k === Qt.Key_Down ? step : 0;
+                const offsets = new Map([[Qt.Key_Left, [-step, 0]], [Qt.Key_Right, [step, 0]], [Qt.Key_Up, [0, -step]], [Qt.Key_Down, [0, step]]]);
+                const [dx, dy] = offsets.get(k);
                 e.selection = Qt.rect(Math.max(0, Math.min(s.x + dx, win.width - s.width)), Math.max(0, Math.min(s.y + dy, win.height - s.height)), s.width, s.height);
             } else if (ctrl) {
                 return;

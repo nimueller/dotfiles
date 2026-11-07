@@ -31,8 +31,21 @@ Popup {
         copiedTimer.restart();
     }
 
+    function layoutState(w) {
+        if (w.fullscreen === 2) {
+            return "Fullscreen";
+        }
+        if (w.fullscreen === 1) {
+            return "Maximized";
+        }
+        if (w.floating) {
+            return "Floating";
+        }
+        return "Tiled";
+    }
+
     function state(w) {
-        const s = [w.fullscreen === 2 ? "Fullscreen" : w.fullscreen === 1 ? "Maximized" : w.floating ? "Floating" : "Tiled"];
+        const s = [layoutState(w)];
         if (w.pinned) {
             s.push("pinned");
         }
@@ -53,7 +66,10 @@ Popup {
             return "No";
         }
         const appPath = info["app-path"];
-        const installation = appPath ? (appPath.startsWith("/var/lib/") ? "system" : "user") : "";
+        let installation = "";
+        if (appPath) {
+            installation = appPath.startsWith("/var/lib/") ? "system" : "user";
+        }
         const details = [info.branch, installation].filter(d => d);
         return details.length ? `${info.name} (${details.join(", ")})` : info.name;
     }

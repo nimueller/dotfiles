@@ -189,7 +189,12 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
         } else if (level > warned) {
             const critical = level === levels;
             const name = target === "/" ? "The system disk" : "The home disk";
-            const summary = critical ? `${name} is full` : level > 1 ? `${name} is almost full` : `${name} is filling up`;
+            let summary = `${name} is filling up`;
+            if (critical) {
+                summary = `${name} is full`;
+            } else if (level > 1) {
+                summary = `${name} is almost full`;
+            }
             const dir = shellQuote(target);
             if (!diskNotes[target]) {
                 diskNotes[target] = diskNote.createObject(root);

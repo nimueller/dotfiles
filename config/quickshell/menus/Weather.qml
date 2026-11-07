@@ -24,7 +24,13 @@ Singleton {
             return [0xf0597, code >= 56 ? "Freezing drizzle" : "Drizzle", Theme.sapphire];
         }
         if (code <= 67) {
-            return [0xf0597, code >= 66 ? "Freezing rain" : code === 65 ? "Heavy rain" : "Rain", Theme.blue];
+            let rain = "Rain";
+            if (code >= 66) {
+                rain = "Freezing rain";
+            } else if (code === 65) {
+                rain = "Heavy rain";
+            }
+            return [0xf0597, rain, Theme.blue];
         }
         if (code <= 77) {
             return [0xf0598, code === 77 ? "Snow grains" : "Snow", Theme.text];

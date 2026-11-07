@@ -95,7 +95,12 @@ Popup {
     property var history: [] // [[time, percent, state]], newest first
     readonly property var stats: {
         const gap = 1800, now = Date.now() / 1000;
-        const state = discharging ? UPowerDeviceState.Discharging : charging ? UPowerDeviceState.Charging : -1;
+        let state = -1;
+        if (discharging) {
+            state = UPowerDeviceState.Discharging;
+        } else if (charging) {
+            state = UPowerDeviceState.Charging;
+        }
         let i = 0;
         while (i < history.length && (history[i][2] === state || history[i][2] === UPowerDeviceState.Unknown)) {
             i++;

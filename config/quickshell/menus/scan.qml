@@ -66,6 +66,20 @@ ShellRoot {
     readonly property bool busy: !!scanning || saving || !!batch
     readonly property string ip: devices.find(d => d.device === device)?.ip ?? ""
 
+    // What a resolution is good for, after it in the list
+    function resolutionUse(dpi) {
+        if (dpi === 150 || dpi === 200) {
+            return " · documents";
+        }
+        if (dpi === 300) {
+            return " · documents, text";
+        }
+        if (dpi >= 600) {
+            return " · photos";
+        }
+        return "";
+    }
+
     function deviceLabel(d) {
         const backend = ({
                 airscan: "AirScan",
@@ -385,7 +399,13 @@ ShellRoot {
                 }
                 root.source = root.pick(o.sources, root.source, o.source);
                 root.mode = root.pick(o.modes, root.mode, o.mode);
-                root.dpi = o.resolutions.includes(root.dpi) ? root.dpi : o.resolutions.includes(300) ? 300 : o.resolution ?? o.resolutions[0];
+                let dpi = o.resolution ?? o.resolutions[0];
+                if (o.resolutions.includes(root.dpi)) {
+                    dpi = root.dpi;
+                } else if (o.resolutions.includes(300)) {
+                    dpi = 300;
+                }
+                root.dpi = dpi;
                 root.options = o;
             }
         }
@@ -671,7 +691,7 @@ ShellRoot {
                         Dropdown {
                             Layout.fillWidth: true
                             model: (root.options?.resolutions ?? []).map(r => ({
-                                        text: `${r} dpi${r === 150 || r === 200 ? " · documents" : r === 300 ? " · documents, text" : r >= 600 ? " · photos" : ""}`,
+                                        text: `${r} dpi${root.resolutionUse(r)}`,
                                         value: r
                                     }))
                             current: root.dpi

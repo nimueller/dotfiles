@@ -97,7 +97,12 @@ Rectangle {
                     font.pixelSize: 10
                     color: Theme.overlay1
                     text: {
-                        const state = root.activating ? "connecting…" : root.active ? "connected" : "off";
+                        let state = "off";
+                        if (root.activating) {
+                            state = "connecting…";
+                        } else if (root.active) {
+                            state = "connected";
+                        }
                         return [root.vpn.kind, state, root.active ? root.vpn.address : ""].filter(x => x).join(" · ");
                     }
                 }

@@ -67,6 +67,17 @@ Scope {
         return entries.find(e => e.key === key) ?? null;
     }
 
+    // 0 low, 1 normal, 2 critical
+    function urgencyLevel(urgency) {
+        if (urgency === NotificationUrgency.Critical) {
+            return 2;
+        }
+        if (urgency === NotificationUrgency.Low) {
+            return 0;
+        }
+        return 1;
+    }
+
     function add(n) {
         // An update of a notification that's already here (replaces_id)
         const old = entries.find(e => e.n === n);
@@ -78,7 +89,7 @@ Scope {
             summary: n.summary,
             body: n.body,
             icon: iconFor(n),
-            urgency: n.urgency === NotificationUrgency.Critical ? 2 : n.urgency === NotificationUrgency.Low ? 0 : 1,
+            urgency: urgencyLevel(n.urgency),
             time: Date.now(),
             transient: n.transient,
             pid: Number(n.hints["sender-pid"] ?? 0),

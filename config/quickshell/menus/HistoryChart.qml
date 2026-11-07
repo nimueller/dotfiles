@@ -29,9 +29,25 @@ Item {
     }
 
     // Labels along the time axis: every few hours for a day, else days
+    // A tick's label: the time within a day, else the weekday or the date
+    function tickLabel(date, step) {
+        if (step < 86400) {
+            return Qt.formatTime(date, "HH:mm");
+        }
+        if (step === 86400) {
+            return Qt.formatDate(date, "ddd");
+        }
+        return Qt.formatDate(date, "d.M.");
+    }
+
     readonly property var ticks: {
         const span = to - from, out = [];
-        const step = span <= 2 * 86400 ? 6 * 3600 : span <= 10 * 86400 ? 86400 : 5 * 86400;
+        let step = 5 * 86400;
+        if (span <= 2 * 86400) {
+            step = 6 * 3600;
+        } else if (span <= 10 * 86400) {
+            step = 86400;
+        }
         const start = new Date(from * 1000);
         if (step < 86400) {
             start.setMinutes(0, 0, 0), start.setHours(Math.ceil(start.getHours() / 6) * 6);
@@ -41,7 +57,7 @@ Item {
         for (let d = start; d.getTime() / 1000 < to; d = new Date(d.getTime() + step * 1000)) {
             out.push({
                 t: d.getTime() / 1000,
-                text: step < 86400 ? Qt.formatTime(d, "HH:mm") : step === 86400 ? Qt.formatDate(d, "ddd") : Qt.formatDate(d, "d.M.")
+                text: tickLabel(d, step)
             });
         }
         return out;

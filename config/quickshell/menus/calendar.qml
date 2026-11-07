@@ -687,7 +687,14 @@ Popup {
                     readonly property int offset: Math.round((new Date(popup.selected.getFullYear(), popup.selected.getMonth(), popup.selected.getDate()) - new Date(popup.today.getFullYear(), popup.today.getMonth(), popup.today.getDate())) / 86400000)
 
                     Layout.fillWidth: true
-                    text: (offset === 0 ? "Today · " : offset === 1 ? "Tomorrow · " : offset === -1 ? "Yesterday · " : "") + Qt.formatDate(popup.selected, "ddd, d MMMM")
+                    text: {
+                        const names = {
+                            "0": "Today · ",
+                            "1": "Tomorrow · ",
+                            "-1": "Yesterday · "
+                        };
+                        return (names[offset] ?? "") + Qt.formatDate(popup.selected, "ddd, d MMMM");
+                    }
                 }
 
                 // Day forecast

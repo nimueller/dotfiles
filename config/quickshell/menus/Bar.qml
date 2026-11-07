@@ -384,7 +384,8 @@ PanelWindow {
             accent: kind ? Theme.sapphire : Theme.red
             text: {
                 if (kind === "wifi") {
-                    return `${Theme.glyph(signal > 75 ? 0xf0928 : signal > 50 ? 0xf0925 : signal > 25 ? 0xf0922 : 0xf091f)}  ${name.length > 18 ? name.slice(0, 17) + "…" : name}`;
+                    const shortName = name.length > 18 ? name.slice(0, 17) + "…" : name;
+                    return `${Theme.wifiGlyph(signal)}  ${shortName}`;
                 }
                 if (kind === "ethernet") {
                     return `${Theme.glyph(0xf0e8)}  Connected`;
