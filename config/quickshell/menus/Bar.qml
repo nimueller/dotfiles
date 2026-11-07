@@ -10,16 +10,18 @@ import Quickshell.Services.UPower
 import Quickshell.Wayland
 import Quickshell.Widgets
 
-// The bar at the bottom of a monitor, part of daemon.qml:
-// the distro logo (system menu), waiting updates, workspaces and window title on the left, the clock in the middle, tray,
-// privacy, a screen recording, sound, battery, Bluetooth, phone, network, notifications and power on the right.
+// The bar at the bottom of a monitor, part of daemon.qml: the distro logo
+// (system menu), waiting updates, workspaces and window title on the left,
+// the clock in the middle, tray, privacy, a screen recording, sound, battery,
+// Bluetooth, phone, network, notifications and power on the right.
 // Each module is a chip in its own accent colour; clicks open the menus.
 // In touch mode (Modes.qml) it's taller, and has buttons for what's
 // otherwise a key: the launcher, the overview of the workspaces and the
-// on-screen keyboard; in tablet mode it's taller still, and holding a finger on a
-// chip is a right click (BarChip.qml). On narrow screens (Modes.compactBar) Bluetooth, the keyboard
-// and power are in the system menu instead. The clock moves left of the
-// middle when the right side would reach it.
+// on-screen keyboard; in tablet mode it's taller still, and holding a finger
+// on a chip is a right click (BarChip.qml). On narrow screens
+// (Modes.compactBar) Bluetooth, the keyboard and power are in the system menu
+// instead. The clock moves left of the middle when the right side would
+// reach it.
 PanelWindow {
     id: bar
 
@@ -88,7 +90,8 @@ PanelWindow {
             visible: Updates.critical || Updates.flakeStale
             accent: news ? Theme.red : Theme.peach
             solid: news
-            text: `${Theme.glyph(news ? 0xf0395 : 0xf06b0)}  ${Updates.critical ? Updates.total : "flake.lock"}` // 󰎕 / 󰚰
+            // 󰎕 / 󰚰
+            text: `${Theme.glyph(news ? 0xf0395 : 0xf06b0)}  ${Updates.critical ? Updates.total : "flake.lock"}`
             onClicked: bar.menu(news ? "updates" : "system")
         }
 
@@ -137,7 +140,11 @@ PanelWindow {
         padding: 14
         accent: Theme.mauve
         bold: true
-        text: `${Theme.glyph(0xf073)}  ${Qt.formatDateTime(clock.date, "yyyy-MM-dd")}    ${Theme.glyph(0xf017)}  ${Qt.formatDateTime(clock.date, "HH:mm")}`
+        text: {
+            const day = Qt.formatDateTime(clock.date, "yyyy-MM-dd");
+            const time = Qt.formatDateTime(clock.date, "HH:mm");
+            return `${Theme.glyph(0xf073)}  ${day}    ${Theme.glyph(0xf017)}  ${time}`;
+        }
         onClicked: bar.menu("calendar")
     }
 
@@ -255,7 +262,14 @@ PanelWindow {
 
             accent: muted ? Theme.overlay0 : Theme.blue
             plain: muted
-            text: muted ? `${Theme.glyph(0xf466)}  Muted` : `${Theme.glyph([0xf026, 0xf027, 0xf028][Math.min(2, Math.floor(volume * 3))])}  ${Math.round(volume * 100)}%`
+            text: {
+                if (muted) {
+                    return `${Theme.glyph(0xf466)}  Muted`;
+                }
+                const level = Math.min(2, Math.floor(volume * 3));
+                const glyph = Theme.glyph([0xf026, 0xf027, 0xf028][level]);
+                return `${glyph}  ${Math.round(volume * 100)}%`;
+            }
             onClicked: button => {
                 if (button === Qt.RightButton) {
                     Quickshell.execDetached(["pavucontrol"]);
@@ -287,7 +301,10 @@ PanelWindow {
                 }
                 return 0;
             }
-            readonly property bool charging: battery?.state === UPowerDeviceState.Charging || battery?.state === UPowerDeviceState.FullyCharged || battery?.state === UPowerDeviceState.PendingCharge
+            readonly property bool charging: {
+                const s = UPowerDeviceState;
+                return [s.Charging, s.FullyCharged, s.PendingCharge].includes(battery?.state);
+            }
 
             visible: !!battery && battery.isLaptopBattery
             accent: {
@@ -302,7 +319,13 @@ PanelWindow {
                 }
                 return Theme.green;
             }
-            text: `${Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][Math.min(4, Math.round(percent / 25))])}  ${Math.round(percent)}%${charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` //
+            //
+            text: {
+                const level = Math.min(4, Math.round(percent / 25));
+                const glyph = Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][level]);
+                const bolt = charging ? ` ${Theme.glyph(0xf0e7)}` : "";
+                return `${glyph}  ${Math.round(percent)}%${bolt}`;
+            }
             onClicked: bar.menu("battery")
         }
 
@@ -328,7 +351,10 @@ PanelWindow {
                     return Theme.glyph(0xf00b2); // 󰂲
                 }
                 if (device) {
-                    return `${Theme.glyph(0xf00b1)}  ${device.name.length > 14 ? device.name.slice(0, 13) + "…" : device.name}${device.batteryAvailable ? ` ${Math.round(device.battery * 100)}%` : ""}`; // 󰂱
+                    // 󰂱
+                    const name = device.name.length > 14 ? device.name.slice(0, 13) + "…" : device.name;
+                    const charge = device.batteryAvailable ? ` ${Math.round(device.battery * 100)}%` : "";
+                    return `${Theme.glyph(0xf00b1)}  ${name}${charge}`;
                 }
                 return connected.length ? `${Theme.glyph(0xf00b1)}  ${connected.length}` : Theme.glyph(0xf00af); // 󰂯
             }
@@ -365,7 +391,14 @@ PanelWindow {
                 }
                 return Theme.green;
             }
-            text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c) // 󰄜
+            // 󰄜
+            text: {
+                if (charge < 0) {
+                    return Theme.glyph(0xf011c);
+                }
+                const bolt = phone.charging ? ` ${Theme.glyph(0xf0e7)}` : "";
+                return `${Theme.glyph(0xf011c)}  ${charge}%${bolt}`;
+            }
             onClicked: button => {
                 if (button === Qt.RightButton) {
                     bar.phones.run("send", phone);

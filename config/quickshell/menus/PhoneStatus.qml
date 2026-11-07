@@ -7,7 +7,8 @@ import Quickshell.Io
 Item {
     id: root
 
-    // [{ id, name, type, reachable, battery (-1: unknown), charging, network, signal, mounted, storage: [[path, name]] }]
+    // [{ id, name, type, reachable, battery (-1: unknown), charging, network,
+    //    signal, mounted, storage: [[path, name]] }]
     property var devices: []
     readonly property var reachable: devices.filter(d => d.reachable)
 

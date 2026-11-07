@@ -197,7 +197,9 @@ Scope {
             return false;
         }
         const chain = Windows.readAncestors(e.pid);
-        return Mpris.players.values.some(p => p.trackTitle && chain.includes(playerPids[p.dbusName]) && [e.summary, e.body].some(t => (t ?? "").includes(p.trackTitle)));
+        const mentions = p => [e.summary, e.body].some(t => (t ?? "").includes(p.trackTitle));
+        const isOwnTrack = p => p.trackTitle && chain.includes(playerPids[p.dbusName]) && mentions(p);
+        return Mpris.players.values.some(isOwnTrack);
     }
 
     // Players may update their track a moment after they notify, so new
@@ -208,7 +210,8 @@ Scope {
         interval: 2000
         onTriggered: {
             const action = LocalSettings.trackAction;
-            for (const e of root.entries.filter(e => action && !e.transient && !e.ruled && !e.track && Date.now() - e.time < 10000 && root.isTrack(e))) {
+            const isCandidate = e => !e.transient && !e.ruled && !e.track && Date.now() - e.time < 10000;
+            for (const e of root.entries.filter(e => action && isCandidate(e) && root.isTrack(e))) {
                 e.track = true;
                 if (action === "hide") {
                     root.remove(e.key);
@@ -268,7 +271,9 @@ Scope {
         const app = norm(e.app), desktop = norm(e.desktop);
         const window = ToplevelManager.toplevels.values.find(t => {
             const id = norm(t.appId), short = norm(t.appId.split(".").pop());
-            return (desktop && (id === desktop || id.includes(desktop))) || (app && (id.includes(app) || (short.length > 2 && app.includes(short))));
+            const matchesDesktop = desktop && (id === desktop || id.includes(desktop));
+            const matchesApp = app && (id.includes(app) || (short.length > 2 && app.includes(short)));
+            return matchesDesktop || matchesApp;
         });
         window?.activate();
     }

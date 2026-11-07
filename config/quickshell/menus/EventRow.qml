@@ -8,7 +8,9 @@ import QtQuick.Layouts
 Rectangle {
     id: root
 
-    required property var event // { title, location, allDay, start: Date, end: Date, firstDay: Date, lastDay: Date, days }
+    // { title, location, allDay, start: Date, end: Date, firstDay: Date,
+    //   lastDay: Date, days }
+    required property var event
     required property date day
     property color colour: Theme.lavender
     property string calendarName: ""
@@ -80,7 +82,11 @@ Rectangle {
             Label {
                 Layout.fillWidth: true
                 visible: root.event.days > 1
-                text: `${Qt.formatDate(root.event.firstDay, "d MMM")} – ${Qt.formatDate(root.event.lastDay, "d MMM")} · ${root.event.days} days`
+                text: {
+                    const first = Qt.formatDate(root.event.firstDay, "d MMM");
+                    const last = Qt.formatDate(root.event.lastDay, "d MMM");
+                    return `${first} – ${last} · ${root.event.days} days`;
+                }
                 font.pixelSize: 10
                 color: Theme.subtext0
             }
@@ -101,7 +107,8 @@ Rectangle {
             Label {
                 Layout.fillWidth: true
                 visible: (root.event.alarms ?? []).length > 0
-                text: `${Theme.glyph(0xf009a)} ${(root.event.alarms ?? []).map(m => Reminders.describe(m)).join(", ")}` // 󰂚
+                // 󰂚
+                text: `${Theme.glyph(0xf009a)} ${(root.event.alarms ?? []).map(m => Reminders.describe(m)).join(", ")}`
                 font.pixelSize: 10
                 color: Theme.overlay1
             }

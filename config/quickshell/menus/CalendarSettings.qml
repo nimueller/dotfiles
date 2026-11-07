@@ -2,8 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 
 // Settings view of the calendar menu. Left: weather location (the machine's
-// from Machine Settings, or its own) and how weeks are shown. Right: the Nextcloud account with its calendars, and read-only
-// ICS subscriptions (holidays etc.).
+// from Machine Settings, or its own) and how weeks are shown. Right: the
+// Nextcloud account with its calendars, and read-only ICS subscriptions
+// (holidays etc.).
 RowLayout {
     id: root
 
@@ -119,7 +120,10 @@ RowLayout {
                 Label {
                     anchors.fill: parent
                     anchors.leftMargin: 10
-                    text: [place.modelData.name, place.modelData.admin1, place.modelData.country].filter(x => x).join(", ")
+                    text: {
+                        const p = place.modelData;
+                        return [p.name, p.admin1, p.country].filter(x => x).join(", ");
+                    }
                     color: placeMouse.containsMouse ? Theme.lavender : Theme.subtext1
                 }
                 MouseArea {
@@ -280,7 +284,13 @@ RowLayout {
 
                 Label {
                     Layout.fillWidth: true
-                    text: root.nextcloud ? `${root.nextcloud.user} on ${root.nextcloud.url.replace(/^https?:\/\//, "")}` : ""
+                    text: {
+                        if (!root.nextcloud) {
+                            return "";
+                        }
+                        const host = root.nextcloud.url.replace(/^https?:\/\//, "");
+                        return `${root.nextcloud.user} on ${host}`;
+                    }
                     color: Theme.subtext1
                 }
                 IconButton {

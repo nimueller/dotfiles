@@ -20,7 +20,8 @@ ShellRoot {
 
     readonly property string helper: Quickshell.shellPath("scan.py")
     readonly property string home: Quickshell.env("HOME")
-    readonly property string session: `${Quickshell.env("XDG_CACHE_HOME") || home + "/.cache"}/qs-scan/session-${Date.now()}`
+    readonly property string cacheHome: Quickshell.env("XDG_CACHE_HOME") || home + "/.cache"
+    readonly property string session: `${cacheHome}/qs-scan/session-${Date.now()}`
     property string folder: `${home}/Documents/Scans`
 
     property var devices: [] // [{ device, name, backend, ip }]
@@ -164,7 +165,10 @@ ShellRoot {
         error = "";
         status = "";
         scanProc.errors = [];
-        scanProc.command = [helper, "scan", device, session, `${kind}-${runs}`, src, kind === "preview" ? pick(options.modes, "Color") : mode, String(res), ...a.map(v => v.toFixed(2)), ...count];
+        const scanMode = kind === "preview" ? pick(options.modes, "Color") : mode;
+        const areaArgs = a.map(v => v.toFixed(2));
+        const name = `${kind}-${runs}`;
+        scanProc.command = [helper, "scan", device, session, name, src, scanMode, String(res), ...areaArgs, ...count];
         scanProc.running = true;
     }
 
@@ -235,7 +239,11 @@ ShellRoot {
         }
         pages = [...pages.slice(0, b.start), ...merged];
         current = b.start;
-        status = fronts.length === backs.length ? `${fronts.length} sheets, both sides, put in order` : `${fronts.length} fronts but ${backs.length} backs: check the order`;
+        if (fronts.length === backs.length) {
+            status = `${fronts.length} sheets, both sides, put in order`;
+        } else {
+            status = `${fronts.length} fronts but ${backs.length} backs: check the order`;
+        }
     }
 
     function save() {
@@ -500,7 +508,8 @@ ShellRoot {
             if (code === 0 && files.length) {
                 root.unsaved = false;
                 root.confirmClose = false;
-                root.status = `Saved as ${files[0].split("/").pop()}${files.length > 1 ? ` and ${files.length - 1} more` : ""}`;
+                const more = files.length > 1 ? ` and ${files.length - 1} more` : "";
+                root.status = `Saved as ${files[0].split("/").pop()}${more}`;
             } else {
                 root.error = "Couldn't save the scan";
             }
@@ -516,7 +525,14 @@ ShellRoot {
         property int detail: 1600
         readonly property alias image: img
         readonly property bool sideways: turn % 180 !== 0
-        readonly property real fit: img.implicitWidth && img.implicitHeight ? Math.min(width / (sideways ? img.implicitHeight : img.implicitWidth), height / (sideways ? img.implicitWidth : img.implicitHeight)) : 0
+        readonly property real fit: {
+            if (!img.implicitWidth || !img.implicitHeight) {
+                return 0;
+            }
+            const imageWidth = sideways ? img.implicitHeight : img.implicitWidth;
+            const imageHeight = sideways ? img.implicitWidth : img.implicitHeight;
+            return Math.min(width / imageWidth, height / imageHeight);
+        }
 
         Image {
             id: img
@@ -755,7 +771,9 @@ ShellRoot {
                                     return "All pages in the feeder are scanned.";
                                 }
                                 if (root.area) {
-                                    return `Area ${(root.area.w / 10).toFixed(1)} × ${(root.area.h / 10).toFixed(1)} cm, from the preview`;
+                                    const widthCm = (root.area.w / 10).toFixed(1);
+                                    const heightCm = (root.area.h / 10).toFixed(1);
+                                    return `Area ${widthCm} × ${heightCm} cm, from the preview`;
                                 }
                                 return "The whole glass. Drag over the preview to scan only a part of it.";
                             }
@@ -809,7 +827,13 @@ ShellRoot {
                         ColumnLayout {
                             id: between
 
-                            readonly property int done: root.batch ? root.pages.length - root.batch.start - (root.batch.pass === 2 ? root.batch.fronts : 0) : 0
+                            readonly property int done: {
+                                if (!root.batch) {
+                                    return 0;
+                                }
+                                const fronts = root.batch.pass === 2 ? root.batch.fronts : 0;
+                                return root.pages.length - root.batch.start - fronts;
+                            }
                             readonly property string side: {
                                 if (root.bothSides) {
                                     if (root.batch?.pass === 2) {
@@ -826,8 +850,6 @@ ShellRoot {
 
                             Label {
                                 Layout.fillWidth: true
-                                // One case per line: qmlformat would join them into one line
-                                // qmlformat off
                                 text: {
                                     if (!root.oneByOne) {
                                         return `${root.batch?.fronts ?? 0} fronts scanned. Turn the stack over like a book page and put it in again.`;
@@ -835,9 +857,11 @@ ShellRoot {
                                     if (between.done === 0 && root.batch?.pass === 2) {
                                         return `${root.batch.fronts} fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.`;
                                     }
-                                    return `${between.done === 1 ? `1 ${between.side}` : `${between.done} ${between.side}s`} scanned. Put in the next one${root.ip ? ", it starts by itself" : ""}.`;
+                                    const n = between.done;
+                                    const count = n === 1 ? `1 ${between.side}` : `${n} ${between.side}s`;
+                                    const automatic = root.ip ? ", it starts by itself" : "";
+                                    return `${count} scanned. Put in the next one${automatic}.`;
                                 }
-                                // qmlformat on
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
                             }
@@ -1122,8 +1146,10 @@ ShellRoot {
                             cursorShape: Qt.CrossCursor
                             onPressed: mouse => overlay.start = Qt.point(mouse.x, mouse.y)
                             onPositionChanged: mouse => {
-                                const x1 = overlay.clamp(Math.min(overlay.start.x, mouse.x), overlay.width), x2 = overlay.clamp(Math.max(overlay.start.x, mouse.x), overlay.width);
-                                const y1 = overlay.clamp(Math.min(overlay.start.y, mouse.y), overlay.height), y2 = overlay.clamp(Math.max(overlay.start.y, mouse.y), overlay.height);
+                                const x1 = overlay.clamp(Math.min(overlay.start.x, mouse.x), overlay.width);
+                                const x2 = overlay.clamp(Math.max(overlay.start.x, mouse.x), overlay.width);
+                                const y1 = overlay.clamp(Math.min(overlay.start.y, mouse.y), overlay.height);
+                                const y2 = overlay.clamp(Math.max(overlay.start.y, mouse.y), overlay.height);
                                 const m = overlay.mmPerPx;
                                 root.area = {
                                     l: x1 * m,

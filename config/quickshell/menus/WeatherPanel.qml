@@ -29,6 +29,25 @@ ColumnLayout {
     readonly property real temp: metar ? metar.temp : current?.temperature_2m ?? 0
     readonly property bool cavok: (metar?.rawOb ?? "").includes("CAVOK")
 
+    // The aviation report's rows: [glyph, text]
+    function metarRows() {
+        const metar = root.metar;
+        if (!metar) {
+            return [];
+        }
+        const visibility = root.cavok ? "≥ 10 km" : Weather.visibility(metar.visib);
+        const pressure = metar.altim ? Math.round(metar.altim) : "–";
+        const rows = [];
+        rows.push([0xf059d, root.wind(metar)]);
+        rows.push([0xf0208, `Visibility ${visibility}`]);
+        rows.push([0xf029a, `QNH ${pressure} hPa`]);
+        rows.push([0xf015f, root.clouds(metar)]);
+        if (metar.wxString) {
+            rows.push([0xf0597, `Weather ${metar.wxString}`]);
+        }
+        return rows;
+    }
+
     function wind(m) {
         if (!m.wspd) {
             return "Calm";
@@ -42,7 +61,8 @@ ColumnLayout {
         if (cavok) {
             return "CAVOK";
         }
-        const layers = (m.clouds ?? []).filter(c => c.cover && c.base !== null && c.base !== undefined).map(c => `${c.cover} ${c.base} ft`);
+        const hasBase = c => c.cover && c.base !== null && c.base !== undefined;
+        const layers = (m.clouds ?? []).filter(hasBase).map(c => `${c.cover} ${c.base} ft`);
         return layers.length ? layers.join(", ") : (m.clouds ?? []).map(c => c.cover).join(" ") || "No clouds";
     }
 
@@ -87,7 +107,8 @@ ColumnLayout {
                 Layout.fillWidth: true
                 text: {
                     if (root.metar) {
-                        return `Dew point ${root.metar.dewp}°  ·  ${Weather.humidity(root.metar.temp, root.metar.dewp)}% humidity`;
+                        const humidity = Weather.humidity(root.metar.temp, root.metar.dewp);
+                        return `Dew point ${root.metar.dewp}°  ·  ${humidity}% humidity`;
                     }
                     if (root.now) {
                         return root.now[1];
@@ -101,15 +122,7 @@ ColumnLayout {
 
     // Aviation report
     Repeater {
-        // One entry per line: qmlformat would join them into one line
-        // qmlformat off
-        model: root.metar ? [
-            [0xf059d, root.wind(root.metar)],
-            [0xf0208, `Visibility ${root.cavok ? "≥ 10 km" : Weather.visibility(root.metar.visib)}`],
-            [0xf029a, `QNH ${root.metar.altim ? Math.round(root.metar.altim) : "–"} hPa`],
-            [0xf015f, root.clouds(root.metar)]
-        ].concat(root.metar.wxString ? [[0xf0597, `Weather ${root.metar.wxString}`]] : []) : []
-        // qmlformat on
+        model: root.metarRows()
 
         delegate: RowLayout {
             required property var modelData
@@ -141,7 +154,14 @@ ColumnLayout {
 
         Label {
             Layout.fillWidth: true
-            text: root.metar ? `${root.metar.icaoId} · ${root.metar.name?.split(",")[0] ?? ""} · ${Math.round(root.metar.distance)} km · ${root.age(root.metar.obsTime)}` : ""
+            text: {
+                const metar = root.metar;
+                if (!metar) {
+                    return "";
+                }
+                const airport = metar.name?.split(",")[0] ?? "";
+                return `${metar.icaoId} · ${airport} · ${Math.round(metar.distance)} km · ${root.age(metar.obsTime)}`;
+            }
             font.pixelSize: 10
             color: Theme.overlay1
         }
@@ -176,7 +196,16 @@ ColumnLayout {
     Label {
         Layout.fillWidth: true
         visible: !root.metar && !!root.current
-        text: root.current ? [root.place, `feels ${Math.round(root.current.apparent_temperature)}°`, `${Math.round(root.current.wind_speed_10m)} km/h`, root.today?.rain ? `${Theme.glyph(0xf058c)} ${root.today.rain}%` : ""].filter(x => x).join("  ·  ") : ""
+        text: {
+            const now = root.current;
+            if (!now) {
+                return "";
+            }
+            const feels = `feels ${Math.round(now.apparent_temperature)}°`;
+            const wind = `${Math.round(now.wind_speed_10m)} km/h`;
+            const rain = root.today?.rain ? `${Theme.glyph(0xf058c)} ${root.today.rain}%` : "";
+            return [root.place, feels, wind, rain].filter(x => x).join("  ·  ");
+        }
         font.pixelSize: 10
         color: Theme.overlay1
     }

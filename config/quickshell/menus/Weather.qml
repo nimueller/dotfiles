@@ -12,7 +12,8 @@ Singleton {
             return night ? [0xf0594, "Clear", Theme.lavender] : [0xf0599, "Clear", Theme.yellow];
         }
         if (code <= 2) {
-            return night ? [0xf0f31, code === 1 ? "Mostly clear" : "Partly cloudy", Theme.lavender] : [0xf0595, code === 1 ? "Mostly clear" : "Partly cloudy", Theme.yellow];
+            const name = code === 1 ? "Mostly clear" : "Partly cloudy";
+            return night ? [0xf0f31, name, Theme.lavender] : [0xf0595, name, Theme.yellow];
         }
         if (code === 3) {
             return [0xf0590, "Overcast", Theme.overlay2];
@@ -116,7 +117,9 @@ Singleton {
 
     function distanceKm(lat1, lon1, lat2, lon2) {
         const r = Math.PI / 180;
-        const a = Math.sin((lat2 - lat1) * r / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin((lon2 - lon1) * r / 2) ** 2;
+        const sinLat = Math.sin((lat2 - lat1) * r / 2);
+        const sinLon = Math.sin((lon2 - lon1) * r / 2);
+        const a = sinLat ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * sinLon ** 2;
         return 6371 * 2 * Math.asin(Math.sqrt(a));
     }
 

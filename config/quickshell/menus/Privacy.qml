@@ -22,7 +22,11 @@ Item {
     required property var osd // Osd.qml
 
     readonly property var recordings: Pipewire.nodes.values.filter(n => n.audio && n.isStream && !n.isSink)
-    readonly property var microphones: recordings.filter(n => String(n.properties["stream.monitor"]) !== "true" && String(n.properties["stream.capture.sink"]) !== "true")
+    readonly property var microphones: {
+        const isTrue = (n, key) => String(n.properties[key]) === "true";
+        const isMicrophone = n => !isTrue(n, "stream.monitor") && !isTrue(n, "stream.capture.sink");
+        return recordings.filter(isMicrophone);
+    }
     // Video recording streams: the screen's consumers (and PipeWire cameras')
     readonly property var videoStreams: Pipewire.nodes.values.filter(n => !n.audio && n.isStream && !n.isSink)
 
@@ -39,7 +43,8 @@ Item {
     readonly property var cameraUsers: unique(cameraProcesses.map(c => {
         const window = Windows.forPid(c.pid);
         const entry = Windows.entry(window);
-        const icons = [entry?.icon, c.comm, Windows.launcherEntry(c.pid)?.icon].map(i => i ? Quickshell.iconPath(i, true) : "");
+        const iconNames = [entry?.icon, c.comm, Windows.launcherEntry(c.pid)?.icon];
+        const icons = iconNames.map(i => i ? Quickshell.iconPath(i, true) : "");
         return {
             name: entry?.name || c.comm,
             icon: icons.find(i => i) ?? "",
@@ -145,8 +150,11 @@ Item {
                 microphone: root.microphoneUsers,
                 screen: root.screenUsers
             };
-            const title = started.map((k, i) => i === 0 ? names[k] : names[k].toLowerCase()).join(" and ") + (started.length > 1 ? " are" : " is") + (started.length === 1 && started[0] === "screen" ? " shared" : " in use");
-            root.osd.privacy(started[0], title, [...new Set([].concat(...started.map(k => users[k].map(u => u.name))))].join(", "));
+            const nouns = started.map((k, i) => i === 0 ? names[k] : names[k].toLowerCase()).join(" and ");
+            const verb = started.length > 1 ? " are" : " is";
+            const state = started.length === 1 && started[0] === "screen" ? " shared" : " in use";
+            const userNames = [].concat(...started.map(k => users[k].map(u => u.name)));
+            root.osd.privacy(started[0], nouns + verb + state, [...new Set(userNames)].join(", "));
         }
     }
 

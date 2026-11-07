@@ -135,10 +135,11 @@ PopupWindow {
                             if (entryItem.modelData.buttonType === QsMenuButtonType.None) {
                                 return "";
                             }
+                            const isRadio = entryItem.modelData.buttonType === QsMenuButtonType.RadioButton;
                             if (entryItem.modelData.checkState === Qt.Checked) {
-                                return Theme.glyph(entryItem.modelData.buttonType === QsMenuButtonType.RadioButton ? 0xf043e : 0xf0132);
+                                return Theme.glyph(isRadio ? 0xf043e : 0xf0132);
                             }
-                            return Theme.glyph(entryItem.modelData.buttonType === QsMenuButtonType.RadioButton ? 0xf043d : 0xf0131);
+                            return Theme.glyph(isRadio ? 0xf043d : 0xf0131);
                         } // 󰐾 󰄲 / 󰐽 󰄱
                         onTriggered: {
                             if (entryItem.modelData.hasChildren) {

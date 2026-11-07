@@ -63,7 +63,11 @@ Prefer more short lines over fewer long ones.
 - **Name the intermediate steps.** A long expression is split into variables
   whose names explain each step, instead of one nested expression.
 - **Short lines.** The formatter's limit (ruff: 120) is a hard ceiling, not a
-  target. Split a line long before it gets there.
+  target, in every language. Split a line long before it gets there.
+  qmlformat puts every expression back on one line, so in QML a long line
+  becomes named steps (variables, small functions, `push` per entry). Only a
+  string of text may run longer: a sentence the user reads, an embedded
+  shell command, a URL. Splitting those would make them harder to read.
 - **One argument per line** when a call, a list or a dict doesn't fit on one
   short line.
 - **One step per line** in chains: method chains, pipes, `.replace(...)`

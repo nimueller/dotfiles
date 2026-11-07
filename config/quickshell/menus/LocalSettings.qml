@@ -87,14 +87,18 @@ Singleton {
     // rule with neither is skipped. The first rule that matches decides:
     // "hide" drops the notification, "center" keeps it from popping up,
     // "popup" keeps it out of the notification center.
-    readonly property var notificationRules: (settings.notifications?.rules ?? []).filter(r => r.app?.trim() || r.text?.trim())
+    readonly property var notificationRules: {
+        const isUsed = r => r.app?.trim() || r.text?.trim();
+        return (settings.notifications?.rules ?? []).filter(isUsed);
+    }
 
     // The rule for media players' track announcements (NotificationStore.qml),
     // after the others: an action as above, "" to treat them like any other
     readonly property string trackAction: settings.notifications?.tracks ?? "popup"
 
     function notificationAction(app, desktop, summary, body) {
-        const has = (haystacks, needle) => !needle?.trim() || haystacks.some(h => (h ?? "").toLowerCase().includes(needle.trim().toLowerCase()));
+        const contains = (text, needle) => (text ?? "").toLowerCase().includes(needle.trim().toLowerCase());
+        const has = (haystacks, needle) => !needle?.trim() || haystacks.some(h => contains(h, needle));
         return notificationRules.find(r => has([app, desktop], r.app) && has([summary, body], r.text))?.action ?? "";
     }
 
@@ -104,7 +108,8 @@ Singleton {
     readonly property var mainMonitor: (settings.monitors ?? []).find(m => m.main) ?? null
     readonly property var mainScreen: {
         const m = mainMonitor;
-        const byDesc = m && Quickshell.screens.find(s => s.model && s.serialNumber && m.desc.includes(s.model) && m.desc.includes(s.serialNumber));
+        const matches = s => s.model && s.serialNumber && m.desc.includes(s.model) && m.desc.includes(s.serialNumber);
+        const byDesc = m && Quickshell.screens.find(matches);
         return byDesc ?? (m && Quickshell.screens.find(s => s.name === m.name)) ?? Quickshell.screens[0];
     }
 

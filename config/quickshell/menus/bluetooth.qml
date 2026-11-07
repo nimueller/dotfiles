@@ -22,9 +22,16 @@ Popup {
     readonly property bool on: adapter?.enabled ?? false
     readonly property var devices: adapter?.devices.values ?? []
     // Paired ones: connected first, then by name
-    readonly property var paired: devices.filter(d => d.paired || d.bonded).sort((a, b) => b.connected - a.connected || a.name.localeCompare(b.name))
+    readonly property var paired: {
+        const byConnectedThenName = (a, b) => b.connected - a.connected || a.name.localeCompare(b.name);
+        return devices.filter(d => d.paired || d.bonded).sort(byConnectedThenName);
+    }
     // Nearby ones that say their name (BlueZ names the others after their address)
-    readonly property var nearby: devices.filter(d => !d.paired && !d.bonded && d.name && d.name !== d.address.replace(/:/g, "-")).sort((a, b) => a.name.localeCompare(b.name))
+    readonly property var nearby: {
+        const isNamed = d => d.name && d.name !== d.address.replace(/:/g, "-");
+        const isNew = d => !d.paired && !d.bonded && isNamed(d);
+        return devices.filter(isNew).sort((a, b) => a.name.localeCompare(b.name));
+    }
     property string expanded: "" // address of the device with its details open
     property var trying: ({}) // address → "pair" | "connect", asked for here
     property var errors: ({}) // address → why it didn't work
@@ -84,9 +91,10 @@ Popup {
             }
             function onStateChanged() {
                 const address = modelData.address;
+                const isDisconnected = modelData.state === BluetoothDeviceState.Disconnected;
                 if (modelData.connected) {
                     popup.trying = popup.mark(popup.trying, address, "");
-                } else if (popup.trying[address] === "connect" && modelData.state === BluetoothDeviceState.Disconnected) {
+                } else if (popup.trying[address] === "connect" && isDisconnected) {
                     popup.trying = popup.mark(popup.trying, address, "");
                     popup.errors = popup.mark(popup.errors, address, "Couldn't connect. Is it switched on and in reach?");
                 }

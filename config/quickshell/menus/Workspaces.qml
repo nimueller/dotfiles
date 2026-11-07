@@ -11,7 +11,11 @@ Rectangle {
 
     required property var monitor // HyprlandMonitor
     readonly property string special: monitor?.lastIpcObject?.specialWorkspace?.name ?? ""
-    readonly property var workspaces: Hyprland.workspaces.values.filter(w => w.monitor === monitor && (w.id > 0 || w.name === special)).sort((a, b) => (a.id < 0) - (b.id < 0) || a.id - b.id)
+    readonly property var workspaces: {
+        const isShown = w => w.monitor === monitor && (w.id > 0 || w.name === special);
+        const specialLast = (a, b) => (a.id < 0) - (b.id < 0) || a.id - b.id;
+        return Hyprland.workspaces.values.filter(isShown).sort(specialLast);
+    }
 
     implicitWidth: row.implicitWidth + 6
     implicitHeight: Modes.barSize(19, 30, 36)

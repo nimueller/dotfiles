@@ -229,7 +229,10 @@ Rectangle {
             active: bar.editor.sound
             accent: Theme.red
             onClicked: bar.editor.sound = !bar.editor.sound
-            onHoveredChanged: bar.say(hovered, bar.editor.sound ? "Recording with the sound the speakers play" : "Recording without sound")
+            onHoveredChanged: {
+                const hint = bar.editor.sound ? "Recording with the sound the speakers play" : "Recording without sound";
+                bar.say(hovered, hint);
+            }
         }
         IconButton {
             glyph: Theme.glyph(0xf0156) // 󰅖

@@ -31,8 +31,11 @@ Popup {
     }
     readonly property int batteryState: battery?.state ?? UPowerDeviceState.Unknown
     readonly property bool charging: batteryState === UPowerDeviceState.Charging
-    readonly property bool full: batteryState === UPowerDeviceState.FullyCharged || (batteryState === UPowerDeviceState.PendingCharge && percent >= 95)
-    readonly property var others: UPower.devices.values.filter(d => !d.isLaptopBattery && d.isPresent && d.type !== UPowerDeviceType.LinePower && d.type !== UPowerDeviceType.Battery && d.percentage > 0)
+    readonly property bool full: {
+        const isHeldFull = batteryState === UPowerDeviceState.PendingCharge && percent >= 95;
+        return batteryState === UPowerDeviceState.FullyCharged || isHeldFull;
+    }
+    readonly property var others: UPower.devices.values.filter(isOtherDevice)
     property bool profiles: false // power-profiles-daemon runs
 
     readonly property var profileList: [
@@ -57,6 +60,62 @@ Popup {
             accent: Theme.peach
         } // 󰓅
     ]
+
+    // A device with a battery of its own, not the laptop's battery or a
+    // power supply
+    function isOtherDevice(d) {
+        if (d.isLaptopBattery || !d.isPresent) {
+            return false;
+        }
+        const isPowerSupply = d.type === UPowerDeviceType.LinePower || d.type === UPowerDeviceType.Battery;
+        return !isPowerSupply && d.percentage > 0;
+    }
+
+    // Performance only where the machine has it
+    function isProfileAvailable(p) {
+        return p.profile !== PowerProfile.Performance || PowerProfiles.hasPerformanceProfile;
+    }
+
+    function chargingRows(s) {
+        const rows = [];
+        rows.push(["Charging", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% gained`]);
+        if (!s.pace) {
+            const fullAt = popup.toFull > 0 ? `${popup.clock(popup.toFull)} (UPower)` : "Not enough data yet";
+            rows.push(["Full at", fullAt]);
+            return rows;
+        }
+        rows.push(["Pace", `${(s.pace * 3600).toFixed(0)}% per hour`]);
+        // Full is in the summary; 80 % comes sooner, as charging slows down after it
+        if (popup.percent < 80) {
+            rows.push(["80% at", `about ${popup.clock((80 - popup.percent) / s.pace)}`]);
+        }
+        return rows;
+    }
+
+    function dischargingRows(s) {
+        const rows = [];
+        rows.push(["On battery", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% used`]);
+        if (!s.pace) {
+            rows.push(["At this pace", "Not enough data yet"]);
+            return rows;
+        }
+        rows.push(["Pace", `${(s.pace * 3600).toFixed(1)}% per hour`]);
+        rows.push(["At this pace", `${popup.duration(s.left)} left`]);
+        rows.push(["Full charge lasts", `about ${popup.duration(s.total)}`]);
+        return rows;
+    }
+
+    // The rows under the summary, for charging or for the battery
+    function statsRows() {
+        const s = popup.stats;
+        if (!s) {
+            return [];
+        }
+        if (popup.discharging) {
+            return dischargingRows(s);
+        }
+        return chargingRows(s);
+    }
 
     function duration(seconds) {
         const h = Math.floor(seconds / 3600), m = Math.round(seconds % 3600 / 60);
@@ -158,7 +217,9 @@ Popup {
         if (!cell || historyProc.running) {
             return;
         }
-        historyProc.command = ["busctl", "--system", "--json=short", "call", "org.freedesktop.UPower", `/org/freedesktop/UPower/devices/battery_${cell.nativePath.replace(/[^A-Za-z0-9]/g, "_")}`, "org.freedesktop.UPower.Device", "GetHistory", "suu", "charge", "604800", "5000"];
+        const path = `/org/freedesktop/UPower/devices/battery_${cell.nativePath.replace(/[^A-Za-z0-9]/g, "_")}`;
+        const call = ["call", "org.freedesktop.UPower", path, "org.freedesktop.UPower.Device", "GetHistory"];
+        historyProc.command = ["busctl", "--system", "--json=short", ...call, "suu", "charge", "604800", "5000"];
         historyProc.running = true;
     }
 
@@ -298,29 +359,7 @@ Popup {
         }
 
         Repeater {
-            // The rows one per line: qmlformat would join them into one line
-            // qmlformat off
-            model: {
-                const s = popup.stats;
-                if (!s)
-                    { return []; }
-                if (!popup.discharging) {
-                    const rows = [["Charging", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% gained`]];
-                    if (!s.pace)
-                        { return rows.concat([["Full at", popup.toFull > 0 ? `${popup.clock(popup.toFull)} (UPower)` : "Not enough data yet"]]); }
-                    // Full is in the summary; 80 % comes sooner, as charging slows down after it
-                    return rows.concat([["Pace", `${(s.pace * 3600).toFixed(0)}% per hour`]]).concat(popup.percent < 80 ? [["80% at", `about ${popup.clock((80 - popup.percent) / s.pace)}`]] : []);
-                }
-                const rows = [["On battery", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% used`]];
-                if (!s.pace)
-                    { return rows.concat([["At this pace", "Not enough data yet"]]); }
-                return rows.concat([
-                    ["Pace", `${(s.pace * 3600).toFixed(1)}% per hour`],
-                    ["At this pace", `${popup.duration(s.left)} left`],
-                    ["Full charge lasts", `about ${popup.duration(s.total)}`]
-                ]);
-            }
-            // qmlformat on
+            model: popup.statsRows()
 
             delegate: RowLayout {
                 required property var modelData
@@ -355,7 +394,7 @@ Popup {
             spacing: 6
 
             Repeater {
-                model: popup.profileList.filter(p => p.profile !== PowerProfile.Performance || PowerProfiles.hasPerformanceProfile)
+                model: popup.profileList.filter(p => popup.isProfileAvailable(p))
 
                 delegate: Rectangle {
                     id: tile
@@ -416,7 +455,12 @@ Popup {
         Label {
             Layout.fillWidth: true
             visible: PowerProfiles.degradationReason !== PerformanceDegradationReason.None
-            text: PowerProfiles.degradationReason === PerformanceDegradationReason.HighTemperature ? "Performance is held back: the laptop is too hot" : "Performance is held back: the laptop is on a lap"
+            text: {
+                if (PowerProfiles.degradationReason === PerformanceDegradationReason.HighTemperature) {
+                    return "Performance is held back: the laptop is too hot";
+                }
+                return "Performance is held back: the laptop is on a lap";
+            }
             wrapMode: Text.WordWrap
             elide: Text.ElideNone
             font.pixelSize: 10
@@ -441,7 +485,10 @@ Popup {
                 id: other
 
                 required property var modelData
-                readonly property real charge: modelData.percentage <= 1 ? modelData.percentage * 100 : modelData.percentage
+                readonly property real charge: {
+                    const p = modelData.percentage;
+                    return p <= 1 ? p * 100 : p;
+                }
 
                 Layout.fillWidth: true
                 spacing: 8

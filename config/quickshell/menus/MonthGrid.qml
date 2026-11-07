@@ -33,7 +33,10 @@ ColumnLayout {
         const d = new Date(year, month, 1);
         return new Date(year, month, 1 - (d.getDay() - weekStart + 7) % 7);
     }
-    readonly property bool showingToday: year === today.getFullYear() && month === today.getMonth() && sameDay(selected, today)
+    readonly property bool showingToday: {
+        const isTodaysMonth = year === today.getFullYear() && month === today.getMonth();
+        return isTodaysMonth && sameDay(selected, today);
+    }
     readonly property var dayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
     function sameDay(a, b) {
@@ -258,7 +261,10 @@ ColumnLayout {
 
                         required property int index
                         readonly property bool viewing: root.pickerYear === root.year && index === root.month
-                        readonly property bool current: root.pickerYear === root.today.getFullYear() && index === root.today.getMonth()
+                        readonly property bool current: {
+                            const today = root.today;
+                            return root.pickerYear === today.getFullYear() && index === today.getMonth();
+                        }
 
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -451,7 +457,10 @@ ColumnLayout {
                             // Reaches the box's edge and over the gap to the
                             // next box; the row's ends stay inside the grid
                             anchors.leftMargin: continued && cell.column > 1 ? -boxContent.anchors.margins : 0
-                            anchors.rightMargin: continues && cell.column < 7 ? -boxContent.anchors.margins - grid.columnSpacing : 0
+                            anchors.rightMargin: {
+                                const reachesNext = continues && cell.column < 7;
+                                return reachesNext ? -boxContent.anchors.margins - grid.columnSpacing : 0;
+                            }
                             topLeftRadius: continued ? 0 : 4
                             bottomLeftRadius: continued ? 0 : 4
                             topRightRadius: continues ? 0 : 4
@@ -479,12 +488,21 @@ ColumnLayout {
                             // the two lanes that every box shows: the third
                             // gives way to "+N more" where a day is full.
                             Label {
-                                readonly property int span: !chip.event || lane.index > 1 ? 1 : Math.min(Math.round((chip.event.lastDay - cell.day) / 86400000) + 1, 8 - cell.column)
+                                readonly property int span: {
+                                    if (!chip.event || lane.index > 1) {
+                                        return 1;
+                                    }
+                                    const days = Math.round((chip.event.lastDay - cell.day) / 86400000) + 1;
+                                    return Math.min(days, 8 - cell.column);
+                                }
 
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
                                 x: chip.timed ? 6 : 5
-                                width: span * cell.width + (span - 1) * grid.columnSpacing - 2 * boxContent.anchors.margins - x - 3
+                                width: {
+                                    const bar = span * cell.width + (span - 1) * grid.columnSpacing;
+                                    return bar - 2 * boxContent.anchors.margins - x - 3;
+                                }
                                 visible: !chip.continued || cell.column === 1
                                 text: {
                                     if (!chip.event) {

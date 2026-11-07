@@ -34,8 +34,10 @@ ShellRoot {
         }
         Menus.settingsPage = "";
     }
-    property var monitors: [] // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
-    property var caps: ({}) // what each connected monitor supports, by port: { vrr, wideColor, hdr }, missing if unknown
+    // { desc, name, connected, enabled, mode, x, y, scale, transform, vrr, wideColor, hdr, workspaces, main, modes }
+    property var monitors: []
+    // what each connected monitor supports, by port: { vrr, wideColor, hdr }, missing if unknown
+    property var caps: ({})
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
     property var bar: ({
@@ -47,7 +49,8 @@ ShellRoot {
     property var locationResults: [] // Open-Meteo's geocoding results
     property string locationError: ""
     property var modes: ({}) // laptop, touch: true | false when forced, missing when detected
-    property var touchpad: ({}) // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
+    // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
+    property var touchpad: ({})
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
     property var rules: [] // notification rules: { app, text, action }, see LocalSettings.qml
     property string trackAction: "popup" // the rule for track announcements, "" for none
@@ -162,31 +165,43 @@ ShellRoot {
 
     function block() {
         const s = saved();
-        const lines = ["-- BEGIN settings: written by Machine Settings, change them there", `-- settings: ${JSON.stringify(s)}`];
+        const header = "-- BEGIN settings: written by Machine Settings, change them there";
+        const lines = [header, `-- settings: ${JSON.stringify(s)}`];
         if (s.monitors.length) {
             lines.push("", "-- Displays", ...s.monitors.map(monitorLua));
         }
         // Workspaces on their monitor; the first opens there by default
         const rules = [];
         for (const m of s.monitors.filter(m => m.enabled)) {
-            workspaceList(m.workspaces).forEach((w, i) => rules.push(`hl.workspace_rule({ workspace = "${w}", monitor = ${luaString("desc:" + m.desc)}${i === 0 ? ", default = true" : ""} })`));
+            const monitor = luaString("desc:" + m.desc);
+            workspaceList(m.workspaces).forEach((w, i) => {
+                const isDefault = i === 0 ? ", default = true" : "";
+                rules.push(`hl.workspace_rule({ workspace = "${w}", monitor = ${monitor}${isDefault} })`);
+            });
         }
         if (rules.length) {
             lines.push("", "-- Workspaces", ...rules);
         }
         if (s.env.length) {
-            lines.push("", "-- Environment", ...s.env.map(([k, v]) => `hl.env(${luaString(k.trim())}, ${luaString(v)})`));
+            const env = s.env.map(([k, v]) => `hl.env(${luaString(k.trim())}, ${luaString(v)})`);
+            lines.push("", "-- Environment", ...env);
         }
         const forced = Object.entries(s.modes).map(([k, v]) => `${k} = ${v}`);
         if (forced.length) {
-            lines.push("", "-- Laptop and touch mode, forced (modes.lua)", `require("modes").set({ ${forced.join(", ")} })`);
+            const call = `require("modes").set({ ${forced.join(", ")} })`;
+            lines.push("", "-- Laptop and touch mode, forced (modes.lua)", call);
         }
         const touchpad = Object.entries(s.touchpad).map(([k, v]) => `${k} = ${v}`);
         if (touchpad.length) {
-            lines.push("", "-- Touchpad (modes.lua applies it after the modes)", `require("modes").touchpad({ ${touchpad.join(", ")} })`);
+            const call = `require("modes").touchpad({ ${touchpad.join(", ")} })`;
+            lines.push("", "-- Touchpad (modes.lua applies it after the modes)", call);
         }
         if (s.autostart.length) {
-            lines.push("", "-- Autostart", 'hl.on("hyprland.start", function()', ...s.autostart.map(c => `    hl.exec_cmd(${luaString("after-unlock " + shellQuote(c.trim()))})`), "end)");
+            const starts = s.autostart.map(c => {
+                const command = luaString("after-unlock " + shellQuote(c.trim()));
+                return `    hl.exec_cmd(${command})`;
+            });
+            lines.push("", "-- Autostart", 'hl.on("hyprland.start", function()', ...starts, "end)");
         }
         lines.push("-- END settings");
         return lines.join("\n");
@@ -297,7 +312,8 @@ ShellRoot {
                 locationError = "Couldn't reach the location search";
             }
         };
-        xhr.open("GET", `https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=${encodeURIComponent(query)}`);
+        const search = "https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json";
+        xhr.open("GET", `${search}&name=${encodeURIComponent(query)}`);
         xhr.send();
     }
 
@@ -686,7 +702,10 @@ ShellRoot {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: root.page === "profile" ? "Stored in ~/.face, which stays out of git." : "Stored in config/hypr/local.lua, which stays out of git."
+                        text: {
+                            const file = root.page === "profile" ? "~/.face" : "config/hypr/local.lua";
+                            return `Stored in ${file}, which stays out of git.`;
+                        }
                         font.pixelSize: 10
                         color: Theme.overlay0
                     }
@@ -893,7 +912,15 @@ ShellRoot {
                         ColumnLayout {
                             id: unsupported
 
-                            readonly property var missing: [["vrr", "variable refresh"], ["wideColor", "wide colour"], ["hdr", "HDR"]].filter(([f]) => !root.supports(parent.m, f))
+                            readonly property var featureNames: ({
+                                    "vrr": "variable refresh",
+                                    "wideColor": "wide colour",
+                                    "hdr": "HDR"
+                                })
+                            readonly property var missing: {
+                                const isMissing = ([feature]) => !root.supports(parent.m, feature);
+                                return Object.entries(featureNames).filter(isMissing);
+                            }
                             readonly property var stillOn: missing.filter(([f]) => parent.m?.[f])
 
                             // "a, b or c"
@@ -945,7 +972,10 @@ ShellRoot {
                                         text: {
                                             const on = unsupported.list(unsupported.stillOn, "and") ?? "";
                                             const many = unsupported.stillOn.length > 1;
-                                            return `${on.charAt(0).toUpperCase()}${on.slice(1)} ${many ? "are" : "is"} on, but won't work here. Switch ${many ? "them" : "it"} off.`;
+                                            const subject = on.charAt(0).toUpperCase() + on.slice(1);
+                                            const verb = many ? "are" : "is";
+                                            const pronoun = many ? "them" : "it";
+                                            return `${subject} ${verb} on, but won't work here. Switch ${pronoun} off.`;
                                         }
                                         color: Theme.yellow
                                     }
@@ -1158,7 +1188,12 @@ ShellRoot {
                         Layout.topMargin: 6
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: `In effect now: laptop ${Modes.laptop ? "on" : "off"}, touch ${Modes.touch ? "on" : "off"}. Saving applies them right away; the on-screen keyboard starts at the next login, or with its button in the bar.`
+                        text: {
+                            const laptop = Modes.laptop ? "on" : "off";
+                            const touch = Modes.touch ? "on" : "off";
+                            const after = "Saving applies them right away; the on-screen keyboard starts at the next login, or with its button in the bar.";
+                            return `In effect now: laptop ${laptop}, touch ${touch}. ${after}`;
+                        }
                         color: Theme.subtext0
                     }
 
@@ -1210,6 +1245,11 @@ ShellRoot {
                             id: touchpadRow
 
                             required property var modelData
+                            // What the option is when it's left at its default
+                            readonly property string defaultState: {
+                                const state = modelData.def ? modelData.on : modelData.off;
+                                return state.toLowerCase();
+                            }
 
                             Layout.fillWidth: true
                             spacing: 14
@@ -1236,7 +1276,7 @@ ShellRoot {
                                 Layout.alignment: Qt.AlignTop
                                 model: [
                                     {
-                                        text: `Default (${(touchpadRow.modelData.def ? touchpadRow.modelData.on : touchpadRow.modelData.off).toLowerCase()})`,
+                                        text: `Default (${touchpadRow.defaultState})`,
                                         value: "default"
                                     },
                                     {
@@ -1331,7 +1371,8 @@ ShellRoot {
 
                         Label {
                             Layout.fillWidth: true
-                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set" // 󰍎
+                            // 󰍎
+                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set"
                             color: root.location ? Theme.text : Theme.overlay0
                         }
                         IconButton {
@@ -1382,7 +1423,10 @@ ShellRoot {
                             Label {
                                 anchors.fill: parent
                                 anchors.leftMargin: 10
-                                text: [place.modelData.name, place.modelData.admin1, place.modelData.country].filter(x => x).join(", ")
+                                text: {
+                                    const p = place.modelData;
+                                    return [p.name, p.admin1, p.country].filter(x => x).join(", ");
+                                }
                                 color: placeMouse.containsMouse ? Theme.lavender : Theme.subtext1
                             }
                             MouseArea {
@@ -1524,7 +1568,8 @@ ShellRoot {
                         readonly property var t: root.nightTimes
                         // The place night-light.py goes by once saved: this
                         // machine's, else the calendar's (only known from its state)
-                        readonly property string place: root.location?.name ?? (t?.placeFrom === "calendar" ? t.place : "")
+                        readonly property string calendarPlace: t?.placeFrom === "calendar" ? t.place : ""
+                        readonly property string place: root.location?.name ?? calendarPlace
                         readonly property bool current: !!t && t.schedule === "sun" && !!place && t.place === place
 
                         Label {
@@ -1536,7 +1581,10 @@ ShellRoot {
                                 if (!where) {
                                     return "No location is set, so it can't work out the sunset and sunrise: it turns on at 19:00 and off at 07:00. Set a location to follow the sun.";
                                 }
-                                const whose = root.location ? "this computer's location (the Location page)" : "the calendar's weather location, as this computer has none (the Location page)";
+                                let whose = "the calendar's weather location, as this computer has none (the Location page)";
+                                if (root.location) {
+                                    whose = "this computer's location (the Location page)";
+                                }
                                 return `It turns on at sunset and off at sunrise in ${where}, ${whose}. They're worked out every day from the place's coordinates, so they move with the seasons.`;
                             }
                             color: Theme.subtext0
@@ -2045,7 +2093,13 @@ ShellRoot {
 
                     Label {
                         Layout.fillWidth: true
-                        text: root.countdown > 0 ? `Keep these display settings? Going back in ${root.countdown} s` : root.status || (root.dirty ? "Unsaved changes" : "")
+                        text: {
+                            if (root.countdown > 0) {
+                                return `Keep these display settings? Going back in ${root.countdown} s`;
+                            }
+                            const unsaved = root.dirty ? "Unsaved changes" : "";
+                            return root.status || unsaved;
+                        }
                         color: root.countdown > 0 ? Theme.peach : Theme.subtext0
                     }
                     IconButton {

@@ -240,11 +240,12 @@ PanelWindow {
             const app = entry?.name ?? w.lastIpcObject?.class ?? "";
             const title = (w.title ?? "").toLowerCase();
             let s = -1;
+            const windowClass = (w.lastIpcObject?.class ?? "").toLowerCase();
             if (app.toLowerCase().startsWith(q)) {
                 s = 800;
             } else if (title.split(/[\s\-_.:|\/]+/).some(x => x.startsWith(q))) {
                 s = 600;
-            } else if (title.includes(q) || app.toLowerCase().includes(q) || (w.lastIpcObject?.class ?? "").toLowerCase().includes(q)) {
+            } else if (title.includes(q) || app.toLowerCase().includes(q) || windowClass.includes(q)) {
                 s = 400;
             }
             if (s >= 0) {
@@ -504,7 +505,8 @@ PanelWindow {
         }
         if (item.emoji !== undefined) {
             hide();
-            Quickshell.execDetached(["sh", "-c", 'printf %s "$1" | "$2"', "sh", item.emoji, Quickshell.shellPath("paste.sh")]);
+            const paste = Quickshell.shellPath("paste.sh");
+            Quickshell.execDetached(["sh", "-c", 'printf %s "$1" | "$2"', "sh", item.emoji, paste]);
             const key = `emoji:${item.emoji}`;
             counts[key] = (counts[key] ?? 0) + 1;
             store.setText(JSON.stringify(counts));
@@ -544,7 +546,10 @@ PanelWindow {
     property var emoji: []
 
     FileView {
-        path: `${Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share"}/quickshell-launcher/emoji.json`
+        path: {
+            const dataHome = Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share";
+            return `${dataHome}/quickshell-launcher/emoji.json`;
+        }
         printErrors: false
         onLoaded: {
             try {
@@ -641,9 +646,9 @@ PanelWindow {
                         const ctrl = event.modifiers & Qt.ControlModifier;
                         if (event.key === Qt.Key_Escape) {
                             root.hide();
-                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
+                        } else if (ListKeys.isDown(event)) {
                             list.incrementCurrentIndex();
-                        } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
+                        } else if (ListKeys.isUp(event)) {
                             list.decrementCurrentIndex();
                         } else if (event.key === Qt.Key_PageDown) {
                             list.currentIndex = Math.min(list.count - 1, list.currentIndex + root.rows);
@@ -659,7 +664,11 @@ PanelWindow {
                 }
 
                 Label {
-                    readonly property int count: root.results.filter(r => r.run === undefined && r.result === undefined && r.window === undefined && r.ssh === undefined).length
+                    readonly property int count: {
+                        const others = ["run", "result", "window", "ssh"];
+                        const isApp = r => others.every(key => r[key] === undefined);
+                        return root.results.filter(isApp).length;
+                    }
                     readonly property int windows: root.results.filter(r => r.window !== undefined).length
 
                     text: {
@@ -669,7 +678,8 @@ PanelWindow {
                         if (root.fileMode) {
                             return `${count} ${count === 1 ? "file" : "files"}`;
                         }
-                        return `${windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : ""}${count} ${count === 1 ? "app" : "apps"}`;
+                        const windowsText = windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : "";
+                        return `${windowsText}${count} ${count === 1 ? "app" : "apps"}`;
                     }
                     font.pixelSize: 11
                     color: Theme.overlay0

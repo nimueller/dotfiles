@@ -53,7 +53,8 @@ ColumnLayout {
         title.text = event.title;
         place.text = event.location ?? "";
         allDay = event.allDay;
-        const last = event.allDay ? new Date(event.end.getFullYear(), event.end.getMonth(), event.end.getDate() - 1) : event.end;
+        const dayBefore = d => new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+        const last = event.allDay ? dayBefore(event.end) : event.end;
         startDate.text = Qt.formatDate(event.start, "yyyy-MM-dd");
         endDate.text = Qt.formatDate(last < event.start ? event.start : last, "yyyy-MM-dd");
         startTime.text = event.allDay ? "09:00" : Qt.formatTime(event.start, "HH:mm");
@@ -137,8 +138,13 @@ ColumnLayout {
         } else if (!calendar) {
             problem = "No writable Nextcloud calendar";
         } else {
-            const start = new Date(from.getFullYear(), from.getMonth(), from.getDate(), allDay ? 0 : t1[0], allDay ? 0 : t1[1]);
-            const end = new Date(to.getFullYear(), to.getMonth(), to.getDate(), allDay ? 0 : t2[0], allDay ? 0 : t2[1]);
+            // Midnight for a whole day, else the time given
+            const at = (day, time) => {
+                const [hours, minutes] = allDay ? [0, 0] : time;
+                return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hours, minutes);
+            };
+            const start = at(from, t1);
+            const end = at(to, t2);
             if (end < start) {
                 problem = "It ends before it starts";
                 return;
@@ -189,7 +195,8 @@ ColumnLayout {
         const from = parseDate(startDate.text), to = parseDate(endDate.text);
         const span = from && to ? Math.round((to - from) / 86400000) : 0;
         startDate.text = Qt.formatDate(day, "yyyy-MM-dd");
-        endDate.text = Qt.formatDate(new Date(day.getFullYear(), day.getMonth(), day.getDate() + Math.max(span, 0)), "yyyy-MM-dd");
+        const lastDay = new Date(day.getFullYear(), day.getMonth(), day.getDate() + Math.max(span, 0));
+        endDate.text = Qt.formatDate(lastDay, "yyyy-MM-dd");
     }
 
     spacing: 6

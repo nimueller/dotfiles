@@ -169,7 +169,9 @@ Item {
                         return;
                     }
                     box.dragging = true;
-                    box.to = root.snap(box.modelData.i, (p.x - box.grab.x - root.originX) / root.factor, (p.y - box.grab.y - root.originY) / root.factor);
+                    const layoutX = (p.x - box.grab.x - root.originX) / root.factor;
+                    const layoutY = (p.y - box.grab.y - root.originY) / root.factor;
+                    box.to = root.snap(box.modelData.i, layoutX, layoutY);
                     box.x = root.originX + box.to.x * root.factor;
                     box.y = root.originY + box.to.y * root.factor;
                 }
