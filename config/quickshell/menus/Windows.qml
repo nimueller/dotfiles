@@ -24,7 +24,8 @@ Singleton {
     }
 
     function newest(windows) {
-        return windows.sort((a, b) => (a.lastIpcObject.focusHistoryID ?? 1e9) - (b.lastIpcObject.focusHistoryID ?? 1e9))[0] ?? null;
+        const focusOrder = w => w.lastIpcObject.focusHistoryID ?? 1e9;
+        return windows.sort((a, b) => focusOrder(a) - focusOrder(b))[0] ?? null;
     }
 
     // { comm, ppid } of a process, null once it's gone
@@ -102,7 +103,14 @@ Singleton {
     // (also evaluated again once the desktop entries have loaded)
     function entry(window) {
         const id = window?.lastIpcObject?.class ?? "";
-        return id && DesktopEntries.applications.values.length >= 0 ? DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) ?? byName(window.title) : null;
+        if (!id) {
+            return null;
+        }
+        const isLoaded = DesktopEntries.applications.values.length >= 0;
+        if (!isLoaded) {
+            return null;
+        }
+        return DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) ?? byName(window.title);
     }
 
     // An entry named like the window: games' windows have ids no entry has

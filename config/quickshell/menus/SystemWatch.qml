@@ -73,8 +73,10 @@ Scope {
         // body, then the output of the top command, which only runs when it warns
         function send(urgency, icon, summary, body, top, show) {
             this.show = show;
-            command = ["sh", "-c", `top=$(sh -c "$5" 2>/dev/null)
-exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$top"`, "sh", urgency, icon, summary, body, top, String(nid)];
+            const script = `top=$(sh -c "$5" 2>/dev/null)
+exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$top"`;
+
+            command = ["sh", "-c", script, "sh", urgency, icon, summary, body, top, String(nid)];
             // The one waiting for the earlier notification goes first
             if (running) {
                 restart = true;
@@ -150,7 +152,11 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             memoryAlert = false;
         } else if (!memoryAlert && (available < limits.memory.percent / 100 || stalled >= 10)) {
             memoryAlert = true;
-            memoryNote.send("critical", "dialog-warning", "Memory is almost full", `${size(v.MemAvailable[0] * 1024)} of ${size(v.MemTotal[0] * 1024)} left, the system may freeze. Most memory: `, `ps -eo rss=,comm= | awk '{r=$1; $1=""; m[substr($0,2)]+=r} END {for (c in m) print m[c], c}' | sort -rn | awk '{r=$1; $1=""; printf "%s (%.1f GB)", substr($0,2), r/1048576; exit}'`, btop);
+            const available = `${size(v.MemAvailable[0] * 1024)} of ${size(v.MemTotal[0] * 1024)}`;
+            const body = `${available} left, the system may freeze. Most memory: `;
+            // The process name with the most memory, all its processes together
+            const top = `ps -eo rss=,comm= | awk '{r=$1; $1=""; m[substr($0,2)]+=r} END {for (c in m) print m[c], c}' | sort -rn | awk '{r=$1; $1=""; printf "%s (%.1f GB)", substr($0,2), r/1048576; exit}'`;
+            memoryNote.send("critical", "dialog-warning", "Memory is almost full", body, top, btop);
         } else if (memoryAlert && available > 2 * limits.memory.percent / 100 && stalled < 2) {
             memoryAlert = false;
         }
@@ -165,7 +171,10 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             cpuAlert = false;
         } else if (!cpuAlert && cpuSince && Date.now() - cpuSince >= limits.cpu.minutes * 60000) {
             cpuAlert = true;
-            cpuNote.send("normal", "dialog-warning", "The system is overloaded", `Programs have waited for the CPU ${Math.round(cpu)} % of the last minute. Busiest: `, `LC_ALL=C top -b -n 2 -d 1 -o %CPU -w 512 | awk '/^ *PID/ {n++; next} n == 2 && NF {c=$12; for (i=13; i<=NF; i++) c=c" "$i; print c" ("int($9)" %)"; exit}'`, btop);
+            const body = `Programs have waited for the CPU ${Math.round(cpu)} % of the last minute. Busiest: `;
+            // The busiest process, from top's second sample
+            const top = `LC_ALL=C top -b -n 2 -d 1 -o %CPU -w 512 | awk '/^ *PID/ {n++; next} n == 2 && NF {c=$12; for (i=13; i<=NF; i++) c=c" "$i; print c" ("int($9)" %)"; exit}'`;
+            cpuNote.send("normal", "dialog-warning", "The system is overloaded", body, top, btop);
         } else if (cpuAlert && cpu < limits.cpu.percent / 2) {
             cpuAlert = false;
         }
@@ -199,7 +208,11 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             if (!diskNotes[target]) {
                 diskNotes[target] = diskNote.createObject(root);
             }
-            diskNotes[target].send(critical ? "critical" : "normal", "drive-harddisk", summary, `${size(free)} (${Math.round(100 * free / total)} %) free on ${target}.`, "", `for t in gdu ncdu; do command -v $t >/dev/null && exec kitty --class disk-usage -e $t -x ${dir}; done; exec nautilus ${dir}`);
+            const urgency = critical ? "critical" : "normal";
+            const body = `${size(free)} (${Math.round(100 * free / total)} %) free on ${target}.`;
+            // A disk usage tool where there is one, else the folder in Files
+            const openUsage = `for t in gdu ncdu; do command -v $t >/dev/null && exec kitty --class disk-usage -e $t -x ${dir}; done; exec nautilus ${dir}`;
+            diskNotes[target].send(urgency, "drive-harddisk", summary, body, "", openUsage);
         } else if (level < warned && free <= diskLimit(warned, total) + 2 * gib) {
             // Fine again only with a margin, so a disk at the limit warns once
             level = warned;

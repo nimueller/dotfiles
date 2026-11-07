@@ -21,12 +21,23 @@ Scope {
     property bool sunshine: false
 
     // MPRIS players that play video: browsers and video players
-    readonly property var videoApps: ["zen", "firefox", "librewolf", "chromium", "chrome", "brave", "vivaldi", "mpv", "vlc", "celluloid", "haruna", "totem", "kodi", "jellyfin"]
+    readonly property var browsers: ["zen", "firefox", "librewolf", "chromium", "chrome", "brave", "vivaldi"]
+    readonly property var videoPlayers: ["mpv", "vlc", "celluloid", "haruna", "totem", "kodi", "jellyfin"]
+    readonly property var videoApps: [...browsers, ...videoPlayers]
 
-    readonly property var video: Mpris.players.values.find(p => p.isPlaying && videoApps.some(a => `${p.desktopEntry ?? ""} ${p.identity ?? ""}`.toLowerCase().includes(a))) ?? null
+    readonly property var video: {
+        const isVideoApp = p => {
+            const name = `${p.desktopEntry ?? ""} ${p.identity ?? ""}`.toLowerCase();
+            return videoApps.some(a => name.includes(a));
+        };
+        return Mpris.players.values.find(p => p.isPlaying && isVideoApp(p)) ?? null;
+    }
 
     // Game windows: Steam (and Proton) games, Wine programs, gamescope
-    readonly property var game: ToplevelManager.toplevels.values.find(t => /^steam_app_|\.exe$|^gamescope$/i.test(t.appId ?? "")) ?? null
+    readonly property var game: {
+        const isGame = t => /^steam_app_|\.exe$|^gamescope$/i.test(t.appId ?? "");
+        return ToplevelManager.toplevels.values.find(isGame) ?? null;
+    }
 
     readonly property string reason: {
         if (sunshine) {

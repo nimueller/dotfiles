@@ -33,7 +33,9 @@ ListView {
     function scrollToStart() {
         const now = new Date();
         const today = Qt.formatDate(now, "yyyy-MM-dd") === Qt.formatDate(day, "yyyy-MM-dd");
-        positionViewAtIndex(Math.max(0, hours.findIndex(h => h.hour >= (today ? now.getHours() : 7))), ListView.Beginning);
+        const firstHour = today ? now.getHours() : 7;
+        const index = hours.findIndex(h => h.hour >= firstHour);
+        positionViewAtIndex(Math.max(0, index), ListView.Beginning);
     }
 
     onHoursChanged: Qt.callLater(scrollToStart)
@@ -51,7 +53,13 @@ ListView {
 
         required property var modelData
         readonly property var info: Weather.describe(modelData.code, modelData.night)
-        readonly property bool isNow: modelData.hour === new Date().getHours() && Qt.formatDate(root.day, "yyyy-MM-dd") === Qt.formatDate(new Date(), "yyyy-MM-dd")
+        readonly property bool isNow: {
+            const now = new Date();
+            if (modelData.hour !== now.getHours()) {
+                return false;
+            }
+            return Qt.formatDate(root.day, "yyyy-MM-dd") === Qt.formatDate(now, "yyyy-MM-dd");
+        }
 
         width: 42
         height: root.height

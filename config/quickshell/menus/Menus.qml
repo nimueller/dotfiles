@@ -14,7 +14,25 @@ import Quickshell
 Singleton {
     id: root
 
-    readonly property var names: ["audio", "battery", "battery-history", "bluetooth", "calendar", "cleanup", "kdeconnect", "network", "power", "scan", "settings", "system", "updates", "window"]
+    // One menu per line: qmlformat would join the list into one line
+    // qmlformat off
+    readonly property var names: [
+        "audio",
+        "battery",
+        "battery-history",
+        "bluetooth",
+        "calendar",
+        "cleanup",
+        "kdeconnect",
+        "network",
+        "power",
+        "scan",
+        "settings",
+        "system",
+        "updates",
+        "window"
+    ]
+    // qmlformat on
 
     // Set by daemon.qml
     property bool hosted: false

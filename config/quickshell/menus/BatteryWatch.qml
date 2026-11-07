@@ -20,7 +20,8 @@ Scope {
         }
         return 100;
     }
-    readonly property bool discharging: Modes.laptop && !!battery && battery.isLaptopBattery && battery.state === UPowerDeviceState.Discharging
+    readonly property bool isOwnBattery: !!battery && battery.isLaptopBattery
+    readonly property bool discharging: Modes.laptop && isOwnBattery && battery.state === UPowerDeviceState.Discharging
     readonly property int level: {
         if (!discharging) {
             return 0;
@@ -45,7 +46,13 @@ Scope {
         } else if (level > warned) {
             warned = level;
             const left = battery.timeToEmpty > 0 ? `, about ${Math.round(battery.timeToEmpty / 60)} min left` : "";
-            notify.command = ["notify-send", "-p", "-r", String(nid), "-a", "Battery", "-u", level === 2 ? "critical" : "normal", "-i", level === 2 ? "battery-empty" : "battery-caution", level === 2 ? "Battery almost empty" : "Battery low", `${Math.round(percent)} %${left}. Plug in the charger.`];
+            const isCritical = level === 2;
+            const urgency = isCritical ? "critical" : "normal";
+            const icon = isCritical ? "battery-empty" : "battery-caution";
+            const summary = isCritical ? "Battery almost empty" : "Battery low";
+            const body = `${Math.round(percent)} %${left}. Plug in the charger.`;
+            const replace = ["-p", "-r", String(nid)];
+            notify.command = ["notify-send", ...replace, "-a", "Battery", "-u", urgency, "-i", icon, summary, body];
             notify.running = true;
         }
     }

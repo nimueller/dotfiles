@@ -37,7 +37,9 @@ ShellRoot {
     property int size: 1 // 0 thin, 1 medium, 2 thick
     property bool sound: false // recordings: with what the speakers play
 
-    readonly property var colors: [Theme.red, Theme.peach, Theme.yellow, Theme.green, Theme.blue, Theme.mauve, "#ffffff", "#000000"]
+    // The pen colours: the theme's, then white and black
+    readonly property var themeColors: [Theme.red, Theme.peach, Theme.yellow, Theme.green, Theme.blue, Theme.mauve]
+    readonly property var colors: [...themeColors, "#ffffff", "#000000"]
     readonly property var percents: [100, 75, 50, 25]
 
     signal finish(string action) // "copy", "save", "text" or "record", handled by the selected monitor
@@ -98,14 +100,19 @@ ShellRoot {
         const focused = monitors.find(m => m.focused) ?? monitors[0];
         screenName = focused?.name ?? "";
         if (mode === "screen" && focused) {
-            selection = Qt.rect(0, 0, Math.round(focused.width / focused.scale), Math.round(focused.height / focused.scale));
+            const screenWidth = Math.round(focused.width / focused.scale);
+            const screenHeight = Math.round(focused.height / focused.scale);
+            selection = Qt.rect(0, 0, screenWidth, screenHeight);
         } else if (mode === "window") {
             const c = clients.find(c => c.focusHistoryID === 0);
             const m = c && monitors.find(m => m.id === c.monitor);
             if (m) {
                 screenName = m.name;
-                const x = Math.max(0, c.at[0] - m.x), y = Math.max(0, c.at[1] - m.y);
-                selection = Qt.rect(x, y, Math.min(c.size[0], m.width / m.scale - x), Math.min(c.size[1], m.height / m.scale - y));
+                const x = Math.max(0, c.at[0] - m.x);
+                const y = Math.max(0, c.at[1] - m.y);
+                const visibleWidth = Math.min(c.size[0], m.width / m.scale - x);
+                const visibleHeight = Math.min(c.size[1], m.height / m.scale - y);
+                selection = Qt.rect(x, y, visibleWidth, visibleHeight);
             }
         }
     }

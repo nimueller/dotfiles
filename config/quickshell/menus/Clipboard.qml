@@ -59,7 +59,8 @@ PanelWindow {
             return;
         }
         hide();
-        Quickshell.execDetached(["sh", "-c", 'printf "%s\\n" "$1" | cliphist decode | "$2"', "sh", entry.line, Quickshell.shellPath("paste.sh")]);
+        const paste = Quickshell.shellPath("paste.sh");
+        Quickshell.execDetached(["sh", "-c", 'printf "%s\\n" "$1" | cliphist decode | "$2"', "sh", entry.line, paste]);
     }
 
     function remove(entry) {
@@ -214,9 +215,9 @@ PanelWindow {
                         const ctrl = event.modifiers & Qt.ControlModifier;
                         if (event.key === Qt.Key_Escape) {
                             root.hide();
-                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
+                        } else if (ListKeys.isDown(event)) {
                             list.incrementCurrentIndex();
-                        } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
+                        } else if (ListKeys.isUp(event)) {
                             list.decrementCurrentIndex();
                         } else if (event.key === Qt.Key_PageDown) {
                             list.currentIndex = Math.min(list.count - 1, list.currentIndex + root.rows);

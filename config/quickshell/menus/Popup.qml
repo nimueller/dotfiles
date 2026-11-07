@@ -70,7 +70,13 @@ PanelWindow {
     // Bigger in tablet mode, for fingers: the card at its usual size, scaled
     // up, so the menus need no sizes of their own for it. As far as the
     // screen's height allows, above the bar.
-    readonly property real zoom: Modes.tablet ? Math.max(1, Math.min(1.3, ((screen?.height ?? 0) - 60) / card.implicitHeight)) : 1
+    readonly property real zoom: {
+        if (!Modes.tablet) {
+            return 1;
+        }
+        const room = (screen?.height ?? 0) - 60;
+        return Math.max(1, Math.min(1.3, room / card.implicitHeight));
+    }
 
     implicitWidth: Math.ceil(cardWidth * zoom)
     implicitHeight: Math.ceil(card.implicitHeight * zoom)

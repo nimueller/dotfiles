@@ -8,7 +8,10 @@ import Quickshell.Services.Mpris
 // playerctld is left out, it only mirrors the others, and so are browsers'
 // players while they have no track.
 Singleton {
-    readonly property var players: Mpris.players.values.filter(p => !p.dbusName.endsWith(".playerctld") && (p.isPlaying || !!p.trackTitle))
+    readonly property var players: {
+        const isShown = p => !p.dbusName.endsWith(".playerctld") && (p.isPlaying || !!p.trackTitle);
+        return Mpris.players.values.filter(isShown);
+    }
 
     // The track's title, or the player's name when it sends none
     function title(p) {
@@ -40,7 +43,14 @@ Singleton {
     // bindings ask again then.
     function entry(p) {
         const id = p?.desktopEntry || p?.identity;
-        return id && DesktopEntries.applications.values.length >= 0 ? DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id) : null;
+        if (!id) {
+            return null;
+        }
+        const isLoaded = DesktopEntries.applications.values.length >= 0;
+        if (!isLoaded) {
+            return null;
+        }
+        return DesktopEntries.byId(id) ?? DesktopEntries.heuristicLookup(id);
     }
 
     // The app's name, from its desktop entry

@@ -104,8 +104,7 @@ Rectangle {
                 readonly property int charge: Math.round(root.device.battery * 100)
 
                 visible: root.device.connected && root.device.batteryAvailable
-                // 󰂎…󰁹
-                text: `${Theme.glyph([0xf008e, 0xf007b, 0xf007d, 0xf007f, 0xf0081, 0xf0079][Math.min(5, Math.floor(charge / 20))])} ${charge}%`
+                text: `${Theme.batteryGlyph(charge)} ${charge}%`
                 font.pixelSize: 10
                 color: {
                     if (charge <= 15) {

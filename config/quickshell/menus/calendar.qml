@@ -26,7 +26,10 @@ Popup {
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string helper: Quickshell.shellPath("calendar-dav.py")
-    readonly property var palette: [Theme.peach, Theme.teal, Theme.pink, Theme.yellow, Theme.green, Theme.maroon, Theme.sky]
+    readonly property var palette: {
+        const warm = [Theme.peach, Theme.teal, Theme.pink, Theme.yellow];
+        return warm.concat([Theme.green, Theme.maroon, Theme.sky]);
+    }
 
     // { location, ownLocation, weekStart, weekNumbers, nextcloud: { url, user, calendars }, ics: [...] }
     property var settings: ({})
@@ -54,7 +57,12 @@ Popup {
     // the calendar is set to its own, or none is set there. settings.location
     // is the calendar's own one, kept while it follows the machine's.
     readonly property bool ownLocation: settings.ownLocation ?? false
-    readonly property var location: !ownLocation && LocalSettings.location ? LocalSettings.location : settings.location ?? null
+    readonly property var location: {
+        if (!ownLocation && LocalSettings.location) {
+            return LocalSettings.location;
+        }
+        return settings.location ?? null;
+    }
     onLocationChanged: if (filesReady === 2) {
         fetchWeather(false);
     }
@@ -425,7 +433,12 @@ Popup {
             return;
         }
         weatherError = "";
-        get(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=16` + "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day", data => {
+        const forecastUrl = "https://api.open-meteo.com/v1/forecast";
+        const coordinates = `latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=16`;
+        const currentFields = "current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day";
+        const dailyFields = "daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max";
+        const hourlyFields = "hourly=temperature_2m,weather_code,precipitation_probability,is_day";
+        get(`${forecastUrl}?${coordinates}&${currentFields}&${dailyFields}&${hourlyFields}`, data => {
             cache = Object.assign({}, cache, {
                 weather: {
                     at: Date.now(),
@@ -443,8 +456,10 @@ Popup {
     // further out if there is none close by
     function fetchMetar(place, widen) {
         const dLat = 0.8 * widen, dLon = 1.2 * widen;
-        get(`https://aviationweather.gov/api/data/metar?format=json&bbox=${place.lat - dLat},${place.lon - dLon},${place.lat + dLat},${place.lon + dLon}`, data => {
-            const fresh = (data ?? []).filter(m => m.temp !== null && m.temp !== undefined && Date.now() / 1000 - m.obsTime < 3 * 3600);
+        const bbox = `${place.lat - dLat},${place.lon - dLon},${place.lat + dLat},${place.lon + dLon}`;
+        get(`https://aviationweather.gov/api/data/metar?format=json&bbox=${bbox}`, data => {
+            const isFresh = m => m.temp !== null && m.temp !== undefined && Date.now() / 1000 - m.obsTime < 3 * 3600;
+            const fresh = (data ?? []).filter(isFresh);
             const nearest = fresh.map(m => Object.assign({}, m, {
                     distance: Weather.distanceKm(place.lat, place.lon, m.lat, m.lon)
                 })).sort((a, b) => a.distance - b.distance)[0];
@@ -462,7 +477,8 @@ Popup {
     }
 
     function searchLocation(query, pickFirst) {
-        get(`https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=${encodeURIComponent(query)}`, data => {
+        const search = "https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json";
+        get(`${search}&name=${encodeURIComponent(query)}`, data => {
             const results = data.results ?? [];
             if (pickFirst && results.length) {
                 pickLocation(results[0], false);
@@ -685,7 +701,10 @@ Popup {
                 spacing: 8
 
                 SectionTitle {
-                    readonly property int offset: Math.round((new Date(popup.selected.getFullYear(), popup.selected.getMonth(), popup.selected.getDate()) - new Date(popup.today.getFullYear(), popup.today.getMonth(), popup.today.getDate())) / 86400000)
+                    readonly property int offset: {
+                        const day = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                        return Math.round((day(popup.selected) - day(popup.today)) / 86400000);
+                    }
 
                     Layout.fillWidth: true
                     text: {
@@ -705,7 +724,13 @@ Popup {
 
                     Layout.fillWidth: true
                     visible: !!day
-                    text: day ? `${Theme.glyph(info[0])}  ${info[1]}  ·  ${day.max}° / ${day.min}°${day.rain ? `  ·  ${Theme.glyph(0xf058c)} ${day.rain}%` : ""}` : ""
+                    text: {
+                        if (!day) {
+                            return "";
+                        }
+                        const rain = day.rain ? `  ·  ${Theme.glyph(0xf058c)} ${day.rain}%` : "";
+                        return `${Theme.glyph(info[0])}  ${info[1]}  ·  ${day.max}° / ${day.min}°${rain}`;
+                    }
                     font.pixelSize: 11
                     color: Theme.subtext0
                 }
@@ -749,7 +774,10 @@ Popup {
 
                 Label {
                     visible: popup.sources.length > 0 && popup.dayEvents.length === 0
-                    text: popup.syncing && !(popup.viewKey in (popup.cache.events ?? {})) ? "Loading appointments…" : "Nothing planned"
+                    text: {
+                        const isLoading = popup.syncing && !(popup.viewKey in (popup.cache.events ?? {}));
+                        return isLoading ? "Loading appointments…" : "Nothing planned";
+                    }
                     color: Theme.overlay0
                     font.italic: true
                 }

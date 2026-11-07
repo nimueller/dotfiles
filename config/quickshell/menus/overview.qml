@@ -101,7 +101,8 @@ ShellRoot {
         if (workspace === "emptym") {
             dispatch(`hl.dsp.focus({ monitor = "${monitor.name}" })`);
         }
-        dispatch(`hl.dsp.window.move({ workspace = ${JSON.stringify(workspace)}, window = "address:0x${toplevel.address}" })`);
+        const destination = `workspace = ${JSON.stringify(workspace)}`;
+        dispatch(`hl.dsp.window.move({ ${destination}, window = "address:0x${toplevel.address}" })`);
         refresh.restart();
     }
 
@@ -156,7 +157,10 @@ ShellRoot {
                 readonly property bool focused: Hyprland.focusedMonitor === monitor
 
                 // Its workspaces in order, the + after them
-                readonly property var workspaces: Hyprland.workspaces.values.filter(w => w.monitor === monitor && w.id > 0).sort((a, b) => a.id - b.id)
+                readonly property var workspaces: {
+                    const isOwn = w => w.monitor === monitor && w.id > 0;
+                    return Hyprland.workspaces.values.filter(isOwn).sort((a, b) => a.id - b.id);
+                }
                 readonly property var toplevels: Hyprland.toplevels.values.filter(t => workspaces.includes(t.workspace))
 
                 // Tiles in the shape of the screen without the bar, as big as fit
@@ -184,7 +188,8 @@ ShellRoot {
                 property bool arrived: false
 
                 readonly property var activeTile: tiles.children.find(t => t.active) ?? null
-                readonly property var zoomTile: root.leaving && tiles.children.includes(root.target) ? root.target : activeTile
+                readonly property bool isLeavingToTarget: root.leaving && tiles.children.includes(root.target)
+                readonly property var zoomTile: isLeavingToTarget ? root.target : activeTile
                 readonly property real zoom: zoomTile ? width / tileWidth : 1
 
                 // The first frame has to look like the screen, so the zoom waits

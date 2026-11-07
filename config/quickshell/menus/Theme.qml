@@ -60,6 +60,12 @@ Singleton {
         return glyph(0xf091f);
     }
 
+    // A battery's charge (0 to 100) as one of six levels: 󰂎 … 󰁹
+    function batteryGlyph(percent) {
+        const levels = [0xf008e, 0xf007b, 0xf007d, 0xf007f, 0xf0081, 0xf0079];
+        return glyph(levels[Math.min(5, Math.floor(percent / 20))]);
+    }
+
     function glyph(cp) {
         return String.fromCodePoint(cp);
     }

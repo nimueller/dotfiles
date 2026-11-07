@@ -74,28 +74,32 @@ Popup {
         return details.length ? `${info.name} (${details.join(", ")})` : info.name;
     }
 
-    // One entry per line: qmlformat would join them into one line
-    // qmlformat off
-    readonly property var rows: !win?.address ? [] : [
-        ["Title", win.title],
-        ["Class", win.class],
-        ["Initial class", win.initialClass !== win.class ? win.initialClass : ""],
-        ["Initial title", win.initialTitle !== win.title ? win.initialTitle : ""],
-        ["App", entry ? `${entry.name} (${entry.id}.desktop)` : ""],
-        ["PID", String(win.pid)],
-        ["Command", command],
-        ["Flatpak", flatpakText(flatpak)],
-        ["Workspace", win.workspace.name],
-        ["Monitor", Hyprland.monitors.values.find(m => m.id === win.monitor)?.name ?? String(win.monitor)],
-        ["Position", `${win.at[0]}, ${win.at[1]}`],
-        ["Size", `${win.size[0]} × ${win.size[1]}`],
-        ["State", state(win)],
-        ["Protocol", win.xwayland ? "XWayland" : "Wayland"],
-        ["Content", win.contentType !== "none" ? win.contentType : ""],
-        ["Tags", win.tags.join(", ")],
-        ["Address", win.address]
-    ].filter(r => r[1])
-    // qmlformat on
+    // [label, value] for every detail the window has
+    readonly property var rows: {
+        if (!win?.address) {
+            return [];
+        }
+        const monitor = Hyprland.monitors.values.find(m => m.id === win.monitor)?.name ?? String(win.monitor);
+        const list = [];
+        list.push(["Title", win.title]);
+        list.push(["Class", win.class]);
+        list.push(["Initial class", win.initialClass !== win.class ? win.initialClass : ""]);
+        list.push(["Initial title", win.initialTitle !== win.title ? win.initialTitle : ""]);
+        list.push(["App", entry ? `${entry.name} (${entry.id}.desktop)` : ""]);
+        list.push(["PID", String(win.pid)]);
+        list.push(["Command", command]);
+        list.push(["Flatpak", flatpakText(flatpak)]);
+        list.push(["Workspace", win.workspace.name]);
+        list.push(["Monitor", monitor]);
+        list.push(["Position", `${win.at[0]}, ${win.at[1]}`]);
+        list.push(["Size", `${win.size[0]} × ${win.size[1]}`]);
+        list.push(["State", state(win)]);
+        list.push(["Protocol", win.xwayland ? "XWayland" : "Wayland"]);
+        list.push(["Content", win.contentType !== "none" ? win.contentType : ""]);
+        list.push(["Tags", win.tags.join(", ")]);
+        list.push(["Address", win.address]);
+        return list.filter(r => r[1]);
+    }
 
     Timer {
         id: copiedTimer

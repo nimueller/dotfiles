@@ -157,7 +157,13 @@ Item {
         visible: tile.toplevels.length > 0 && (tile.closing || hover.hovered || Modes.touch)
         opacity: tile.view.progress
         glyph: Theme.glyph(0xf0156) // 󰅖
-        text: tile.closing ? `Close ${tile.toplevels.length === 1 ? "1 window" : `${tile.toplevels.length} windows`}?` : "Close workspace"
+        text: {
+            if (!tile.closing) {
+                return "Close workspace";
+            }
+            const count = tile.toplevels.length;
+            return `Close ${count === 1 ? "1 window" : `${count} windows`}?`;
+        }
         accent: Theme.red
         active: tile.closing
         onClicked: {

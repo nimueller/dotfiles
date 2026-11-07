@@ -107,7 +107,15 @@ Item {
                     ctx.fillStyle = Theme.alpha(c, 0.15);
                     ctx.fill();
                     ctx.beginPath();
-                    run.forEach((p, i) => i ? ctx.lineTo(root.xOf(p.t), root.yOf(p.v)) : ctx.moveTo(root.xOf(p.t), root.yOf(p.v)));
+                    run.forEach((p, i) => {
+                        const x = root.xOf(p.t);
+                        const y = root.yOf(p.v);
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
                     ctx.strokeStyle = c;
                     ctx.lineWidth = 1.5;
                     ctx.stroke();
@@ -219,7 +227,16 @@ Item {
         Label {
             id: tipLabel
             anchors.centerIn: parent
-            text: tip.sample ? `${Qt.formatDateTime(new Date(tip.sample.t * 1000), "ddd HH:mm")} · ${tip.sample.v.toFixed(root.decimals)}${root.unit === "%" ? "%" : ` ${root.unit}`}${tip.sample.charging ? " · charging" : ""}` : ""
+            text: {
+                const sample = tip.sample;
+                if (!sample) {
+                    return "";
+                }
+                const time = Qt.formatDateTime(new Date(sample.t * 1000), "ddd HH:mm");
+                const unit = root.unit === "%" ? "%" : ` ${root.unit}`;
+                const charging = sample.charging ? " · charging" : "";
+                return `${time} · ${sample.v.toFixed(root.decimals)}${unit}${charging}`;
+            }
             font.pixelSize: 10
         }
     }

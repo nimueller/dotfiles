@@ -138,9 +138,11 @@ Popup {
                 bySsid[ssid] = n;
             }
         }
-        networks = Object.values(bySsid).sort((a, b) => b.active - a.active || b.known - a.known || b.signal - a.signal);
+        const byRelevance = (a, b) => b.active - a.active || b.known - a.known || b.signal - a.signal;
+        networks = Object.values(bySsid).sort(byRelevance);
 
-        vpns = connections.filter(f => f[2] === "vpn" || f[2] === "wireguard").map(([name, uuid, type, state, device]) => {
+        const isVpn = f => f[2] === "vpn" || f[2] === "wireguard";
+        vpns = connections.filter(isVpn).map(([name, uuid, type, state, device]) => {
             const info = vpnInfo[uuid] ?? {};
             const service = (info.service ?? "").split(".").pop();
             let kind = service || "VPN";
@@ -229,14 +231,18 @@ Popup {
             return;
         }
         secrets.ssid = network.ssid;
-        secrets.command = ["nmcli", "-s", "-g", "802-11-wireless.ssid,802-11-wireless.hidden,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,802-11-wireless-security.wep-key0", "connection", "show", "uuid", network.uuid];
+        const wireless = "802-11-wireless";
+        const security = "802-11-wireless-security";
+        const fields = `${wireless}.ssid,${wireless}.hidden,${security}.key-mgmt,${security}.psk,${security}.wep-key0`;
+        secrets.command = ["nmcli", "-s", "-g", fields, "connection", "show", "uuid", network.uuid];
         secrets.running = true;
     }
 
     // The WIFI: format phones read: T(ype), S(SID), P(assword), H(idden),
     // with \ ; , : " escaped
     function wifiCode(text) {
-        const [ssid, hidden, keyMgmt, psk, wep] = text.replace(/\n$/, "").split("\n").map(l => l.replace(/\\(.)/g, "$1"));
+        const unescape = l => l.replace(/\\(.)/g, "$1");
+        const [ssid, hidden, keyMgmt, psk, wep] = text.replace(/\n$/, "").split("\n").map(unescape);
         let type = "nopass";
         let password = "";
         if (keyMgmt === "sae") {
@@ -462,7 +468,10 @@ Popup {
                         checked: wiredRow.connected
                         enabled: !wiredRow.unplugged
                         accent: Theme.sapphire
-                        onToggled: popup.nmcli(["device", wiredRow.connected ? "disconnect" : "connect", wiredRow.modelData.device])
+                        onToggled: {
+                            const action = wiredRow.connected ? "disconnect" : "connect";
+                            popup.nmcli(["device", action, wiredRow.modelData.device]);
+                        }
                     }
                 }
             }
@@ -551,11 +560,13 @@ Popup {
                     // A new password for a saved network goes in through stdin
                     // (passwd-file), and NetworkManager keeps it
                     if (modelData.known && password) {
-                        popup.nmcli(["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"], modelData.ssid, `802-11-wireless-security.psk:${password}\n`);
+                        const up = ["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"];
+                        popup.nmcli(up, modelData.ssid, `802-11-wireless-security.psk:${password}\n`);
                     } else if (modelData.known) {
                         popup.nmcli(["connection", "up", "uuid", modelData.uuid], modelData.ssid);
                     } else if (password) {
-                        popup.nmcli(["device", "wifi", "connect", modelData.ssid, "password", password], modelData.ssid);
+                        const connect = ["device", "wifi", "connect", modelData.ssid, "password", password];
+                        popup.nmcli(connect, modelData.ssid);
                     } else {
                         popup.nmcli(["device", "wifi", "connect", modelData.ssid], modelData.ssid);
                     }
@@ -672,7 +683,8 @@ Popup {
                     if (code) {
                         secrets += `vpn.secrets.challenge-response:${code}\n`;
                     }
-                    popup.nmcli(["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"], modelData.uuid, secrets);
+                    const up = ["connection", "up", "uuid", modelData.uuid, "passwd-file", "/dev/stdin"];
+                    popup.nmcli(up, modelData.uuid, secrets);
                 }
                 onEditRequested: {
                     Quickshell.execDetached(["nm-connection-editor", `--edit=${modelData.uuid}`]);

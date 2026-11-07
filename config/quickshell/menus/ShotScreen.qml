@@ -43,7 +43,11 @@ PanelWindow {
             return [];
         }
         const shown = [m.activeWorkspace?.id, m.specialWorkspace?.id].filter(id => id);
-        return editor.clients.filter(c => c.mapped && !c.hidden && c.monitor === m.id && shown.includes(c.workspace.id)).sort((a, b) => (b.workspace.id < 0) - (a.workspace.id < 0) || b.floating - a.floating || a.focusHistoryID - b.focusHistoryID).map(c => Qt.rect(c.at[0] - m.x, c.at[1] - m.y, c.size[0], c.size[1]));
+        const isShown = c => c.mapped && !c.hidden && c.monitor === m.id && shown.includes(c.workspace.id);
+        const bySpecial = (a, b) => (b.workspace.id < 0) - (a.workspace.id < 0);
+        const byStacking = (a, b) => bySpecial(a, b) || b.floating - a.floating || a.focusHistoryID - b.focusHistoryID;
+        const toRect = c => Qt.rect(c.at[0] - m.x, c.at[1] - m.y, c.size[0], c.size[1]);
+        return editor.clients.filter(isShown).sort(byStacking).map(toRect);
     }
 
     property string drag: "" // "new", "move", "resize" or "draw" while the button is down
@@ -56,13 +60,35 @@ PanelWindow {
     property var textAt: null // { x, y } while typing a text
     property int pointer: Qt.CrossCursor
 
+    // The four rectangles around the selection: above, below, left, right
+    function shades() {
+        const s = sel;
+        const below = s.y + s.height;
+        const right = s.x + s.width;
+        const rects = [];
+        rects.push(Qt.rect(0, 0, width, s.y));
+        rects.push(Qt.rect(0, below, width, height - below));
+        rects.push(Qt.rect(0, s.y, s.x, s.height));
+        rects.push(Qt.rect(right, s.y, width - right, s.height));
+        return rects;
+    }
+
     function contains(r, p) {
         return p.x >= r.x && p.x < r.x + r.width && p.y >= r.y && p.y < r.y + r.height;
     }
 
     function clamp(r) {
         const x = Math.max(0, r.x), y = Math.max(0, r.y);
-        return Qt.rect(x, y, Math.max(0, Math.min(r.x + r.width, width) - x), Math.max(0, Math.min(r.y + r.height, height) - y));
+        const right = Math.min(r.x + r.width, width);
+        const bottom = Math.min(r.y + r.height, height);
+        return Qt.rect(x, y, Math.max(0, right - x), Math.max(0, bottom - y));
+    }
+
+    // A rectangle moved by dx, dy, but kept on the screen
+    function movedOnScreen(r, dx, dy) {
+        const x = Math.max(0, Math.min(r.x + dx, width - r.width));
+        const y = Math.max(0, Math.min(r.y + dy, height - r.height));
+        return Qt.rect(x, y, r.width, r.height);
     }
 
     function rectFrom(a, b) {
@@ -262,9 +288,13 @@ PanelWindow {
         }
         commitText();
         const f = factor;
-        const geometry = `${Math.round(sel.width * f)}x${Math.round(sel.height * f)}+${Math.round(sel.x * f)}+${Math.round(sel.y * f)}`;
+        const size = `${Math.round(sel.width * f)}x${Math.round(sel.height * f)}`;
+        const offset = `+${Math.round(sel.x * f)}+${Math.round(sel.y * f)}`;
+        const geometry = size + offset;
+        const script = Quickshell.shellPath("screenshot.py");
+        const percent = String(editor.percent);
         const run = layerFile => {
-            Quickshell.execDetached([Quickshell.shellPath("screenshot.py"), "--export", editor.dir, file, layerFile, geometry, String(editor.percent), action]);
+            Quickshell.execDetached([script, "--export", editor.dir, file, layerFile, geometry, percent, action]);
             Qt.quit();
         };
         if (!editor.shapes.length) {
@@ -284,7 +314,9 @@ PanelWindow {
     function recordShot() {
         const position = `${Math.round(monitor.x + sel.x)},${Math.round(monitor.y + sel.y)}`;
         const size = `${Math.round(sel.width)}x${Math.round(sel.height)}`;
-        Quickshell.execDetached([Quickshell.shellPath("screenshot.py"), "--record", editor.dir, name, position, size, String(editor.percent), editor.sound ? "sound" : "mute"]);
+        const script = Quickshell.shellPath("screenshot.py");
+        const audio = editor.sound ? "sound" : "mute";
+        Quickshell.execDetached([script, "--record", editor.dir, name, position, size, String(editor.percent), audio]);
         Qt.quit();
     }
 
@@ -332,7 +364,13 @@ PanelWindow {
         visible: win.active
 
         Repeater {
-            model: win.active ? [...win.editor.shapes, ...(win.pending ? [win.pending] : [])].filter(s => s.type === "pixelate") : []
+            model: {
+                if (!win.active) {
+                    return [];
+                }
+                const shapes = win.pending ? [...win.editor.shapes, win.pending] : win.editor.shapes;
+                return shapes.filter(s => s.type === "pixelate");
+            }
 
             // A window onto the whole screen scaled down to one pixel per block
             delegate: Item {
@@ -350,7 +388,11 @@ PanelWindow {
                     width: win.width
                     height: win.height
                     source: frozen.source
-                    sourceSize: Qt.size(Math.ceil(frozen.implicitWidth / win.block), Math.ceil(frozen.implicitHeight / win.block))
+                    sourceSize: {
+                        const columns = Math.ceil(frozen.implicitWidth / win.block);
+                        const rows = Math.ceil(frozen.implicitHeight / win.block);
+                        return Qt.size(columns, rows);
+                    }
                     smooth: false
                     asynchronous: true
                 }
@@ -405,15 +447,7 @@ PanelWindow {
         visible: win.selected
 
         Repeater {
-            // One entry per line: qmlformat would join them into one line
-            // qmlformat off
-            model: [
-                Qt.rect(0, 0, win.width, win.sel.y),
-                Qt.rect(0, win.sel.y + win.sel.height, win.width, win.height - win.sel.y - win.sel.height),
-                Qt.rect(0, win.sel.y, win.sel.x, win.sel.height),
-                Qt.rect(win.sel.x + win.sel.width, win.sel.y, win.width - win.sel.x - win.sel.width, win.sel.height)
-            ]
-            // qmlformat on
+            model: win.shades()
 
             delegate: Rectangle {
                 required property rect modelData
@@ -564,7 +598,7 @@ PanelWindow {
             if (win.drag === "new" && win.moved) {
                 win.editor.select(win.name, win.clamp(win.rectFrom(win.pressAt, p)));
             } else if (win.drag === "move") {
-                win.editor.selection = Qt.rect(Math.max(0, Math.min(s.x + dx, win.width - s.width)), Math.max(0, Math.min(s.y + dy, win.height - s.height)), s.width, s.height);
+                win.editor.selection = win.movedOnScreen(s, dx, dy);
             } else if (win.drag === "resize") {
                 const e = win.edges;
                 const l = s.x + (e.l ? dx : 0), r = s.x + s.width + (e.r ? dx : 0);
@@ -675,9 +709,18 @@ PanelWindow {
                 e.undo();
             } else if (win.selected && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down].includes(k)) {
                 const step = shift ? 10 : 1, s = win.sel;
-                const offsets = new Map([[Qt.Key_Left, [-step, 0]], [Qt.Key_Right, [step, 0]], [Qt.Key_Up, [0, -step]], [Qt.Key_Down, [0, step]]]);
-                const [dx, dy] = offsets.get(k);
-                e.selection = Qt.rect(Math.max(0, Math.min(s.x + dx, win.width - s.width)), Math.max(0, Math.min(s.y + dy, win.height - s.height)), s.width, s.height);
+                let dx = 0;
+                let dy = 0;
+                if (k === Qt.Key_Left) {
+                    dx = -step;
+                } else if (k === Qt.Key_Right) {
+                    dx = step;
+                } else if (k === Qt.Key_Up) {
+                    dy = -step;
+                } else {
+                    dy = step;
+                }
+                e.selection = win.movedOnScreen(s, dx, dy);
             } else if (ctrl) {
                 return;
             } else if (tools[letter]) {

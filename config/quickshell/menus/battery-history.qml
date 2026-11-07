@@ -13,7 +13,8 @@ import Quickshell.Io
 ShellRoot {
     id: root
 
-    readonly property string dir: `${Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state"}/battery-history`
+    readonly property string stateHome: Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME") + "/.local/state"
+    readonly property string dir: `${stateHome}/battery-history`
     readonly property real gap: 180 // s, see battery-log.py
 
     property int span: 86400
@@ -37,8 +38,24 @@ ShellRoot {
         }
     ]
 
+    // "Mon 3.2. 09:15 – 11:40", or "– now" while it lasts
+    function sessionTimes(s) {
+        const start = Qt.formatDateTime(new Date(s.start * 1000), "ddd d.M. HH:mm");
+        const end = s.ongoing ? "now" : Qt.formatTime(new Date(s.end * 1000), "HH:mm");
+        return `${start} – ${end}`;
+    }
+
+    // How long it lasted, and how long it was awake if it slept for a while
+    function sessionLength(s) {
+        const length = s.end - s.start;
+        const awakeNote = length - s.awake > 600 ? `, ${duration(s.awake)} awake` : "";
+        return duration(length) + awakeNote;
+    }
+
     function duration(seconds) {
-        const d = Math.floor(seconds / 86400), h = Math.floor(seconds % 86400 / 3600), m = Math.round(seconds % 3600 / 60);
+        const d = Math.floor(seconds / 86400);
+        const h = Math.floor(seconds % 86400 / 3600);
+        const m = Math.round(seconds % 3600 / 60);
         if (d) {
             return `${d} d ${h} h`;
         }
@@ -181,7 +198,11 @@ ShellRoot {
 
     // The logger keeps the apps' hours in memory for a while: write them now
     // (only the daemon's own command line, not e.g. an editor with the file)
-    Component.onCompleted: Quickshell.execDetached(["pkill", "-USR1", "-fx", `/usr/bin/python3 ${Quickshell.shellPath("battery-log.py")}`])
+    // battery-log.py writes what it has collected so far on SIGUSR1
+    Component.onCompleted: {
+        const logger = `/usr/bin/python3 ${Quickshell.shellPath("battery-log.py")}`;
+        Quickshell.execDetached(["pkill", "-USR1", "-fx", logger]);
+    }
 
     FloatingWindow {
         title: "Battery History"
@@ -408,7 +429,10 @@ ShellRoot {
                                     text: app.modelData.name
                                 }
                                 Label {
-                                    text: `${root.duration(app.modelData.cpu)} CPU · ${Math.round(app.modelData.share * 100)}%`
+                                    text: {
+                                        const share = Math.round(app.modelData.share * 100);
+                                        return `${root.duration(app.modelData.cpu)} CPU · ${share}%`;
+                                    }
                                     color: Theme.subtext0
                                 }
                             }
@@ -465,7 +489,10 @@ ShellRoot {
 
                             required property var modelData
                             readonly property real used: modelData.from - modelData.to
-                            readonly property real pace: modelData.awake >= 600 && used >= 2 ? used / (modelData.awake / 3600) : 0
+                            readonly property real pace: {
+                                const isLongEnough = modelData.awake >= 600 && used >= 2;
+                                return isLongEnough ? used / (modelData.awake / 3600) : 0;
+                            }
 
                             Layout.fillWidth: true
                             implicitHeight: 44
@@ -483,10 +510,10 @@ ShellRoot {
                                     spacing: 1
 
                                     Label {
-                                        text: `${Qt.formatDateTime(new Date(session.modelData.start * 1000), "ddd d.M. HH:mm")} – ${session.modelData.ongoing ? "now" : Qt.formatTime(new Date(session.modelData.end * 1000), "HH:mm")}`
+                                        text: root.sessionTimes(session.modelData)
                                     }
                                     Label {
-                                        text: `${root.duration(session.modelData.end - session.modelData.start)}${session.modelData.end - session.modelData.start - session.modelData.awake > 600 ? `, ${root.duration(session.modelData.awake)} awake` : ""}`
+                                        text: root.sessionLength(session.modelData)
                                         font.pixelSize: 10
                                         color: Theme.overlay1
                                     }
@@ -497,7 +524,14 @@ ShellRoot {
                                     color: Theme.subtext1
                                 }
                                 Label {
-                                    text: session.pace ? `${session.pace.toFixed(1)}% / h · ${(session.modelData.energy / (session.modelData.awake / 3600)).toFixed(1)} W` : ""
+                                    text: {
+                                        if (!session.pace) {
+                                            return "";
+                                        }
+                                        const s = session.modelData;
+                                        const watts = (s.energy / (s.awake / 3600)).toFixed(1);
+                                        return `${session.pace.toFixed(1)}% / h · ${watts} W`;
+                                    }
                                     color: Theme.subtext0
                                 }
                                 Label {

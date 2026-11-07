@@ -107,15 +107,22 @@ Popup {
                 Label {
                     visible: device.modelData.reachable && !!device.modelData.network
                     // 󰢿 󰢼 󰢽 󰢾
-                    text: `${Theme.glyph([0xf08bf, 0xf08bc, 0xf08bd, 0xf08be, 0xf08be][Math.max(0, Math.min(4, device.modelData.signal))])}  ${device.modelData.network}`
+                    text: {
+                        const level = Math.max(0, Math.min(4, device.modelData.signal));
+                        const glyph = Theme.glyph([0xf08bf, 0xf08bc, 0xf08bd, 0xf08be, 0xf08be][level]);
+                        return `${glyph}  ${device.modelData.network}`;
+                    }
                     color: Theme.subtext0
                 }
                 Label {
                     readonly property int charge: device.modelData.battery
 
                     visible: device.modelData.reachable && charge >= 0
-                    // 󰂄 / 󰂎…󰁹
-                    text: `${Theme.glyph(device.modelData.charging ? 0xf0084 : [0xf008e, 0xf007b, 0xf007d, 0xf007f, 0xf0081, 0xf0079][Math.min(5, Math.floor(charge / 20))])}  ${charge}%`
+                    // 󰂄 while charging
+                    text: {
+                        const glyph = device.modelData.charging ? Theme.glyph(0xf0084) : Theme.batteryGlyph(charge);
+                        return `${glyph}  ${charge}%`;
+                    }
                     color: {
                         if (device.modelData.charging) {
                             return Theme.teal;

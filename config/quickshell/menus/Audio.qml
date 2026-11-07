@@ -143,7 +143,9 @@ Singleton {
         const p = props(node);
         const name = appName(node).toLowerCase();
         const pid = parseInt(p["application.process.id"]);
-        const candidates = [owner(node)?.icon, p["application.icon-name"], p["application.process.binary"], name, `${name}-browser`, name.replace(/\s+/g, "-"), pid > 0 ? Windows.launcherEntry(pid)?.icon : ""];
+        const candidates = [owner(node)?.icon, p["application.icon-name"], p["application.process.binary"], name];
+        candidates.push(`${name}-browser`, name.replace(/\s+/g, "-"));
+        candidates.push(pid > 0 ? Windows.launcherEntry(pid)?.icon : "");
         for (const c of candidates) {
             const path = c ? Quickshell.iconPath(c, true) : "";
             if (path) {

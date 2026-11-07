@@ -101,12 +101,90 @@ Popup {
     // Waiting updates (Updates.qml): fresh ones while the menu is open
     Component.onCompleted: Updates.refresh()
 
+    function dayWord(days) {
+        return days === 1 ? "day" : "days";
+    }
+
+    // "1920 × 1080 · 60 Hz · scale 1.25", with the model first
+    function monitorText(m) {
+        const scale = m.scale !== 1 ? `scale ${m.scale}` : "";
+        const parts = [m.model, `${m.width} × ${m.height}`, `${Math.round(m.refreshRate)} Hz`, scale];
+        return parts.filter(s => s).join(" · ");
+    }
+
+    function lastUpgradeText() {
+        if (Updates.lastUpgrade === 0) {
+            return "Today";
+        }
+        return `${Updates.lastUpgrade} ${dayWord(Updates.lastUpgrade)} ago`;
+    }
+
+    function newsText() {
+        if (Updates.news.length === 1) {
+            return Updates.news[0].title;
+        }
+        return `${Updates.news.length} since the last upgrade`;
+    }
+
+    function flakeText() {
+        if (Updates.flakeAge === 0) {
+            return "Updated today";
+        }
+        const hint = Updates.flakeStale ? " · git pull, then switch" : "";
+        return `${Updates.flakeAge} ${dayWord(Updates.flakeAge)} old${hint}`;
+    }
+
+    // The rows of the info list, [label, value]; an empty value hides its row
+    function infoRows() {
+        const rows = [];
+        rows.push(["Host", root.info.host ?? ""]);
+        rows.push(["Kernel", root.info.kernel ?? ""]);
+        for (const m of root.monitors) {
+            rows.push([m.name, monitorText(m)]);
+        }
+        rows.push(["Uptime", root.info.uptime ? root.uptime(Number(root.info.uptime)) : ""]);
+        rows.push(["Packages", root.info.packages ? `${root.info.packages} from pacman` : ""]);
+        rows.push(["Updates", updatesText()]);
+        if (Updates.lastUpgrade !== null) {
+            rows.push(["Last upgrade", lastUpgradeText()]);
+        }
+        if (Updates.security.length) {
+            rows.push(["Security", Updates.security.map(s => s.package).join(", ")]);
+        }
+        if (Updates.news.length) {
+            rows.push(["Arch news", newsText()]);
+        }
+        if (Updates.flakeAge !== null) {
+            rows.push(["flake.lock", flakeText()]);
+        }
+        return rows;
+    }
+
+    // Rows to look at: updates waiting, security fixes, an old upgrade or
+    // flake.lock
+    function needsAttention(label) {
+        if (label === "Updates") {
+            return Updates.total > 0;
+        }
+        if (label === "Security") {
+            return true;
+        }
+        if (label === "Last upgrade") {
+            return Updates.upgradeStale;
+        }
+        if (label === "flake.lock") {
+            return Updates.flakeStale;
+        }
+        return false;
+    }
+
     // "12 from pacman · 2 from the AUR", "Up to date"
     function updatesText() {
         if (!Updates.checked) {
             return "Checking…";
         }
-        const parts = [[Updates.pacman, "pacman"], [Updates.aur, "the AUR"], [Updates.flatpak, "Flatpak"]].filter(([n]) => n > 0).map(([n, from]) => `${n} from ${from}`);
+        const sources = [[Updates.pacman, "pacman"], [Updates.aur, "the AUR"], [Updates.flatpak, "Flatpak"]];
+        const parts = sources.filter(([n]) => n > 0).map(([n, from]) => `${n} from ${from}`);
         return parts.length ? parts.join(" · ") : "Up to date";
     }
 
@@ -118,8 +196,13 @@ Popup {
         command: ["sh", "-c", `head -1 /proc/stat
 grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo
 df -B1 --output=source,size,used,target / "$HOME" | tail -n +2 | awk '!seen[$1]++ {$1 = "disk"; print}'
-for h in /sys/class/hwmon/hwmon*; do case $(cat "$h/name") in coretemp|k10temp|zenpower) echo "cputemp $(cat "$h/temp1_input")"; break ;; esac; done
-command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits | head -1)"`]
+for h in /sys/class/hwmon/hwmon*; do
+    case $(cat "$h/name") in
+        coretemp|k10temp|zenpower) echo "cputemp $(cat "$h/temp1_input")"; break ;;
+    esac
+done
+gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu
+command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --format=csv,noheader,nounits | head -1)"`]
         stdout: StdioCollector {
             onStreamFinished: {
                 const kb = {};
@@ -199,21 +282,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         rowSpacing: 6
 
         Repeater {
-            // One entry per line: qmlformat would join them into one line
-            // qmlformat off
-            model: [
-                ["Host", root.info.host ?? ""],
-                ["Kernel", root.info.kernel ?? ""],
-                ...root.monitors.map(m => [m.name, [m.model, `${m.width} × ${m.height}`, `${Math.round(m.refreshRate)} Hz`, m.scale !== 1 ? `scale ${m.scale}` : ""].filter(s => s).join(" · ")]),
-                ["Uptime", root.info.uptime ? root.uptime(Number(root.info.uptime)) : ""],
-                ["Packages", root.info.packages ? `${root.info.packages} from pacman` : ""],
-                ["Updates", root.updatesText()],
-                ...(Updates.lastUpgrade !== null ? [["Last upgrade", Updates.lastUpgrade === 0 ? "Today" : `${Updates.lastUpgrade} ${Updates.lastUpgrade === 1 ? "day" : "days"} ago`]] : []),
-                ...(Updates.security.length ? [["Security", Updates.security.map(s => s.package).join(", ")]] : []),
-                ...(Updates.news.length ? [["Arch news", Updates.news.length === 1 ? Updates.news[0].title : `${Updates.news.length} since the last upgrade`]] : []),
-                ...(Updates.flakeAge !== null ? [["flake.lock", Updates.flakeAge === 0 ? "Updated today" : `${Updates.flakeAge} ${Updates.flakeAge === 1 ? "day" : "days"} old${Updates.flakeStale ? " · git pull, then switch" : ""}`]] : [])
-            ]
-            // qmlformat on
+            model: root.infoRows()
 
             delegate: Item {
                 required property var modelData
@@ -235,7 +304,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                         if (parent.modelData[0] === "Arch news") {
                             return Theme.red;
                         }
-                        if ((parent.modelData[0] === "Updates" && Updates.total > 0) || parent.modelData[0] === "Security" || (parent.modelData[0] === "Last upgrade" && Updates.upgradeStale) || (parent.modelData[0] === "flake.lock" && Updates.flakeStale)) {
+                        if (root.needsAttention(parent.modelData[0])) {
                             return Theme.peach;
                         }
                         return Theme.text;
@@ -385,7 +454,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
                 root.nightLight = {
                     on: on
                 };
-                Quickshell.execDetached(on ? ["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)] : ["hyprctl", "hyprsunset", "identity"]);
+                if (on) {
+                    Quickshell.execDetached(["hyprctl", "hyprsunset", "temperature", String(root.nightTemperature)]);
+                } else {
+                    Quickshell.execDetached(["hyprctl", "hyprsunset", "identity"]);
+                }
             }
         }
     }
@@ -649,7 +722,14 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=name,util
         visible: !!root.gpu
         glyph: 0xf08ae // 󰢮
         title: "GPU"
-        detail: root.gpu ? `${Math.round(root.gpu.load * 100)} % · ${root.gib(root.gpu.memUsed)} of ${root.gib(root.gpu.memTotal)} · ${root.gpu.temp} °C` : ""
+        detail: {
+            const gpu = root.gpu;
+            if (!gpu) {
+                return "";
+            }
+            const memory = `${root.gib(gpu.memUsed)} of ${root.gib(gpu.memTotal)}`;
+            return `${Math.round(gpu.load * 100)} % · ${memory} · ${gpu.temp} °C`;
+        }
         value: root.gpu?.load ?? 0
         accent: Theme.green
     }

@@ -35,7 +35,16 @@ Popup {
 
     Label {
         Layout.fillWidth: true
-        text: `Published since the last upgrade${Updates.lastUpgrade !== null ? ` (${Updates.lastUpgrade === 0 ? "today" : `${Updates.lastUpgrade} ${Updates.lastUpgrade === 1 ? "day" : "days"} ago`})` : ""}. Read them before updating: some need a step of their own.`
+        text: {
+            const days = Updates.lastUpgrade;
+            let since = "";
+            if (days === 0) {
+                since = " (today)";
+            } else if (days !== null) {
+                since = ` (${days} ${days === 1 ? "day" : "days"} ago)`;
+            }
+            return `Published since the last upgrade${since}. Read them before updating: some need a step of their own.`;
+        }
         color: Theme.subtext0
         wrapMode: Text.WordWrap
         elide: Text.ElideNone
