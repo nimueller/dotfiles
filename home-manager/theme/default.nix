@@ -5,7 +5,7 @@ let
       owner = "catppuccin";
       repo = "btop";
       rev = "1.0.0";
-      sha256 = "J3UezOQMDdxpflGax0rGBF/XMiKqdqZXuX4KMVGTxFk=";
+      hash = "sha256-J3UezOQMDdxpflGax0rGBF/XMiKqdqZXuX4KMVGTxFk=";
     };
   };
 in

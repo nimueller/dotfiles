@@ -54,21 +54,49 @@ in
   # user.js of its own is left alone.
   xdg.dataFile."thunderbird-gnome-theme".source = theme.thunderbird;
   home.activation.thunderbirdTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    theme=${config.xdg.dataHome}/thunderbird-gnome-theme
-    for root in "${config.xdg.configHome}/thunderbird" "$HOME/.thunderbird"; do
-      [ -f "$root/profiles.ini" ] || continue
+    thunderbird_theme=${config.xdg.dataHome}/thunderbird-gnome-theme
+
+    # thunderbird_link <profile> <name> <target>
+    thunderbird_link() {
+      local link=$1/$2
+      if [ -e "$link" ] && [ ! -L "$link" ]; then
+        warnEcho "Thunderbird theme: $link exists, left as it is"
+        return
+      fi
+      run ln -sfn "$3" "$link"
+    }
+
+    # The profile folders in <root>/profiles.ini; relative ones are below root
+    thunderbird_profiles() {
+      local root=$1 path
       sed -n 's/^Path=//p' "$root/profiles.ini" | while IFS= read -r path; do
-        case $path in /*) profile=$path ;; *) profile=$root/$path ;; esac
-        [ -d "$profile" ] || continue
-        for link in "chrome:$theme" "user.js:$theme/configuration/user.js"; do
-          target=$profile/''${link%%:*}
-          if [ -e "$target" ] && [ ! -L "$target" ]; then
-            warnEcho "Thunderbird theme: $target exists, left as it is"
-          else
-            run ln -sfn "''${link#*:}" "$target"
-          fi
-        done
+        case $path in
+          /*)
+            echo "$path"
+            ;;
+          *)
+            echo "$root/$path"
+            ;;
+        esac
       done
+    }
+
+    # thunderbird_theme_profiles <root>: the theme in every profile of a root
+    thunderbird_theme_profiles() {
+      local root=$1 profile
+      if [ ! -f "$root/profiles.ini" ]; then
+        return
+      fi
+      thunderbird_profiles "$root" | while IFS= read -r profile; do
+        if [ -d "$profile" ]; then
+          thunderbird_link "$profile" chrome "$thunderbird_theme"
+          thunderbird_link "$profile" user.js "$thunderbird_theme/configuration/user.js"
+        fi
+      done
+    }
+
+    for root in "${config.xdg.configHome}/thunderbird" "$HOME/.thunderbird"; do
+      thunderbird_theme_profiles "$root"
     done
   '';
 }

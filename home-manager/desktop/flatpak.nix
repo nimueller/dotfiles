@@ -29,28 +29,35 @@ let
   ];
 
   # KeePassXC-Browser: the browsers start the proxy from the dotfiles, which
-  # talks to KeePassXC's socket (config/keepassxc/keepassxc-proxy.py)
-  braveHost = pkgs.writeText "org.keepassxc.keepassxc_browser.json" (
-    builtins.toJSON {
-      name = "org.keepassxc.keepassxc_browser";
-      description = "KeePassXC integration with native messaging support";
-      path = proxy;
-      type = "stdio";
-      allowed_origins = [
-        "chrome-extension://pdffhmdngciaglkoonimfcmckehcpafo/"
-        "chrome-extension://oboonakemofpalcgghocfoadofidjkkk/"
-      ];
-    }
-  );
-  zenHost = pkgs.writeText "org.keepassxc.keepassxc_browser.json" (
-    builtins.toJSON {
-      name = "org.keepassxc.keepassxc_browser";
-      description = "KeePassXC integration with native messaging support";
-      path = proxy;
-      type = "stdio";
-      allowed_extensions = [ "keepassxc-browser@keepassxc.org" ];
-    }
-  );
+  # talks to KeePassXC's socket (config/keepassxc/keepassxc-proxy.py). The
+  # entry is the same for both, apart from how each names the extension.
+  nativeHostName = "org.keepassxc.keepassxc_browser";
+  nativeHostFile = "${nativeHostName}.json";
+  nativeHost =
+    extensions:
+    pkgs.writeText nativeHostFile (
+      builtins.toJSON (
+        {
+          name = nativeHostName;
+          description = "KeePassXC integration with native messaging support";
+          path = proxy;
+          type = "stdio";
+        }
+        // extensions
+      )
+    );
+  braveHost = nativeHost {
+    allowed_origins = [
+      "chrome-extension://pdffhmdngciaglkoonimfcmckehcpafo/"
+      "chrome-extension://oboonakemofpalcgghocfoadofidjkkk/"
+    ];
+  };
+  zenHost = nativeHost {
+    allowed_extensions = [ "keepassxc-browser@keepassxc.org" ];
+  };
+
+  # A declared Flatpak is its id, or an attribute set with appId and origin
+  appIdOf = package: if builtins.isString package then package else package.appId;
 in
 {
   services.flatpak = {
@@ -139,15 +146,16 @@ in
   # through the Nix store), and copies of the entries
   home.activation.flatpakBrowsers = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     brave=$HOME/.var/app/com.brave.Browser/config
-    zen=$HOME/.var/app/app.zen_browser.zen/.mozilla
-    run mkdir -p "$brave/BraveSoftware/Brave-Browser/NativeMessagingHosts" "$zen/native-messaging-hosts"
+    brave_hosts=$brave/BraveSoftware/Brave-Browser/NativeMessagingHosts
+    zen_hosts=$HOME/.var/app/app.zen_browser.zen/.mozilla/native-messaging-hosts
+    run mkdir -p "$brave_hosts" "$zen_hosts"
     run ln -sfn ${config.dotfiles}/config/brave-flags.conf "$brave/brave-flags.conf"
-    run install -m 644 ${braveHost} "$brave/BraveSoftware/Brave-Browser/NativeMessagingHosts/org.keepassxc.keepassxc_browser.json"
-    run install -m 644 ${zenHost} "$zen/native-messaging-hosts/org.keepassxc.keepassxc_browser.json"
+    run install -m 644 ${braveHost} "$brave_hosts/${nativeHostFile}"
+    run install -m 644 ${zenHost} "$zen_hosts/${nativeHostFile}"
   '';
 
   # For pkg-sync
   xdg.configFile."pkg-sync/flatpaks".text = lib.concatMapStrings (
-    p: "${if builtins.isString p then p else p.appId}\n"
+    package: "${appIdOf package}\n"
   ) config.services.flatpak.packages;
 }
