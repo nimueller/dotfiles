@@ -10,6 +10,12 @@ var CA = (() => {
     disabledSites: []
   };
 
+  const RAND_LENGTH_MIN = 2;
+  const RAND_LENGTH_MAX = 16;
+  // The longest local part an address may have (RFC 5321)
+  const LOCAL_PART_MAX = 64;
+  const ALIASES_PER_SITE = 10;
+
   // Two-part endings, where the site's name is one level further down (amazon.co.uk)
   const MULTI_TLD = new Set([
     'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'me.uk', 'com.au', 'net.au', 'org.au',
@@ -18,29 +24,44 @@ var CA = (() => {
     'com.pl', 'com.es', 'co.il', 'com.ua'
   ]);
 
-  // Returns { base: "amazon.co.uk", site: "amazon" }
-  function parseHost(hostname) {
-    const host = String(hostname || '').toLowerCase().replace(/^www\d*\./, '').replace(/\.$/, '');
-    const p = host.split('.');
-    if (p.length < 2 || /^\d+$/.test(p[p.length - 1])) {
-      return { base: host, site: sanitize(host) };
-    }
-    const last2 = p.slice(-2).join('.');
-    const n = MULTI_TLD.has(last2) && p.length >= 3 ? 3 : 2;
-    const base = p.slice(-n).join('.');
-    return { base, site: sanitize(p[p.length - n]) };
-  }
-
-  function sanitize(s) {
-    return String(s).toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '') || 'site';
-  }
-
   // Without characters that are easy to mix up (0/o, 1/l/i)
   const ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
-  function rand(n) {
-    const buf = new Uint32Array(n);
-    crypto.getRandomValues(buf);
-    return Array.from(buf, (x) => ALPHABET[x % ALPHABET.length]).join('');
+
+  function sanitize(text) {
+    const name = String(text)
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/^-+|-+$/g, '');
+    return name || 'site';
+  }
+
+  // Returns { base: "amazon.co.uk", site: "amazon" }
+  function parseHost(hostname) {
+    const host = String(hostname || '')
+      .toLowerCase()
+      .replace(/^www\d*\./, '')
+      .replace(/\.$/, '');
+    const parts = host.split('.');
+    const isIpAddress = /^\d+$/.test(parts[parts.length - 1]);
+    if (parts.length < 2 || isIpAddress) {
+      return { base: host, site: sanitize(host) };
+    }
+    const lastTwo = parts.slice(-2).join('.');
+    const hasTwoPartEnding = MULTI_TLD.has(lastTwo) && parts.length >= 3;
+    const baseLength = hasTwoPartEnding ? 3 : 2;
+    const base = parts.slice(-baseLength).join('.');
+    return { base, site: sanitize(parts[parts.length - baseLength]) };
+  }
+
+  function rand(length) {
+    const values = new Uint32Array(length);
+    crypto.getRandomValues(values);
+    return Array.from(values, (value) => ALPHABET[value % ALPHABET.length]).join('');
+  }
+
+  function randLength(settings) {
+    const length = +settings.randLen || DEFAULTS.randLen;
+    return Math.min(Math.max(length, RAND_LENGTH_MIN), RAND_LENGTH_MAX);
   }
 
   function cleanLocal(local) {
@@ -49,18 +70,28 @@ var CA = (() => {
       .replace(/[^a-z0-9._+-]/g, '')
       .replace(/([._+-])\1+/g, '$1')
       .replace(/^[._+-]+|[._+-]+$/g, '')
-      .slice(0, 64);
+      .slice(0, LOCAL_PART_MAX);
+  }
+
+  function cleanDomain(domain) {
+    return String(domain)
+      .trim()
+      .replace(/^@/, '')
+      .trim()
+      .toLowerCase();
   }
 
   function buildAlias(settings, site, pattern) {
-    const d = new Date();
+    const now = new Date();
+    const year = String(now.getFullYear());
+    const month = String(now.getMonth() + 1).padStart(2, '0');
     const local = (pattern || settings.pattern)
       .replace(/\{site\}/g, site)
-      .replace(/\{rand\}/g, () => rand(Math.min(Math.max(+settings.randLen || 4, 2), 16)))
-      .replace(/\{yyyy\}/g, String(d.getFullYear()))
-      .replace(/\{yy\}/g, String(d.getFullYear()).slice(2))
-      .replace(/\{mm\}/g, String(d.getMonth() + 1).padStart(2, '0'));
-    return cleanLocal(local) + '@' + String(settings.domain).replace(/^@/, '').trim().toLowerCase();
+      .replace(/\{rand\}/g, () => rand(randLength(settings)))
+      .replace(/\{yyyy\}/g, year)
+      .replace(/\{yy\}/g, year.slice(2))
+      .replace(/\{mm\}/g, month);
+    return cleanLocal(local) + '@' + cleanDomain(settings.domain);
   }
 
   async function getSettings() {
@@ -75,19 +106,34 @@ var CA = (() => {
 
   async function rememberAlias(base, alias) {
     const aliases = await getAliases();
-    const list = (aliases[base] || []).filter((a) => a.alias !== alias);
+    const list = (aliases[base] || []).filter((entry) => entry.alias !== alias);
     list.unshift({ alias, ts: Date.now() });
-    aliases[base] = list.slice(0, 10);
+    aliases[base] = list.slice(0, ALIASES_PER_SITE);
     await chrome.storage.local.set({ aliases });
   }
 
   async function forgetAlias(base, alias) {
     const aliases = await getAliases();
-    if (!aliases[base]) return;
-    aliases[base] = aliases[base].filter((a) => a.alias !== alias);
-    if (!aliases[base].length) delete aliases[base];
+    if (!aliases[base]) {
+      return;
+    }
+    aliases[base] = aliases[base].filter((entry) => entry.alias !== alias);
+    if (aliases[base].length === 0) {
+      delete aliases[base];
+    }
     await chrome.storage.local.set({ aliases });
   }
 
-  return { DEFAULTS, parseHost, buildAlias, getSettings, getAliases, rememberAlias, forgetAlias };
+  return {
+    DEFAULTS,
+    RAND_LENGTH_MIN,
+    RAND_LENGTH_MAX,
+    parseHost,
+    buildAlias,
+    cleanDomain,
+    getSettings,
+    getAliases,
+    rememberAlias,
+    forgetAlias
+  };
 })();

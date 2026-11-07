@@ -1,89 +1,178 @@
 /* global CA */
 (async () => {
+  const SAVED_SHOWN_MS = 1500;
   const $ = (id) => document.getElementById(id);
-  const s = await CA.getSettings();
-  $('domain').value = s.domain;
-  $('pattern').value = s.pattern;
-  $('randLen').value = s.randLen;
-  $('onlyEmpty').checked = s.onlyEmpty;
-  $('disabled').value = (s.disabledSites || []).join('\n');
 
-  const current = () => ({
-    domain: $('domain').value.trim().replace(/^@/, '').toLowerCase(),
-    pattern: $('pattern').value.trim() || CA.DEFAULTS.pattern,
-    randLen: Math.min(Math.max(parseInt($('randLen').value, 10) || 4, 2), 16),
-    onlyEmpty: $('onlyEmpty').checked,
-    disabledSites: $('disabled').value.split(/\s+/).map((x) => x.trim().toLowerCase()).filter(Boolean)
-  });
-  const preview = () => {
-    const s = current();
-    $('preview').textContent = s.domain ? CA.buildAlias(s, 'amazon') : '(set a domain first)';
-  };
-  ['domain', 'pattern', 'randLen'].forEach((id) => $(id).addEventListener('input', preview));
+  const stored = await CA.getSettings();
+  $('domain').value = stored.domain;
+  $('pattern').value = stored.pattern;
+  $('randLen').value = stored.randLen;
+  $('onlyEmpty').checked = stored.onlyEmpty;
+  $('disabled').value = (stored.disabledSites || []).join('\n');
+
+  function randLength() {
+    const length = parseInt($('randLen').value, 10) || CA.DEFAULTS.randLen;
+    return Math.min(Math.max(length, CA.RAND_LENGTH_MIN), CA.RAND_LENGTH_MAX);
+  }
+
+  function disabledSites() {
+    return $('disabled').value
+      .split(/\s+/)
+      .map((site) => site.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  // The settings as the form shows them
+  function current() {
+    return {
+      domain: CA.cleanDomain($('domain').value),
+      pattern: $('pattern').value.trim() || CA.DEFAULTS.pattern,
+      randLen: randLength(),
+      onlyEmpty: $('onlyEmpty').checked,
+      disabledSites: disabledSites()
+    };
+  }
+
+  function preview() {
+    const settings = current();
+    if (settings.domain) {
+      $('preview').textContent = CA.buildAlias(settings, 'amazon');
+    } else {
+      $('preview').textContent = '(set a domain first)';
+    }
+  }
+  for (const id of ['domain', 'pattern', 'randLen']) {
+    $(id).addEventListener('input', preview);
+  }
   preview();
 
   $('save').onclick = async () => {
     await chrome.storage.sync.set(current());
     $('saved').textContent = 'Saved ✓';
-    setTimeout(() => ($('saved').textContent = ''), 1500);
+    setTimeout(() => {
+      $('saved').textContent = '';
+    }, SAVED_SHOWN_MS);
   };
 
-  async function renderRows() {
-    const aliases = await CA.getAliases();
-    const q = $('search').value.trim().toLowerCase();
+  // All aliases as rows, the newest first: [{ base, alias, ts }]
+  function aliasRows(aliases) {
     const rows = [];
-    Object.entries(aliases).forEach(([base, list]) => list.forEach((a) => rows.push({ base, ...a })));
-    rows.sort((a, b) => b.ts - a.ts);
+    for (const [base, list] of Object.entries(aliases)) {
+      for (const entry of list) {
+        rows.push({ base, ...entry });
+      }
+    }
+    return rows.sort((a, b) => b.ts - a.ts);
+  }
+
+  function cell(content) {
+    const td = document.createElement('td');
+    td.append(content);
+    return td;
+  }
+
+  function aliasRow(row) {
+    const tr = document.createElement('tr');
+    const code = document.createElement('code');
+    code.textContent = row.alias;
+    const remove = document.createElement('button');
+    remove.textContent = 'Remove';
+    remove.onclick = async () => {
+      await CA.forgetAlias(row.base, row.alias);
+      renderRows();
+    };
+    const date = new Date(row.ts).toLocaleDateString();
+    tr.append(cell(row.base), cell(code), cell(date), cell(remove));
+    return tr;
+  }
+
+  function emptyRow() {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 4;
+    td.className = 'hint';
+    td.textContent = 'No aliases saved yet.';
+    tr.appendChild(td);
+    return tr;
+  }
+
+  async function renderRows() {
+    const rows = aliasRows(await CA.getAliases());
+    const query = $('search').value.trim().toLowerCase();
+    const matches = (row) => !query || row.base.includes(query) || row.alias.includes(query);
     const tbody = $('rows');
     tbody.textContent = '';
-    rows.filter((r) => !q || r.base.includes(q) || r.alias.includes(q)).forEach((r) => {
-      const tr = document.createElement('tr');
-      const td = (content) => { const t = document.createElement('td'); t.append(content); return t; };
-      const code = document.createElement('code'); code.textContent = r.alias;
-      const del = document.createElement('button'); del.textContent = 'Remove';
-      del.onclick = async () => { await CA.forgetAlias(r.base, r.alias); renderRows(); };
-      tr.append(td(r.base), td(code), td(new Date(r.ts).toLocaleDateString()), td(del));
-      tbody.appendChild(tr);
-    });
-    if (!rows.length) {
-      const tr = document.createElement('tr'); const t = document.createElement('td');
-      t.colSpan = 4; t.className = 'hint'; t.textContent = 'No aliases saved yet.';
-      tr.appendChild(t); tbody.appendChild(tr);
+    for (const row of rows.filter(matches)) {
+      tbody.appendChild(aliasRow(row));
+    }
+    if (rows.length === 0) {
+      tbody.appendChild(emptyRow());
     }
   }
   $('search').addEventListener('input', renderRows);
   renderRows();
 
-  const download = (name, text, type) => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([text], { type }));
-    a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  function download(name, text, type) {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([text], { type }));
+    link.download = name;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  $('export').onclick = async () => {
+    const json = JSON.stringify(await CA.getAliases(), null, 2);
+    download('catch-all-aliases.json', json, 'application/json');
   };
-  $('export').onclick = async () => download('catch-all-aliases.json', JSON.stringify(await CA.getAliases(), null, 2), 'application/json');
+
   $('exportCsv').onclick = async () => {
     const lines = ['website,alias,date'];
-    Object.entries(await CA.getAliases()).forEach(([base, list]) =>
-      list.forEach((a) => lines.push([base, a.alias, new Date(a.ts).toISOString().slice(0, 10)].join(','))));
+    for (const [base, list] of Object.entries(await CA.getAliases())) {
+      for (const entry of list) {
+        const date = new Date(entry.ts).toISOString().slice(0, 10);
+        lines.push([base, entry.alias, date].join(','));
+      }
+    }
     download('catch-all-aliases.csv', lines.join('\n'), 'text/csv');
   };
+
+  // The saved and the imported aliases of a site, the newest first and each
+  // alias once
+  function mergeAliases(saved, imported) {
+    const valid = imported.filter((entry) => entry && typeof entry.alias === 'string');
+    const merged = [...saved, ...valid].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const seen = new Set();
+    return merged.filter((entry) => {
+      if (seen.has(entry.alias)) {
+        return false;
+      }
+      seen.add(entry.alias);
+      return true;
+    });
+  }
+
+  async function importAliases(file) {
+    const incoming = JSON.parse(await file.text());
+    const aliases = await CA.getAliases();
+    for (const [base, list] of Object.entries(incoming)) {
+      if (Array.isArray(list)) {
+        aliases[base] = mergeAliases(aliases[base] || [], list);
+      }
+    }
+    await chrome.storage.local.set({ aliases });
+  }
+
   $('importBtn').onclick = () => $('importFile').click();
-  $('importFile').onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  $('importFile').onchange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+      return;
+    }
     try {
-      const incoming = JSON.parse(await file.text());
-      const aliases = await CA.getAliases();
-      Object.entries(incoming).forEach(([base, list]) => {
-        if (!Array.isArray(list)) return;
-        const merged = [...(aliases[base] || []), ...list.filter((a) => a && typeof a.alias === 'string')];
-        const seen = new Set();
-        aliases[base] = merged.sort((a, b) => (b.ts || 0) - (a.ts || 0)).filter((a) => !seen.has(a.alias) && seen.add(a.alias));
-      });
-      await chrome.storage.local.set({ aliases });
+      await importAliases(file);
       renderRows();
-    } catch (err) {
-      alert('Import failed: ' + err.message);
+    } catch (error) {
+      alert('Import failed: ' + error.message);
     }
   };
 })();
