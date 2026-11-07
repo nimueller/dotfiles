@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Catch-All Alias – Settings</title>
+<style>
+  body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 760px; margin: 32px auto; padding: 0 16px; color: #111827; }
+  h1 { font-size: 20px; } h2 { font-size: 15px; margin-top: 28px; }
+  label { display: block; margin: 12px 0 4px; font-weight: 600; }
+  input[type=text], input[type=number], textarea { font: 14px ui-monospace, Menlo, Consolas, monospace; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; width: 100%; box-sizing: border-box; }
+  input[type=number] { width: 90px; }
+  .hint { color: #6b7280; font-size: 12.5px; }
+  .preview { font-family: ui-monospace, Menlo, Consolas, monospace; color: #1d4ed8; }
+  button { font: inherit; font-size: 13px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+  button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  td code { color: #1d4ed8; }
+  .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  #saved { color: #059669; }
+  @media (prefers-color-scheme: dark) {
+    body { background:#111827; color:#f9fafb; } input, textarea { background:#1f2937; color:#f9fafb; border-color:#374151; }
+    button { background:#1f2937; color:#f9fafb; border-color:#374151; } th, td { border-color:#374151; }
+    .preview, td code { color:#93c5fd; } .hint { color:#9ca3af; }
+  }
+</style>
+</head>
+<body>
+  <h1>✉ Catch-All Alias</h1>
+
+  <label for="domain">Domain</label>
+  <input type="text" id="domain" placeholder="example.com">
+
+  <label for="pattern">Alias pattern</label>
+  <input type="text" id="pattern" placeholder="{site}.{rand}">
+  <div class="hint">Placeholders: <code>{site}</code> the site's name (e.g. amazon), <code>{rand}</code> a random part,
+    <code>{yyyy}</code>/<code>{yy}</code> the year, <code>{mm}</code> the month. Example: <code>{site}-{yy}{mm}</code></div>
+  <div class="hint">Preview for amazon.de: <span class="preview" id="preview"></span></div>
+
+  <label for="randLen">Length of the random part</label>
+  <input type="number" id="randLen" min="2" max="16">
+
+  <label><input type="checkbox" id="onlyEmpty"> Only show when the field is empty</label>
+  <div class="hint"><b>Alt+Shift+E</b> opens the suggestion in any focused field either way.</div>
+
+  <label for="disabled">Turned off on (one domain per line)</label>
+  <textarea id="disabled" rows="3" placeholder="google.com"></textarea>
+
+  <div class="bar"><button class="primary" id="save">Save</button><span id="saved"></span></div>
+
+  <h2>Aliases used</h2>
+  <div class="hint">Saved when you pick a suggestion or copy one in the popup. Only kept locally in this browser.</div>
+  <div class="bar">
+    <input type="text" id="search" placeholder="Search…" style="max-width:260px">
+    <button id="export">Export as JSON</button>
+    <button id="exportCsv">Export as CSV</button>
+    <button id="importBtn">Import</button>
+    <input type="file" id="importFile" accept=".json" hidden>
+  </div>
+  <table>
+    <thead><tr><th>Website</th><th>Alias</th><th>Date</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script src="common.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

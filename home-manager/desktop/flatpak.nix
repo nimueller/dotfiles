@@ -87,12 +87,16 @@ in
       # also ones installed by hand: what an app is given can't leave the
       # machine. An app's own override wins over this one
       global.Context.shared = [ "!network" ];
-      # Its flags (config/brave-flags.conf: Wayland) and KeePassXC
+      # Its flags (config/brave-flags.conf: Wayland), KeePassXC, and the
+      # extensions in the dotfiles. Brave can't be told to load those (no
+      # --load-extension in release builds): load each once in
+      # brave://extensions, developer mode, "Load unpacked"
       "com.brave.Browser".Context = {
         shared = [ "network" ];
         filesystems = [
           keepassxcSocket
           "${dotfiles}/config/brave-flags.conf:ro"
+          "${dotfiles}/config/brave/extensions:ro"
           "${dotfiles}/config/keepassxc:ro"
         ];
       };
