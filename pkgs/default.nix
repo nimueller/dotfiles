@@ -1,4 +1,20 @@
 { pkgs, ... }:
+let
+  # A command from scripts/<name>.py. check.sh lints it (ruff, pyright)
+  # instead of the writer's flake8 (doCheck).
+  pythonScript =
+    name:
+    pkgs.writers.writePython3Bin name { doCheck = false; } (builtins.readFile ./scripts/${name}.py);
+
+  # A command from scripts/<name>.sh: shellcheck runs at build time, and the
+  # given tools are on its PATH
+  shellScript =
+    name: runtimeInputs:
+    pkgs.writeShellApplication {
+      inherit name runtimeInputs;
+      text = builtins.readFile ./scripts/${name}.sh;
+    };
+in
 {
   # Python with the iCalendar libraries, for config/quickshell/menus/calendar-dav.py
   quickshell-calendar-python = pkgs.writeShellScriptBin "quickshell-calendar-python" ''
@@ -16,8 +32,10 @@
     pkgs.runCommand "quickshell-emoji.json" { nativeBuildInputs = [ pkgs.python3 ]; }
       ''
         cldr=${pkgs.cldr-annotations}/share/unicode/cldr/common
-        python3 ${./emoji.py} ${pkgs.unicode-emoji}/share/unicode/emoji/emoji-test.txt $out \
-          $cldr/annotations/{en,de}.xml $cldr/annotationsDerived/{en,de}.xml
+        emoji=${pkgs.unicode-emoji}/share/unicode/emoji/emoji-test.txt
+        python3 ${./emoji.py} "$emoji" "$out" \
+          $cldr/annotations/{en,de}.xml \
+          $cldr/annotationsDerived/{en,de}.xml
       '';
 
   # Preloaded into Nautilus: keeps it running, and its start from waiting
@@ -46,71 +64,40 @@
   '';
 
   # Installed software against system/packages/*.txt and the Flatpaks in
-  # home-manager/desktop/flatpak.nix. Python scripts: check.sh lints them
-  # (ruff, pyright) instead of the writer's flake8 (doCheck)
-  pkg-sync = pkgs.writers.writePython3Bin "pkg-sync" { doCheck = false; } (
-    builtins.readFile ./scripts/pkg-sync.py
-  );
+  # home-manager/desktop/flatpak.nix
+  pkg-sync = pythonScript "pkg-sync";
 
-  # Shell scripts: shellcheck runs at build time and the tools they need are
-  # on their PATH. TeX Live and Neovim (init-tex, edit-tex) come from the dev
-  # module rather than being pulled in here.
-  # systemd-inhibit and hyprctl come from the system, like the session they serve
-  stay-awake = pkgs.writeShellApplication {
-    name = "stay-awake";
-    text = builtins.readFile ./scripts/stay-awake.sh;
-  };
+  # TeX Live and Neovim (init-tex, edit-tex) come from the dev module rather
+  # than being pulled in here. systemd-inhibit and hyprctl come from the
+  # system, like the session they serve.
+  stay-awake = shellScript "stay-awake" [ ];
   # Ends the Sunshine stream from the power menu (config/quickshell/menus/power.qml)
-  sunshine-disconnect = pkgs.writeShellApplication {
-    name = "sunshine-disconnect";
-    runtimeInputs = with pkgs; [
+  sunshine-disconnect = shellScript "sunshine-disconnect" (
+    with pkgs;
+    [
       curl
       libsecret
       libnotify
       coreutils
-    ];
-    text = builtins.readFile ./scripts/sunshine-disconnect.sh;
-  };
+    ]
+  );
   # pgrep comes from the system too
-  after-unlock = pkgs.writeShellApplication {
-    name = "after-unlock";
-    text = builtins.readFile ./scripts/after-unlock.sh;
-  };
+  after-unlock = shellScript "after-unlock" [ ];
   # The lock screen, with the on-screen keyboard in the touch mode and a
   # Caps Lock warning (config/hypr/hyprlock.conf); busctl, pgrep and hyprctl
   # come from the system
-  lock-screen = pkgs.writeShellApplication {
-    name = "lock-screen";
-    runtimeInputs = [ pkgs.jq ];
-    text = builtins.readFile ./scripts/lock-screen.sh;
-  };
+  lock-screen = shellScript "lock-screen" [ pkgs.jq ];
   # The media player on the lock screen (config/hypr/hyprlock.conf);
   # playerctl comes from home-manager/desktop
-  lock-media = pkgs.writers.writePython3Bin "lock-media" { doCheck = false; } (
-    builtins.readFile ./scripts/lock-media.py
-  );
+  lock-media = pythonScript "lock-media";
   # The time left after too many wrong passwords at the lock screen
   # (config/hypr/hyprlock.conf, system/pam-hyprlock)
-  lock-lockout = pkgs.writers.writePython3Bin "lock-lockout" { doCheck = false; } (
-    builtins.readFile ./scripts/lock-lockout.py
-  );
+  lock-lockout = pythonScript "lock-lockout";
   # Dims and suspends laptops when idle (config/hypr/hypridle.conf);
   # brightnessctl, busctl and systemctl come from the system
-  laptop-idle = pkgs.writeShellApplication {
-    name = "laptop-idle";
-    text = builtins.readFile ./scripts/laptop-idle.sh;
-  };
+  laptop-idle = shellScript "laptop-idle" [ ];
   # Keeps Discord's logs of calls (timer in home-manager/desktop/default.nix)
-  discord-call-logs = pkgs.writers.writePython3Bin "discord-call-logs" { doCheck = false; } (
-    builtins.readFile ./scripts/discord-call-logs.py
-  );
-  init-tex = pkgs.writeShellApplication {
-    name = "init-tex";
-    text = builtins.readFile ./scripts/init-tex.sh;
-  };
-  edit-tex = pkgs.writeShellApplication {
-    name = "edit-tex";
-    runtimeInputs = with pkgs; [ fzf ];
-    text = builtins.readFile ./scripts/edit-tex.sh;
-  };
+  discord-call-logs = pythonScript "discord-call-logs";
+  init-tex = shellScript "init-tex" [ ];
+  edit-tex = shellScript "edit-tex" [ pkgs.fzf ];
 }

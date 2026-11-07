@@ -3,6 +3,7 @@
   lib,
   username,
   config,
+  dotfilesLink,
   ...
 }:
 let
@@ -56,14 +57,12 @@ in
     ];
 
     file = {
-      ".p10k.zsh".source = config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/zsh/p10k.zsh";
+      ".p10k.zsh".source = dotfilesLink "config/zsh/p10k.zsh";
       # Claude Code's instructions for every project
-      ".claude/CLAUDE.md".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/claude/CLAUDE.md";
+      ".claude/CLAUDE.md".source = dotfilesLink "config/claude/CLAUDE.md";
       # Its settings (theme, plugins); `claude plugin enable`/`disable` and
       # /config write through the link into the repository
-      ".claude/settings.json".source =
-        config.lib.file.mkOutOfStoreSymlink "${config.dotfiles}/config/claude/settings.json";
+      ".claude/settings.json".source = dotfilesLink "config/claude/settings.json";
     };
   };
 
@@ -80,12 +79,8 @@ in
         ignoreSpace = true;
         share = true;
       };
-      autosuggestion = {
-        enable = true;
-      };
-      syntaxHighlighting = {
-        enable = true;
-      };
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
       oh-my-zsh = {
         enable = true;
         plugins = [
@@ -131,9 +126,7 @@ in
 
     btop = {
       enable = true;
-      settings = {
-        vim_keys = true;
-      };
+      settings.vim_keys = true;
     };
 
     git = {
@@ -223,10 +216,12 @@ in
   # to the machine, and the runner in CI has none.
   home.activation.gitAllowedSigners = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     key=${lib.replaceStrings [ "~" ] [ config.home.homeDirectory ] signingKey}
+    email=${lib.escapeShellArg config.programs.git.settings.user.email}
     if [[ -f $key && ! -v DRY_RUN ]]; then
       mkdir -p "$(dirname ${allowedSigners})"
-      printf '%s namespaces="git" %s\n' ${lib.escapeShellArg config.programs.git.settings.user.email} \
-        "$(cut -d' ' -f1,2 "$key")" > ${allowedSigners}
+      # The key's type and the key itself, without its comment
+      public_key=$(cut -d' ' -f1,2 "$key")
+      printf '%s namespaces="git" %s\n' "$email" "$public_key" >${allowedSigners}
     fi
   '';
 
@@ -235,11 +230,23 @@ in
   # the GPG keyring. Without a key of our own to certify them with, only
   # ultimate owner trust makes them valid: `git log --show-signature` then
   # says good instead of unknown.
+  #
+  # The owner trust list takes "<fingerprint>:6:" (6: ultimate) per primary
+  # key: the first fingerprint after each "pub" line, not those of subkeys.
   home.activation.gitHubWebFlowKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     gpg=${lib.getExe' pkgs.gnupg "gpg"}
+    awk=${lib.getExe pkgs.gawk}
     run $gpg --batch --quiet --import ${gitHubWebFlowKey}
-    $gpg --show-keys --with-colons ${gitHubWebFlowKey} \
-      | ${lib.getExe pkgs.gawk} -F: '$1 == "pub" { pub = 1 } $1 == "fpr" && pub { print $10 ":6:"; pub = 0 }' \
-      | run $gpg --batch --quiet --import-ownertrust
+    $gpg --show-keys --with-colons ${gitHubWebFlowKey} |
+      $awk -F: '
+        $1 == "pub" {
+          is_primary = 1
+        }
+        $1 == "fpr" && is_primary {
+          print $10 ":6:"
+          is_primary = 0
+        }
+      ' |
+      run $gpg --batch --quiet --import-ownertrust
   '';
 }

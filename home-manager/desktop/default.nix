@@ -6,6 +6,12 @@
 }:
 let
   my-pkgs = import ../../pkgs { inherit pkgs; };
+  menus = "${config.dotfiles}/config/quickshell/menus";
+  # From pacman (system/packages/session.txt): the system's Qt and GTK
+  quickshell = "/usr/bin/qs";
+  nautilus = "/usr/bin/nautilus";
+  calendarPython = lib.getExe my-pkgs.quickshell-calendar-python;
+  nautilusExtensions = "share/nautilus-python/extensions";
 in
 {
   targets.genericLinux.enable = true;
@@ -55,7 +61,7 @@ in
         Service = {
           Type = "dbus";
           BusName = "org.freedesktop.Notifications";
-          ExecStart = "/usr/bin/qs -n -p ${config.dotfiles}/config/quickshell/menus/daemon.qml"; # from pacman (system/packages/session.txt)
+          ExecStart = "${quickshell} -n -p ${menus}/daemon.qml";
           Restart = "on-failure";
         };
       };
@@ -74,7 +80,7 @@ in
         Service = {
           Type = "dbus";
           BusName = "org.gnome.Nautilus";
-          ExecStart = "/usr/bin/nautilus --gapplication-service"; # from pacman (system/packages/session.txt)
+          ExecStart = "${nautilus} --gapplication-service";
           Environment = "LD_PRELOAD=${my-pkgs.nautilus-preload}/lib/nautilus-preload.so";
           Restart = "on-failure";
         };
@@ -87,7 +93,7 @@ in
         Unit.Description = "Calendar reminders for the quickshell calendar menu";
         Service = {
           Type = "oneshot";
-          ExecStart = "${my-pkgs.quickshell-calendar-python}/bin/quickshell-calendar-python %h/.config/quickshell/menus/calendar-dav.py remind";
+          ExecStart = "${calendarPython} %h/.config/quickshell/menus/calendar-dav.py remind";
           Environment = "PATH=${
             lib.makeBinPath [
               pkgs.libsecret
@@ -95,7 +101,6 @@ in
             ]
           }:/usr/bin";
         };
-
       };
 
       # Discord's WebRTC logs of calls, kept beyond its last sessions to look
@@ -104,29 +109,30 @@ in
         Unit.Description = "Keep Discord's logs of calls";
         Service = {
           Type = "oneshot";
-          ExecStart = "${my-pkgs.discord-call-logs}/bin/discord-call-logs";
+          ExecStart = lib.getExe my-pkgs.discord-call-logs;
           Nice = 19;
           IOSchedulingClass = "idle";
         };
       };
     };
-    timers.quickshell-calendar-reminders = {
-      Unit.Description = "Check calendar reminders every minute";
-      Timer = {
-        OnCalendar = "minutely";
-        AccuracySec = "5s";
+    timers = {
+      quickshell-calendar-reminders = {
+        Unit.Description = "Check calendar reminders every minute";
+        Timer = {
+          OnCalendar = "minutely";
+          AccuracySec = "5s";
+        };
+        Install.WantedBy = [ "timers.target" ];
       };
-      Install.WantedBy = [ "timers.target" ];
-
-    };
-    # Often enough that Discord restarting twice in between is unlikely
-    timers.discord-call-logs = {
-      Unit.Description = "Keep Discord's logs of calls every 5 minutes";
-      Timer = {
-        OnCalendar = "*:0/5";
-        AccuracySec = "1min";
+      # Often enough that Discord restarting twice in between is unlikely
+      discord-call-logs = {
+        Unit.Description = "Keep Discord's logs of calls every 5 minutes";
+        Timer = {
+          OnCalendar = "*:0/5";
+          AccuracySec = "1min";
+        };
+        Install.WantedBy = [ "timers.target" ];
       };
-      Install.WantedBy = [ "timers.target" ];
     };
   };
 
@@ -136,7 +142,7 @@ in
       machine-settings = {
         name = "Machine Settings";
         comment = "Displays, environment variables and autostart programs of this machine";
-        exec = "${config.dotfiles}/config/quickshell/menus/toggle.sh settings";
+        exec = "${menus}/toggle.sh settings";
         # Adwaita's own: the theme Qt reads (the Nix one, first in
         # XDG_DATA_DIRS) doesn't inherit AdwaitaLegacy, which has
         # preferences-desktop-display
@@ -148,7 +154,7 @@ in
       scanner = {
         name = "Scanner";
         comment = "Scan documents and photos from network scanners into PDFs or images";
-        exec = "${config.dotfiles}/config/quickshell/menus/toggle.sh scan";
+        exec = "${menus}/toggle.sh scan";
         icon = "scanner";
         categories = [
           "Graphics"
@@ -184,11 +190,11 @@ in
       # "Send to <phone> via KDE Connect" in Nautilus' context menu, from the
       # KDE Connect package (Nautilus runs it with nautilus-python from pacman)
       "nautilus-python/extensions/kdeconnect-share.py".source =
-        "${config.services.kdeconnect.package}/share/nautilus-python/extensions/kdeconnect-share.py";
+        "${config.services.kdeconnect.package}/${nautilusExtensions}/kdeconnect-share.py";
 
       # The lock screen's cover until there is one (config/hypr/hyprlock.conf)
       "lock-media/blank.png".source = pkgs.runCommand "lock-media-blank.png" { } ''
-        ${my-pkgs.lock-media}/bin/lock-media blank > $out
+        ${lib.getExe my-pkgs.lock-media} blank > $out
       '';
 
       # For the launcher's emoji search (config/quickshell/menus/Launcher.qml)
@@ -232,8 +238,9 @@ in
     # looks up there: a name that no theme has took ~0.5 s each (the sound menu
     # tries several per app). Built here like NixOS does for its system profile.
     extraProfileCommands = ''
-      if [ -w $out/share/icons/hicolor ]; then
-        ${pkgs.gtk3.out}/bin/gtk-update-icon-cache --quiet --ignore-theme-index $out/share/icons/hicolor
+      hicolor=$out/share/icons/hicolor
+      if [ -w "$hicolor" ]; then
+        ${pkgs.gtk3.out}/bin/gtk-update-icon-cache --quiet --ignore-theme-index "$hicolor"
       fi
     '';
 

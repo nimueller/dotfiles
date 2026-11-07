@@ -26,6 +26,11 @@
       ...
     }:
     let
+      forAllSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+
       # Unfree packages (Steam, Discord, ...) are allowed everywhere; setting
       # it here instead of in a module spares home-manager a second nixpkgs
       # import
@@ -55,14 +60,12 @@
     in
     {
       # `nix fmt`: nixfmt over every .nix file
-      formatter = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
-        system: nixpkgs.legacyPackages.${system}.nixfmt-tree
-      );
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
 
       # The tools of check.sh (`nix develop` for a shell with them): linters
       # and formatters for Nix, shell, Python, Lua and QML, and a Python with
       # the libraries the helpers import, so pyright knows their types
-      devShells = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
+      devShells = forAllSystems (
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
