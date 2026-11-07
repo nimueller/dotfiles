@@ -47,10 +47,11 @@ ShellRoot {
         let lo = 0, hi = samples.length;
         while (lo < hi) {
             const mid = (lo + hi) >> 1;
-            if (samples[mid].t < from)
+            if (samples[mid].t < from) {
                 lo = mid + 1;
-            else
+            } else {
                 hi = mid;
+            }
         }
         return lo;
     }
@@ -118,8 +119,9 @@ ShellRoot {
         const sums = {};
         let total = 0;
         for (const key in hours) {
-            if (Number(key) + 3600 <= from)
+            if (Number(key) + 3600 <= from) {
                 continue;
+            }
             for (const name in hours[key].apps) {
                 sums[name] = (sums[name] ?? 0) + hours[key].apps[name];
                 total += hours[key].apps[name];
@@ -141,7 +143,7 @@ ShellRoot {
             const out = [];
             for (const line of text().split("\n")) {
                 const f = line.split(",");
-                if (f.length >= 5)
+                if (f.length >= 5) {
                     out.push({
                         t: Number(f[0]),
                         percent: Number(f[1]),
@@ -149,6 +151,7 @@ ShellRoot {
                         power: Number(f[3]),
                         state: f[4]
                     });
+                }
             }
             root.now = Date.now() / 1000;
             root.samples = out;
@@ -176,8 +179,9 @@ ShellRoot {
         implicitWidth: 760
         implicitHeight: 720
         color: Theme.base
-        onVisibleChanged: if (!visible)
-            Menus.close("battery-history")
+        onVisibleChanged: if (!visible) {
+            Menus.close("battery-history");
+        }
 
         WindowClose {
             anchors.top: parent.top

@@ -53,10 +53,11 @@ PanelWindow {
     }
 
     function toggle() {
-        if (shown)
+        if (shown) {
             hide();
-        else
+        } else {
             show();
+        }
     }
 
     IpcHandler {
@@ -71,11 +72,13 @@ PanelWindow {
         target: Hyprland
 
         function onRawEvent(event) {
-            if (event.name !== "custom" || event.data !== "quickshell-launcher")
+            if (event.name !== "custom" || event.data !== "quickshell-launcher") {
                 return;
+            }
             // Looking Glass passes SUPER+D on to the VM
-            if (root.shown || ToplevelManager.activeToplevel?.appId !== "looking-glass-client")
+            if (root.shown || ToplevelManager.activeToplevel?.appId !== "looking-glass-client") {
                 root.toggle();
+            }
         }
     }
 
@@ -95,13 +98,15 @@ PanelWindow {
     onQueryChanged: {
         asked++;
         // File results stay until the next ones arrive, so the list doesn't flicker
-        if (!fileMode)
+        if (!fileMode) {
             found = [];
-        if (helper.running)
+        }
+        if (helper.running) {
             helper.write(JSON.stringify({
                 id: asked,
                 q: query
             }) + "\n");
+        }
     }
 
     Process {
@@ -121,10 +126,11 @@ PanelWindow {
                 } catch (e) {
                     return;
                 }
-                if (message.hosts)
+                if (message.hosts) {
                     root.sshHosts = message.hosts;
-                else if (message.id === root.asked)
+                } else if (message.id === root.asked) {
                     root.found = message.results;
+                }
             }
         }
     }
@@ -132,8 +138,9 @@ PanelWindow {
     readonly property var apps: {
         const seen = new Set();
         return DesktopEntries.applications.values.filter(a => {
-            if (a.noDisplay || seen.has(a.name))
+            if (a.noDisplay || seen.has(a.name)) {
                 return false;
+            }
             seen.add(a.name);
             return true;
         });
@@ -141,15 +148,17 @@ PanelWindow {
     readonly property bool emojiMode: query.startsWith(":")
     readonly property bool fileMode: query.startsWith("/")
     readonly property var results: {
-        if (emojiMode)
+        if (emojiMode) {
             return emojiResults(query.slice(1).trim().toLowerCase());
-        if (fileMode)
+        }
+        if (fileMode) {
             return found.filter(r => r.kind === "file").map(r => ({
                         file: r.path,
                         name: r.name,
                         dir: r.dir,
                         folder: r.folder
                     }));
+        }
         const q = query.trim().toLowerCase();
         const ranked = apps.map(app => ({
                     app,
@@ -162,28 +171,32 @@ PanelWindow {
         const hosts = sshResults(ssh ? typed.slice(4).trim() : q, ssh);
         const list = [...(ssh ? hosts : []), ...windowResults(q), ...ranked.map(r => r.app), ...(ssh ? [] : hosts)];
         const result = calculate(query);
-        if (result !== null)
+        if (result !== null) {
             list.unshift({
                 result
             });
-        for (const r of found.filter(r => r.kind === "convert"))
+        }
+        for (const r of found.filter(r => r.kind === "convert")) {
             list.unshift({
                 result: r.value,
                 display: r.text,
                 detail: r.detail
             });
-        if (q)
+        }
+        if (q) {
             list.push({
                 run: query.trim()
             });
+        }
         return list;
     }
 
     // SSH hosts for "ssh <start of the name>", or whose name starts with the
     // text (two letters at least, so they don't crowd out the apps)
     function sshResults(part, ssh) {
-        if (!ssh && part.length < 2)
+        if (!ssh && part.length < 2) {
             return [];
+        }
         return sshHosts.filter(h => h.host.toLowerCase().startsWith(part)).map(h => ({
                     ssh: h.host,
                     detail: h.detail
@@ -192,45 +205,49 @@ PanelWindow {
 
     function score(app, q) {
         const used = Math.min(counts[app.id] ?? 0, 50) * 4;
-        if (!q)
+        if (!q) {
             return used;
+        }
         const name = app.name.toLowerCase();
         const extra = `${app.genericName} ${app.keywords} ${app.comment} ${app.categories}`.toLowerCase();
         let s = -1;
-        if (name === q)
+        if (name === q) {
             s = 1000;
-        else if (name.startsWith(q))
+        } else if (name.startsWith(q)) {
             s = 800;
-        else if (name.split(/[\s\-_.]+/).some(w => w.startsWith(q)))
+        } else if (name.split(/[\s\-_.]+/).some(w => w.startsWith(q))) {
             s = 600;
-        else if (name.includes(q))
+        } else if (name.includes(q)) {
             s = 400;
-        else if (`${app.genericName} ${app.keywords}`.toLowerCase().includes(q))
+        } else if (`${app.genericName} ${app.keywords}`.toLowerCase().includes(q)) {
             s = 250;
-        else if (initials(name).startsWith(q))
+        } else if (initials(name).startsWith(q)) {
             s = 150;
-        else if (extra.includes(q))
+        } else if (extra.includes(q)) {
             s = 100;
+        }
         return s < 0 ? -1 : s + used;
     }
 
     // Open windows matching the text: { window, name, app, icon }
     function windowResults(q) {
-        if (!q)
+        if (!q) {
             return [];
+        }
         const ranked = [];
         for (const w of Hyprland.toplevels.values) {
             const entry = Windows.entry(w);
             const app = entry?.name ?? w.lastIpcObject?.class ?? "";
             const title = (w.title ?? "").toLowerCase();
             let s = -1;
-            if (app.toLowerCase().startsWith(q))
+            if (app.toLowerCase().startsWith(q)) {
                 s = 800;
-            else if (title.split(/[\s\-_.:|\/]+/).some(x => x.startsWith(q)))
+            } else if (title.split(/[\s\-_.:|\/]+/).some(x => x.startsWith(q))) {
                 s = 600;
-            else if (title.includes(q) || app.toLowerCase().includes(q) || (w.lastIpcObject?.class ?? "").toLowerCase().includes(q))
+            } else if (title.includes(q) || app.toLowerCase().includes(q) || (w.lastIpcObject?.class ?? "").toLowerCase().includes(q)) {
                 s = 400;
-            if (s >= 0)
+            }
+            if (s >= 0) {
                 ranked.push({
                     w,
                     entry,
@@ -238,6 +255,7 @@ PanelWindow {
                     score: s,
                     recent: w.lastIpcObject?.focusHistoryID ?? 1e9
                 });
+            }
         }
         ranked.sort((a, b) => b.score - a.score || a.recent - b.recent);
         return ranked.map(r => ({
@@ -268,26 +286,28 @@ PanelWindow {
             const used = Math.min(counts[`emoji:${e.e}`] ?? 0, 50) * 4;
             const name = e.n.toLowerCase(); // "flag: Germany"
             let s = -1;
-            if (!q)
+            if (!q) {
                 s = 0;
-            else if (name === q)
+            } else if (name === q) {
                 s = 1000;
-            else if (name.startsWith(q))
+            } else if (name.startsWith(q)) {
                 s = 800;
-            else if (e.k.split(" ").includes(q))
+            } else if (e.k.split(" ").includes(q)) {
                 s = 700;
-            else if (name.split(/[\s:]+/).some(w => w.startsWith(q)))
+            } else if (name.split(/[\s:]+/).some(w => w.startsWith(q))) {
                 s = 600;
-            else if (e.k.split(" ").some(w => w.startsWith(q)))
+            } else if (e.k.split(" ").some(w => w.startsWith(q))) {
                 s = 300;
-            else if (name.includes(q) || e.k.includes(q))
+            } else if (name.includes(q) || e.k.includes(q)) {
                 s = 100;
-            if (s >= 0)
+            }
+            if (s >= 0) {
                 ranked.push({
                     e,
                     i,
                     score: s + used
                 });
+            }
         });
         ranked.sort((a, b) => b.score - a.score || a.i - b.i);
         return ranked.map(r => ({
@@ -305,13 +325,15 @@ PanelWindow {
     // names don't turn into sums.
     function calculate(text) {
         let src = text.trim();
-        if (src.startsWith("="))
+        if (src.startsWith("=")) {
             src = src.slice(1);
-        else if (!/\d/.test(src) || /^[\d.,\s]+$/.test(src))
+        } else if (!/\d/.test(src) || /^[\d.,\s]+$/.test(src)) {
             return null;
+        }
         const tokens = src.toLowerCase().replace(/,/g, ".").match(/\d*\.?\d+(?:e[+-]?\d+)?|[a-zπ]+|\*\*|\S/g);
-        if (!tokens)
+        if (!tokens) {
             return null;
+        }
         const constants = {
             pi: Math.PI,
             "π": Math.PI,
@@ -336,16 +358,18 @@ PanelWindow {
         let pos = 0;
         const peek = () => tokens[pos];
         const take = t => {
-            if (tokens[pos] !== t)
+            if (tokens[pos] !== t) {
                 throw t;
+            }
             pos++;
         };
         // expr: term (+|- term)*, term: unary (*|/|% unary)*,
         // unary: -unary | power, power: factorial (^ unary)?
         const expr = () => {
             let v = term();
-            while (peek() === "+" || peek() === "-")
+            while (peek() === "+" || peek() === "-") {
                 v = tokens[pos++] === "+" ? v + term() : v - term();
+            }
             return v;
         };
         const term = () => {
@@ -380,11 +404,13 @@ PanelWindow {
             let v = primary();
             while (peek() === "!") {
                 pos++;
-                if (v < 0 || v > 170 || !Number.isInteger(v))
+                if (v < 0 || v > 170 || !Number.isInteger(v)) {
                     throw "!";
+                }
                 let f = 1;
-                for (let i = 2; i <= v; i++)
+                for (let i = 2; i <= v; i++) {
                     f *= i;
+                }
                 v = f;
             }
             return v;
@@ -396,19 +422,23 @@ PanelWindow {
                 take(")");
                 return v;
             }
-            if (/^\d|^\./.test(t ?? ""))
+            if (/^\d|^\./.test(t ?? "")) {
                 return parseFloat(t);
+            }
             // Own properties only: "constructor" isn't a function here
-            if (Object.prototype.hasOwnProperty.call(constants, t))
+            if (Object.prototype.hasOwnProperty.call(constants, t)) {
                 return constants[t];
-            if (Object.prototype.hasOwnProperty.call(functions, t))
+            }
+            if (Object.prototype.hasOwnProperty.call(functions, t)) {
                 return functions[t](factorial());
+            }
             throw t;
         };
         try {
             const v = expr();
-            if (pos !== tokens.length || !isFinite(v))
+            if (pos !== tokens.length || !isFinite(v)) {
                 return null;
+            }
             // 0.1+0.2 reads 0.3
             return String(parseFloat(v.toPrecision(12)));
         } catch (e) {
@@ -417,8 +447,9 @@ PanelWindow {
     }
 
     function launch(item) {
-        if (!item)
+        if (!item) {
             return;
+        }
         if (item.window !== undefined) {
             hide();
             const address = item.window.address.startsWith("0x") ? item.window.address : `0x${item.window.address}`;
@@ -577,20 +608,21 @@ PanelWindow {
 
                     Keys.onPressed: event => {
                         const ctrl = event.modifiers & Qt.ControlModifier;
-                        if (event.key === Qt.Key_Escape)
+                        if (event.key === Qt.Key_Escape) {
                             root.hide();
-                        else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N)))
+                        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_Tab || (ctrl && (event.key === Qt.Key_J || event.key === Qt.Key_N))) {
                             list.incrementCurrentIndex();
-                        else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P)))
+                        } else if (event.key === Qt.Key_Up || event.key === Qt.Key_Backtab || (ctrl && (event.key === Qt.Key_K || event.key === Qt.Key_P))) {
                             list.decrementCurrentIndex();
-                        else if (event.key === Qt.Key_PageDown)
+                        } else if (event.key === Qt.Key_PageDown) {
                             list.currentIndex = Math.min(list.count - 1, list.currentIndex + root.rows);
-                        else if (event.key === Qt.Key_PageUp)
+                        } else if (event.key === Qt.Key_PageUp) {
                             list.currentIndex = Math.max(0, list.currentIndex - root.rows);
-                        else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                             root.launch(root.results[list.currentIndex]);
-                        else
+                        } else {
                             return;
+                        }
                         event.accepted = true;
                     }
                 }

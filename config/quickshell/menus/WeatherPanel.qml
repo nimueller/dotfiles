@@ -22,16 +22,18 @@ ColumnLayout {
     readonly property bool cavok: (metar?.rawOb ?? "").includes("CAVOK")
 
     function wind(m) {
-        if (!m.wspd)
+        if (!m.wspd) {
             return "Calm";
+        }
         const dir = m.wdir === "VRB" ? "Variable" : `${String(m.wdir).padStart(3, "0")}°`;
         const gust = m.wgst ? ` G${m.wgst}` : "";
         return `${dir} ${m.wspd}${gust} kt (${Math.round(m.wspd * 1.852)} km/h)`;
     }
 
     function clouds(m) {
-        if (cavok)
+        if (cavok) {
             return "CAVOK";
+        }
         const layers = (m.clouds ?? []).filter(c => c.cover && c.base !== null && c.base !== undefined).map(c => `${c.cover} ${c.base} ft`);
         return layers.length ? layers.join(", ") : (m.clouds ?? []).map(c => c.cover).join(" ") || "No clouds";
     }

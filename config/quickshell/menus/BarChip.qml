@@ -73,8 +73,9 @@ Rectangle {
         // A held press doesn't click as well
         onPressAndHold: event => root.clicked(Modes.touch ? Qt.RightButton : event.button)
         onWheel: event => {
-            if (event.angleDelta.y !== 0)
+            if (event.angleDelta.y !== 0) {
                 root.scrolled(event.angleDelta.y > 0 ? 1 : -1);
+            }
         }
     }
 }

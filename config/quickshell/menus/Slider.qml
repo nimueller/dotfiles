@@ -72,8 +72,9 @@ Item {
 
         onPressed: e => setFrom(e.x)
         onPositionChanged: e => {
-            if (pressed)
+            if (pressed) {
                 setFrom(e.x);
+            }
         }
         onWheel: e => {
             const step = e.angleDelta.y > 0 ? 0.05 : -0.05;

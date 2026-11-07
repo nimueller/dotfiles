@@ -32,8 +32,9 @@ Singleton {
     }
 
     function send(message) {
-        if (agent.running)
+        if (agent.running) {
             agent.write(JSON.stringify(message) + "\n");
+        }
     }
 
     function received(message) {
@@ -50,8 +51,9 @@ Singleton {
             return;
         }
         requests = requests.concat([message]);
-        if (!Menus.isOpen("bluetooth"))
+        if (!Menus.isOpen("bluetooth")) {
             Menus.toggle("bluetooth");
+        }
     }
 
     Process {
@@ -72,8 +74,9 @@ Singleton {
         }
         onExited: {
             root.requests = [];
-            if (Menus.hosted)
+            if (Menus.hosted) {
                 restart.start();
+            }
         }
     }
 

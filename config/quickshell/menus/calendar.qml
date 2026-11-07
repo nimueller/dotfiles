@@ -54,8 +54,9 @@ Popup {
     // is the calendar's own one, kept while it follows the machine's.
     readonly property bool ownLocation: settings.ownLocation ?? false
     readonly property var location: !ownLocation && LocalSettings.location ? LocalSettings.location : settings.location ?? null
-    onLocationChanged: if (filesReady === 2)
-        fetchWeather(false)
+    onLocationChanged: if (filesReady === 2) {
+        fetchWeather(false);
+    }
 
     readonly property int weekStart: settings.weekStart ?? 1
     readonly property bool weekNumbers: settings.weekNumbers ?? true
@@ -117,21 +118,26 @@ Popup {
         const lanes = {};
         for (const e of [...events].sort((a, b) => b.days - a.days)) {
             const keys = [];
-            for (let d = new Date(e.firstDay); d <= e.lastDay && d < gridEnd; d.setDate(d.getDate() + 1))
-                if (d >= gridStart)
+            for (let d = new Date(e.firstDay); d <= e.lastDay && d < gridEnd; d.setDate(d.getDate() + 1)) {
+                if (d >= gridStart) {
                     keys.push(Qt.formatDate(d, "yyyy-MM-dd"));
+                }
+            }
             let lane = 0;
-            while (keys.some(key => lanes[key]?.[lane]))
+            while (keys.some(key => lanes[key]?.[lane])) {
                 lane++;
+            }
             for (const key of keys) {
-                if (!lanes[key])
+                if (!lanes[key]) {
                     lanes[key] = [];
+                }
                 lanes[key][lane] = e;
             }
         }
         const out = {};
-        for (const key in lanes)
+        for (const key in lanes) {
             out[key] = Array.from(lanes[key], e => e ?? null);
+        }
         return out;
     }
     readonly property var dayEvents: (byDay[Qt.formatDate(selected, "yyyy-MM-dd")] ?? []).filter(e => e)
@@ -140,15 +146,17 @@ Popup {
 
     function byId(list, value) {
         const out = {};
-        for (const s of list)
+        for (const s of list) {
             out[s.id] = value(s);
+        }
         return out;
     }
 
     // All-day dates are local days; timed events carry their offset
     function parseTime(value, allDay) {
-        if (!allDay)
+        if (!allDay) {
             return new Date(value);
+        }
         const [y, m, d] = value.split("-").map(Number);
         return new Date(y, m - 1, d);
     }
@@ -389,11 +397,13 @@ Popup {
     function get(url, done, fail) {
         const xhr = new XMLHttpRequest();
         xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE)
+            if (xhr.readyState !== XMLHttpRequest.DONE) {
                 return;
+            }
             try {
-                if (xhr.status !== 200)
+                if (xhr.status !== 200) {
                     throw new Error();
+                }
                 done(JSON.parse(xhr.responseText));
             } catch (e) {
                 fail();
@@ -410,8 +420,9 @@ Popup {
             return;
         }
         const w = cache.weather;
-        if (!force && w && w.place === place.name && w.data?.hourly && Date.now() - w.at < 15 * 60 * 1000)
+        if (!force && w && w.place === place.name && w.data?.hourly && Date.now() - w.at < 15 * 60 * 1000) {
             return;
+        }
         weatherError = "";
         get(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=16` + "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" + "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" + "&hourly=temperature_2m,weather_code,precipitation_probability,is_day", data => {
             cache = Object.assign({}, cache, {
@@ -452,12 +463,14 @@ Popup {
     function searchLocation(query, pickFirst) {
         get(`https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=${encodeURIComponent(query)}`, data => {
             const results = data.results ?? [];
-            if (pickFirst && results.length)
+            if (pickFirst && results.length) {
                 pickLocation(results[0], false);
-            else
+            } else {
                 locationResults = results;
-            if (!results.length)
+            }
+            if (!results.length) {
                 weatherError = `No place called “${query}” found`;
+            }
         }, () => weatherError = "Couldn't reach the location search");
     }
 
@@ -483,10 +496,11 @@ Popup {
         stdout: StdioCollector {
             onStreamFinished: {
                 const city = text.trim().split("/").pop().replace(/_/g, " ");
-                if (city)
+                if (city) {
                     popup.searchLocation(city, true);
-                else
+                } else {
                     popup.weatherError = "Set a location in the settings";
+                }
             }
         }
     }
@@ -549,8 +563,9 @@ Popup {
         repeat: true
         onTriggered: {
             const now = new Date();
-            if (now.getDate() !== popup.today.getDate())
+            if (now.getDate() !== popup.today.getDate()) {
                 popup.today = now;
+            }
         }
     }
 
@@ -611,8 +626,9 @@ Popup {
             legend: popup.sources
             onPicked: day => popup.select(day)
             onActivated: day => {
-                if (popup.writable.length > 0)
+                if (popup.writable.length > 0) {
                     popup.newAppointment(day);
+                }
             }
             onShift: months => popup.shiftMonth(months)
             onReset: popup.goToday()

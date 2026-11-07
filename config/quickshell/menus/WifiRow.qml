@@ -118,8 +118,9 @@ Rectangle {
                 visible: root.needsPassword
                 masked: true
                 placeholder: "Password"
-                onAccepted: if (text)
-                    root.connectRequested(text)
+                onAccepted: if (text) {
+                    root.connectRequested(text);
+                }
             }
             Item {
                 Layout.fillWidth: true
@@ -153,8 +154,9 @@ Rectangle {
                 accent: Theme.sapphire
                 active: true
                 onClicked: {
-                    if (!root.needsPassword || password.text)
+                    if (!root.needsPassword || password.text) {
                         root.connectRequested(password.text);
+                    }
                 }
             }
             IconButton {
@@ -214,10 +216,12 @@ Rectangle {
             wrapMode: Text.Wrap
         }
 
-        onVisibleChanged: if (root.expanded && root.needsPassword)
-            password.focusField()
+        onVisibleChanged: if (root.expanded && root.needsPassword) {
+            password.focusField();
+        }
     }
 
-    onExpandedChanged: if (expanded && needsPassword)
-        password.focusField()
+    onExpandedChanged: if (expanded && needsPassword) {
+        password.focusField();
+    }
 }

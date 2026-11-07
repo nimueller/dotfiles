@@ -20,8 +20,9 @@ PopupWindow {
     function open(trayItem, icon) {
         // A click on the same icon while its menu was open has just closed it
         // through the focus grab: leave it closed
-        if (trayItem === closedItem && Date.now() - closedAt < 400)
+        if (trayItem === closedItem && Date.now() - closedAt < 400) {
             return;
+        }
         item = trayItem;
         stack = [];
         anchor.item = icon;
@@ -39,10 +40,11 @@ PopupWindow {
     // The grab needs the window to exist, so start it once the menu shows
     property bool grabbing: false
     onVisibleChanged: {
-        if (visible)
+        if (visible) {
             grabStart.restart();
-        else
+        } else {
             grabbing = false;
+        }
     }
     Timer {
         id: grabStart

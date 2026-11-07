@@ -24,13 +24,15 @@ Rectangle {
 
     onExpandedChanged: {
         confirmRemove = false;
-        if (askPassword)
+        if (askPassword) {
             password.focusField();
+        }
     }
 
     function connectWithFields() {
-        if (password.text)
+        if (password.text) {
             root.connectRequested(password.text, code.text);
+        }
     }
 
     implicitHeight: column.implicitHeight + 16
@@ -145,8 +147,9 @@ Rectangle {
                 accent: Theme.red
                 active: root.confirmRemove
                 onClicked: {
-                    if (root.confirmRemove)
+                    if (root.confirmRemove) {
                         root.removeRequested();
+                    }
                     root.confirmRemove = !root.confirmRemove;
                 }
             }

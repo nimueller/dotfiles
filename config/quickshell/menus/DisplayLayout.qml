@@ -63,19 +63,22 @@ Item {
             m,
             i
         } of shown) {
-            if (i === index)
+            if (i === index) {
                 continue;
+            }
             const o = size(m);
-            for (const cx of [m.x - me.w, m.x + o.w, m.x, m.x + o.w - me.w])
+            for (const cx of [m.x - me.w, m.x + o.w, m.x, m.x + o.w - me.w]) {
                 if (Math.abs(cx - x) < dx) {
                     dx = Math.abs(cx - x);
                     bestX = cx;
                 }
-            for (const cy of [m.y - me.h, m.y + o.h, m.y, m.y + o.h - me.h])
+            }
+            for (const cy of [m.y - me.h, m.y + o.h, m.y, m.y + o.h - me.h]) {
                 if (Math.abs(cy - y) < dy) {
                     dy = Math.abs(cy - y);
                     bestY = cy;
                 }
+            }
         }
         return {
             x: Math.round(bestX),
@@ -154,16 +157,18 @@ Item {
                 }
                 onPositionChanged: mouse => {
                     const p = mapToItem(root, mouse.x, mouse.y);
-                    if (!box.dragging && Math.hypot(p.x - box.pressedAt.x, p.y - box.pressedAt.y) < 4)
+                    if (!box.dragging && Math.hypot(p.x - box.pressedAt.x, p.y - box.pressedAt.y) < 4) {
                         return;
+                    }
                     box.dragging = true;
                     box.to = root.snap(box.modelData.i, (p.x - box.grab.x - root.originX) / root.factor, (p.y - box.grab.y - root.originY) / root.factor);
                     box.x = root.originX + box.to.x * root.factor;
                     box.y = root.originY + box.to.y * root.factor;
                 }
                 onReleased: {
-                    if (!box.dragging)
+                    if (!box.dragging) {
                         return;
+                    }
                     root.moved(box.modelData.i, box.to.x, box.to.y);
                     box.settle();
                 }

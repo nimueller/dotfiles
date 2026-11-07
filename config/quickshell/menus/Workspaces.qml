@@ -23,8 +23,9 @@ Rectangle {
         target: Hyprland
 
         function onRawEvent(event) {
-            if (event.name.startsWith("activespecial"))
+            if (event.name.startsWith("activespecial")) {
                 Hyprland.refreshMonitors();
+            }
         }
     }
     Component.onCompleted: Hyprland.refreshMonitors()
@@ -75,12 +76,13 @@ Rectangle {
                     // Lua dispatchers: Quickshell 0.3.1 doesn't detect the Lua
                     // config, so HyprlandWorkspace.activate() does nothing
                     onClicked: {
-                        if (button.active && !button.isSpecial)
+                        if (button.active && !button.isSpecial) {
                             Hyprland.dispatch(`hl.dsp.event("quickshell-overview")`);
-                        else if (button.isSpecial)
+                        } else if (button.isSpecial) {
                             Hyprland.dispatch(`hl.dsp.workspace.toggle_special("${label.text}")`);
-                        else
+                        } else {
                             Hyprland.dispatch(`hl.dsp.focus({ workspace = ${button.modelData.id} })`);
+                        }
                     }
                 }
             }

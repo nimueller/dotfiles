@@ -460,10 +460,11 @@ ColumnLayout {
         target: null
         onWheel: event => {
             const step = event.angleDelta.y > 0 ? -1 : 1;
-            if (root.picking)
+            if (root.picking) {
                 root.pickerYear += step;
-            else
+            } else {
                 root.shift(step);
+            }
         }
     }
 }

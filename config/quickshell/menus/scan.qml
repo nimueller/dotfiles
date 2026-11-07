@@ -101,8 +101,9 @@ ShellRoot {
         options = null;
         preview = "";
         area = null;
-        if (!device)
+        if (!device) {
             return;
+        }
         asking = true;
         error = "";
         optionsProc.command = [helper, "options", device];
@@ -110,25 +111,27 @@ ShellRoot {
     }
 
     function startScan(kind) {
-        if (scanning || saving || !options || batch && !batch.waiting)
+        if (scanning || saving || !options || batch && !batch.waiting) {
             return;
+        }
         const full = [0, 0, options.width, options.height];
         const a = kind === "pages" && area && !feeder ? [area.l, area.t, area.w, area.h] : full;
         const res = kind === "preview" ? Math.min(...options.resolutions) : dpi;
         const src = kind === "preview" ? options.sources.find(s => !/adf|feeder|auto/i.test(s)) ?? source : source;
         const count = kind === "preview" || !feeder || oneByOne ? ["1"] : [];
         if (kind === "pages" && feeder && (oneByOne || bothSides)) {
-            if (!batch)
+            if (!batch) {
                 batch = {
                     start: pages.length,
                     fronts: 0,
                     pass: 1,
                     waiting: false
                 };
-            else
+            } else {
                 batch = Object.assign({}, batch, {
                     waiting: false
                 });
+            }
         }
         stopping = false;
         runs++;
@@ -178,29 +181,34 @@ ShellRoot {
 
     // One by one: now the backs
     function startBacks() {
-        if (batch && batch.waiting)
+        if (batch && batch.waiting) {
             batch = Object.assign({}, batch, {
                 fronts: pages.length - batch.start,
                 pass: 2
             });
+        }
     }
 
     // The turned stack gives the backs last page first: front 1, back 1, …
     function finishBatch() {
         const b = batch;
         batch = null;
-        if (!b || b.pass !== 2)
+        if (!b || b.pass !== 2) {
             return;
+        }
         const fronts = pages.slice(b.start, b.start + b.fronts);
         const backs = pages.slice(b.start + b.fronts).reverse();
-        if (!backs.length)
+        if (!backs.length) {
             return;
+        }
         const merged = [];
         for (let i = 0; i < Math.max(fronts.length, backs.length); i++) {
-            if (i < fronts.length)
+            if (i < fronts.length) {
                 merged.push(fronts[i]);
-            if (i < backs.length)
+            }
+            if (i < backs.length) {
                 merged.push(backs[i]);
+            }
         }
         pages = [...pages.slice(0, b.start), ...merged];
         current = b.start;
@@ -208,8 +216,9 @@ ShellRoot {
     }
 
     function save() {
-        if (busy || !pages.length)
+        if (busy || !pages.length) {
             return;
+        }
         const stamp = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd_HH-mm-ss");
         const base = (nameField.text.trim() || `Scan_${stamp}`).replace(/\//g, "-");
         const ext = format === "pdf" ? "pdf" : format;
@@ -230,13 +239,15 @@ ShellRoot {
     }
     function move(i, by) {
         const j = i + by;
-        if (j < 0 || j >= pages.length)
+        if (j < 0 || j >= pages.length) {
             return;
+        }
         const list = pages.slice();
         [list[i], list[j]] = [list[j], list[i]];
         pages = list;
-        if (current === i)
+        if (current === i) {
             current = j;
+        }
         unsaved = true;
     }
     function remove(i) {
@@ -263,7 +274,7 @@ ShellRoot {
 
     property bool loaded: false
     function remember() {
-        if (loaded)
+        if (loaded) {
             settingsFile.setText(JSON.stringify({
                 device,
                 source,
@@ -274,6 +285,7 @@ ShellRoot {
                 oneByOne,
                 bothSides
             }, null, 2));
+        }
     }
     onOneByOneChanged: remember()
     onBothSidesChanged: remember()
@@ -318,8 +330,9 @@ ShellRoot {
         stdout: StdioCollector {
             onStreamFinished: {
                 const dir = text.trim();
-                if (dir && dir !== root.home)
+                if (dir && dir !== root.home) {
                     root.folder = `${dir}/Scans`;
+                }
             }
         }
     }
@@ -340,8 +353,9 @@ ShellRoot {
                     root.options = null;
                     return;
                 }
-                if (wanted.device !== root.device)
+                if (wanted.device !== root.device) {
                     root.device = wanted.device;
+                }
                 root.loadOptions();
             }
         }
@@ -383,8 +397,9 @@ ShellRoot {
                     root.scannedNow++;
                     root.progress = 0;
                     if (root.scanning === "preview") {
-                        if (root.preview)
+                        if (root.preview) {
                             Quickshell.execDetached(["rm", "-f", root.preview]);
+                        }
                         root.preview = rest;
                         root.current = -1;
                     } else {
@@ -405,16 +420,19 @@ ShellRoot {
         onExited: (code, status) => {
             // The feeder running out ends every scan from it
             const errors = scanProc.errors.filter(e => !(root.scannedNow && /feeder is empty/.test(e)));
-            if (!root.scannedNow)
+            if (!root.scannedNow) {
                 root.error = errors[errors.length - 1] ?? (root.scanning ? "Stopped" : "");
-            else if (errors.length)
+            } else if (errors.length) {
                 root.error = errors[errors.length - 1];
-            if (root.scanning === "pages" && root.scannedNow && !root.batch)
+            }
+            if (root.scanning === "pages" && root.scannedNow && !root.batch) {
                 root.status = root.scannedNow === 1 ? "1 page scanned" : `${root.scannedNow} pages scanned`;
+            }
             const kind = root.scanning;
             root.scanning = "";
-            if (kind === "pages" && root.batch)
+            if (kind === "pages" && root.batch) {
                 root.scanned();
+            }
         }
     }
 
@@ -494,8 +512,9 @@ ShellRoot {
         implicitWidth: 1040
         implicitHeight: 740
         color: Theme.base
-        onVisibleChanged: if (!visible)
-            root.close(true)
+        onVisibleChanged: if (!visible) {
+            root.close(true);
+        }
 
         WindowClose {
             anchors.top: parent.top
@@ -512,12 +531,13 @@ ShellRoot {
             focus: true
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Escape) {
-                    if (root.scanning || root.batch)
+                    if (root.scanning || root.batch) {
                         root.stopScan();
-                    else if (root.confirmClose)
+                    } else if (root.confirmClose) {
                         root.confirmClose = false;
-                    else
+                    } else {
                         root.close(false);
+                    }
                 } else if (event.key === Qt.Key_S && event.modifiers & Qt.ControlModifier) {
                     root.save();
                 } else if (event.key === Qt.Key_Delete && root.current >= 0) {
@@ -557,8 +577,9 @@ ShellRoot {
                             glyph: Theme.glyph(0xf0450) // 󰑐
                             accent: Theme.sapphire
                             active: root.searching
-                            onClicked: if (!root.searching && !root.busy)
-                                root.searchDevices()
+                            onClicked: if (!root.searching && !root.busy) {
+                                root.searchDevices();
+                            }
                         }
                     }
 
@@ -1034,8 +1055,9 @@ ShellRoot {
                                 };
                             }
                             // A click (or a tiny drag) takes the whole glass again
-                            onReleased: if (root.area && (root.area.w < 5 || root.area.h < 5))
-                                root.area = null
+                            onReleased: if (root.area && (root.area.w < 5 || root.area.h < 5)) {
+                                root.area = null;
+                            }
                         }
                     }
 

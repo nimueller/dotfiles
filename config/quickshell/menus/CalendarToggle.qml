@@ -42,8 +42,9 @@ RowLayout {
         accent: Theme.red
         active: root.confirming
         onClicked: {
-            if (root.confirming)
+            if (root.confirming) {
                 root.removed();
+            }
             root.confirming = !root.confirming;
         }
     }

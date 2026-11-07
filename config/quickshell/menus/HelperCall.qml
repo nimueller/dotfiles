@@ -36,10 +36,11 @@ Process {
                     error: "The calendar helper failed"
                 };
             }
-            if (result.error && call.failed)
+            if (result.error && call.failed) {
                 call.failed(result.error);
-            else if (!result.error && call.done)
+            } else if (!result.error && call.done) {
                 call.done(result);
+            }
         }
     }
 }

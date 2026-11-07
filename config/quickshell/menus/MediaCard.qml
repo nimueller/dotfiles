@@ -135,8 +135,9 @@ Rectangle {
                 accent: root.accent
                 value: root.hasLength ? Math.min(1, root.player.position / root.player.length) : 0
                 onMoved: v => {
-                    if (root.player?.canSeek)
+                    if (root.player?.canSeek) {
                         root.player.position = v * root.player.length;
+                    }
                 }
             }
             Label {

@@ -91,14 +91,16 @@ RowLayout {
                 Layout.fillWidth: true
                 placeholder: "Search a city"
                 accent: Theme.lavender
-                onAccepted: if (text)
-                    root.searchLocation(text)
+                onAccepted: if (text) {
+                    root.searchLocation(text);
+                }
             }
             IconButton {
                 glyph: Theme.glyph(0xf0349) // 󰍉
                 text: "Search"
-                onClicked: if (city.text)
-                    root.searchLocation(city.text)
+                onClicked: if (city.text) {
+                    root.searchLocation(city.text);
+                }
             }
         }
         Repeater {
@@ -259,8 +261,9 @@ RowLayout {
                 accent: Theme.blue
                 active: true
                 onClicked: {
-                    if (!root.busy && url.text && user.text && password.text)
+                    if (!root.busy && url.text && user.text && password.text) {
                         root.signIn(url.text, user.text, password.text);
+                    }
                 }
             }
         }
@@ -283,8 +286,9 @@ RowLayout {
                 IconButton {
                     glyph: Theme.glyph(0xf0450) // 󰑐
                     text: root.busy ? "Loading…" : "Reload"
-                    onClicked: if (!root.busy)
-                        root.refreshCalendars()
+                    onClicked: if (!root.busy) {
+                        root.refreshCalendars();
+                    }
                 }
                 IconButton {
                     glyph: Theme.glyph(0xf0343) // 󰍃
@@ -292,8 +296,9 @@ RowLayout {
                     accent: Theme.red
                     active: root.confirmSignOut
                     onClicked: {
-                        if (root.confirmSignOut)
+                        if (root.confirmSignOut) {
                             root.signOut();
+                        }
                         root.confirmSignOut = !root.confirmSignOut;
                     }
                 }
@@ -359,8 +364,9 @@ RowLayout {
                 glyph: Theme.glyph(0xf0415) // 󰐕
                 text: "Add"
                 onClicked: {
-                    if (!subUrl.text.trim())
+                    if (!subUrl.text.trim()) {
                         return;
+                    }
                     root.addSubscription(subName.text.trim() || "Subscription", subUrl.text.trim());
                     subName.text = "";
                     subUrl.text = "";

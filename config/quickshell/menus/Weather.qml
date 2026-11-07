@@ -8,52 +8,70 @@ import Quickshell
 Singleton {
     // -> [glyph code point, description, colour]
     function describe(code, night) {
-        if (code === 0)
+        if (code === 0) {
             return night ? [0xf0594, "Clear", Theme.lavender] : [0xf0599, "Clear", Theme.yellow];
-        if (code <= 2)
+        }
+        if (code <= 2) {
             return night ? [0xf0f31, code === 1 ? "Mostly clear" : "Partly cloudy", Theme.lavender] : [0xf0595, code === 1 ? "Mostly clear" : "Partly cloudy", Theme.yellow];
-        if (code === 3)
+        }
+        if (code === 3) {
             return [0xf0590, "Overcast", Theme.overlay2];
-        if (code <= 48)
+        }
+        if (code <= 48) {
             return [0xf0591, "Fog", Theme.overlay1];
-        if (code <= 57)
+        }
+        if (code <= 57) {
             return [0xf0597, code >= 56 ? "Freezing drizzle" : "Drizzle", Theme.sapphire];
-        if (code <= 67)
+        }
+        if (code <= 67) {
             return [0xf0597, code >= 66 ? "Freezing rain" : code === 65 ? "Heavy rain" : "Rain", Theme.blue];
-        if (code <= 77)
+        }
+        if (code <= 77) {
             return [0xf0598, code === 77 ? "Snow grains" : "Snow", Theme.text];
-        if (code <= 82)
+        }
+        if (code <= 82) {
             return [0xf0596, "Rain showers", Theme.blue];
-        if (code <= 86)
+        }
+        if (code <= 86) {
             return [0xf0598, "Snow showers", Theme.text];
+        }
         return [0xf067e, code >= 96 ? "Thunderstorm, hail" : "Thunderstorm", Theme.peach];
     }
 
     // METAR (aviationweather.gov JSON) -> the closest WMO code, for the glyph
     function metarCode(m) {
         const wx = m.wxString ?? "";
-        if (/TS/.test(wx))
+        if (/TS/.test(wx)) {
             return 95;
-        if (/SN|SG|PL|GS|GR/.test(wx))
+        }
+        if (/SN|SG|PL|GS|GR/.test(wx)) {
             return /SH/.test(wx) ? 85 : 73;
+        }
         if (/RA|DZ|UP/.test(wx)) {
-            if (/SH/.test(wx))
+            if (/SH/.test(wx)) {
                 return 80;
-            if (/DZ/.test(wx))
+            }
+            if (/DZ/.test(wx)) {
                 return 53;
+            }
             return wx.includes("+") ? 65 : wx.includes("-") ? 61 : 63;
         }
-        if (/FG|BR|HZ|FU/.test(wx))
+        if (/FG|BR|HZ|FU/.test(wx)) {
             return 45;
+        }
         const covers = (m.clouds ?? []).map(c => c.cover);
-        if (covers.includes("OVC") || covers.includes("VV"))
+        if (covers.includes("OVC") || covers.includes("VV")) {
             return 3;
-        if (covers.includes("BKN"))
+        }
+        if (covers.includes("BKN")) {
             return 3;
-        if (covers.includes("SCT"))
+        }
+        if (covers.includes("SCT")) {
             return 2;
-        if (covers.includes("FEW"))
+        }
+        if (covers.includes("FEW")) {
             return 1;
+        }
         return 0;
     }
 
@@ -74,10 +92,12 @@ Singleton {
 
     // Visibility in statute miles ("6+" = 6 or more) as km
     function visibility(v) {
-        if (v === undefined || v === null || v === "")
+        if (v === undefined || v === null || v === "") {
             return "";
-        if (`${v}`.endsWith("+"))
+        }
+        if (`${v}`.endsWith("+")) {
             return "≥ 10 km";
+        }
         const km = parseFloat(v) * 1.609;
         return km >= 10 ? "≥ 10 km" : `${km < 5 ? km.toFixed(1) : Math.round(km)} km`;
     }
@@ -92,12 +112,14 @@ Singleton {
     function daily(weather) {
         const d = weather?.daily;
         const out = {};
-        if (!d)
+        if (!d) {
             return out;
+        }
         d.time.forEach((t, i) => {
             // The last forecast days can come without values
-            if (d.weather_code[i] === null || d.temperature_2m_max[i] === null)
+            if (d.weather_code[i] === null || d.temperature_2m_max[i] === null) {
                 return;
+            }
             out[t] = {
                 code: d.weather_code[i],
                 max: Math.round(d.temperature_2m_max[i]),

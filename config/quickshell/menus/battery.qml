@@ -64,12 +64,15 @@ Popup {
     readonly property real toFull: stats?.toFull || (charging ? battery.timeToFull : 0)
 
     readonly property string summary: {
-        if (full)
+        if (full) {
             return "Fully charged";
-        if (charging)
+        }
+        if (charging) {
             return toFull > 0 ? `Full at ${clock(toFull)} · in ${duration(toFull)}` : "Charging";
-        if (batteryState === UPowerDeviceState.Discharging)
+        }
+        if (batteryState === UPowerDeviceState.Discharging) {
             return battery.timeToEmpty > 0 ? `${duration(battery.timeToEmpty)} left` : "On battery";
+        }
         return UPower.onBattery ? "On battery" : "Plugged in, not charging";
     }
 
@@ -86,11 +89,13 @@ Popup {
         const gap = 1800, now = Date.now() / 1000;
         const state = discharging ? UPowerDeviceState.Discharging : charging ? UPowerDeviceState.Charging : -1;
         let i = 0;
-        while (i < history.length && (history[i][2] === state || history[i][2] === UPowerDeviceState.Unknown))
+        while (i < history.length && (history[i][2] === state || history[i][2] === UPowerDeviceState.Unknown)) {
             i++;
+        }
         const run = history.slice(0, i).filter(e => e[2] === state);
-        if (state < 0 || !run.length)
+        if (state < 0 || !run.length) {
             return null;
+        }
         // Percent used (on battery) or gained (charging) in the time awake;
         // while charging only the last 15 minutes, as the pace changes with
         // the charge
@@ -124,14 +129,16 @@ Popup {
     function untilFull(pace) {
         const base = pace / chargeFactor(percent);
         let seconds = 0;
-        for (let p = Math.floor(percent); p < 100; p++)
+        for (let p = Math.floor(percent); p < 100; p++) {
             seconds += 1 / (base * chargeFactor(p));
+        }
         return seconds;
     }
 
     function loadHistory() {
-        if (!cell || historyProc.running)
+        if (!cell || historyProc.running) {
             return;
+        }
         historyProc.command = ["busctl", "--system", "--json=short", "call", "org.freedesktop.UPower", `/org/freedesktop/UPower/devices/battery_${cell.nativePath.replace(/[^A-Za-z0-9]/g, "_")}`, "org.freedesktop.UPower.Device", "GetHistory", "suu", "charge", "604800", "5000"];
         historyProc.running = true;
     }
@@ -258,17 +265,17 @@ Popup {
             model: {
                 const s = popup.stats;
                 if (!s)
-                    return [];
+                    { return []; }
                 if (!popup.discharging) {
                     const rows = [["Charging", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% gained`]];
                     if (!s.pace)
-                        return rows.concat([["Full at", popup.toFull > 0 ? `${popup.clock(popup.toFull)} (UPower)` : "Not enough data yet"]]);
+                        { return rows.concat([["Full at", popup.toFull > 0 ? `${popup.clock(popup.toFull)} (UPower)` : "Not enough data yet"]]); }
                     // Full is in the summary; 80 % comes sooner, as charging slows down after it
                     return rows.concat([["Pace", `${(s.pace * 3600).toFixed(0)}% per hour`]]).concat(popup.percent < 80 ? [["80% at", `about ${popup.clock((80 - popup.percent) / s.pace)}`]] : []);
                 }
                 const rows = [["On battery", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% used`]];
                 if (!s.pace)
-                    return rows.concat([["At this pace", "Not enough data yet"]]);
+                    { return rows.concat([["At this pace", "Not enough data yet"]]); }
                 return rows.concat([
                     ["Pace", `${(s.pace * 3600).toFixed(1)}% per hour`],
                     ["At this pace", `${popup.duration(s.left)} left`],

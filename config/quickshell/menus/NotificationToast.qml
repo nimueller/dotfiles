@@ -34,8 +34,9 @@ Rectangle {
 
     // Fade out, then report what happened
     function leave(then) {
-        if (outro.running)
+        if (outro.running) {
             return;
+        }
         outro.then = then;
         outro.start();
     }
@@ -95,8 +96,9 @@ Rectangle {
         }
         ScriptAction {
             script: {
-                if (outro.then)
+                if (outro.then) {
                     outro.then();
+                }
             }
         }
     }
@@ -110,12 +112,13 @@ Rectangle {
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         cursorShape: Qt.PointingHandCursor
         onClicked: event => {
-            if (event.button === Qt.RightButton)
+            if (event.button === Qt.RightButton) {
                 root.leave(() => root.closed());
-            else if (event.button === Qt.MiddleButton)
+            } else if (event.button === Qt.MiddleButton) {
                 root.closeAll();
-            else
+            } else {
                 root.leave(() => root.activated());
+            }
         }
     }
 

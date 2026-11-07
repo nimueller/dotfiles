@@ -89,8 +89,9 @@ Popup {
                     text: entry.cleaning ? "Clearing…" : root.confirming === entry.modelData.id ? "Sure?" : "Clear"
                     accent: Theme.red
                     active: entry.cleaning || root.confirming === entry.modelData.id
-                    onClicked: if (!Cleanup.busy)
-                        root.ask(entry.modelData.id, () => Cleanup.clean([entry.modelData.id]))
+                    onClicked: if (!Cleanup.busy) {
+                        root.ask(entry.modelData.id, () => Cleanup.clean([entry.modelData.id]));
+                    }
                 }
             }
         }
@@ -123,8 +124,9 @@ Popup {
             text: root.confirming === "all" ? "Sure?" : `Clear all · ${Cleanup.size(root.total)}`
             accent: Theme.red
             active: true
-            onClicked: if (!Cleanup.busy)
-                root.ask("all", () => Cleanup.clean(root.ready.map(item => item.id)))
+            onClicked: if (!Cleanup.busy) {
+                root.ask("all", () => Cleanup.clean(root.ready.map(item => item.id)));
+            }
         }
     }
 }

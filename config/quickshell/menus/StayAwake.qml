@@ -44,13 +44,15 @@ Scope {
         id: settle
         interval: 2000
         onTriggered: {
-            if (root.wanted === root.active && (!root.wanted || root.reason === root.shownReason))
+            if (root.wanted === root.active && (!root.wanted || root.reason === root.shownReason)) {
                 return;
+            }
             const changed = root.wanted !== root.active;
             root.active = root.wanted;
             root.shownReason = root.reason;
-            if (root.started && changed)
+            if (root.started && changed) {
                 root.osd.awake(root.active, root.active ? root.reason : "The screen locks when idle again");
+            }
         }
     }
 
@@ -106,7 +108,8 @@ Scope {
     }
 
     function event(name, state) {
-        if (name === "sunshine")
+        if (name === "sunshine") {
             sunshine = state === "on";
+        }
     }
 }

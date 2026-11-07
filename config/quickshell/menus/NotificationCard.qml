@@ -29,12 +29,15 @@ Rectangle {
 
     function age(ms) {
         const s = Math.max(0, Math.floor(ms / 1000));
-        if (s < 60)
+        if (s < 60) {
             return "now";
-        if (s < 3600)
+        }
+        if (s < 3600) {
             return `${Math.floor(s / 60)}m`;
-        if (s < 86400)
+        }
+        if (s < 86400) {
             return `${Math.floor(s / 3600)}h`;
+        }
         return `${Math.floor(s / 86400)}d`;
     }
 

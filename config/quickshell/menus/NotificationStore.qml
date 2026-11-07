@@ -43,17 +43,22 @@ Scope {
     // still shows after a restart, names must exist in the icon theme.
     function iconFor(n) {
         for (let c of [n.image, n.appIcon, DesktopEntries.byId(n.desktopEntry)?.icon]) {
-            if (!c)
+            if (!c) {
                 continue;
-            if (c.startsWith("image://icon/"))
+            }
+            if (c.startsWith("image://icon/")) {
                 c = c.slice("image://icon/".length);
-            if (c.startsWith("/"))
+            }
+            if (c.startsWith("/")) {
                 return `file://${c}`;
-            if (c.includes("://"))
+            }
+            if (c.includes("://")) {
                 return c;
+            }
             const path = Quickshell.iconPath(c, true);
-            if (path)
+            if (path) {
                 return path;
+            }
         }
         return "";
     }
@@ -85,28 +90,33 @@ Scope {
         const action = e.ruled || (e.track ? LocalSettings.trackAction : "");
         if (action === "hide") {
             // Gone for the app too, as if it timed out
-            if (old)
+            if (old) {
                 remove(old.key);
-            else
+            } else {
                 n.expire();
+            }
             return;
         }
-        if (action === "popup")
+        if (action === "popup") {
             e.transient = true;
+        }
         entries = [e, ...entries.filter(x => x.key !== e.key)].slice(0, historyLength);
         // The sender's window, for the popup: it may be new, and short-lived
         // senders (notify-send) are gone in a moment
         Windows.refresh();
-        if (e.pid)
+        if (e.pid) {
             Windows.readAncestors(e.pid);
+        }
         trackCheck.restart();
-        if (!silenced && action !== "center" && !popups.includes(e.key))
+        if (!silenced && action !== "center" && !popups.includes(e.key)) {
             popups = [e.key, ...popups];
+        }
         n.closed.connect(() => {
             // The app withdrew it (or it was dismissed): drop the live object
             const current = entry(e.key);
-            if (current)
+            if (current) {
                 current.n = null;
+            }
             closePopup(e.key);
         });
         changed();
@@ -116,13 +126,15 @@ Scope {
         popups = popups.filter(k => k !== key);
         // Transient notifications don't stay in the history
         const e = entry(key);
-        if (e?.transient)
+        if (e?.transient) {
             remove(key);
+        }
     }
 
     function closeAllPopups() {
-        for (const key of popups.slice())
+        for (const key of popups.slice()) {
             closePopup(key);
+        }
     }
 
     function remove(key) {
@@ -134,8 +146,9 @@ Scope {
     }
 
     function clear() {
-        for (const e of entries)
+        for (const e of entries) {
             e.n?.dismiss();
+        }
         entries = [];
         popups = [];
         changed();
@@ -159,8 +172,9 @@ Scope {
                 const pids = {};
                 for (const line of text.split("\n")) {
                     const [name, pid] = line.split(" ");
-                    if (name && parseInt(pid) > 0)
+                    if (name && parseInt(pid) > 0) {
                         pids[name] = parseInt(pid);
+                    }
                 }
                 root.playerPids = pids;
             }
@@ -168,8 +182,9 @@ Scope {
     }
 
     function isTrack(e) {
-        if (!e.pid)
+        if (!e.pid) {
             return false;
+        }
         const chain = Windows.readAncestors(e.pid);
         return Mpris.players.values.some(p => p.trackTitle && chain.includes(playerPids[p.dbusName]) && [e.summary, e.body].some(t => (t ?? "").includes(p.trackTitle)));
     }
@@ -190,8 +205,9 @@ Scope {
                     root.popups = root.popups.filter(k => k !== e.key);
                 } else {
                     e.transient = true;
-                    if (!root.popups.includes(e.key))
+                    if (!root.popups.includes(e.key)) {
                         root.remove(e.key);
+                    }
                 }
             }
             root.entries = root.entries.slice(); // history follows
@@ -204,8 +220,9 @@ Scope {
     }
 
     onSilencedChanged: {
-        if (silenced)
+        if (silenced) {
             popups = [];
+        }
     }
 
     // Click on a notification: bring the app's window up and run its default
@@ -214,8 +231,9 @@ Scope {
     // history too.
     function activate(key) {
         const e = entry(key);
-        if (!e)
+        if (!e) {
             return;
+        }
         focusApp(e);
         e.n?.actions.find(a => a.identifier === "default")?.invoke();
         remove(key);

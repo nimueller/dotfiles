@@ -127,8 +127,9 @@ Item {
             };
             const started = ["camera", "microphone", "screen"].filter(k => now[k] && !root.announced[k]);
             root.announced = now;
-            if (!root.started || started.length === 0)
+            if (!root.started || started.length === 0) {
                 return;
+            }
             const names = {
                 camera: "Camera",
                 microphone: "Microphone",

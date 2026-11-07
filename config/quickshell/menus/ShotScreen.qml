@@ -39,8 +39,9 @@ PanelWindow {
     // Windows on the workspaces this monitor showed, top-most first
     readonly property var windows: {
         const m = monitor;
-        if (!m)
+        if (!m) {
             return [];
+        }
         const shown = [m.activeWorkspace?.id, m.specialWorkspace?.id].filter(id => id);
         return editor.clients.filter(c => c.mapped && !c.hidden && c.monitor === m.id && shown.includes(c.workspace.id)).sort((a, b) => (b.workspace.id < 0) - (a.workspace.id < 0) || b.floating - a.floating || a.focusHistoryID - b.focusHistoryID).map(c => Qt.rect(c.at[0] - m.x, c.at[1] - m.y, c.size[0], c.size[1]));
     }
@@ -70,30 +71,36 @@ PanelWindow {
 
     // Which edges of the selection are under `p`, or null
     function edgesAt(p) {
-        if (!selected)
+        if (!selected) {
             return null;
+        }
         const t = 8, s = sel;
-        if (p.x < s.x - t || p.x > s.x + s.width + t || p.y < s.y - t || p.y > s.y + s.height + t)
+        if (p.x < s.x - t || p.x > s.x + s.width + t || p.y < s.y - t || p.y > s.y + s.height + t) {
             return null;
+        }
         const e = {
             l: Math.abs(p.x - s.x) < t,
             r: Math.abs(p.x - s.x - s.width) < t,
             t: Math.abs(p.y - s.y) < t,
             b: Math.abs(p.y - s.y - s.height) < t
         };
-        if (e.l && e.r)
+        if (e.l && e.r) {
             e.l = false;
-        if (e.t && e.b)
+        }
+        if (e.t && e.b) {
             e.t = false;
+        }
         return e.l || e.r || e.t || e.b ? e : null;
     }
 
     function pointerAt(p) {
         const e = edgesAt(p);
-        if (e)
+        if (e) {
             return e.l && e.t || e.r && e.b ? Qt.SizeFDiagCursor : e.r && e.t || e.l && e.b ? Qt.SizeBDiagCursor : e.l || e.r ? Qt.SizeHorCursor : Qt.SizeVerCursor;
-        if (selected && contains(sel, p))
+        }
+        if (selected && contains(sel, p)) {
             return editor.tool === "select" ? Qt.SizeAllCursor : editor.tool === "text" ? Qt.IBeamCursor : Qt.CrossCursor;
+        }
         return Qt.CrossCursor;
     }
 
@@ -141,11 +148,14 @@ PanelWindow {
     function finishShape() {
         const s = pending;
         pending = null;
-        if (!s)
+        if (!s) {
             return;
+        }
         if (s.type === "pen" || s.type === "marker") {
             if (s.points.length === 1) // a click: a dot
+            {
                 s.points.push([s.x1 + 0.1, s.y1]);
+            }
             editor.addShape(s);
         } else if (Math.abs(s.x2 - s.x1) + Math.abs(s.y2 - s.y1) > 3) {
             editor.addShape(s);
@@ -168,8 +178,9 @@ PanelWindow {
         // fall through
         case "pen":
             ctx.moveTo(s.points[0][0], s.points[0][1]);
-            for (const q of s.points)
+            for (const q of s.points) {
                 ctx.lineTo(q[0], q[1]);
+            }
             ctx.stroke();
             break;
         case "line":
@@ -206,7 +217,7 @@ PanelWindow {
     }
 
     function commitText() {
-        if (textAt && textInput.text.trim())
+        if (textAt && textInput.text.trim()) {
             editor.addShape({
                 type: "text",
                 x: textAt.x,
@@ -215,6 +226,7 @@ PanelWindow {
                 color: editor.color,
                 size: textSizes[editor.size]
             });
+        }
         textAt = null;
         textInput.text = "";
         keys.forceActiveFocus();
@@ -226,8 +238,9 @@ PanelWindow {
     // size, then screenshot.py puts them onto the shot, crops and scales it.
     // It runs detached, so the editor can close right away.
     function exportShot(action) {
-        if (!selected)
+        if (!selected) {
             return;
+        }
         if (action === "record") {
             recordShot();
             return;
@@ -264,8 +277,9 @@ PanelWindow {
         target: win.editor
 
         function onFinish(action) {
-            if (win.active)
+            if (win.active) {
                 win.exportShot(action);
+            }
         }
         function onShapesChanged() {
             canvas.requestPaint();
@@ -335,11 +349,14 @@ PanelWindow {
             onPaint: {
                 const ctx = getContext("2d");
                 ctx.reset();
-                for (const s of win.editor.shapes)
-                    if (s.type !== "pixelate" && s.type !== "text")
+                for (const s of win.editor.shapes) {
+                    if (s.type !== "pixelate" && s.type !== "text") {
                         win.paintShape(ctx, s);
-                if (win.pending && win.pending.type !== "pixelate")
+                    }
+                }
+                if (win.pending && win.pending.type !== "pixelate") {
                     win.paintShape(ctx, win.pending);
+                }
             }
         }
 
@@ -486,8 +503,9 @@ PanelWindow {
                 return;
             }
             if (mouse.button === Qt.RightButton) {
-                if (win.active)
+                if (win.active) {
                     win.editor.selection = Qt.rect(0, 0, 0, 0);
+                }
                 return;
             }
             win.pressAt = p;
@@ -524,8 +542,9 @@ PanelWindow {
                 return;
             }
             const dx = p.x - win.pressAt.x, dy = p.y - win.pressAt.y;
-            if (Math.abs(dx) + Math.abs(dy) > 3)
+            if (Math.abs(dx) + Math.abs(dy) > 3) {
                 win.moved = true;
+            }
             const s = win.pressSel;
             if (win.drag === "new" && win.moved) {
                 win.editor.select(win.name, win.clamp(win.rectFrom(win.pressAt, p)));
@@ -557,8 +576,9 @@ PanelWindow {
         }
 
         onDoubleClicked: mouse => {
-            if (win.selected && win.editor.tool === "select" && win.contains(win.sel, Qt.point(mouse.x, mouse.y)))
+            if (win.selected && win.editor.tool === "select" && win.contains(win.sel, Qt.point(mouse.x, mouse.y))) {
                 win.exportShot("copy");
+            }
         }
     }
 
@@ -616,35 +636,36 @@ PanelWindow {
                 B: "pixelate"
             };
             const letter = event.text.toUpperCase();
-            if (k === Qt.Key_Escape)
+            if (k === Qt.Key_Escape) {
                 e.cancel();
-            else if (k === Qt.Key_Return || k === Qt.Key_Enter || ctrl && k === Qt.Key_C)
+            } else if (k === Qt.Key_Return || k === Qt.Key_Enter || ctrl && k === Qt.Key_C) {
                 win.exportShot("copy");
-            else if (ctrl && k === Qt.Key_S)
+            } else if (ctrl && k === Qt.Key_S) {
                 win.exportShot("save");
-            else if (ctrl && k === Qt.Key_T)
+            } else if (ctrl && k === Qt.Key_T) {
                 win.exportShot("text");
-            else if (ctrl && k === Qt.Key_R)
+            } else if (ctrl && k === Qt.Key_R) {
                 win.exportShot("record");
-            else if (ctrl && (k === Qt.Key_Y || k === Qt.Key_Z && shift))
+            } else if (ctrl && (k === Qt.Key_Y || k === Qt.Key_Z && shift)) {
                 e.redo();
-            else if (ctrl && k === Qt.Key_Z)
+            } else if (ctrl && k === Qt.Key_Z) {
                 e.undo();
-            else if (win.selected && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down].includes(k)) {
+            } else if (win.selected && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down].includes(k)) {
                 const step = shift ? 10 : 1, s = win.sel;
                 const dx = k === Qt.Key_Left ? -step : k === Qt.Key_Right ? step : 0;
                 const dy = k === Qt.Key_Up ? -step : k === Qt.Key_Down ? step : 0;
                 e.selection = Qt.rect(Math.max(0, Math.min(s.x + dx, win.width - s.width)), Math.max(0, Math.min(s.y + dy, win.height - s.height)), s.width, s.height);
-            } else if (ctrl)
+            } else if (ctrl) {
                 return;
-            else if (tools[letter])
+            } else if (tools[letter]) {
                 e.tool = tools[letter];
-            else if (letter === "F")
+            } else if (letter === "F") {
                 e.select(win.name, Qt.rect(0, 0, win.width, win.height));
-            else if (letter >= "1" && letter <= "4")
+            } else if (letter >= "1" && letter <= "4") {
                 e.percent = e.percents[Number(letter) - 1];
-            else
+            } else {
                 return;
+            }
             event.accepted = true;
         }
     }

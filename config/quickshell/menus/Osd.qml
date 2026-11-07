@@ -55,8 +55,9 @@ Scope {
     // step in percent; never above 100 %, unmutes like the old binding did
     function volume(step) {
         const audio = sink?.audio;
-        if (!audio)
+        if (!audio) {
             return;
+        }
         const next = Math.max(0, Math.min(1, Math.round(audio.volume * 100 + step) / 100));
         Audio.setMuted(sink, false);
         Audio.setVolume(sink, next);
@@ -65,16 +66,18 @@ Scope {
 
     function toggleMute() {
         const audio = sink?.audio;
-        if (!audio)
+        if (!audio) {
             return;
+        }
         Audio.setMuted(sink, !audio.muted);
         show("volume", audio.volume, audio.muted);
     }
 
     function toggleMic() {
         const audio = source?.audio;
-        if (!audio)
+        if (!audio) {
             return;
+        }
         audio.muted = !audio.muted;
         show("mic", audio.volume, audio.muted);
     }
@@ -133,19 +136,22 @@ Scope {
                 } catch (e) {
                     return;
                 }
-                if (!keyboard)
+                if (!keyboard) {
                     return;
+                }
                 root.locks = {
                     caps: keyboard.capsLock,
                     num: keyboard.numLock
                 };
-                if (!lockPoll.running)
+                if (!lockPoll.running) {
                     return;
+                }
                 const actual = root.locks[root.lockWhich];
                 if (actual === root.lockExpected || ++root.lockTries >= 12) {
                     lockPoll.stop();
-                    if (actual !== root.lockExpected)
+                    if (actual !== root.lockExpected) {
                         root.show(root.lockWhich, actual ? 1 : 0, !actual);
+                    }
                 }
             }
         }
@@ -169,8 +175,9 @@ Scope {
     onSinkMutedChanged: deviceChange()
 
     function deviceChange() {
-        if (!bluetooth || !sink.ready || settling.running || Date.now() - Audio.localChange < 500)
+        if (!bluetooth || !sink.ready || settling.running || Date.now() - Audio.localChange < 500) {
             return;
+        }
         show("volume", sinkVolume, sinkMuted);
     }
 
@@ -191,8 +198,9 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 const percent = parseInt(text);
-                if (!isNaN(percent))
+                if (!isNaN(percent)) {
                     root.show("brightness", percent / 100, false);
+                }
             }
         }
     }
@@ -283,22 +291,28 @@ Scope {
                         font.pixelSize: 18
                         color: pill.accent
                         text: {
-                            if (root.kind === "privacy")
+                            if (root.kind === "privacy") {
                                 return Theme.glyph({
                                     camera: 0xf05a0,
                                     microphone: 0xf036c,
                                     screen: 0xf0379
                                 }[root.device]); // 󰖠 󰍬 󰍹
-                            if (root.kind === "awake")
+                            }
+                            if (root.kind === "awake") {
                                 return Theme.glyph(root.muted ? 0xf04b2 : 0xf0176); // 󰒲 / 󰅶
-                            if (root.kind === "caps")
+                            }
+                            if (root.kind === "caps") {
                                 return Theme.glyph(0xf0632); // 󰘲
-                            if (root.kind === "num")
+                            }
+                            if (root.kind === "num") {
                                 return Theme.glyph(0xf061c); // 󰘜
-                            if (root.kind === "mic")
+                            }
+                            if (root.kind === "mic") {
                                 return Theme.glyph(root.muted ? 0xf036d : 0xf036c); // 󰍭 / 󰍬
-                            if (root.kind === "brightness")
+                            }
+                            if (root.kind === "brightness") {
                                 return Theme.glyph(root.value < 0.34 ? 0xf00de : root.value < 0.67 ? 0xf00df : 0xf00e0); // 󰃞 󰃟 󰃠
+                            }
                             return Audio.volumeIcon({
                                 volume: root.value,
                                 muted: root.muted

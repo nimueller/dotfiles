@@ -37,10 +37,11 @@ PanelWindow {
     // The menus right here in the daemon (Menus.qml), the launcher through
     // toggle.sh
     function menu(name) {
-        if (Menus.names.includes(name))
+        if (Menus.names.includes(name)) {
             Menus.toggle(name);
-        else
+        } else {
             Quickshell.execDetached([toggle, name]);
+        }
     }
 
     anchors {
@@ -184,16 +185,18 @@ PanelWindow {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: event => {
                             const item = trayIcon.modelData;
-                            if (event.button === Qt.MiddleButton)
+                            if (event.button === Qt.MiddleButton) {
                                 item.secondaryActivate();
-                            else if (event.button === Qt.LeftButton && !item.onlyMenu)
+                            } else if (event.button === Qt.LeftButton && !item.onlyMenu) {
                                 item.activate();
-                            else if (item.hasMenu)
+                            } else if (item.hasMenu) {
                                 trayMenu.open(item, trayIcon);
+                            }
                         }
                         onPressAndHold: {
-                            if (Modes.touch && trayIcon.modelData.hasMenu)
+                            if (Modes.touch && trayIcon.modelData.hasMenu) {
                                 trayMenu.open(trayIcon.modelData, trayIcon);
+                            }
                         }
                         onWheel: event => trayIcon.modelData.scroll(event.angleDelta.y, false)
                     }
@@ -254,12 +257,13 @@ PanelWindow {
             plain: muted
             text: muted ? `${Theme.glyph(0xf466)}  Muted` : `${Theme.glyph([0xf026, 0xf027, 0xf028][Math.min(2, Math.floor(volume * 3))])}  ${Math.round(volume * 100)}%`
             onClicked: button => {
-                if (button === Qt.RightButton)
+                if (button === Qt.RightButton) {
                     Quickshell.execDetached(["pavucontrol"]);
-                else if (button === Qt.MiddleButton)
+                } else if (button === Qt.MiddleButton) {
                     Audio.setMuted(sink, !muted);
-                else
+                } else {
                     bar.menu("audio");
+                }
             }
             onScrolled: steps => {
                 Audio.setVolume(sink, Math.round((volume + steps * 0.02) * 100) / 100);
@@ -301,17 +305,20 @@ PanelWindow {
             accent: on ? Theme.blue : Theme.overlay0
             plain: !on
             text: {
-                if (!on)
+                if (!on) {
                     return Theme.glyph(0xf00b2); // 󰂲
-                if (device)
+                }
+                if (device) {
                     return `${Theme.glyph(0xf00b1)}  ${device.name.length > 14 ? device.name.slice(0, 13) + "…" : device.name}${device.batteryAvailable ? ` ${Math.round(device.battery * 100)}%` : ""}`; // 󰂱
+                }
                 return connected.length ? `${Theme.glyph(0xf00b1)}  ${connected.length}` : Theme.glyph(0xf00af); // 󰂯
             }
             onClicked: button => {
-                if (button === Qt.RightButton && adapter)
+                if (button === Qt.RightButton && adapter) {
                     adapter.enabled = !on;
-                else
+                } else {
                     bar.menu("bluetooth");
+                }
             }
 
             Process {
@@ -333,10 +340,11 @@ PanelWindow {
             accent: phone?.charging ? Theme.teal : charge >= 0 && charge <= 15 ? Theme.red : Theme.green
             text: charge >= 0 ? `${Theme.glyph(0xf011c)}  ${charge}%${phone.charging ? ` ${Theme.glyph(0xf0e7)}` : ""}` : Theme.glyph(0xf011c) // 󰄜
             onClicked: button => {
-                if (button === Qt.RightButton)
+                if (button === Qt.RightButton) {
                     bar.phones.run("send", phone);
-                else
+                } else {
                     bar.menu("kdeconnect");
+                }
             }
         }
 
@@ -364,18 +372,20 @@ PanelWindow {
             plain: dnd || count === 0
             accent: dnd ? Theme.overlay0 : count > 0 ? Theme.lavender : Theme.overlay2
             onClicked: button => {
-                if (button === Qt.RightButton)
+                if (button === Qt.RightButton) {
                     bar.store.setDnd(!bar.store.dnd);
-                else if (button === Qt.MiddleButton)
+                } else if (button === Qt.MiddleButton) {
                     bar.store.clear();
-                else
+                } else {
                     bar.center.toggle();
+                }
             }
 
             // A short pulse when new notifications arrive
             onCountChanged: {
-                if (count > seen && !dnd)
+                if (count > seen && !dnd) {
                     pulse.restart();
+                }
                 seen = count;
             }
 

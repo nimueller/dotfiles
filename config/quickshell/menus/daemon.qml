@@ -118,8 +118,9 @@ ShellRoot {
         id: batteryLog
         running: Modes.laptop
         command: ["/usr/bin/python3", Quickshell.shellPath("battery-log.py")]
-        onExited: if (Modes.laptop)
-            batteryLogRestart.start()
+        onExited: if (Modes.laptop) {
+            batteryLogRestart.start();
+        }
     }
     Timer {
         id: batteryLogRestart
@@ -202,19 +203,21 @@ ShellRoot {
                 stayAwake.event(name, state);
                 return;
             }
-            if (event.name !== "custom" || !event.data.startsWith("quickshell-osd "))
+            if (event.name !== "custom" || !event.data.startsWith("quickshell-osd ")) {
                 return;
+            }
             const [, what, arg] = event.data.split(" ");
-            if (what === "volume")
+            if (what === "volume") {
                 osd.volume(parseInt(arg));
-            else if (what === "mute")
+            } else if (what === "mute") {
                 osd.toggleMute();
-            else if (what === "mic-mute")
+            } else if (what === "mic-mute") {
                 osd.toggleMic();
-            else if (what === "brightness")
+            } else if (what === "brightness") {
                 osd.brightness(parseInt(arg));
-            else if (what === "lock")
+            } else if (what === "lock") {
                 osd.lockKey(arg);
+            }
         }
     }
 }

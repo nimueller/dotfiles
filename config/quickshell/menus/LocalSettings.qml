@@ -71,8 +71,9 @@ Singleton {
     function withDefaults(w) {
         const d = warningDefaults;
         const disk = Object.assign({}, d.disk, w?.disk);
-        if (!Array.isArray(disk.levels) || disk.levels.length !== d.disk.levels.length)
+        if (!Array.isArray(disk.levels) || disk.levels.length !== d.disk.levels.length) {
             disk.levels = d.disk.levels;
+        }
         return {
             memory: Object.assign({}, d.memory, w?.memory),
             cpu: Object.assign({}, d.cpu, w?.cpu),

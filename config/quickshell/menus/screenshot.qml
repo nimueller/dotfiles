@@ -57,15 +57,17 @@ ShellRoot {
     }
 
     function undo() {
-        if (!shapes.length)
+        if (!shapes.length) {
             return;
+        }
         undone = [...undone, shapes[shapes.length - 1]];
         shapes = shapes.slice(0, -1);
     }
 
     function redo() {
-        if (!undone.length)
+        if (!undone.length) {
             return;
+        }
         shapes = [...shapes, undone[undone.length - 1]];
         undone = undone.slice(0, -1);
     }
@@ -77,13 +79,14 @@ ShellRoot {
 
     property bool loaded: false
     function remember() {
-        if (loaded)
+        if (loaded) {
             settingsFile.setText(JSON.stringify({
                 percent,
                 color,
                 size,
                 sound
             }, null, 2));
+        }
     }
     onPercentChanged: remember()
     onColorChanged: remember()
@@ -142,8 +145,9 @@ ShellRoot {
     // Once the monitors and windows are known
     property int filesLoaded: 0
     onFilesLoadedChanged: {
-        if (filesLoaded === 2)
+        if (filesLoaded === 2) {
             preselect(Quickshell.env("QS_SCREENSHOT_MODE") ?? "region");
+        }
     }
     Component.onCompleted: loaded = true
 

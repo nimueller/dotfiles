@@ -16,8 +16,9 @@ Rectangle {
     readonly property bool valid: kind === "pin" ? value.length >= 1 && value.length <= 16 : kind === "passkey" ? /^\d{1,6}$/.test(value) : true
 
     function accept() {
-        if (valid)
+        if (valid) {
             BluetoothAgent.answer(request.id, true, value);
+        }
     }
 
     implicitHeight: column.implicitHeight + 24
@@ -26,8 +27,9 @@ Rectangle {
     border.width: 1
     border.color: Theme.alpha(Theme.blue, 0.35)
 
-    Component.onCompleted: if (typing)
-        field.focusField()
+    Component.onCompleted: if (typing) {
+        field.focusField();
+    }
 
     ColumnLayout {
         id: column

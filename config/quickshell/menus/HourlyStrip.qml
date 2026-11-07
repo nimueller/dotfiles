@@ -11,12 +11,13 @@ ListView {
 
     readonly property var hours: {
         const h = weather?.hourly;
-        if (!h)
+        if (!h) {
             return [];
+        }
         const key = Qt.formatDate(day, "yyyy-MM-dd");
         const out = [];
         h.time.forEach((t, i) => {
-            if (t.startsWith(key) && h.temperature_2m[i] !== null)
+            if (t.startsWith(key) && h.temperature_2m[i] !== null) {
                 out.push({
                     hour: parseInt(t.slice(11, 13)),
                     code: h.weather_code[i],
@@ -24,6 +25,7 @@ ListView {
                     rain: h.precipitation_probability?.[i] ?? 0,
                     night: h.is_day?.[i] === 0
                 });
+            }
         });
         return out;
     }

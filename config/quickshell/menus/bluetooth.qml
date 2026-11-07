@@ -31,10 +31,11 @@ Popup {
 
     function mark(map, address, value) {
         const m = Object.assign({}, map);
-        if (value)
+        if (value) {
             m[address] = value;
-        else
+        } else {
             delete m[address];
+        }
         return m;
     }
 
@@ -77,8 +78,9 @@ Popup {
             }
             // Paired changes around the same time; look a moment later
             function onPairingChanged() {
-                if (!modelData.pairing && popup.trying[modelData.address] === "pair")
+                if (!modelData.pairing && popup.trying[modelData.address] === "pair") {
                     pairCheck.restart();
+                }
             }
             function onStateChanged() {
                 const address = modelData.address;
