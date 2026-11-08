@@ -213,6 +213,22 @@ Popup {
         return seconds;
     }
 
+    // UPower lists the history as recorded, newest first. Keep the entries
+    // earlier than every newer one: after a boot the clock can run ahead
+    // until NTP corrects it, and what it stamped then would count as later
+    // (see battery-log.py)
+    function inOrder(entries) {
+        const kept = [];
+        let earliestNewer = Infinity;
+        for (const entry of entries) {
+            if (entry[0] < earliestNewer) {
+                kept.push(entry);
+                earliestNewer = entry[0];
+            }
+        }
+        return kept;
+    }
+
     function loadHistory() {
         if (!cell || historyProc.running) {
             return;
@@ -232,7 +248,7 @@ Popup {
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    popup.history = JSON.parse(text).data[0].sort((a, b) => b[0] - a[0]);
+                    popup.history = popup.inOrder(JSON.parse(text).data[0]);
                 } catch (e) {
                     popup.history = [];
                 }
