@@ -362,6 +362,7 @@ ShellRoot {
                         to: root.now
                         color: Theme.green
                         gap: root.gap
+                        connectGaps: true
                     }
                 }
 

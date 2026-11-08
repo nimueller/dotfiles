@@ -2,8 +2,9 @@ import QtQuick
 
 // Line chart over time for the battery history (battery-history.qml): one
 // value per sample, broken where samples are missing (suspended, off), in
-// `color` and in `chargeColor` while charging, filled below. Hover for the
-// value at that time.
+// `color` and in `chargeColor` while charging, filled below. With
+// `connectGaps` a dashed line bridges each break, from the last value
+// before it to the first after it. Hover for the value at that time.
 Item {
     id: root
 
@@ -16,6 +17,7 @@ Item {
     property color color: Theme.blue
     property color chargeColor: Theme.teal
     property real gap: 180 // s between samples that still connect
+    property bool connectGaps: false
 
     readonly property real plotLeft: 34
     readonly property real plotBottom: height - 18
@@ -26,6 +28,107 @@ Item {
     }
     function yOf(v) {
         return plotBottom - Math.min(1, Math.max(0, v / maxValue)) * (plotBottom - 4);
+    }
+
+    // The samples split up: runs of connected samples with the same state,
+    // thinned to about one per pixel, and the breaks between runs where
+    // samples are missing, as [last before, first after]
+    function segments() {
+        const pixel = (to - from) / Math.max(1, width - plotLeft);
+        const runs = [];
+        const breaks = [];
+        let run = [];
+        let seen = null; // the last sample, drawn or not
+        for (const p of samples) {
+            if (p.t < from - gap) {
+                seen = p;
+                continue;
+            }
+            const isBroken = seen !== null && p.t - seen.t > gap;
+            const isNewState = seen !== null && p.charging !== seen.charging;
+            if (isBroken) {
+                breaks.push([seen, p]);
+            }
+            if (isBroken || isNewState) {
+                runs.push(finished(run, seen));
+                run = isBroken ? [] : [carriedOver(seen, p)];
+            } else if (run.length > 0 && p.t - run[run.length - 1].t < pixel) {
+                seen = p;
+                continue;
+            }
+            run.push(p);
+            seen = p;
+        }
+        runs.push(finished(run, seen));
+        return {
+            runs: runs.filter(r => r.length > 1),
+            breaks: breaks
+        };
+    }
+
+    // A run ends on its last sample, also when the thinning left it out
+    function finished(run, last) {
+        if (run.length > 0 && run[run.length - 1] !== last) {
+            run.push(last);
+        }
+        return run;
+    }
+
+    // A new state carries on from the last point
+    function carriedOver(last, next) {
+        return Object.assign({}, last, {
+            charging: next.charging
+        });
+    }
+
+    // Quarters of the scale
+    function drawGrid(ctx) {
+        ctx.strokeStyle = Theme.surface0;
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+            const y = Math.round(yOf(maxValue * i / 4)) + 0.5;
+            ctx.beginPath();
+            ctx.moveTo(plotLeft, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+    }
+
+    function drawRun(ctx, run) {
+        const c = run[0].charging ? chargeColor : color;
+        const last = run[run.length - 1];
+        ctx.beginPath();
+        ctx.moveTo(xOf(run[0].t), plotBottom);
+        for (const p of run) {
+            ctx.lineTo(xOf(p.t), yOf(p.v));
+        }
+        ctx.lineTo(xOf(last.t), plotBottom);
+        ctx.closePath();
+        ctx.fillStyle = Theme.alpha(c, 0.15);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(xOf(run[0].t), yOf(run[0].v));
+        for (const p of run.slice(1)) {
+            ctx.lineTo(xOf(p.t), yOf(p.v));
+        }
+        ctx.strokeStyle = c;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+
+    // Dashed: what happened in between wasn't recorded
+    function drawBreaks(ctx, breaks) {
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = Theme.overlay1;
+        ctx.lineWidth = 1;
+        for (const [before, after] of breaks) {
+            ctx.beginPath();
+            ctx.moveTo(xOf(before.t), yOf(before.v));
+            ctx.lineTo(xOf(after.t), yOf(after.v));
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 
     // Labels along the time axis: every few hours for a day, else days
@@ -77,76 +180,18 @@ Item {
         onPaint: {
             const ctx = getContext("2d");
             ctx.reset();
-
-            // Grid: quarters of the scale
-            ctx.strokeStyle = Theme.surface0;
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 4; i++) {
-                const y = Math.round(root.yOf(root.maxValue * i / 4)) + 0.5;
-                ctx.beginPath();
-                ctx.moveTo(root.plotLeft, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
+            root.drawGrid(ctx);
+            // Breaks can start before the range: keep them off the scale
+            ctx.beginPath();
+            ctx.rect(root.plotLeft, 0, width - root.plotLeft, height);
+            ctx.clip();
+            const parts = root.segments();
+            for (const run of parts.runs) {
+                root.drawRun(ctx, run);
             }
-
-            // Runs of connected samples with the same state, thinned to
-            // about one per pixel
-            const s = root.samples;
-            const pixel = (root.to - root.from) / Math.max(1, width - root.plotLeft);
-            let run = [];
-            const flush = () => {
-                if (run.length > 1) {
-                    const c = run[0].charging ? root.chargeColor : root.color;
-                    ctx.beginPath();
-                    ctx.moveTo(root.xOf(run[0].t), root.plotBottom);
-                    for (const p of run) {
-                        ctx.lineTo(root.xOf(p.t), root.yOf(p.v));
-                    }
-                    ctx.lineTo(root.xOf(run[run.length - 1].t), root.plotBottom);
-                    ctx.closePath();
-                    ctx.fillStyle = Theme.alpha(c, 0.15);
-                    ctx.fill();
-                    ctx.beginPath();
-                    run.forEach((p, i) => {
-                        const x = root.xOf(p.t);
-                        const y = root.yOf(p.v);
-                        if (i === 0) {
-                            ctx.moveTo(x, y);
-                        } else {
-                            ctx.lineTo(x, y);
-                        }
-                    });
-                    ctx.strokeStyle = c;
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-                }
-            };
-            let seen = null; // the last sample, drawn or not
-            const end = () => {
-                if (seen && run[run.length - 1] !== seen) {
-                    run.push(seen);
-                }
-            };
-            for (const p of s) {
-                if (p.t < root.from - root.gap) {
-                    continue;
-                }
-                if (seen && (p.t - seen.t > root.gap || p.charging !== seen.charging)) {
-                    end();
-                    flush();
-                    // A new state carries on from the last point
-                    run = p.t - seen.t <= root.gap ? [Object.assign({}, seen, {
-                            charging: p.charging
-                        })] : [];
-                } else if (run.length && p.t - run[run.length - 1].t < pixel) {
-                    seen = p;
-                    continue;
-                }
-                run.push(p);
-                seen = p;
+            if (root.connectGaps) {
+                root.drawBreaks(ctx, parts.breaks);
             }
-            end();
-            flush();
         }
     }
 
