@@ -3,8 +3,9 @@ import QtQuick
 // Line chart over time for the battery history (battery-history.qml): one
 // value per sample, broken where samples are missing (suspended, off), in
 // `color` and in `chargeColor` while charging, filled below. With
-// `connectGaps` a dashed line bridges each break, from the last value
-// before it to the first after it. Hover for the value at that time.
+// `connectGaps` gaps up to `shortGap` are drawn as if there were samples,
+// and a dashed line bridges each longer one, from the last value before it
+// to the first after it. Hover for the value at that time.
 Item {
     id: root
 
@@ -18,6 +19,7 @@ Item {
     property color chargeColor: Theme.teal
     property real gap: 180 // s between samples that still connect
     property bool connectGaps: false
+    property real shortGap: 900 // s, with connectGaps
 
     readonly property real plotLeft: 34
     readonly property real plotBottom: height - 18
@@ -35,6 +37,8 @@ Item {
     // samples are missing, as [last before, first after]
     function segments() {
         const pixel = (to - from) / Math.max(1, width - plotLeft);
+        // A logger restart or a short suspend says nothing about the charge
+        const longestJoined = connectGaps ? Math.max(gap, shortGap) : gap;
         const runs = [];
         const breaks = [];
         let run = [];
@@ -44,7 +48,7 @@ Item {
                 seen = p;
                 continue;
             }
-            const isBroken = seen !== null && p.t - seen.t > gap;
+            const isBroken = seen !== null && p.t - seen.t > longestJoined;
             const isNewState = seen !== null && p.charging !== seen.charging;
             if (isBroken) {
                 breaks.push([seen, p]);
