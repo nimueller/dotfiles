@@ -5,7 +5,11 @@ power draw and state to samples.csv, and while on battery it adds up the
 CPU time of every app since the last sample in apps.json, by hour (written
 every 10 minutes, on exit and on SIGUSR1, which the history sends when it
 opens). Both in ~/.local/state/battery-history,
-kept for 30 days.
+kept for 30 days. Only one logger runs at a time (a lock file there).
+
+After a boot the clock can run ahead until NTP corrects it (the RTC keeps
+local time). The samples stamped with that clock end up later than the
+ones after them; they are dropped when the clock goes back.
 
 Apps: a Flatpak or systemd scope/service by its name (all of Brave's
 processes are one app), else the program (argv[0]; for interpreters the
@@ -13,7 +17,9 @@ script), kernel threads as "Kernel". The CPU time says what kept the
 processor busy; the screen, Wi-Fi and the rest draw power too.
 """
 
+import fcntl
 import json
+import math
 import os
 import re
 import signal
@@ -22,7 +28,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from types import FrameType
-from typing import NamedTuple, NoReturn, TypedDict, cast
+from typing import NamedTuple, NoReturn, TextIO, TypedDict, cast
 
 INTERVAL = 60
 GAP = 3 * INTERVAL  # longer between two samples: suspended, not counted
@@ -35,6 +41,7 @@ MICRO = 1_000_000
 STATE = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state") / "battery-history"
 SAMPLES = STATE / "samples.csv"
 APPS = STATE / "apps.json"
+LOCK = STATE / "lock"
 POWER_SUPPLY = Path("/sys/class/power_supply")
 FLATPAK_INSTALLATIONS = [Path("/var/lib/flatpak"), Path.home() / ".local/share/flatpak"]
 INTERPRETERS = {"python", "python3", "node", "bash", "sh", "zsh", "perl", "ruby", "bun", "deno"}
@@ -293,18 +300,56 @@ def sample_time(line: str) -> float:
         return 0
 
 
+def in_order(lines: list[str]) -> list[str]:
+    """The samples earlier than every one written after them: drops those
+    a clock running ahead stamped too late, and repeated ones."""
+    kept: list[str] = []
+    earliest_after = math.inf
+    for line in reversed(lines):
+        line_time = sample_time(line)
+        if line_time < earliest_after:
+            kept.append(line)
+            earliest_after = line_time
+    kept.reverse()
+    return kept
+
+
+def clean_samples() -> None:
+    """Keeps the samples of the last KEEP_DAYS that are in order."""
+    cutoff = time.time() - KEEP_DAYS * DAY
+    try:
+        lines = SAMPLES.read_text().splitlines()
+    except OSError:
+        return
+    kept = [line for line in in_order(lines) if sample_time(line) >= cutoff]
+    if len(kept) < len(lines):
+        save(SAMPLES, "".join(f"{line}\n" for line in kept))
+
+
+def last_sample_time() -> float:
+    try:
+        lines = SAMPLES.read_text().splitlines()
+    except OSError:
+        return 0
+    if len(lines) == 0:
+        return 0
+    return sample_time(lines[-1])
+
+
 def prune(apps: dict[str, Hour]) -> None:
     cutoff = time.time() - KEEP_DAYS * DAY
     old_hours = [hour for hour in apps if int(hour) < cutoff - HOUR]
     for hour in old_hours:
         del apps[hour]
-    try:
-        lines = SAMPLES.read_text().splitlines()
-    except OSError:
-        return
-    kept = [line for line in lines if sample_time(line) >= cutoff]
-    if len(kept) < len(lines):
-        save(SAMPLES, "".join(f"{line}\n" for line in kept))
+    clean_samples()
+
+
+def wait_for_lock() -> TextIO:
+    """Waits while another logger runs (the daemon restarted it before the
+    old one ended): two would write every sample twice."""
+    lock = LOCK.open("w")
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    return lock
 
 
 # ---------- The log ----------
@@ -317,6 +362,7 @@ def today() -> str:
 class BatteryLog:
     def __init__(self) -> None:
         STATE.mkdir(parents=True, exist_ok=True)
+        self.lock = wait_for_lock()
         self.apps = load_apps()
         prune(self.apps)
         self.pruned = today()
@@ -324,6 +370,7 @@ class BatteryLog:
         self.dirty = False
         # The last sample on battery, None when charging or unknown
         self.last: Sample | None = None
+        self.last_written = last_sample_time()
 
     def flush(self) -> None:
         save(APPS, json.dumps(self.apps, separators=(",", ":")))
@@ -338,13 +385,17 @@ class BatteryLog:
 
     def count_cpu(self, now: float, times: dict[int, ProcessTime]) -> None:
         """Adds the CPU time since the last sample, unless the machine was
-        suspended in between."""
+        suspended in between or the clock went back."""
         last = self.last
-        if last is None or now - last.time > GAP:
+        if last is None:
+            return
+        elapsed = now - last.time
+        has_gap = elapsed <= 0 or elapsed > GAP
+        if has_gap:
             return
         hour_start = str(int(now // HOUR * HOUR))
         hour = self.apps.setdefault(hour_start, {"seconds": 0, "apps": {}})
-        hour["seconds"] += round(now - last.time)
+        hour["seconds"] += round(elapsed)
         for name, seconds in seconds_by_app(last.cpu, times).items():
             hour["apps"][name] = round(hour["apps"].get(name, 0) + seconds, 2)
         self.dirty = True
@@ -355,6 +406,10 @@ class BatteryLog:
             return
         with SAMPLES.open("a") as f:
             f.write(sample_line(now, sample))
+        if now <= self.last_written:
+            # The clock went back
+            clean_samples()
+        self.last_written = now
         if sample.state != DISCHARGING:
             self.last = None
             return
