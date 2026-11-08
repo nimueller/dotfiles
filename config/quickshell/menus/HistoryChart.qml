@@ -5,7 +5,8 @@ import QtQuick
 // `color` and in `chargeColor` while charging, filled below. With
 // `connectGaps` gaps up to `shortGap` are drawn as if there were samples,
 // and a dashed line bridges each longer one, from the last value before it
-// to the first after it. Hover for the value at that time.
+// to the first after it. `estimates` are averages over times without
+// samples, drawn as a dashed level. Hover for the value at that time.
 Item {
     id: root
 
@@ -20,10 +21,13 @@ Item {
     property real gap: 180 // s between samples that still connect
     property bool connectGaps: false
     property real shortGap: 900 // s, with connectGaps
+    property var estimates: [] // [{ from, to (s), v }]
 
     readonly property real plotLeft: 34
     readonly property real plotBottom: height - 18
     property int hovered: -1
+    property int hoveredEstimate: -1
+    property real hoverTime: 0
 
     function xOf(t) {
         return plotLeft + (t - from) / (to - from) * (width - plotLeft);
@@ -120,6 +124,73 @@ Item {
         ctx.stroke();
     }
 
+    // Dashed and barely filled: an average over that time, not samples
+    function drawEstimates(ctx) {
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.fillStyle = Theme.alpha(color, 0.06);
+        for (const estimate of estimates) {
+            const left = xOf(estimate.from);
+            const right = xOf(estimate.to);
+            const y = yOf(estimate.v);
+            ctx.fillRect(left, y, right - left, plotBottom - y);
+            ctx.beginPath();
+            ctx.moveTo(left, y);
+            ctx.lineTo(right, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function timeAt(x) {
+        return from + (x - plotLeft) / (width - plotLeft) * (to - from);
+    }
+
+    // The index of the sample nearest to t, -1 when none is within gap
+    function nearestSample(t) {
+        const s = samples;
+        if (s.length === 0) {
+            return -1;
+        }
+        let lo = 0;
+        let hi = s.length - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (s[mid].t < t) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        if (lo > 0 && Math.abs(s[lo - 1].t - t) < Math.abs(s[lo].t - t)) {
+            lo--;
+        }
+        return Math.abs(s[lo].t - t) <= gap ? lo : -1;
+    }
+
+    function estimateAt(t) {
+        return estimates.findIndex(e => e.from <= t && t <= e.to);
+    }
+
+    function valueText(v) {
+        const unitText = unit === "%" ? "%" : ` ${unit}`;
+        return `${v.toFixed(decimals)}${unitText}`;
+    }
+
+    function sampleText(sample) {
+        const time = Qt.formatDateTime(new Date(sample.t * 1000), "ddd HH:mm");
+        const charging = sample.charging ? " · charging" : "";
+        return `${time} · ${valueText(sample.v)}${charging}`;
+    }
+
+    function estimateText(estimate) {
+        const start = Qt.formatDateTime(new Date(estimate.from * 1000), "ddd HH:mm");
+        const end = Qt.formatTime(new Date(estimate.to * 1000), "HH:mm");
+        return `${start} – ${end} · ≈ ${valueText(estimate.v)} average`;
+    }
+
     // Dashed: what happened in between wasn't recorded
     function drawBreaks(ctx, breaks) {
         ctx.save();
@@ -174,6 +245,7 @@ Item {
     onFromChanged: canvas.requestPaint()
     onToChanged: canvas.requestPaint()
     onMaxValueChanged: canvas.requestPaint()
+    onEstimatesChanged: canvas.requestPaint()
     onWidthChanged: canvas.requestPaint()
     onHeightChanged: canvas.requestPaint()
 
@@ -196,6 +268,7 @@ Item {
             if (root.connectGaps) {
                 root.drawBreaks(ctx, parts.breaks);
             }
+            root.drawEstimates(ctx);
         }
     }
 
@@ -227,28 +300,21 @@ Item {
         }
     }
 
-    // Hover: the nearest sample
+    // Hover: the nearest sample, else the estimate there
     MouseArea {
         id: mouse
         anchors.fill: parent
         hoverEnabled: true
-        onExited: root.hovered = -1
+        onExited: {
+            root.hovered = -1;
+            root.hoveredEstimate = -1;
+        }
         onPositionChanged: event => {
-            const t = root.from + (event.x - root.plotLeft) / (root.width - root.plotLeft) * (root.to - root.from);
-            const s = root.samples;
-            let lo = 0, hi = s.length - 1;
-            while (lo < hi) {
-                const mid = (lo + hi) >> 1;
-                if (s[mid].t < t) {
-                    lo = mid + 1;
-                } else {
-                    hi = mid;
-                }
-            }
-            if (lo > 0 && Math.abs(s[lo - 1].t - t) < Math.abs(s[lo].t - t)) {
-                lo--;
-            }
-            root.hovered = s.length && event.x >= root.plotLeft && Math.abs(s[lo].t - t) <= root.gap ? lo : -1;
+            const t = root.timeAt(event.x);
+            const isInPlot = event.x >= root.plotLeft;
+            root.hoverTime = t;
+            root.hovered = isInPlot ? root.nearestSample(t) : -1;
+            root.hoveredEstimate = isInPlot && root.hovered < 0 ? root.estimateAt(t) : -1;
         }
     }
 
@@ -264,9 +330,11 @@ Item {
         id: tip
 
         readonly property var sample: root.hovered >= 0 ? root.samples[root.hovered] : null
+        readonly property var estimate: root.hoveredEstimate >= 0 ? root.estimates[root.hoveredEstimate] : null
+        readonly property real anchorTime: sample ? sample.t : root.hoverTime
 
-        visible: !!sample
-        x: sample ? Math.min(root.width - width, Math.max(root.plotLeft, root.xOf(sample.t) + 8)) : 0
+        visible: !!sample || !!estimate
+        x: Math.min(root.width - width, Math.max(root.plotLeft, root.xOf(anchorTime) + 8))
         y: 4
         width: tipLabel.implicitWidth + 12
         height: tipLabel.implicitHeight + 6
@@ -277,14 +345,13 @@ Item {
             id: tipLabel
             anchors.centerIn: parent
             text: {
-                const sample = tip.sample;
-                if (!sample) {
-                    return "";
+                if (tip.sample) {
+                    return root.sampleText(tip.sample);
                 }
-                const time = Qt.formatDateTime(new Date(sample.t * 1000), "ddd HH:mm");
-                const unit = root.unit === "%" ? "%" : ` ${root.unit}`;
-                const charging = sample.charging ? " · charging" : "";
-                return `${time} · ${sample.v.toFixed(root.decimals)}${unit}${charging}`;
+                if (tip.estimate) {
+                    return root.estimateText(tip.estimate);
+                }
+                return "";
             }
             font.pixelSize: 10
         }

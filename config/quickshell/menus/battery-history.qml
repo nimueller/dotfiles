@@ -104,6 +104,34 @@ ShellRoot {
         };
     }
 
+    // Where no samples were written on battery (suspended, off, the logger
+    // restarting): the average draw from the energy used in between. Not
+    // when it charged meanwhile: then an end isn't on battery, or it gained.
+    function drawInGap(before, after) {
+        const seconds = after.t - before.t;
+        const used = before.energy - after.energy;
+        const isOnBattery = before.state === "d" && after.state === "d";
+        const isEstimable = seconds > gap && isOnBattery && used >= 0;
+        if (isEstimable) {
+            return {
+                from: before.t,
+                to: after.t,
+                v: used / (seconds / 3600)
+            };
+        }
+        return null;
+    }
+    readonly property var gapDraws: {
+        const out = [];
+        for (let i = Math.max(1, first); i < samples.length; i++) {
+            const estimate = drawInGap(samples[i - 1], samples[i]);
+            if (estimate) {
+                out.push(estimate);
+            }
+        }
+        return out;
+    }
+
     // Each time on battery (suspends included), newest first
     readonly property var sessions: {
         const out = [];
@@ -373,7 +401,8 @@ ShellRoot {
                     SectionTitle {
                         text: "Power draw"
                     }
-                    // On battery only: while charging it's the charger's power
+                    // On battery only: while charging it's the charger's power.
+                    // Gaps show the average draw over them.
                     HistoryChart {
                         readonly property var points: root.shown.filter(s => s.state === "d").map(s => ({
                                     t: s.t,
@@ -384,6 +413,7 @@ ShellRoot {
                         Layout.fillWidth: true
                         implicitHeight: 110
                         samples: points
+                        estimates: root.gapDraws
                         from: root.from
                         to: root.now
                         maxValue: Math.max(5, Math.ceil(points.reduce((m, p) => Math.max(m, p.v), 0) / 5) * 5)
