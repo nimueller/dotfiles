@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Audio Tabs",
+  "version": "1.0.0",
+  "description": "Tells the desktop's sound menu which tabs play sound, so it can name Brave's audio streams after them.",
+  "permissions": ["tabs", "alarms"],
+  "host_permissions": ["http://127.0.0.1:48231/*"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

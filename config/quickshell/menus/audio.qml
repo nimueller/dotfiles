@@ -97,7 +97,7 @@ Popup {
                 iconSource: Audio.appIcon(modelData)
                 glyph: Theme.glyph(0xf075a) // 󰝚
                 title: Audio.appName(modelData)
-                subtitle: Audio.mediaName(modelData)
+                subtitle: Audio.streamLabel(modelData)
             }
         }
     }

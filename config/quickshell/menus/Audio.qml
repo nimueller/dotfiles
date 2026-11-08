@@ -130,12 +130,42 @@ Singleton {
         return owner(node)?.name || p["application.name"] || node.description || node.name;
     }
 
+    // The titles of Brave's tabs by their stream's object.serial, from
+    // audio-tabs.py (daemon.qml); empty without its browser extension
+    property var tabTitles: ({})
+
     // Media title, unless it's one of the generic names apps like to send
-    // (Wine numbers its streams: "audio stream #1").
+    // (Wine numbers its streams: "audio stream #1"). Brave only ever sends
+    // "Playback": its tab's title instead, if known.
     function mediaName(node) {
+        const tabTitle = tabTitles[node.properties["object.serial"]];
+        if (tabTitle !== undefined) {
+            return tabTitle;
+        }
         const media = node.properties["media.name"] ?? "";
+        const unnumbered = media.toLowerCase().replace(/\s*#\d+$/, "");
         const generic = ["audiostream", "playback", "audio stream", "output", ""];
-        return generic.includes(media.toLowerCase().replace(/\s*#\d+$/, "")) || media === appName(node) ? "" : media;
+        if (generic.includes(unnumbered) || media === appName(node)) {
+            return "";
+        }
+        return media;
+    }
+
+    // What tells a stream apart from the app's others: its media title, else
+    // its place among them in the order they started ("Stream 2")
+    function streamLabel(node) {
+        const media = mediaName(node);
+        if (media !== "") {
+            return media;
+        }
+        const app = appName(node);
+        const siblings = streams.filter(n => appName(n) === app);
+        if (siblings.length < 2) {
+            return "";
+        }
+        const serial = n => Number(n.properties["object.serial"]);
+        siblings.sort((a, b) => serial(a) - serial(b));
+        return `Stream ${siblings.indexOf(node) + 1}`;
     }
 
     // The app's icon, or else that of the program that started it

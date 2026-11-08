@@ -16,7 +16,8 @@ import Quickshell.Io
 // monitor, the app launcher, the clipboard history, the notification daemon with
 // its popups and center (replaces dunst), the OSD for the volume and
 // brightness keys (replaces SwayOSD), the stay-awake inhibitor, the
-// camera/microphone/screen-sharing watch, the KDE Connect phones, the
+// camera/microphone/screen-sharing watch, the KDE Connect phones, the names
+// of Brave's audio streams (audio-tabs.py), the
 // night light's schedule, the Bluetooth pairing agent, the fixed folders in Files' sidebar and the
 // warnings about a full memory, an overloaded CPU, a full disk or a low
 // battery. The bar menus and the
@@ -104,6 +105,32 @@ ShellRoot {
         id: drivesRestart
         interval: 5000
         onTriggered: drives.running = true
+    }
+
+    // Brave's audio streams named after their tabs, for the sound menu
+    // (audio-tabs.py, with its browser extension)
+    Process {
+        id: audioTabs
+        running: true
+        command: ["/usr/bin/python3", Quickshell.shellPath("audio-tabs.py")]
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    Audio.tabTitles = JSON.parse(line);
+                } catch (error) {
+                    console.warn(`audio-tabs.py: not JSON: ${line}`);
+                }
+            }
+        }
+        onExited: {
+            Audio.tabTitles = {};
+            audioTabsRestart.start();
+        }
+    }
+    Timer {
+        id: audioTabsRestart
+        interval: 5000
+        onTriggered: audioTabs.running = true
     }
 
     // Notifications when memory, the CPU or the disk run out
