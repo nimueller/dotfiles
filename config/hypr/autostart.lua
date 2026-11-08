@@ -11,24 +11,25 @@ local startSession = "dbus-update-activation-environment --systemd "
     .. sessionEnvironment
     .. " && systemctl --user start hyprland-session.target"
 
--- Start `command` unless a process of ours matches `pattern` (pgrep -f; a
--- bracket in it keeps the check's own shell from matching)
-local function daemon(pattern, command)
-    hl.exec_cmd(string.format("pgrep -u \"$USER\" -f '%s' >/dev/null || %s", pattern, command))
+-- Start `command` unless the command line of a process of ours starts with
+-- `program` (pgrep -f). Anchored, as the check's own shell has `command` in
+-- its command line, too, but starts with `sh -c`.
+local function daemon(program, command)
+    hl.exec_cmd(string.format("pgrep -u \"$USER\" -f '^%s' >/dev/null || %s", program, command))
 end
 
 -- System programs. Also run again after the shutdown was cancelled
 -- (quickshell/menus/shutdown.py): hyprshutdown ends them right away.
 function M.daemons()
-    daemon("[p]olkit-gnome-authentication-agent-1", polkitAgent .. " || " .. polkitMissing)
-    daemon("[w]l-paste --watch cliphist", "wl-paste --watch cliphist store")
-    daemon("^[s]unshine", "sunshine")
+    daemon(polkitAgent, polkitAgent .. " || " .. polkitMissing)
+    daemon("wl-paste --watch cliphist", "wl-paste --watch cliphist store")
+    daemon("sunshine", "sunshine")
     -- Bar, launcher, notifications, OSD; and SUPER + W. Only one of each.
     hl.exec_cmd(menus .. "toggle.sh daemon --start")
     hl.exec_cmd(menus .. "toggle.sh overview --start")
-    daemon("^[h]yprpaper", "hyprpaper")
+    daemon("hyprpaper", "hyprpaper")
     -- Lock and screens off when idle, lock before suspend (hypridle.conf)
-    daemon("^[h]ypridle", "hypridle")
+    daemon("hypridle", "hypridle")
 end
 
 hl.on("hyprland.start", function()
