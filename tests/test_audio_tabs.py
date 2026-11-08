@@ -1,5 +1,8 @@
 # pyright: strict
+import tempfile
 import unittest
+import unittest.mock
+from pathlib import Path
 
 from helpers import load
 
@@ -114,6 +117,57 @@ class Pairing(unittest.TestCase):
         self.stream(87, 753, 40.0)
         self.pairing.pair(40.0 + WINDOW * 2)
         self.assertEqual(self.pairing.titles(), {"753": "Video"})
+
+
+class Restore(unittest.TestCase):
+    def test_restart_keeps_pairs_of_streams_still_there(self) -> None:
+        before = audio_tabs.Pairing()
+        before.update_tabs({1: "Video"}, 10.0)
+        before.add_stream(105, audio_tabs.Stream(739, 10.0))
+        before.update_tabs({1: "Video", 2: "Radio"}, 30.0)
+        before.add_stream(87, audio_tabs.Stream(753, 30.0))
+        before.pair(30.0)
+        self.assertEqual(before.titles(), {"739": "Video", "753": "Radio"})
+        after = audio_tabs.Pairing()
+        after.restore(before.saved_pairs())
+        # After the restart only 753 is still there, and from before the watch
+        after.add_stream(87, audio_tabs.Stream(753, None))
+        after.drop_ended_pairs()
+        self.assertEqual(after.titles(), {"753": "Radio"})
+
+    def test_restored_tab_takes_no_second_stream(self) -> None:
+        pairing = audio_tabs.Pairing()
+        pairing.restore([audio_tabs.SavedPair(739, 1, "Video")])
+        pairing.add_stream(105, audio_tabs.Stream(739, None))
+        pairing.drop_ended_pairs()
+        pairing.update_tabs({1: "Video"}, 50.0)
+        pairing.add_stream(87, audio_tabs.Stream(753, 50.0))
+        pairing.pair(60.0)
+        self.assertEqual(pairing.titles(), {"739": "Video"})
+
+
+class SavedPairs(unittest.TestCase):
+    def setUp(self) -> None:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.path = Path(directory.name) / "audio-tabs.json"
+
+    def test_round_trip(self) -> None:
+        pairs = [audio_tabs.SavedPair(739, 1, "Fußball"), audio_tabs.SavedPair(753, 2, "Radio")]
+        audio_tabs.save_pairs(self.path, pairs)
+        self.assertEqual(audio_tabs.load_pairs(self.path), pairs)
+
+    def test_no_file(self) -> None:
+        self.assertEqual(audio_tabs.load_pairs(self.path), [])
+
+    def test_invalid_file(self) -> None:
+        self.path.write_text("not json")
+        with unittest.mock.patch("sys.stderr"):
+            self.assertEqual(audio_tabs.load_pairs(self.path), [])
+
+    def test_invalid_entries_are_skipped(self) -> None:
+        self.path.write_text('[{"serial": 739, "tab_id": 1, "title": "Video"}, {"serial": "x"}, 3]')
+        self.assertEqual(audio_tabs.load_pairs(self.path), [audio_tabs.SavedPair(739, 1, "Video")])
 
 
 if __name__ == "__main__":

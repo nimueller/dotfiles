@@ -20,11 +20,16 @@ object.serial:
 
   {"739": "Some video", "753": "Another video"}
 
+The pairs are kept in $XDG_RUNTIME_DIR/audio-tabs.json, so a restart (of
+the daemon) keeps those whose stream still plays: a stream that was there
+before the start can't be paired by time.
+
 Without the extension nothing is posted, PipeWire isn't watched and nothing
 is printed: the sound menu shows the streams as before.
 """
 
 import json
+import os
 import queue
 import signal
 import subprocess
@@ -34,6 +39,7 @@ import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from types import FrameType
 from typing import IO, cast
 
@@ -50,6 +56,8 @@ MAX_BODY_BYTES = 64 * 1024
 PAIRING_WINDOW = 2.0
 # How often the waiting tabs are paired again without any change, in seconds
 TICK = 1.0
+
+STATE = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / "audio-tabs.json"
 
 PW_DUMP_COMMAND = ["pw-dump", "--monitor", "--no-colors"]
 BRAVE_BINARY = "brave"
@@ -68,6 +76,13 @@ class Stream:
     serial: int
     # When it turned up; None for streams that were there before the watch
     appeared: float | None
+
+
+@dataclass
+class SavedPair:
+    serial: int
+    tab_id: int
+    title: str
 
 
 @dataclass
@@ -154,6 +169,28 @@ class Pairing:
     def titles(self) -> dict[str, str]:
         return {str(serial): self.tabs[tab_id].title for serial, tab_id in self.tab_of_stream.items()}
 
+    def saved_pairs(self) -> list[SavedPair]:
+        pairs: list[SavedPair] = []
+        for serial, tab_id in self.tab_of_stream.items():
+            pairs.append(SavedPair(serial, tab_id, self.tabs[tab_id].title))
+        return pairs
+
+    def restore(self, pairs: list[SavedPair]) -> None:
+        """Pairs from before a restart, until the watch says which streams
+        are still there (drop_ended_pairs)."""
+        for pair in pairs:
+            self.tabs[pair.tab_id] = Tab(pair.title, None)
+            self.tab_of_stream[pair.serial] = pair.tab_id
+
+    def drop_ended_pairs(self) -> None:
+        """Restored pairs whose stream has ended meanwhile. Serials aren't
+        reused, so a pair of a serial that's still there is still right."""
+        playing = {stream.serial for stream in self.streams.values()}
+        for serial in list(self.tab_of_stream):
+            if serial not in playing:
+                del self.tab_of_stream[serial]
+        self.forget_unused_tabs()
+
 
 def started_together(first: float | None, second: float) -> bool:
     if first is None:
@@ -211,6 +248,44 @@ def pw_dump_chunks(lines: Iterator[str]) -> Iterator[list[dict[str, object]]]:
         chunk = []
 
 
+def load_pairs(path: Path) -> list[SavedPair]:
+    """The pairs save_pairs wrote; none if there's no valid file."""
+    try:
+        entries = json.loads(path.read_text())
+    except FileNotFoundError:
+        return []
+    except (OSError, json.JSONDecodeError) as error:
+        print(f"audio-tabs: {path} not read: {error}", file=sys.stderr)
+        return []
+    if not isinstance(entries, list):
+        return []
+    pairs: list[SavedPair] = []
+    for entry in cast(list[object], entries):
+        pair = saved_pair(entry)
+        if pair is not None:
+            pairs.append(pair)
+    return pairs
+
+
+def saved_pair(entry: object) -> SavedPair | None:
+    if not isinstance(entry, dict):
+        return None
+    fields = cast(dict[str, object], entry)
+    serial = fields.get("serial")
+    tab_id = fields.get("tab_id")
+    title = fields.get("title")
+    if not isinstance(serial, int) or not isinstance(tab_id, int) or not isinstance(title, str):
+        return None
+    return SavedPair(serial, tab_id, title)
+
+
+def save_pairs(path: Path, pairs: list[SavedPair]) -> None:
+    entries = [{"serial": pair.serial, "tab_id": pair.tab_id, "title": pair.title} for pair in pairs]
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(entries, ensure_ascii=False) + "\n")
+    temporary.replace(path)
+
+
 # Events for the main loop, from the server's and the watch's threads
 @dataclass
 class TabsPosted:
@@ -229,11 +304,16 @@ class StreamRemoved:
 
 
 @dataclass
+class StreamsListed:
+    """pw-dump's first chunk, the streams that were there, is through."""
+
+
+@dataclass
 class WatchEnded:
     pass
 
 
-Event = TabsPosted | StreamAdded | StreamRemoved | WatchEnded
+Event = TabsPosted | StreamAdded | StreamRemoved | StreamsListed | WatchEnded
 
 
 def start_watch(events: "queue.Queue[Event]") -> "subprocess.Popen[str]":
@@ -254,6 +334,8 @@ def watch_streams(events: "queue.Queue[Event]", output: IO[str]) -> None:
             appeared = None if is_first_chunk else time.monotonic()
             for pw_object in chunk:
                 put_stream_event(events, pw_object, appeared)
+            if is_first_chunk:
+                events.put(StreamsListed())
             is_first_chunk = False
     finally:
         events.put(WatchEnded())
@@ -311,6 +393,8 @@ def apply(pairing: Pairing, event: Event, now: float) -> None:
         pairing.add_stream(event.node_id, event.stream)
     elif isinstance(event, StreamRemoved):
         pairing.remove_stream(event.node_id)
+    elif isinstance(event, StreamsListed):
+        pairing.drop_ended_pairs()
     else:
         # Without the watch the pairs go stale: daemon.qml starts this again
         sys.exit("audio-tabs: pw-dump has ended")
@@ -331,25 +415,35 @@ def next_event(events: "queue.Queue[Event]", is_watching: bool) -> Event | None:
         return None
 
 
+def publish_titles(pairing: Pairing, printed: dict[str, str]) -> dict[str, str]:
+    """Prints and saves the pairs if they changed since `printed`; returns
+    what's printed now."""
+    titles = pairing.titles()
+    if titles == printed:
+        return printed
+    print(json.dumps(titles, ensure_ascii=False), flush=True)
+    save_pairs(STATE, pairing.saved_pairs())
+    return titles
+
+
 def main() -> None:
     signal.signal(signal.SIGTERM, exit_on_terminate)
     events: queue.Queue[Event] = queue.Queue()
     serve(events)
     pairing = Pairing()
-    watch: subprocess.Popen[str] | None = None
+    pairing.restore(load_pairs(STATE))
+    # Restored pairs need the watch to learn which streams have ended
+    watch = start_watch(events) if pairing.tab_of_stream else None
     printed: dict[str, str] = {}
     try:
         while True:
+            printed = publish_titles(pairing, printed)
             event = next_event(events, watch is not None)
             if event is not None:
                 apply(pairing, event, time.monotonic())
             if isinstance(event, TabsPosted) and watch is None:
                 watch = start_watch(events)
             pairing.pair(time.monotonic())
-            titles = pairing.titles()
-            if titles != printed:
-                print(json.dumps(titles, ensure_ascii=False), flush=True)
-                printed = titles
     finally:
         if watch is not None:
             watch.terminate()
