@@ -66,6 +66,9 @@ in
   # Installed software against system/packages/*.txt and the Flatpaks in
   # home-manager/desktop/flatpak.nix
   pkg-sync = pythonScript "pkg-sync";
+  # After an update: reboot now, later or not at all (Updates.qml, the
+  # `upgrade` alias); pacman comes from the system
+  reboot-check = pythonScript "reboot-check";
 
   # TeX Live and Neovim (init-tex, edit-tex) come from the dev module rather
   # than being pulled in here. systemd-inhibit and hyprctl come from the

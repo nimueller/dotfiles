@@ -28,7 +28,7 @@ alias cat='bat'
 alias ls='lsd'
 alias la='lsd -lah'
 alias fzf='fzf --reverse'
-alias upgrade="yay -Syu ; notify-command-finished"
+alias upgrade="yay -Syu ; reboot-check ; notify-command-finished"
 alias cleanup="sudo pacman -Qdtq | sudo pacman -Rns -"
 
 if command -v kitten >/dev/null 2>&1 && [ "$TERM" = "xterm-kitty" ]; then

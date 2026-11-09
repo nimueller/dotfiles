@@ -35,12 +35,13 @@ Singleton {
     }
 
     // pacman and the AUR together through the helper, then Flatpak; in a
-    // terminal that stays open to read. It checks again when the update is
+    // terminal that stays open to read, ending with whether to reboot
+    // (reboot-check). It checks again when the update is
     // through (ipc.sh, the chip goes away at once) and once it's closed.
     function update() {
         const system = aurHelper ? `${aurHelper} -Syu` : "sudo pacman -Syu";
         const done = `'${Quickshell.shellPath("ipc.sh")}' updates refresh`;
-        updater.command = ["kitty", "--hold", "sh", "-c", `${system}; flatpak update; ${done}`];
+        updater.command = ["kitty", "--hold", "sh", "-c", `${system}; flatpak update; reboot-check; ${done}`];
         updater.running = true;
     }
 

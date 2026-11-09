@@ -291,6 +291,7 @@ in
       my-pkgs.init-tex
       my-pkgs.edit-tex
       my-pkgs.pkg-sync # installed software against the lists and flatpak.nix
+      my-pkgs.reboot-check # after an update: whether to reboot, and how soon
 
       # Apps that aren't on Flathub, instead of the AUR; none needs the GPU
       # much (Nix apps on Arch don't get the NVIDIA driver)
