@@ -1,9 +1,9 @@
 -- Markdown: read without spelling marks, write with them. Outside insert
 -- mode, Vim's spell check and the diagnostics of the spelling servers
--- (codebook, ltex) are hidden; in insert mode they show. Other diagnostics
--- (e.g. marksman's) always show.
+-- (codebook, ltex_plus) are hidden; in insert mode they show. Other
+-- diagnostics (e.g. marksman's) always show.
 local buf = vim.api.nvim_get_current_buf()
-local spellers = { codebook = true, ltex = true }
+local spellers = { codebook = true, ltex_plus = true }
 
 -- A server's diagnostics come in two namespaces: pushed and pulled ones
 local function showDiagnostics(client, on)

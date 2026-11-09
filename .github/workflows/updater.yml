@@ -5,10 +5,11 @@ on:
     - cron: '0 0 * * 0' # runs weekly on Sunday at 00:00
 
 # Updates flake.lock in a pull request, builds the configurations from it
-# and merges it when they all build; otherwise the pull request is closed
-# and main keeps the previous lock. A vulnerability scan comments which known
-# vulnerabilities the update fixes and which it brings in; it never blocks
-# the merge.
+# and merges it when they all build; otherwise the pull request stays open
+# with a comment, so the failure shows, and main keeps the previous lock
+# until it's fixed. The next run updates the same pull request. A
+# vulnerability scan comments which known vulnerabilities the update fixes
+# and which it brings in; it never blocks the merge.
 #
 # Needs in the repository settings (Actions > General > Workflow
 # permissions): "Read and write permissions" and "Allow GitHub Actions to
@@ -41,9 +42,10 @@ jobs:
           pr-body: |
             Weekly `flake.lock` update. The workflow that opened this pull
             request builds the configurations from it and merges it when all
-            of them build; otherwise it closes it and `main` keeps the
-            current lock. A comment lists the known vulnerabilities the update
-            fixes and brings in (information only).
+            of them build; otherwise it stays open with a comment until the
+            build is fixed, and `main` keeps the current lock. A comment lists
+            the known vulnerabilities the update fixes and brings in
+            (information only).
 
             ```
             {{ env.GIT_COMMIT_MESSAGE }}
@@ -140,8 +142,8 @@ jobs:
       - name: 🚀 Merge, everything builds
         if: needs.build.result == 'success'
         run: gh pr merge "$PR" --squash --delete-branch
-      - name: 🗑️ Close, something doesn't build
+      - name: 💬 Keep open, something doesn't build
         if: needs.build.result != 'success'
         run: |
-          gh pr close "$PR" --delete-branch \
-            --comment "Not merged: a configuration failed to build (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+          gh pr comment "$PR" \
+            --body "Not merged: a configuration failed to build (${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})."

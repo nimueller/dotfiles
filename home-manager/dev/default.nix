@@ -20,7 +20,7 @@
       # LaTeX
       texliveFull
       texlab
-      ltex-ls
+      ltex-ls-plus
 
       # Markdown
       marksman
