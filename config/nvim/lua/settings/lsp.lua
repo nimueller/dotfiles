@@ -25,7 +25,7 @@ end
 enable("codebook")
 
 -- LaTeX and Markdown
-enable("ltex")
+enable("ltex_plus")
 enable("marksman")
 
 -- Lua
