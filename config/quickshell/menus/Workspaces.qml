@@ -115,7 +115,12 @@ Rectangle {
         }
     }
 
-    WheelHandler {
+    // On top of the buttons but takes no buttons, so clicks and hover still
+    // reach them: a WheelHandler got no wheel events from a real mouse in the
+    // Quickshell window
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
         onWheel: event => Hyprland.dispatch(`hl.dsp.focus({ workspace = "e${event.angleDelta.y > 0 ? "-" : "+"}1" })`)
     }
 }
