@@ -456,10 +456,11 @@ Popup {
     // further out if there is none close by
     function fetchMetar(place, widen) {
         const dLat = 0.8 * widen, dLon = 1.2 * widen;
-        const bbox = `${place.lat - dLat},${place.lon - dLon},${place.lat + dLat},${place.lon + dLon}`;
+        // Rounded: the API rejects float noise like 50.900000000000006
+        const corners = [place.lat - dLat, place.lon - dLon, place.lat + dLat, place.lon + dLon];
+        const bbox = corners.map(c => c.toFixed(2)).join(",");
         get(`https://aviationweather.gov/api/data/metar?format=json&bbox=${bbox}`, data => {
-            const isFresh = m => m.temp !== null && m.temp !== undefined && Date.now() / 1000 - m.obsTime < 3 * 3600;
-            const fresh = (data ?? []).filter(isFresh);
+            const fresh = (data ?? []).filter(isFreshMetar);
             const nearest = fresh.map(m => Object.assign({}, m, {
                     distance: Weather.distanceKm(place.lat, place.lon, m.lat, m.lon)
                 })).sort((a, b) => a.distance - b.distance)[0];
@@ -467,13 +468,28 @@ Popup {
                 fetchMetar(place, widen + 1);
                 return;
             }
-            cache = Object.assign({}, cache, {
-                weather: Object.assign({}, cache.weather, {
-                    metar: nearest ?? null
-                })
-            });
-            saveCache();
-        }, () => {}); // keep Open-Meteo's current weather
+            setMetar(nearest ?? null);
+        }, () => {
+            // Keep a cached METAR while it's recent; after that, Open-Meteo's
+            // current weather is the better guess
+            const cached = cache.weather?.metar;
+            if (cached && !isFreshMetar(cached)) {
+                setMetar(null);
+            }
+        });
+    }
+
+    function isFreshMetar(m) {
+        return m.temp !== null && m.temp !== undefined && Date.now() / 1000 - m.obsTime < 3 * 3600;
+    }
+
+    function setMetar(metar) {
+        cache = Object.assign({}, cache, {
+            weather: Object.assign({}, cache.weather, {
+                metar
+            })
+        });
+        saveCache();
     }
 
     function searchLocation(query, pickFirst) {
