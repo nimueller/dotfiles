@@ -1,13 +1,15 @@
 import QtQuick
 import Quickshell.Io
 
-// One call of calendar-dav.py: run(args, input, done, failed) writes `input`
-// to its stdin and calls done(result) or failed(error) with its JSON answer.
+// One call of a helper that answers in JSON, {"error": "..."} on failure
+// (calendar-dav.py, weather.py): run(args, input, done, failed) writes
+// `input` to its stdin and calls done(result) or failed(error).
 Process {
     id: call
 
     required property string helper
     property string input: ""
+    property string failure: I18n.tr("The calendar helper failed") // when it answers no JSON
     property var done: null
     property var failed: null
 
@@ -33,7 +35,7 @@ Process {
                 result = JSON.parse(text);
             } catch (e) {
                 result = {
-                    error: I18n.tr("The calendar helper failed")
+                    error: call.failure
                 };
             }
             if (result.error && call.failed) {
