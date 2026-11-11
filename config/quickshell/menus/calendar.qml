@@ -9,10 +9,10 @@ import Quickshell.Io
 // appointments and forecast, the selected day in a sidebar with the current
 // weather and an hourly forecast, and a form to add or edit appointments
 // (with reminders) on Nextcloud. Events come from Nextcloud (CalDAV) and
-// read-only ICS subscriptions via calendar-dav.py; the forecast from
-// Open-Meteo, the current weather from the nearest airport's METAR
-// (aviationweather.gov); address suggestions for an appointment's place from
-// Photon (photon.komoot.io). The gear opens the settings.
+// read-only ICS subscriptions via calendar-dav.py; the forecast and the
+// current weather from the Deutscher Wetterdienst via weather.py; address
+// suggestions for an appointment's place from Photon (photon.komoot.io). The
+// gear opens the settings.
 //
 // Settings: ~/.local/state/quickshell-calendar.json (the app password is in
 // the keyring). Last events and weather are cached in
@@ -26,6 +26,7 @@ Popup {
 
     readonly property string home: Quickshell.env("HOME")
     readonly property string helper: Quickshell.shellPath("calendar-dav.py")
+    readonly property string weatherHelper: Quickshell.shellPath("weather.py")
     readonly property var palette: {
         const warm = [Theme.peach, Theme.teal, Theme.pink, Theme.yellow];
         return warm.concat([Theme.green, Theme.maroon, Theme.sky]);
@@ -34,6 +35,9 @@ Popup {
     // { location, ownLocation, weekStart, weekNumbers, nextcloud: { url, user, calendars }, ics: [...] }
     property var settings: ({})
     property var cache: ({}) // { weather: { at, place, data }, events: { "yyyy-MM": [...] } }
+    // weather.py's answer; null until there is one (or a cache from before
+    // it, which had another shape)
+    readonly property var weather: cache.weather?.data?.forecast ? cache.weather.data : null
     property bool editing: false
     property bool creating: false
 
@@ -150,7 +154,7 @@ Popup {
         return out;
     }
     readonly property var dayEvents: (byDay[Qt.formatDate(selected, "yyyy-MM-dd")] ?? []).filter(e => e)
-    readonly property var forecast: Weather.daily(cache.weather?.data)
+    readonly property var forecast: weather?.daily ?? ({})
     readonly property string syncError: Object.values(syncErrors)[0] ?? ""
 
     function byId(list, value) {
@@ -403,6 +407,37 @@ Popup {
 
     // Weather ------------------------------------------------------------------
 
+    HelperCall {
+        id: weatherCall
+        helper: popup.weatherHelper
+        failure: "Couldn't load the weather"
+    }
+
+    function fetchWeather(force) {
+        const place = location;
+        if (!place) {
+            zoneProc.running = true; // guess from the time zone first
+            return;
+        }
+        const w = cache.weather;
+        const isFresh = Date.now() - (w?.at ?? 0) < 15 * 60 * 1000;
+        if (!force && weather && w.place === place.name && isFresh) {
+            return;
+        }
+        weatherError = "";
+        weatherCall.run([String(place.lat), String(place.lon)], "", data => {
+            cache = Object.assign({}, cache, {
+                weather: {
+                    at: Date.now(),
+                    place: place.name,
+                    data
+                }
+            });
+            saveCache();
+        }, error => weatherError = error);
+    }
+
+    // The location search: Open-Meteo's geocoding
     function get(url, done, fail) {
         const xhr = new XMLHttpRequest();
         xhr.onreadystatechange = () => {
@@ -420,60 +455,6 @@ Popup {
         };
         xhr.open("GET", url);
         xhr.send();
-    }
-
-    function fetchWeather(force) {
-        const place = location;
-        if (!place) {
-            zoneProc.running = true; // guess from the time zone first
-            return;
-        }
-        const w = cache.weather;
-        if (!force && w && w.place === place.name && w.data?.hourly && Date.now() - w.at < 15 * 60 * 1000) {
-            return;
-        }
-        weatherError = "";
-        const forecastUrl = "https://api.open-meteo.com/v1/forecast";
-        const coordinates = `latitude=${place.lat}&longitude=${place.lon}&timezone=auto&forecast_days=16`;
-        const currentFields = "current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day";
-        const dailyFields = "daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max";
-        const hourlyFields = "hourly=temperature_2m,weather_code,precipitation_probability,is_day";
-        get(`${forecastUrl}?${coordinates}&${currentFields}&${dailyFields}&${hourlyFields}`, data => {
-            cache = Object.assign({}, cache, {
-                weather: {
-                    at: Date.now(),
-                    place: place.name,
-                    data,
-                    metar: cache.weather?.place === place.name ? cache.weather.metar : null
-                }
-            });
-            saveCache();
-            fetchMetar(place, 1);
-        }, () => weatherError = "Couldn't load the weather");
-    }
-
-    // Current weather from the nearest airport with a recent METAR; looks
-    // further out if there is none close by
-    function fetchMetar(place, widen) {
-        const dLat = 0.8 * widen, dLon = 1.2 * widen;
-        const bbox = `${place.lat - dLat},${place.lon - dLon},${place.lat + dLat},${place.lon + dLon}`;
-        get(`https://aviationweather.gov/api/data/metar?format=json&bbox=${bbox}`, data => {
-            const isFresh = m => m.temp !== null && m.temp !== undefined && Date.now() / 1000 - m.obsTime < 3 * 3600;
-            const fresh = (data ?? []).filter(isFresh);
-            const nearest = fresh.map(m => Object.assign({}, m, {
-                    distance: Weather.distanceKm(place.lat, place.lon, m.lat, m.lon)
-                })).sort((a, b) => a.distance - b.distance)[0];
-            if (!nearest && widen < 3) {
-                fetchMetar(place, widen + 1);
-                return;
-            }
-            cache = Object.assign({}, cache, {
-                weather: Object.assign({}, cache.weather, {
-                    metar: nearest ?? null
-                })
-            });
-            saveCache();
-        }, () => {}); // keep Open-Meteo's current weather
     }
 
     function searchLocation(query, pickFirst) {
@@ -667,8 +648,7 @@ Popup {
 
             WeatherPanel {
                 Layout.fillWidth: true
-                weather: popup.cache.weather?.data ?? null
-                metar: popup.cache.weather?.metar ?? null
+                weather: popup.weather
                 place: popup.location?.name.split(",")[0] ?? ""
                 error: popup.weatherError
                 onConfigure: popup.editing = true
@@ -738,7 +718,7 @@ Popup {
                 HourlyStrip {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 70
-                    weather: popup.cache.weather?.data ?? null
+                    hourly: popup.weather?.hourly ?? []
                     day: popup.selected
                 }
 
