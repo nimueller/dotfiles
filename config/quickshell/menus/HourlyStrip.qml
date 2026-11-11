@@ -1,32 +1,29 @@
 import QtQuick
 import QtQuick.Layouts
 
-// Hour-by-hour forecast of one day from Open-Meteo's hourly arrays, as a
-// strip to scroll sideways. Starts at the current hour today, at 7 otherwise.
+// Hour-by-hour forecast of one day from weather.py's hourly list, as a strip
+// to scroll sideways. Starts at the current hour today, at 7 otherwise.
 ListView {
     id: root
 
-    property var weather: null // Open-Meteo /v1/forecast JSON with `hourly`
+    property var hourly: [] // weather.py's: [{ time, temp, code, rain, night }]
     required property date day
 
     readonly property var hours: {
-        const h = weather?.hourly;
-        if (!h) {
-            return [];
-        }
         const key = Qt.formatDate(day, "yyyy-MM-dd");
         const out = [];
-        h.time.forEach((t, i) => {
-            if (t.startsWith(key) && h.temperature_2m[i] !== null) {
-                out.push({
-                    hour: parseInt(t.slice(11, 13)),
-                    code: h.weather_code[i],
-                    temp: Math.round(h.temperature_2m[i]),
-                    rain: h.precipitation_probability?.[i] ?? 0,
-                    night: h.is_day?.[i] === 0
-                });
+        for (const h of hourly) {
+            if (!h.time.startsWith(key)) {
+                continue;
             }
-        });
+            out.push({
+                hour: parseInt(h.time.slice(11, 13)),
+                code: h.code,
+                temp: h.temp,
+                rain: h.rain ?? 0,
+                night: h.night
+            });
+        }
         return out;
     }
 
