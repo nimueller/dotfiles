@@ -94,8 +94,14 @@ ListView {
         }
     }
 
-    WheelHandler {
-        // Vertical wheel scrolls the strip sideways
+    // Vertical wheel scrolls the strip sideways. A MouseArea that takes no
+    // buttons, on the list itself rather than its moving content: a
+    // WheelHandler got no wheel events from a real mouse in the Quickshell
+    // window.
+    MouseArea {
+        parent: root
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
         onWheel: event => root.flick(event.angleDelta.y * 6, 0)
     }
 }
