@@ -74,9 +74,9 @@ Scope {
         function send(urgency, icon, summary, body, top, show) {
             this.show = show;
             const script = `top=$(sh -c "$5" 2>/dev/null)
-exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$top"`;
+exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A "show=$7" -- "$3" "$4$top"`;
 
-            command = ["sh", "-c", script, "sh", urgency, icon, summary, body, top, String(nid)];
+            command = ["sh", "-c", script, "sh", urgency, icon, summary, body, top, String(nid), I18n.tr("Show")];
             // The one waiting for the earlier notification goes first
             if (running) {
                 restart = true;
@@ -152,11 +152,11 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             memoryAlert = false;
         } else if (!memoryAlert && (available < limits.memory.percent / 100 || stalled >= 10)) {
             memoryAlert = true;
-            const available = `${size(v.MemAvailable[0] * 1024)} of ${size(v.MemTotal[0] * 1024)}`;
-            const body = `${available} left, the system may freeze. Most memory: `;
+            const available = I18n.tr("%1 of %2", size(v.MemAvailable[0] * 1024), size(v.MemTotal[0] * 1024));
+            const body = I18n.tr("%1 left, the system may freeze. Most memory: ", available);
             // The process name with the most memory, all its processes together
             const top = `ps -eo rss=,comm= | awk '{r=$1; $1=""; m[substr($0,2)]+=r} END {for (c in m) print m[c], c}' | sort -rn | awk '{r=$1; $1=""; printf "%s (%.1f GB)", substr($0,2), r/1048576; exit}'`;
-            memoryNote.send("critical", "dialog-warning", "Memory is almost full", body, top, btop);
+            memoryNote.send("critical", "dialog-warning", I18n.tr("Memory is almost full"), body, top, btop);
         } else if (memoryAlert && available > 2 * limits.memory.percent / 100 && stalled < 2) {
             memoryAlert = false;
         }
@@ -171,10 +171,10 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             cpuAlert = false;
         } else if (!cpuAlert && cpuSince && Date.now() - cpuSince >= limits.cpu.minutes * 60000) {
             cpuAlert = true;
-            const body = `Programs have waited for the CPU ${Math.round(cpu)} % of the last minute. Busiest: `;
+            const body = I18n.tr("Programs have waited for the CPU %1 % of the last minute. Busiest: ", Math.round(cpu));
             // The busiest process, from top's second sample
             const top = `LC_ALL=C top -b -n 2 -d 1 -o %CPU -w 512 | awk '/^ *PID/ {n++; next} n == 2 && NF {c=$12; for (i=13; i<=NF; i++) c=c" "$i; print c" ("int($9)" %)"; exit}'`;
-            cpuNote.send("normal", "dialog-warning", "The system is overloaded", body, top, btop);
+            cpuNote.send("normal", "dialog-warning", I18n.tr("The system is overloaded"), body, top, btop);
         } else if (cpuAlert && cpu < limits.cpu.percent / 2) {
             cpuAlert = false;
         }
@@ -197,19 +197,19 @@ exec notify-send -p -r "$6" -a System -u "$1" -i "$2" -A show=Show -- "$3" "$4$t
             level = 0;
         } else if (level > warned) {
             const critical = level === levels;
-            const name = target === "/" ? "The system disk" : "The home disk";
-            let summary = `${name} is filling up`;
+            const isSystem = target === "/";
+            let summary = isSystem ? I18n.tr("The system disk is filling up") : I18n.tr("The home disk is filling up");
             if (critical) {
-                summary = `${name} is full`;
+                summary = isSystem ? I18n.tr("The system disk is full") : I18n.tr("The home disk is full");
             } else if (level > 1) {
-                summary = `${name} is almost full`;
+                summary = isSystem ? I18n.tr("The system disk is almost full") : I18n.tr("The home disk is almost full");
             }
             const dir = shellQuote(target);
             if (!diskNotes[target]) {
                 diskNotes[target] = diskNote.createObject(root);
             }
             const urgency = critical ? "critical" : "normal";
-            const body = `${size(free)} (${Math.round(100 * free / total)} %) free on ${target}.`;
+            const body = I18n.tr("%1 (%2 %) free on %3.", size(free), Math.round(100 * free / total), target);
             // A disk usage tool where there is one, else the folder in Files
             const openUsage = `for t in gdu ncdu; do command -v $t >/dev/null && exec kitty --class disk-usage -e $t -x ${dir}; done; exec nautilus ${dir}`;
             diskNotes[target].send(urgency, "drive-harddisk", summary, body, "", openUsage);

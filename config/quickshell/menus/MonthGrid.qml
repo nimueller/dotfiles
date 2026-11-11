@@ -37,7 +37,8 @@ ColumnLayout {
         const isTodaysMonth = year === today.getFullYear() && month === today.getMonth();
         return isTodaysMonth && sameDay(selected, today);
     }
-    readonly property var dayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    // Sunday first, as Date.getDay() counts
+    readonly property var dayNames: [0, 1, 2, 3, 4, 5, 6].map(day => I18n.locale.dayName(day, Locale.ShortFormat))
 
     function sameDay(a, b) {
         return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -88,7 +89,7 @@ ColumnLayout {
                 spacing: 6
 
                 Label {
-                    text: Qt.formatDate(new Date(root.year, root.month, 1), "MMMM yyyy")
+                    text: I18n.formatDate(new Date(root.year, root.month, 1), "MMMM yyyy")
                     font.pixelSize: 14
                     font.bold: true
                     color: root.picking ? Theme.lavender : Theme.text
@@ -144,7 +145,7 @@ ColumnLayout {
         IconButton {
             visible: !root.showingToday || root.picking
             glyph: Theme.glyph(0xf00f6) // 󰃶
-            text: "Today"
+            text: I18n.tr("Today")
             onClicked: {
                 root.picking = false;
                 root.reset();
@@ -289,7 +290,7 @@ ColumnLayout {
 
                         Label {
                             anchors.centerIn: parent
-                            text: Qt.locale().standaloneMonthName(monthButton.index, Locale.LongFormat)
+                            text: I18n.locale.standaloneMonthName(monthButton.index, Locale.LongFormat)
                             font.pixelSize: 14
                             font.bold: monthButton.viewing || monthButton.current
                             color: {
@@ -521,7 +522,7 @@ ColumnLayout {
                 }
                 Label {
                     visible: cell.hidden > 0
-                    text: `+${cell.hidden} more`
+                    text: I18n.tr("+%1 more", cell.hidden)
                     font.pixelSize: 9
                     color: Theme.overlay1
                     leftPadding: 4

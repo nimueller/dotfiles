@@ -24,6 +24,7 @@ import gi
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib  # noqa: E402
+from i18n import tr  # noqa: E402
 
 PATH = "/io/github/nimueller/dotfiles/BluetoothAgent"
 XML = """
@@ -147,7 +148,7 @@ def six_digits(number: int) -> str:
 def service_name(uuid: str) -> str:
     """0000110b-0000-1000-8000-00805f9b34fb -> "audio"."""
     short_uuid = uuid[4:8].lower()
-    return SERVICES.get(short_uuid, UNKNOWN_SERVICE)
+    return tr(SERVICES.get(short_uuid, UNKNOWN_SERVICE))
 
 
 def is_valid_answer(kind: str, value: str) -> bool:

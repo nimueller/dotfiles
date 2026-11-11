@@ -12,6 +12,10 @@ Singleton {
 
     property var settings: ({})
 
+    // The shell's language (I18n.qml): "en", "de", or "system" for the
+    // system's
+    readonly property string language: settings.language ?? "system"
+
     // The focused window's title in the bar
     readonly property bool windowTitle: settings.bar?.windowTitle ?? false
 

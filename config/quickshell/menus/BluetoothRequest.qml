@@ -74,17 +74,17 @@ Rectangle {
             text: {
                 switch (root.kind) {
                 case "confirm":
-                    return "Does it show this code too? Only pair if it does.";
+                    return I18n.tr("Does it show this code too? Only pair if it does.");
                 case "display":
-                    return "Type this code on it, then press Enter there.";
+                    return I18n.tr("Type this code on it, then press Enter there.");
                 case "pin":
-                    return "Asks for a PIN: the one in its manual (often 0000 or 1234), or for a keyboard any digits, then type them on it too.";
+                    return I18n.tr("Asks for a PIN: the one in its manual (often 0000 or 1234), or for a keyboard any digits, then type them on it too.");
                 case "passkey":
-                    return "Enter the code it shows.";
+                    return I18n.tr("Enter the code it shows.");
                 case "authorize":
-                    return "Wants to pair with this computer.";
+                    return I18n.tr("Wants to pair with this computer.");
                 case "service":
-                    return `Wants to connect for ${root.request.service}. Allowed, it may from now on.`;
+                    return I18n.tr("Wants to connect for %1. Allowed, it may from now on.", root.request.service);
                 }
                 return "";
             }
@@ -117,7 +117,7 @@ Rectangle {
             Layout.fillWidth: true
             visible: root.typing
             accent: Theme.blue
-            placeholder: root.kind === "pin" ? "PIN" : "6-digit code"
+            placeholder: root.kind === "pin" ? "PIN" : I18n.tr("6-digit code")
             onAccepted: root.accept()
         }
 
@@ -131,19 +131,19 @@ Rectangle {
             IconButton {
                 text: {
                     if (root.kind === "display") {
-                        return "Hide";
+                        return I18n.tr("Hide");
                     }
                     if (root.kind === "service") {
-                        return "Deny";
+                        return I18n.tr("Deny");
                     }
-                    return "Cancel";
+                    return I18n.tr("Cancel");
                 }
                 onClicked: BluetoothAgent.answer(root.request.id, false)
             }
             IconButton {
                 visible: root.kind !== "display"
                 glyph: Theme.glyph(0xf012c) // 󰄬
-                text: root.kind === "service" ? "Allow" : "Pair"
+                text: root.kind === "service" ? I18n.tr("Allow") : I18n.tr("Pair")
                 accent: Theme.green
                 active: root.valid
                 onClicked: root.accept()

@@ -9,7 +9,7 @@ Process {
 
     required property string helper
     property string input: ""
-    property string failure: "The calendar helper failed" // when it answers no JSON
+    property string failure: I18n.tr("The calendar helper failed") // when it answers no JSON
     property var done: null
     property var failed: null
 

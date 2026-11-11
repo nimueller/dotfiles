@@ -38,7 +38,7 @@ RowLayout {
     IconButton {
         visible: root.removable
         glyph: Theme.glyph(0xf01b4) // 󰆴
-        text: root.confirming ? "Remove?" : ""
+        text: root.confirming ? I18n.tr("Remove?") : ""
         accent: Theme.red
         active: root.confirming
         onClicked: {

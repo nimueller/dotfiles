@@ -16,55 +16,55 @@ Rectangle {
         {
             id: "select",
             glyph: 0xf01be,
-            name: "Move and resize the selection",
+            name: I18n.tr("Move and resize the selection"),
             key: "V"
         },
         {
             id: "pen",
             glyph: 0xf03eb,
-            name: "Pen",
+            name: I18n.tr("Pen"),
             key: "P"
         },
         {
             id: "line",
             glyph: 0xf0fdf,
-            name: "Line",
+            name: I18n.tr("Line"),
             key: "L"
         },
         {
             id: "arrow",
             glyph: 0xf005c,
-            name: "Arrow",
+            name: I18n.tr("Arrow"),
             key: "A"
         },
         {
             id: "rect",
             glyph: 0xf0763,
-            name: "Rectangle",
+            name: I18n.tr("Rectangle"),
             key: "R"
         },
         {
             id: "ellipse",
             glyph: 0xf0766,
-            name: "Ellipse",
+            name: I18n.tr("Ellipse"),
             key: "O"
         },
         {
             id: "marker",
             glyph: 0xf0652,
-            name: "Highlighter",
+            name: I18n.tr("Highlighter"),
             key: "M"
         },
         {
             id: "text",
             glyph: 0xf0284,
-            name: "Text",
+            name: I18n.tr("Text"),
             key: "T"
         },
         {
             id: "pixelate",
             glyph: 0xf00b5,
-            name: "Pixelate",
+            name: I18n.tr("Pixelate"),
             key: "B"
         }
     ]
@@ -141,7 +141,7 @@ Rectangle {
             id: sizeButton
 
             onClicked: bar.editor.size = (bar.editor.size + 1) % 3
-            onHoveredChanged: bar.say(hovered, "Thickness and text size")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Thickness and text size"))
 
             Rectangle {
                 anchors.centerIn: parent
@@ -158,13 +158,13 @@ Rectangle {
             glyph: Theme.glyph(0xf054c) // 󰕌
             opacity: bar.editor.shapes.length ? 1 : 0.4
             onClicked: bar.editor.undo()
-            onHoveredChanged: bar.say(hovered, "Undo   Ctrl+Z")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Undo   Ctrl+Z"))
         }
         IconButton {
             glyph: Theme.glyph(0xf044e) // 󰑎
             opacity: bar.editor.undone.length ? 1 : 0.4
             onClicked: bar.editor.redo()
-            onHoveredChanged: bar.say(hovered, "Redo   Ctrl+Shift+Z")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Redo   Ctrl+Shift+Z"))
         }
 
         Separator {}
@@ -179,7 +179,7 @@ Rectangle {
                 text: `${modelData}%`
                 active: bar.editor.percent === modelData
                 onClicked: bar.editor.percent = modelData
-                onHoveredChanged: bar.say(hovered, `Scale to ${modelData}%   ${index + 1}`)
+                onHoveredChanged: bar.say(hovered, I18n.tr("Scale to %1%   %2", modelData, index + 1))
             }
         }
 
@@ -194,35 +194,35 @@ Rectangle {
 
         IconButton {
             glyph: Theme.glyph(0xf018f) // 󰆏
-            text: "Copy"
+            text: I18n.tr("Copy")
             accent: Theme.green
             active: true
             onClicked: bar.editor.finish("copy")
-            onHoveredChanged: bar.say(hovered, "Copy to the clipboard   Enter")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Copy to the clipboard   Enter"))
         }
         IconButton {
             glyph: Theme.glyph(0xf0193) // 󰆓
-            text: "Save"
+            text: I18n.tr("Save")
             accent: Theme.blue
             active: true
             onClicked: bar.editor.finish("save")
-            onHoveredChanged: bar.say(hovered, "Save to ~/Pictures/Screenshots and copy   Ctrl+S")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Save to ~/Pictures/Screenshots and copy   Ctrl+S"))
         }
         IconButton {
             glyph: Theme.glyph(0xf113a) // 󱄺
             onClicked: bar.editor.finish("text")
-            onHoveredChanged: bar.say(hovered, "Copy the text or the QR code's content   Ctrl+T")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Copy the text or the QR code's content   Ctrl+T"))
         }
 
         Separator {}
 
         IconButton {
             glyph: Theme.glyph(0xf044a) // 󰑊
-            text: "Record"
+            text: I18n.tr("Record")
             accent: Theme.red
             active: true
             onClicked: bar.editor.finish("record")
-            onHoveredChanged: bar.say(hovered, "Record a video to ~/Videos/Screencasts, without the drawings; the bar stops it   Ctrl+R")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Record a video to ~/Videos/Screencasts, without the drawings; the bar stops it   Ctrl+R"))
         }
         IconButton {
             glyph: Theme.glyph(bar.editor.sound ? 0xf057e : 0xf0581) // 󰕾 / 󰖁
@@ -230,14 +230,14 @@ Rectangle {
             accent: Theme.red
             onClicked: bar.editor.sound = !bar.editor.sound
             onHoveredChanged: {
-                const hint = bar.editor.sound ? "Recording with the sound the speakers play" : "Recording without sound";
+                const hint = bar.editor.sound ? I18n.tr("Recording with the sound the speakers play") : I18n.tr("Recording without sound");
                 bar.say(hovered, hint);
             }
         }
         IconButton {
             glyph: Theme.glyph(0xf0156) // 󰅖
             onClicked: bar.editor.cancel()
-            onHoveredChanged: bar.say(hovered, "Cancel   Esc")
+            onHoveredChanged: bar.say(hovered, I18n.tr("Cancel   Esc"))
         }
     }
 

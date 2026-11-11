@@ -96,7 +96,7 @@ Popup {
                     popup.trying = popup.mark(popup.trying, address, "");
                 } else if (popup.trying[address] === "connect" && isDisconnected) {
                     popup.trying = popup.mark(popup.trying, address, "");
-                    popup.errors = popup.mark(popup.errors, address, "Couldn't connect. Is it switched on and in reach?");
+                    popup.errors = popup.mark(popup.errors, address, I18n.tr("Couldn't connect. Is it switched on and in reach?"));
                 }
             }
 
@@ -106,7 +106,7 @@ Popup {
                     const d = watch.modelData;
                     if (!d.paired && !d.bonded && !d.pairing && popup.trying[d.address] === "pair") {
                         popup.trying = popup.mark(popup.trying, d.address, "");
-                        popup.errors = popup.mark(popup.errors, d.address, "Pairing didn't work. Is it still in pairing mode?");
+                        popup.errors = popup.mark(popup.errors, d.address, I18n.tr("Pairing didn't work. Is it still in pairing mode?"));
                     }
                 }
             }
@@ -126,7 +126,7 @@ Popup {
         glyph: Theme.glyph(0xf00af) // 󰂯
         accent: Theme.blue
         title: "Bluetooth"
-        badge: popup.on && popup.adapter.discovering ? "Searching" : ""
+        badge: popup.on && popup.adapter.discovering ? I18n.tr("Searching") : ""
 
         Switch {
             visible: !!popup.adapter
@@ -159,12 +159,12 @@ Popup {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         elide: Text.ElideNone
-        text: "BlueZ doesn't see a Bluetooth adapter: the Bluetooth service isn't running, or the controller has no address of its own. system/setup.sh sets up both."
+        text: I18n.tr("BlueZ doesn't see a Bluetooth adapter: the Bluetooth service isn't running, or the controller has no address of its own. system/setup.sh sets up both.")
         color: Theme.subtext0
     }
     Label {
         visible: !!popup.adapter && !popup.on
-        text: popup.adapter?.state === BluetoothAdapterState.Blocked ? "Blocked by a key or switch (airplane mode)" : "Bluetooth is off"
+        text: popup.adapter?.state === BluetoothAdapterState.Blocked ? I18n.tr("Blocked by a key or switch (airplane mode)") : I18n.tr("Bluetooth is off")
         color: Theme.overlay0
         font.italic: true
     }
@@ -175,11 +175,11 @@ Popup {
         spacing: 8
 
         SectionTitle {
-            text: "Devices"
+            text: I18n.tr("Devices")
         }
         Label {
             visible: popup.paired.length === 0
-            text: "No paired devices yet"
+            text: I18n.tr("No paired devices yet")
             color: Theme.overlay0
             font.italic: true
         }
@@ -206,11 +206,11 @@ Popup {
         spacing: 8
 
         SectionTitle {
-            text: "Nearby — click to pair"
+            text: I18n.tr("Nearby — click to pair")
         }
         Label {
             visible: popup.nearby.length === 0
-            text: "Looking for devices… Put the device into pairing mode."
+            text: I18n.tr("Looking for devices… Put the device into pairing mode.")
             color: Theme.overlay0
             font.italic: true
         }

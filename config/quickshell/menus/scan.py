@@ -45,6 +45,8 @@ from pathlib import Path
 from types import FrameType
 from typing import TypedDict
 
+from i18n import tr
+
 CACHE = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "qs-scan"
 EPSON_CONF = Path.home() / ".epsonscan2/Network/epsonscan2.conf"
 A4_HEIGHT = 297.18  # mm
@@ -201,7 +203,7 @@ def parse_options(text: str) -> Options | None:
 def options(device: str) -> None:
     env, _ = sane_env()
     found = parse_options(scanimage("-d", device, "-A", env=env))
-    print(json.dumps(found or {"error": "The scanner doesn't answer"}))
+    print(json.dumps(found or {"error": tr("The scanner doesn't answer")}))
     if not found:
         sys.exit(1)
 
@@ -272,7 +274,7 @@ def scan(
             if m := re.match(r"Progress: ([\d.]+)%", line):
                 say(lock, f"progress {m.group(1)}")
             elif "out of documents" in line:
-                say(lock, "error The feeder is empty")
+                say(lock, f"error {tr('The feeder is empty')}")
             elif line.startswith("scanimage: rounded value"):
                 pass  # a note on an option, e.g. a resolution it doesn't offer
             elif m := re.match(r"scanimage: (?:sane_\w+: )?(.*)", line):
@@ -340,7 +342,8 @@ def save(kind: str, file: str, *pages: str) -> None:
             page, degrees = arg.rsplit(":", 1)
             dst = Path(work) / f"{i:03d}.{'png' if kind == 'png' else 'jpg'}"
             if not run("magick", page, "-rotate", degrees, "-quality", "85", dst):
-                notify("-u", "critical", "-i", "dialog-error", "Scan not saved", f"ImageMagick couldn't read page {i}")
+                unreadable = tr("ImageMagick couldn't read page %1", i)
+                notify("-u", "critical", "-i", "dialog-error", tr("Scan not saved"), unreadable)
                 sys.exit(1)
             turned.append(dst)
 
@@ -361,7 +364,7 @@ def save(kind: str, file: str, *pages: str) -> None:
             ]
 
     if not written:
-        notify("-u", "critical", "-i", "dialog-error", "Scan not saved", f"Couldn't write {target.name}")
+        notify("-u", "critical", "-i", "dialog-error", tr("Scan not saved"), tr("Couldn't write %1", target.name))
         sys.exit(1)
     for f in written:
         print(f, flush=True)
@@ -379,8 +382,9 @@ def save(kind: str, file: str, *pages: str) -> None:
 
 def saved(file: str, count: str) -> None:
     """The notification after save, with Open and Show in folder"""
-    what = "1 page" if count == "1" else f"{count} pages"
-    action = notify("-e", "-A", "open=Open", "-A", "folder=Show in folder", "Scan saved", f"{Path(file).name} · {what}")
+    what = tr("1 page") if count == "1" else tr("%1 pages", count)
+    actions = ["-A", f"open={tr('Open')}", "-A", f"folder={tr('Show in folder')}"]
+    action = notify("-e", *actions, tr("Scan saved"), f"{Path(file).name} · {what}")
     if action in ("open", "folder"):
         run("xdg-open", file if action == "open" else Path(file).parent)
 

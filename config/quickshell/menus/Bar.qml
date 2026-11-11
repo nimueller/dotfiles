@@ -264,7 +264,7 @@ PanelWindow {
             plain: muted
             text: {
                 if (muted) {
-                    return `${Theme.glyph(0xf466)}  Muted`;
+                    return `${Theme.glyph(0xf466)}  ${I18n.tr("Muted")}`;
                 }
                 const level = Math.min(2, Math.floor(volume * 3));
                 const glyph = Theme.glyph([0xf026, 0xf027, 0xf028][level]);
@@ -421,9 +421,9 @@ PanelWindow {
                     return `${Theme.wifiGlyph(signal)}  ${shortName}`;
                 }
                 if (kind === "ethernet") {
-                    return `${Theme.glyph(0xf0e8)}  Connected`;
+                    return `${Theme.glyph(0xf0e8)}  ${I18n.tr("Connected")}`;
                 }
-                return "⚠ Disconnected";
+                return `⚠ ${I18n.tr("Disconnected")}`;
             } // 󰤨 󰤥 󰤢 󰤟
             onClicked: bar.menu("network")
         }

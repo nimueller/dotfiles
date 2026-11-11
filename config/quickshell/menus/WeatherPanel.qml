@@ -43,29 +43,29 @@ ColumnLayout {
             rows.push([0xf059d, root.wind(report)]);
         }
         if (report.dewPoint !== null) {
-            rows.push([0xf058c, `Dew point ${report.dewPoint.toFixed(1)}°`]);
+            rows.push([0xf058c, I18n.tr("Dew point %1°", report.dewPoint.toFixed(1))]);
         }
         if (report.visibility !== null) {
-            rows.push([0xf0208, `Visibility ${root.visibility(report.visibility)}`]);
+            rows.push([0xf0208, I18n.tr("Visibility %1", root.visibility(report.visibility))]);
         }
         if (report.pressure !== null) {
-            rows.push([0xf029a, `Pressure ${Math.round(report.pressure)} hPa`]);
+            rows.push([0xf029a, I18n.tr("Pressure %1 hPa", Math.round(report.pressure))]);
         }
         if (report.cloudCover !== null) {
             rows.push([0xf015f, root.clouds(report)]);
         }
         if (report.rain) {
-            rows.push([0xf0597, `${report.rain.toFixed(1)} mm in the last hour`]);
+            rows.push([0xf0597, I18n.tr("%1 mm in the last hour", report.rain.toFixed(1))]);
         }
         return rows;
     }
 
     function wind(report) {
         if (report.windSpeed === 0) {
-            return "Calm";
+            return I18n.tr("Calm");
         }
         const from = report.windDirection === null ? "" : `${Weather.compass(report.windDirection)} `;
-        const gusts = report.gusts ? `, gusts ${Math.round(report.gusts)} km/h` : "";
+        const gusts = report.gusts ? I18n.tr(", gusts %1 km/h", Math.round(report.gusts)) : "";
         return `${from}${Math.round(report.windSpeed)} km/h${gusts}`;
     }
 
@@ -77,13 +77,13 @@ ColumnLayout {
     }
 
     function clouds(report) {
-        const base = report.cloudBase === null ? "" : `, base ${Math.round(report.cloudBase)} m`;
-        return `Clouds ${Math.round(report.cloudCover)}%${base}`;
+        const base = report.cloudBase === null ? "" : I18n.tr(", base %1 m", Math.round(report.cloudBase));
+        return I18n.tr("Clouds %1%%2", Math.round(report.cloudCover), base);
     }
 
     function age(epoch) {
         const minutes = Math.round((Date.now() / 1000 - epoch) / 60);
-        return minutes < 60 ? `${minutes} min ago` : `${Math.floor(minutes / 60)} h ${minutes % 60} min ago`;
+        return minutes < 60 ? I18n.tr("%1 min ago", minutes) : I18n.tr("%1 h %2 min ago", Math.floor(minutes / 60), minutes % 60);
     }
 
     spacing: 4
@@ -128,7 +128,7 @@ ColumnLayout {
                     if (humidity === null) {
                         return root.now[1];
                     }
-                    return `${root.now[1]}  ·  ${Math.round(humidity)}% humidity`;
+                    return I18n.tr("%1  ·  %2% humidity", root.now[1], Math.round(humidity));
                 }
                 color: Theme.subtext0
             }
@@ -187,7 +187,7 @@ ColumnLayout {
                 return "";
             }
             const rain = hour.rain ? `${Theme.glyph(0xf058c)} ${hour.rain}%` : "";
-            return [root.place, "DWD forecast", rain].filter(x => x).join("  ·  ");
+            return [root.place, I18n.tr("DWD forecast"), rain].filter(x => x).join("  ·  ");
         }
         font.pixelSize: 10
         color: Theme.overlay1
@@ -201,14 +201,14 @@ ColumnLayout {
 
         Label {
             Layout.fillWidth: true
-            text: root.error || "Loading weather…"
+            text: root.error || I18n.tr("Loading weather…")
             color: root.error ? Theme.red : Theme.overlay0
             wrapMode: Text.Wrap
         }
         IconButton {
             visible: !!root.error
             glyph: Theme.glyph(0xf034e) // 󰍎
-            text: "Location"
+            text: I18n.tr("Location")
             onClicked: root.configure()
         }
     }

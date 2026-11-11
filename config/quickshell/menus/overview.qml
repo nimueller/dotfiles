@@ -331,7 +331,7 @@ ShellRoot {
                                 id: newTile
 
                                 view: win
-                                title: "New"
+                                title: I18n.tr("New")
                                 toplevels: []
                                 onActivated: {
                                     root.dispatch(`hl.dsp.focus({ monitor = "${win.monitor.name}" })`);

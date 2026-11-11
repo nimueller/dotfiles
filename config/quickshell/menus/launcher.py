@@ -33,6 +33,8 @@ import xml.etree.ElementTree as ET
 from collections.abc import Iterator
 from pathlib import Path
 
+from i18n import tr
+
 HOME = Path.home()
 SSH_CONFIG = HOME / ".ssh/config"
 CACHE = Path(os.environ.get("XDG_CACHE_HOME") or HOME / ".cache") / "quickshell-launcher"
@@ -264,7 +266,7 @@ def convert(query: str, rates: Rates | None) -> dict[str, str | bool] | None:
             "kind": "convert",
             "value": f"{result:.2f}",
             "text": f"{text} {b}",
-            "detail": f"{number(value)} {a} = {text} {b} · ECB rate of {rates.date}",
+            "detail": f"{number(value)} {a} = {text} {b} · {tr('ECB rate of %1', rates.date)}",
         }
     text = number(result)
     return {

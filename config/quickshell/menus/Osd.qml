@@ -363,7 +363,7 @@ Scope {
                             if (root.kind === "privacy") {
                                 return root.title;
                             }
-                            return "Stay awake";
+                            return I18n.tr("Stay awake");
                         }
                         font.pixelSize: 13
                         font.bold: true
@@ -385,7 +385,7 @@ Scope {
 
                     Label {
                         anchors.centerIn: parent
-                        text: root.muted ? "Off" : "On"
+                        text: root.muted ? I18n.tr("Off") : I18n.tr("On")
                         font.pixelSize: 11
                         font.bold: true
                         color: root.muted ? Theme.overlay1 : Theme.crust
@@ -428,7 +428,7 @@ Scope {
                     visible: !root.toggle
                     Layout.preferredWidth: 46
                     horizontalAlignment: Text.AlignRight
-                    text: root.muted ? "Muted" : `${Math.round(root.value * 100)}%`
+                    text: root.muted ? I18n.tr("Muted") : `${Math.round(root.value * 100)}%`
                     font.pixelSize: 13
                     font.bold: true
                     color: root.muted ? Theme.overlay1 : Theme.text

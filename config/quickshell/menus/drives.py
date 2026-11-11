@@ -9,6 +9,7 @@ import gi
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib, GObject  # noqa: E402
+from i18n import tr  # noqa: E402
 from notifications import close, notify, subscribe  # noqa: E402
 
 APP = "Drives"
@@ -72,8 +73,8 @@ class Drives:
     def on_closed(self, notification_id: int) -> None:
         self.shown.pop(notification_id, None)
 
-    def failed(self, volume: Gio.Volume, what: str, error: GLib.Error, notification_id: int) -> None:
-        summary = f"Couldn't {what} {volume.get_name()}"
+    def failed(self, summary: str, error: GLib.Error, notification_id: int) -> None:
+        """summary says what didn't work: "Couldn't open <drive>"."""
         notify(self.bus, APP, summary, error.message, ERROR_ICON, replaces=notification_id)
 
     # ---------- Volumes ----------
@@ -81,10 +82,10 @@ class Drives:
     def on_added(self, _monitor: Gio.VolumeMonitor, volume: Gio.Volume) -> None:
         if not was_plugged_in(volume):
             return
-        actions = ["default", "Open", "open", "Open"]
+        actions = ["default", tr("Open"), "open", tr("Open")]
         if volume.can_eject() or volume.get_mount() is not None:
-            actions += [EJECT_ACTION, "Eject"]
-        summary = f"{volume.get_name()} connected"
+            actions += [EJECT_ACTION, tr("Eject")]
+        summary = tr("%1 connected", volume.get_name())
         notification_id = notify(self.bus, APP, summary, drive_name(volume), icon_name(volume), actions)
         self.shown[notification_id] = volume
 
@@ -104,7 +105,7 @@ class Drives:
             try:
                 volume.mount_finish(result)
             except GLib.Error as error:
-                self.failed(volume, "open", error, notification_id)
+                self.failed(tr("Couldn't open %1", volume.get_name()), error, notification_id)
                 return
             mounted = volume.get_mount()
             if mounted is not None:
@@ -125,9 +126,9 @@ class Drives:
                 else:
                     volume.eject_with_operation_finish(result)
             except GLib.Error as error:
-                self.failed(volume, "eject", error, notification_id)
+                self.failed(tr("Couldn't eject %1", volume.get_name()), error, notification_id)
                 return
-            notify(self.bus, APP, f"{name} can be removed", "", icon, replaces=notification_id)
+            notify(self.bus, APP, tr("%1 can be removed", name), "", icon, replaces=notification_id)
 
         operation = Gio.MountOperation()
         if volume.can_eject():

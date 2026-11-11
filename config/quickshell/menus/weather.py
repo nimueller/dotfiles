@@ -52,6 +52,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
 
+from i18n import tr
+
 OPENDATA = "https://opendata.dwd.de/weather"
 FORECAST_URL = f"{OPENDATA}/local_forecasts/mos/MOSMIX_L/single_stations/{{id}}/kml/MOSMIX_L_LATEST_{{id}}.kmz"
 REPORTS_URL = f"{OPENDATA}/weather_reports/poi/"
@@ -199,7 +201,7 @@ def load_catalogue() -> list[Station]:
     except OSError as error:
         if cached.exists():
             return parse_catalogue(cached.read_text(errors="replace"))
-        raise Fail("Couldn't load the DWD station list") from error
+        raise Fail(tr("Couldn't load the DWD station list")) from error
     cached.parent.mkdir(parents=True, exist_ok=True)
     cached.write_text(text)
     return parse_catalogue(text)
@@ -283,9 +285,9 @@ def load_forecast(nearest: list[tuple[float, Station]]) -> tuple[StationInfo, da
             print(f"No forecast for {station.id}: {error}", file=sys.stderr)
             continue
         except (OSError, zipfile.BadZipFile, ET.ParseError, ValueError) as error:
-            raise Fail("Couldn't load the DWD forecast") from error
+            raise Fail(tr("Couldn't load the DWD forecast")) from error
         return station_info(distance, station), issued, forecast
-    raise Fail("No DWD forecast for this place")
+    raise Fail(tr("No DWD forecast for this place"))
 
 
 # Current weather --------------------------------------------------------------

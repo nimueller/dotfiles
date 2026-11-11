@@ -158,7 +158,7 @@ Rectangle {
 
             Label {
                 Layout.fillWidth: true
-                text: "●  Live"
+                text: I18n.tr("●  Live")
                 color: Theme.red
                 font.pixelSize: 11
                 font.bold: true

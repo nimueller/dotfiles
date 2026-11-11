@@ -29,7 +29,7 @@ Popup {
     Header {
         glyph: Theme.glyph(0xf0395) // 󰎕
         accent: Theme.red
-        title: "Arch news"
+        title: I18n.tr("Arch news")
         badge: Updates.news.length > 1 ? String(Updates.news.length) : ""
     }
 
@@ -39,11 +39,11 @@ Popup {
             const days = Updates.lastUpgrade;
             let since = "";
             if (days === 0) {
-                since = " (today)";
+                since = I18n.tr(" (today)");
             } else if (days !== null) {
-                since = ` (${days} ${days === 1 ? "day" : "days"} ago)`;
+                since = I18n.tr(days === 1 ? " (%1 day ago)" : " (%1 days ago)", days);
             }
-            return `Published since the last upgrade${since}. Read them before updating: some need a step of their own.`;
+            return I18n.tr("Published since the last upgrade%1. Read them before updating: some need a step of their own.", since);
         }
         color: Theme.subtext0
         wrapMode: Text.WordWrap
@@ -114,7 +114,7 @@ Popup {
 
         IconButton {
             glyph: Theme.glyph(0xf06b0) // 󰚰
-            text: "Update anyway"
+            text: I18n.tr("Update anyway")
             onClicked: {
                 Updates.update();
                 root.close();
@@ -124,12 +124,12 @@ Popup {
             Layout.fillWidth: true
         }
         IconButton {
-            text: "Cancel"
+            text: I18n.tr("Cancel")
             onClicked: root.close()
         }
         IconButton {
             glyph: Theme.glyph(0xf0395) // 󰎕
-            text: Updates.news.length > 1 ? "Read the news" : "Read it"
+            text: Updates.news.length > 1 ? I18n.tr("Read the news") : I18n.tr("Read it")
             accent: Theme.red
             active: true
             onClicked: root.open(Updates.news.map(n => n.link))

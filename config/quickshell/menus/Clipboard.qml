@@ -109,7 +109,7 @@ PanelWindow {
                     return {
                         line,
                         id: line.slice(0, tab),
-                        text: image ? `Image ${image[3]}` : preview,
+                        text: image ? I18n.tr("Image %1", image[3]) : preview,
                         image: !!image,
                         info: image ? `${image[2]} · ${image[1]}` : "",
                         file: image ? `${root.cacheDir}/${line.slice(0, tab)}.${image[2]}` : ""
@@ -206,7 +206,7 @@ PanelWindow {
 
                     Label {
                         visible: !search.text
-                        text: "Search the clipboard history…"
+                        text: I18n.tr("Search the clipboard history…")
                         font.pixelSize: 15
                         color: Theme.overlay0
                     }
@@ -237,7 +237,7 @@ PanelWindow {
                 IconButton {
                     visible: root.entries.length > 0
                     glyph: Theme.glyph(0xf05e9) // 󰗩
-                    text: root.confirmWipe ? "Really clear?" : "Clear"
+                    text: root.confirmWipe ? I18n.tr("Really clear?") : I18n.tr("Clear")
                     accent: Theme.red
                     active: root.confirmWipe
                     onClicked: {
@@ -263,7 +263,7 @@ PanelWindow {
                 Label {
                     anchors.centerIn: parent
                     visible: root.results.length === 0
-                    text: root.entries.length ? "Nothing matches" : "The clipboard history is empty"
+                    text: root.entries.length ? I18n.tr("Nothing matches") : I18n.tr("The clipboard history is empty")
                     color: Theme.overlay0
                     font.italic: true
                 }
@@ -421,7 +421,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 34
                 horizontalAlignment: Text.AlignHCenter
-                text: "↑↓  select     ⏎  paste     shift+del  remove     esc  close"
+                text: I18n.tr("↑↓  select     ⏎  paste     shift+del  remove     esc  close")
                 font.pixelSize: 10
                 color: Theme.overlay0
             }

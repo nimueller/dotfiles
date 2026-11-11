@@ -14,6 +14,7 @@ import gi
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib  # noqa: E402
+from i18n import tr  # noqa: E402
 from portal import choose_files  # noqa: E402
 
 SIZE = 512
@@ -23,7 +24,7 @@ FACE = Path.home() / ".face"
 def choose_picture() -> str | None:
     """The picked image's path, None if cancelled."""
     bus = Gio.bus_get_sync(Gio.BusType.SESSION)
-    uris = choose_files(bus, "Select a profile picture", "_Use", mime_types=["image/*"])
+    uris = choose_files(bus, tr("Select a profile picture"), tr("_Use"), mime_types=["image/*"])
     if not uris:
         return None
     path, _hostname = GLib.filename_from_uri(uris[0])
@@ -70,6 +71,6 @@ if __name__ == "__main__":
         main()
     except subprocess.CalledProcessError as error:
         stderr = str(error.stderr).strip()
-        sys.exit(stderr or "ImageMagick couldn't read the picture")
+        sys.exit(stderr or tr("ImageMagick couldn't read the picture"))
     except (GLib.Error, OSError) as error:
         sys.exit(str(error))

@@ -180,15 +180,15 @@ Item {
     }
 
     function sampleText(sample) {
-        const time = Qt.formatDateTime(new Date(sample.t * 1000), "ddd HH:mm");
-        const charging = sample.charging ? " · charging" : "";
+        const time = I18n.formatDateTime(new Date(sample.t * 1000), "ddd HH:mm");
+        const charging = sample.charging ? I18n.tr(" · charging") : "";
         return `${time} · ${valueText(sample.v)}${charging}`;
     }
 
     function estimateText(estimate) {
-        const start = Qt.formatDateTime(new Date(estimate.from * 1000), "ddd HH:mm");
+        const start = I18n.formatDateTime(new Date(estimate.from * 1000), "ddd HH:mm");
         const end = Qt.formatTime(new Date(estimate.to * 1000), "HH:mm");
-        return `${start} – ${end} · ≈ ${valueText(estimate.v)} average`;
+        return I18n.tr("%1 – %2 · ≈ %3 average", start, end, valueText(estimate.v));
     }
 
     // Dashed: what happened in between wasn't recorded
@@ -213,7 +213,7 @@ Item {
             return Qt.formatTime(date, "HH:mm");
         }
         if (step === 86400) {
-            return Qt.formatDate(date, "ddd");
+            return I18n.formatDate(date, "ddd");
         }
         return Qt.formatDate(date, "d.M.");
     }

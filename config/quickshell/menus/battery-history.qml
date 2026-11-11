@@ -29,26 +29,26 @@ ShellRoot {
             span: 86400
         },
         {
-            text: "7 days",
+            text: I18n.tr("7 days"),
             span: 7 * 86400
         },
         {
-            text: "30 days",
+            text: I18n.tr("30 days"),
             span: 30 * 86400
         }
     ]
 
     // "Mon 3.2. 09:15 – 11:40", or "– now" while it lasts
     function sessionTimes(s) {
-        const start = Qt.formatDateTime(new Date(s.start * 1000), "ddd d.M. HH:mm");
-        const end = s.ongoing ? "now" : Qt.formatTime(new Date(s.end * 1000), "HH:mm");
+        const start = I18n.formatDateTime(new Date(s.start * 1000), "ddd d.M. HH:mm");
+        const end = s.ongoing ? I18n.tr("now") : Qt.formatTime(new Date(s.end * 1000), "HH:mm");
         return `${start} – ${end}`;
     }
 
     // How long it lasted, and how long it was awake if it slept for a while
     function sessionLength(s) {
         const length = s.end - s.start;
-        const awakeNote = length - s.awake > 600 ? `, ${duration(s.awake)} awake` : "";
+        const awakeNote = length - s.awake > 600 ? I18n.tr(", %1 awake", duration(s.awake)) : "";
         return duration(length) + awakeNote;
     }
 
@@ -57,7 +57,7 @@ ShellRoot {
         const h = Math.floor(seconds % 86400 / 3600);
         const m = Math.round(seconds % 3600 / 60);
         if (d) {
-            return `${d} d ${h} h`;
+            return I18n.tr("%1 d %2 h", d, h);
         }
         if (h) {
             return `${h} h ${m} min`;
@@ -233,7 +233,7 @@ ShellRoot {
     }
 
     FloatingWindow {
-        title: "Battery History"
+        title: I18n.tr("Battery History")
         implicitWidth: 760
         implicitHeight: 720
         color: Theme.base
@@ -273,7 +273,7 @@ ShellRoot {
                     Layout.rightMargin: 24
                     glyph: Theme.glyph(0xf0079) // 󰁹
                     accent: Theme.green
-                    title: "Battery History"
+                    title: I18n.tr("Battery History")
 
                     Repeater {
                         model: root.ranges
@@ -294,7 +294,7 @@ ShellRoot {
                 Label {
                     Layout.fillWidth: true
                     visible: root.samples.length < 2
-                    text: "No history yet: the shell writes it once a minute in laptop mode (battery-log.py), so it fills from now on."
+                    text: I18n.tr("No history yet: the shell writes it once a minute in laptop mode (battery-log.py), so it fills from now on.")
                     wrapMode: Text.WordWrap
                     elide: Text.ElideNone
                     color: Theme.subtext0
@@ -309,22 +309,22 @@ ShellRoot {
                     Repeater {
                         model: [
                             {
-                                label: "On battery",
+                                label: I18n.tr("On battery"),
                                 value: root.totals.seconds ? root.duration(root.totals.seconds) : "–",
                                 accent: Theme.yellow
                             },
                             {
-                                label: "Average draw",
+                                label: I18n.tr("Average draw"),
                                 value: root.totals.watts ? `${root.totals.watts.toFixed(1)} W` : "–",
                                 accent: Theme.peach
                             },
                             {
-                                label: "Pace",
+                                label: I18n.tr("Pace"),
                                 value: root.totals.pace ? `${root.totals.pace.toFixed(1)}% / h` : "–",
                                 accent: Theme.blue
                             },
                             {
-                                label: "Full charge lasts",
+                                label: I18n.tr("Full charge lasts"),
                                 value: root.totals.full ? root.duration(root.totals.full) : "–",
                                 accent: Theme.green
                             }
@@ -365,7 +365,7 @@ ShellRoot {
                 Label {
                     Layout.fillWidth: true
                     Layout.topMargin: -10
-                    text: "Time awake on battery; pace and draw from the charge and energy used in that time."
+                    text: I18n.tr("Time awake on battery; pace and draw from the charge and energy used in that time.")
                     font.pixelSize: 10
                     color: Theme.overlay0
                 }
@@ -376,7 +376,7 @@ ShellRoot {
                     spacing: 6
 
                     SectionTitle {
-                        text: "Charge"
+                        text: I18n.tr("Charge")
                     }
                     HistoryChart {
                         Layout.fillWidth: true
@@ -399,7 +399,7 @@ ShellRoot {
                     spacing: 6
 
                     SectionTitle {
-                        text: "Power draw"
+                        text: I18n.tr("Power draw")
                     }
                     // On battery only: while charging it's the charger's power.
                     // Gaps show the average draw over them.
@@ -430,12 +430,12 @@ ShellRoot {
                     spacing: 8
 
                     SectionTitle {
-                        text: "Busiest apps on battery"
+                        text: I18n.tr("Busiest apps on battery")
                     }
 
                     Label {
                         visible: root.apps.length === 0
-                        text: "None recorded in this time yet."
+                        text: I18n.tr("None recorded in this time yet.")
                         color: Theme.subtext0
                     }
 
@@ -509,7 +509,7 @@ ShellRoot {
                     spacing: 6
 
                     SectionTitle {
-                        text: "Times on battery"
+                        text: I18n.tr("Times on battery")
                     }
 
                     Repeater {
@@ -568,7 +568,7 @@ ShellRoot {
                                 Label {
                                     Layout.preferredWidth: 110
                                     horizontalAlignment: Text.AlignRight
-                                    text: session.pace ? `full: ${root.duration(100 / session.pace * 3600)}` : ""
+                                    text: session.pace ? I18n.tr("full: %1", root.duration(100 / session.pace * 3600)) : ""
                                     color: Theme.green
                                 }
                             }

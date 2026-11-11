@@ -119,21 +119,21 @@ Rectangle {
             Label {
                 text: {
                     if (root.device.pairing) {
-                        return "Pairing…";
+                        return I18n.tr("Pairing…");
                     }
                     if (root.device.state === BluetoothDeviceState.Connecting) {
-                        return "Connecting…";
+                        return I18n.tr("Connecting…");
                     }
                     if (root.device.state === BluetoothDeviceState.Disconnecting) {
-                        return "Disconnecting…";
+                        return I18n.tr("Disconnecting…");
                     }
                     if (root.device.connected) {
-                        return "Connected";
+                        return I18n.tr("Connected");
                     }
                     if (root.known) {
                         return "";
                     }
-                    return "Pair";
+                    return I18n.tr("Pair");
                 }
                 visible: !!text
                 font.pixelSize: 10
@@ -170,7 +170,7 @@ Rectangle {
             }
             IconButton {
                 glyph: Theme.glyph(0xf01b4) // 󰆴
-                text: "Forget"
+                text: I18n.tr("Forget")
                 onClicked: root.device.forget()
             }
         }

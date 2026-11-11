@@ -90,7 +90,7 @@ RowLayout {
     Label {
         Layout.preferredWidth: 38
         horizontalAlignment: Text.AlignRight
-        text: root.muted ? "muted" : `${Math.round((root.node?.audio?.volume ?? 0) * 100)}%`
+        text: root.muted ? I18n.tr("muted") : `${Math.round((root.node?.audio?.volume ?? 0) * 100)}%`
         color: root.muted ? Theme.overlay0 : Theme.subtext1
         font.pixelSize: 11
     }

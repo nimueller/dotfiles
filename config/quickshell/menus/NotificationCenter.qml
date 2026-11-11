@@ -26,12 +26,12 @@ Popup {
     Header {
         glyph: Theme.glyph(popup.store.dnd ? 0xf009b : 0xf009a) // 󰂛 / 󰂚
         accent: popup.store.dnd ? Theme.overlay1 : Theme.lavender
-        title: "Notifications"
+        title: I18n.tr("Notifications")
         badge: popup.store.history.length || ""
 
         IconButton {
             glyph: Theme.glyph(0xf009b) // 󰂛
-            text: popup.store.dnd ? "Silenced" : "Silence"
+            text: popup.store.dnd ? I18n.tr("Silenced") : I18n.tr("Silence")
             accent: Theme.peach
             active: popup.store.dnd
             onClicked: popup.store.setDnd(!popup.store.dnd)
@@ -39,7 +39,7 @@ Popup {
         IconButton {
             visible: popup.store.history.length > 0
             glyph: Theme.glyph(0xf05e9) // 󰗩
-            text: "Clear"
+            text: I18n.tr("Clear")
             onClicked: popup.store.clear()
         }
     }
@@ -56,7 +56,7 @@ Popup {
             anchors.fill: parent
             anchors.leftMargin: 12
             anchors.rightMargin: 12
-            text: popup.store.dnd ? "Do not disturb is on: notifications don't pop up" : "The screen is shared: notifications don't pop up"
+            text: popup.store.dnd ? I18n.tr("Do not disturb is on: notifications don't pop up") : I18n.tr("The screen is shared: notifications don't pop up")
             font.pixelSize: 11
             color: Theme.peach
         }
@@ -78,7 +78,7 @@ Popup {
         }
         Label {
             Layout.alignment: Qt.AlignHCenter
-            text: "You're all caught up"
+            text: I18n.tr("You're all caught up")
             color: Theme.overlay1
         }
     }

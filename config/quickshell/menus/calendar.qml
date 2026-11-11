@@ -410,7 +410,7 @@ Popup {
     HelperCall {
         id: weatherCall
         helper: popup.weatherHelper
-        failure: "Couldn't load the weather"
+        failure: I18n.tr("Couldn't load the weather")
     }
 
     function fetchWeather(force) {
@@ -458,7 +458,7 @@ Popup {
     }
 
     function searchLocation(query, pickFirst) {
-        const search = "https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json";
+        const search = `https://geocoding-api.open-meteo.com/v1/search?count=6&language=${I18n.language}&format=json`;
         get(`${search}&name=${encodeURIComponent(query)}`, data => {
             const results = data.results ?? [];
             if (pickFirst && results.length) {
@@ -467,9 +467,9 @@ Popup {
                 locationResults = results;
             }
             if (!results.length) {
-                weatherError = `No place called “${query}” found`;
+                weatherError = I18n.tr("No place called “%1” found", query);
             }
-        }, () => weatherError = "Couldn't reach the location search");
+        }, () => weatherError = I18n.tr("Couldn't reach the location search"));
     }
 
     function pickLocation(r, byHand) {
@@ -497,7 +497,7 @@ Popup {
                 if (city) {
                     popup.searchLocation(city, true);
                 } else {
-                    popup.weatherError = "Set a location in the settings";
+                    popup.weatherError = I18n.tr("Set a location in the settings");
                 }
             }
         }
@@ -572,12 +572,12 @@ Popup {
     Header {
         glyph: Theme.glyph(0xf00ed) // 󰃭
         accent: Theme.mauve
-        title: popup.editing ? "Calendar settings" : Qt.formatDate(popup.today, "dddd, d MMMM yyyy")
+        title: popup.editing ? I18n.tr("Calendar settings") : I18n.formatDate(popup.today, I18n.tr("dddd, d MMMM yyyy"))
 
         IconButton {
             visible: !popup.editing && popup.writable.length > 0
             glyph: Theme.glyph(0xf0415) // 󰐕
-            text: "New"
+            text: I18n.tr("New")
             accent: Theme.mauve
             active: popup.creating
             onClicked: popup.creating ? popup.creating = false : popup.newAppointment(popup.selected)
@@ -585,7 +585,7 @@ Popup {
         IconButton {
             visible: !popup.editing && popup.sources.length > 0
             glyph: Theme.glyph(0xf0450) // 󰑐
-            text: popup.syncing ? "Syncing…" : ""
+            text: popup.syncing ? I18n.tr("Syncing…") : ""
             onClicked: {
                 popup.fetchEvents();
                 popup.fetchWeather(true);
@@ -593,7 +593,7 @@ Popup {
         }
         IconButton {
             glyph: Theme.glyph(popup.editing ? 0xf012c : 0xf0493) // 󰄬 / 󰒓
-            text: popup.editing ? "Done" : ""
+            text: popup.editing ? I18n.tr("Done") : ""
             accent: Theme.mauve
             active: popup.editing
             onClicked: {
@@ -689,11 +689,11 @@ Popup {
                     Layout.fillWidth: true
                     text: {
                         const names = {
-                            "0": "Today · ",
-                            "1": "Tomorrow · ",
-                            "-1": "Yesterday · "
+                            "0": I18n.tr("Today · "),
+                            "1": I18n.tr("Tomorrow · "),
+                            "-1": I18n.tr("Yesterday · ")
                         };
-                        return (names[offset] ?? "") + Qt.formatDate(popup.selected, "ddd, d MMMM");
+                        return (names[offset] ?? "") + I18n.formatDate(popup.selected, I18n.tr("ddd, d MMMM"));
                     }
                 }
 
@@ -730,13 +730,13 @@ Popup {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Connect your Nextcloud or subscribe to a calendar to see your appointments."
+                        text: I18n.tr("Connect your Nextcloud or subscribe to a calendar to see your appointments.")
                         color: Theme.overlay1
                         wrapMode: Text.Wrap
                     }
                     IconButton {
                         glyph: Theme.glyph(0xf0342) // 󰍂
-                        text: "Set up"
+                        text: I18n.tr("Set up")
                         accent: Theme.blue
                         active: true
                         onClicked: popup.editing = true
@@ -756,7 +756,7 @@ Popup {
                     visible: popup.sources.length > 0 && popup.dayEvents.length === 0
                     text: {
                         const isLoading = popup.syncing && !(popup.viewKey in (popup.cache.events ?? {}));
-                        return isLoading ? "Loading appointments…" : "Nothing planned";
+                        return isLoading ? I18n.tr("Loading appointments…") : I18n.tr("Nothing planned");
                     }
                     color: Theme.overlay0
                     font.italic: true
@@ -794,7 +794,7 @@ Popup {
                 Label {
                     Layout.fillWidth: true
                     visible: popup.writable.length > 0
-                    text: "Double-click a day to add an appointment"
+                    text: I18n.tr("Double-click a day to add an appointment")
                     font.pixelSize: 10
                     color: Theme.overlay0
                 }
