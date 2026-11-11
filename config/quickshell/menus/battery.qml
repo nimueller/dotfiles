@@ -41,21 +41,21 @@ Popup {
     readonly property var profileList: [
         {
             profile: PowerProfile.PowerSaver,
-            text: "Power saver",
+            text: I18n.tr("Power saver"),
             glyph: 0xf032a,
             accent: Theme.green
         // 󰌪
         },
         {
             profile: PowerProfile.Balanced,
-            text: "Balanced",
+            text: I18n.tr("Balanced"),
             glyph: 0xf05d1,
             accent: Theme.blue
         // 󰗑
         },
         {
             profile: PowerProfile.Performance,
-            text: "Performance",
+            text: I18n.tr("Performance"),
             glyph: 0xf04c5,
             accent: Theme.peach
         } // 󰓅
@@ -78,30 +78,30 @@ Popup {
 
     function chargingRows(s) {
         const rows = [];
-        rows.push(["Charging", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% gained`]);
+        rows.push([I18n.tr("Charging"), I18n.tr("%1 · %2% gained", popup.duration(s.since), Math.max(0, Math.round(s.moved)))]);
         if (!s.pace) {
-            const fullAt = popup.toFull > 0 ? `${popup.clock(popup.toFull)} (UPower)` : "Not enough data yet";
-            rows.push(["Full at", fullAt]);
+            const fullAt = popup.toFull > 0 ? `${popup.clock(popup.toFull)} (UPower)` : I18n.tr("Not enough data yet");
+            rows.push([I18n.tr("Full at"), fullAt]);
             return rows;
         }
-        rows.push(["Pace", `${(s.pace * 3600).toFixed(0)}% per hour`]);
+        rows.push([I18n.tr("Pace"), I18n.tr("%1% per hour", (s.pace * 3600).toFixed(0))]);
         // Full is in the summary; 80 % comes sooner, as charging slows down after it
         if (popup.percent < 80) {
-            rows.push(["80% at", `about ${popup.clock((80 - popup.percent) / s.pace)}`]);
+            rows.push([I18n.tr("80% at"), I18n.tr("about %1", popup.clock((80 - popup.percent) / s.pace))]);
         }
         return rows;
     }
 
     function dischargingRows(s) {
         const rows = [];
-        rows.push(["On battery", `${popup.duration(s.since)} · ${Math.max(0, Math.round(s.moved))}% used`]);
+        rows.push([I18n.tr("On battery"), I18n.tr("%1 · %2% used", popup.duration(s.since), Math.max(0, Math.round(s.moved)))]);
         if (!s.pace) {
-            rows.push(["At this pace", "Not enough data yet"]);
+            rows.push([I18n.tr("At this pace"), I18n.tr("Not enough data yet")]);
             return rows;
         }
-        rows.push(["Pace", `${(s.pace * 3600).toFixed(1)}% per hour`]);
-        rows.push(["At this pace", `${popup.duration(s.left)} left`]);
-        rows.push(["Full charge lasts", `about ${popup.duration(s.total)}`]);
+        rows.push([I18n.tr("Pace"), I18n.tr("%1% per hour", (s.pace * 3600).toFixed(1))]);
+        rows.push([I18n.tr("At this pace"), I18n.tr("%1 left", popup.duration(s.left))]);
+        rows.push([I18n.tr("Full charge lasts"), I18n.tr("about %1", popup.duration(s.total))]);
         return rows;
     }
 
@@ -132,15 +132,15 @@ Popup {
 
     readonly property string summary: {
         if (full) {
-            return "Fully charged";
+            return I18n.tr("Fully charged");
         }
         if (charging) {
-            return toFull > 0 ? `Full at ${clock(toFull)} · in ${duration(toFull)}` : "Charging";
+            return toFull > 0 ? I18n.tr("Full at %1 · in %2", clock(toFull), duration(toFull)) : I18n.tr("Charging");
         }
         if (batteryState === UPowerDeviceState.Discharging) {
-            return battery.timeToEmpty > 0 ? `${duration(battery.timeToEmpty)} left` : "On battery";
+            return battery.timeToEmpty > 0 ? I18n.tr("%1 left", duration(battery.timeToEmpty)) : I18n.tr("On battery");
         }
-        return UPower.onBattery ? "On battery" : "Plugged in, not charging";
+        return UPower.onBattery ? "On battery" : I18n.tr("Plugged in, not charging");
     }
 
     // Since unplugged or plugged in: UPower's charge history (one entry per
@@ -273,8 +273,8 @@ Popup {
             }
             return Theme.green;
         }
-        title: "Battery"
-        badge: UPower.onBattery ? "On battery" : "Plugged in"
+        title: I18n.tr("Battery")
+        badge: UPower.onBattery ? "On battery" : I18n.tr("Plugged in")
         badgeColor: UPower.onBattery ? Theme.yellow : Theme.teal
 
         // The history: charge, draw, times on battery, busiest apps
@@ -313,7 +313,7 @@ Popup {
                 Label {
                     Layout.fillWidth: true
                     visible: Math.abs(popup.battery?.changeRate ?? 0) > 0.1
-                    text: `${Math.abs(popup.battery?.changeRate ?? 0).toFixed(1)} W ${popup.charging ? "in" : "drawn"}`
+                    text: I18n.tr(popup.charging ? "%1 W in" : "%1 W drawn", Math.abs(popup.battery?.changeRate ?? 0).toFixed(1))
                     font.pixelSize: 10
                     color: Theme.overlay1
                 }
@@ -358,7 +358,7 @@ Popup {
             readonly property var cell: UPower.devices.values.find(d => d.isLaptopBattery && d.healthSupported) ?? null
 
             visible: !!cell
-            text: cell ? `Health ${Math.round(cell.healthPercentage)}%${cell.model ? ` · ${cell.model}` : ""}` : ""
+            text: cell ? I18n.tr("Health %1%", Math.round(cell.healthPercentage)) + (cell.model ? ` · ${cell.model}` : "") : ""
             font.pixelSize: 10
             color: Theme.overlay1
         }
@@ -371,7 +371,7 @@ Popup {
         spacing: 6
 
         SectionTitle {
-            text: popup.discharging ? "Since unplugged" : "Since plugged in"
+            text: popup.discharging ? I18n.tr("Since unplugged") : I18n.tr("Since plugged in")
         }
 
         Repeater {
@@ -402,7 +402,7 @@ Popup {
         spacing: 8
 
         SectionTitle {
-            text: "Power profile"
+            text: I18n.tr("Power profile")
         }
 
         RowLayout {
@@ -473,9 +473,9 @@ Popup {
             visible: PowerProfiles.degradationReason !== PerformanceDegradationReason.None
             text: {
                 if (PowerProfiles.degradationReason === PerformanceDegradationReason.HighTemperature) {
-                    return "Performance is held back: the laptop is too hot";
+                    return I18n.tr("Performance is held back: the laptop is too hot");
                 }
-                return "Performance is held back: the laptop is on a lap";
+                return I18n.tr("Performance is held back: the laptop is on a lap");
             }
             wrapMode: Text.WordWrap
             elide: Text.ElideNone
@@ -491,7 +491,7 @@ Popup {
         spacing: 6
 
         SectionTitle {
-            text: "Devices"
+            text: I18n.tr("Devices")
         }
 
         Repeater {

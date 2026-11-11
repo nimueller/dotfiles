@@ -39,14 +39,14 @@ Popup {
 
     Header {
         glyph: Theme.glyph(0xf00e2) // 󰃢
-        title: "Clean up"
-        badge: Cleanup.scanned ? `${Cleanup.size(Cleanup.free)} free` : ""
+        title: I18n.tr("Clean up")
+        badge: Cleanup.scanned ? I18n.tr("%1 free", Cleanup.size(Cleanup.free)) : ""
     }
 
     Label {
         Layout.fillWidth: true
         visible: !Cleanup.items.length
-        text: Cleanup.scanned ? "Nothing to clean up" : "Looking at the disk…"
+        text: Cleanup.scanned ? I18n.tr("Nothing to clean up") : I18n.tr("Looking at the disk…")
         color: Theme.subtext0
     }
 
@@ -88,12 +88,12 @@ Popup {
                     visible: !entry.modelData.blocked
                     text: {
                         if (entry.cleaning) {
-                            return "Clearing…";
+                            return I18n.tr("Clearing…");
                         }
                         if (root.confirming === entry.modelData.id) {
-                            return "Sure?";
+                            return I18n.tr("Sure?");
                         }
-                        return "Clear";
+                        return I18n.tr("Clear");
                     }
                     accent: Theme.red
                     active: entry.cleaning || root.confirming === entry.modelData.id
@@ -123,13 +123,13 @@ Popup {
             Layout.fillWidth: true
         }
         IconButton {
-            text: "Close"
+            text: I18n.tr("Close")
             onClicked: root.close()
         }
         IconButton {
             visible: root.ready.length > 1
             glyph: Theme.glyph(0xf00e2) // 󰃢
-            text: root.confirming === "all" ? "Sure?" : `Clear all · ${Cleanup.size(root.total)}`
+            text: root.confirming === "all" ? I18n.tr("Sure?") : I18n.tr("Clear all · %1", Cleanup.size(root.total))
             accent: Theme.red
             active: true
             onClicked: if (!Cleanup.busy) {

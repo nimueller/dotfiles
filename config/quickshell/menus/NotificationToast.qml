@@ -194,7 +194,7 @@ Rectangle {
                 Label {
                     Layout.fillWidth: true
                     // The sending window's title, else the app's name (in capitals)
-                    text: root.window?.title || root.entry.app || "Notification"
+                    text: root.window?.title || root.entry.app || I18n.tr("Notification")
                     font.pixelSize: 10
                     font.bold: true
                     font.capitalization: root.window?.title ? Font.MixedCase : Font.AllUppercase

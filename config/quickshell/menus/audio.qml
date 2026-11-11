@@ -21,7 +21,7 @@ Popup {
     Header {
         glyph: Theme.glyph(0xf057e) // 󰕾
         accent: Theme.blue
-        title: "Sound"
+        title: I18n.tr("Sound")
 
         // Full mixer for everything this menu doesn't cover
         IconButton {
@@ -35,14 +35,14 @@ Popup {
 
     DeviceSection {
         Layout.fillWidth: true
-        title: "Output"
+        title: I18n.tr("Output")
         output: true
         accent: Theme.blue
     }
 
     DeviceSection {
         Layout.fillWidth: true
-        title: "Input"
+        title: I18n.tr("Input")
         output: false
         accent: Theme.mauve
     }
@@ -54,7 +54,7 @@ Popup {
         spacing: 10
 
         SectionTitle {
-            text: "Playing"
+            text: I18n.tr("Playing")
         }
 
         Repeater {
@@ -75,12 +75,12 @@ Popup {
         spacing: 10
 
         SectionTitle {
-            text: "Applications"
+            text: I18n.tr("Applications")
         }
 
         Label {
             visible: Audio.streams.length === 0
-            text: "Nothing is playing"
+            text: I18n.tr("Nothing is playing")
             color: Theme.overlay0
             font.italic: true
         }

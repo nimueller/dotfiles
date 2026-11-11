@@ -261,7 +261,7 @@ PanelWindow {
         ranked.sort((a, b) => b.score - a.score || a.recent - b.recent);
         return ranked.map(r => ({
                     window: r.w,
-                    name: r.w.title || r.app || "Window",
+                    name: r.w.title || r.app || I18n.tr("Window"),
                     app: r.app,
                     icon: r.entry?.icon ?? ""
                 }));
@@ -271,30 +271,30 @@ PanelWindow {
     // What Enter does with the selected result, for the hint line
     function enterAction(item) {
         if (emojiMode) {
-            return "paste";
+            return I18n.tr("paste");
         }
         if (item?.result !== undefined) {
-            return "copy";
+            return I18n.tr("copy");
         }
         if (item?.window !== undefined) {
-            return "go to window";
+            return I18n.tr("go to window");
         }
         if (item?.ssh !== undefined) {
-            return "connect";
+            return I18n.tr("connect");
         }
         if (item?.file !== undefined) {
-            return "open";
+            return I18n.tr("open");
         }
-        return "launch";
+        return I18n.tr("launch");
     }
 
     function windowPlace(item) {
         const ws = item.window.workspace?.name ?? "";
         let place = "";
         if (ws.startsWith("special:")) {
-            place = `${ws.slice(8)} scratchpad`;
+            place = I18n.tr("%1 scratchpad", ws.slice(8));
         } else if (ws) {
-            place = `workspace ${ws}`;
+            place = I18n.tr("workspace %1", ws);
         }
         return [item.app, place].filter(x => x).join(" · ");
     }
@@ -637,7 +637,7 @@ PanelWindow {
 
                     Label {
                         visible: !search.text
-                        text: "Search apps, :emoji, /files or calculate…"
+                        text: I18n.tr("Search apps, :emoji, /files or calculate…")
                         font.pixelSize: 15
                         color: Theme.overlay0
                     }
@@ -673,13 +673,13 @@ PanelWindow {
 
                     text: {
                         if (root.emojiMode) {
-                            return `${count} emoji`;
+                            return I18n.tr("%1 emoji", count);
                         }
                         if (root.fileMode) {
-                            return `${count} ${count === 1 ? "file" : "files"}`;
+                            return I18n.tr(count === 1 ? "%1 file" : "%1 files", count);
                         }
-                        const windowsText = windows ? `${windows} ${windows === 1 ? "window" : "windows"} · ` : "";
-                        return `${windowsText}${count} ${count === 1 ? "app" : "apps"}`;
+                        const windowsText = windows ? I18n.tr(windows === 1 ? "%1 window · " : "%1 windows · ", windows) : "";
+                        return windowsText + I18n.tr(count === 1 ? "%1 app" : "%1 apps", count);
                     }
                     font.pixelSize: 11
                     color: Theme.overlay0
@@ -812,7 +812,7 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 text: {
                                     if (row.isCommand) {
-                                        return `Run “${row.modelData.run}”`;
+                                        return I18n.tr("Run “%1”", row.modelData.run);
                                     }
                                     if (row.isResult) {
                                         return `= ${row.modelData.display ?? row.modelData.result}`;
@@ -833,15 +833,15 @@ PanelWindow {
                                 text: {
                                     if (row.isCommand) {
                                         if (row.modelData.run.startsWith("ssh ")) {
-                                            return "Open in terminal";
+                                            return I18n.tr("Open in terminal");
                                         }
-                                        return "Run as a command";
+                                        return I18n.tr("Run as a command");
                                     }
                                     if (row.isResult) {
-                                        return row.modelData.detail ?? "Copy the result";
+                                        return row.modelData.detail ?? I18n.tr("Copy the result");
                                     }
                                     if (row.isSsh) {
-                                        return row.modelData.detail || "SSH host";
+                                        return row.modelData.detail || I18n.tr("SSH host");
                                     }
                                     if (row.isFile) {
                                         return row.modelData.dir;
@@ -882,7 +882,7 @@ PanelWindow {
                 horizontalAlignment: Text.AlignHCenter
                 readonly property var item: root.results[list.currentIndex]
 
-                text: `↑↓  select     ⏎  ${root.enterAction(item)}     esc  close`
+                text: I18n.tr("↑↓  select     ⏎  %1     esc  close", root.enterAction(item))
                 font.pixelSize: 10
                 color: Theme.overlay0
             }

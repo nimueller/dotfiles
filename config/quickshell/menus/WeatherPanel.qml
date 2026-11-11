@@ -39,20 +39,20 @@ ColumnLayout {
         const pressure = metar.altim ? Math.round(metar.altim) : "–";
         const rows = [];
         rows.push([0xf059d, root.wind(metar)]);
-        rows.push([0xf0208, `Visibility ${visibility}`]);
+        rows.push([0xf0208, I18n.tr("Visibility %1", visibility)]);
         rows.push([0xf029a, `QNH ${pressure} hPa`]);
         rows.push([0xf015f, root.clouds(metar)]);
         if (metar.wxString) {
-            rows.push([0xf0597, `Weather ${metar.wxString}`]);
+            rows.push([0xf0597, I18n.tr("Weather %1", metar.wxString)]);
         }
         return rows;
     }
 
     function wind(m) {
         if (!m.wspd) {
-            return "Calm";
+            return I18n.tr("Calm");
         }
-        const dir = m.wdir === "VRB" ? "Variable" : `${String(m.wdir).padStart(3, "0")}°`;
+        const dir = m.wdir === "VRB" ? I18n.tr("Variable") : `${String(m.wdir).padStart(3, "0")}°`;
         const gust = m.wgst ? ` G${m.wgst}` : "";
         return `${dir} ${m.wspd}${gust} kt (${Math.round(m.wspd * 1.852)} km/h)`;
     }
@@ -63,12 +63,12 @@ ColumnLayout {
         }
         const hasBase = c => c.cover && c.base !== null && c.base !== undefined;
         const layers = (m.clouds ?? []).filter(hasBase).map(c => `${c.cover} ${c.base} ft`);
-        return layers.length ? layers.join(", ") : (m.clouds ?? []).map(c => c.cover).join(" ") || "No clouds";
+        return layers.length ? layers.join(", ") : (m.clouds ?? []).map(c => c.cover).join(" ") || I18n.tr("No clouds");
     }
 
     function age(epoch) {
         const minutes = Math.round((Date.now() / 1000 - epoch) / 60);
-        return minutes < 60 ? `${minutes} min ago` : `${Math.floor(minutes / 60)} h ${minutes % 60} min ago`;
+        return minutes < 60 ? I18n.tr("%1 min ago", minutes) : I18n.tr("%1 h %2 min ago", Math.floor(minutes / 60), minutes % 60);
     }
 
     spacing: 4
@@ -108,7 +108,7 @@ ColumnLayout {
                 text: {
                     if (root.metar) {
                         const humidity = Weather.humidity(root.metar.temp, root.metar.dewp);
-                        return `Dew point ${root.metar.dewp}°  ·  ${humidity}% humidity`;
+                        return I18n.tr("Dew point %1°  ·  %2% humidity", root.metar.dewp, humidity);
                     }
                     if (root.now) {
                         return root.now[1];
@@ -201,7 +201,7 @@ ColumnLayout {
             if (!now) {
                 return "";
             }
-            const feels = `feels ${Math.round(now.apparent_temperature)}°`;
+            const feels = I18n.tr("feels %1°", Math.round(now.apparent_temperature));
             const wind = `${Math.round(now.wind_speed_10m)} km/h`;
             const rain = root.today?.rain ? `${Theme.glyph(0xf058c)} ${root.today.rain}%` : "";
             return [root.place, feels, wind, rain].filter(x => x).join("  ·  ");
@@ -218,14 +218,14 @@ ColumnLayout {
 
         Label {
             Layout.fillWidth: true
-            text: root.error || "Loading weather…"
+            text: root.error || I18n.tr("Loading weather…")
             color: root.error ? Theme.red : Theme.overlay0
             wrapMode: Text.Wrap
         }
         IconButton {
             visible: !!root.error
             glyph: Theme.glyph(0xf034e) // 󰍎
-            text: "Location"
+            text: I18n.tr("Location")
             onClicked: root.configure()
         }
     }

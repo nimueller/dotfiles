@@ -33,7 +33,7 @@ Process {
                 result = JSON.parse(text);
             } catch (e) {
                 result = {
-                    error: "The calendar helper failed"
+                    error: I18n.tr("The calendar helper failed")
                 };
             }
             if (result.error && call.failed) {

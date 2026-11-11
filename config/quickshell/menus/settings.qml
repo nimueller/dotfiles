@@ -11,7 +11,7 @@ import Quickshell.Io
 // (config/hypr/modes.lua: detected, or forced on or off) with the touchpad
 // (right click in the corner or with two fingers, tapping, scrolling and its
 // speed, typing), the location (weather and night light), the night light's
-// schedule, the bar, when to warn
+// schedule, the bar, the language of the shell, when to warn
 // about memory, the CPU and the disk and which notifications to hide (read
 // by the shell through LocalSettings.qml), written to
 // config/hypr/local.lua (see local.example.lua) between
@@ -40,6 +40,7 @@ ShellRoot {
     property var caps: ({})
     property var env: [] // [[name, value]]
     property var autostart: [] // ["command"]
+    property string language: "system" // "en", "de" or "system", see I18n.qml
     property var bar: ({
             windowTitle: false
         })
@@ -65,10 +66,14 @@ ShellRoot {
     property var before: []
     property int countdown: 0
 
+    readonly property var languageNames: ({
+            en: "English",
+            de: "Deutsch"
+        })
     readonly property var scales: [1, 1.25, 1.333333, 1.5, 1.6, 1.75, 2, 2.5, 3]
     readonly property var rotations: [
         {
-            text: "None",
+            text: I18n.tr("None"),
             value: 0
         },
         {
@@ -152,6 +157,7 @@ ShellRoot {
             autostart: autostart.filter(c => c.trim()),
             modes: modes,
             touchpad: touchpad,
+            language: language,
             bar: bar,
             location: location,
             nightLight: nightLight,
@@ -213,7 +219,7 @@ ShellRoot {
         file.setText(re.test(text) ? text.replace(re, block() + "\n") : `${text.replace(/\n*$/, "\n\n")}${block()}\n`);
         dirty = false;
         scrollTried = false;
-        status = "Saved. Environment and autostart changes apply at the next login.";
+        status = I18n.tr("Saved. Environment and autostart changes apply at the next login.");
     }
 
     // The saved settings, merged with the monitors connected right now
@@ -271,6 +277,7 @@ ShellRoot {
         warnings = LocalSettings.withDefaults(s.warnings);
         autostart = s.autostart;
         trackAction = s.notifications?.tracks ?? "popup";
+        language = s.language ?? "system";
         rules = (s.notifications?.rules ?? []).map(r => ({
                     app: r.app ?? "",
                     text: r.text ?? "",
@@ -306,13 +313,13 @@ ShellRoot {
                 }
                 locationResults = JSON.parse(xhr.responseText).results ?? [];
                 if (!locationResults.length) {
-                    locationError = `No place called “${query}” found`;
+                    locationError = I18n.tr("No place called “%1” found", query);
                 }
             } catch (e) {
-                locationError = "Couldn't reach the location search";
+                locationError = I18n.tr("Couldn't reach the location search");
             }
         };
-        const search = "https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json";
+        const search = `https://geocoding-api.open-meteo.com/v1/search?count=6&language=${I18n.language}&format=json`;
         xhr.open("GET", `${search}&name=${encodeURIComponent(query)}`);
         xhr.send();
     }
@@ -391,7 +398,7 @@ ShellRoot {
 
     function apply() {
         if (!monitors.some(m => m.connected && m.enabled)) {
-            status = "At least one monitor has to stay on.";
+            status = I18n.tr("At least one monitor has to stay on.");
             return;
         }
         snapshot.running = true; // remembers the live state, then applies
@@ -440,13 +447,13 @@ ShellRoot {
 
     function keep() {
         countdown = 0;
-        status = "Applied. Save to keep it after the next login.";
+        status = I18n.tr("Applied. Save to keep it after the next login.");
     }
 
     function revert() {
         countdown = 0;
         run(before.map(monitorLua));
-        status = "Went back to the previous display settings.";
+        status = I18n.tr("Went back to the previous display settings.");
     }
 
     // Data -----------------------------------------------------------------------
@@ -534,12 +541,12 @@ ShellRoot {
         stdout: StdioCollector {
             onStreamFinished: if (text.trim() === "saved") {
                 root.faceVersion++;
-                root.status = "Profile picture changed. The lock screen shows it from the next lock.";
+                root.status = I18n.tr("Profile picture changed. The lock screen shows it from the next lock.");
             }
         }
         stderr: StdioCollector {
             onStreamFinished: if (text.trim()) {
-                root.status = `Couldn't change the profile picture: ${text.trim().split("\n").pop()}`;
+                root.status = I18n.tr("Couldn't change the profile picture: %1", text.trim().split("\n").pop());
             }
         }
     }
@@ -557,7 +564,7 @@ ShellRoot {
     FloatingWindow {
         id: window
 
-        title: "Machine Settings"
+        title: I18n.tr("Machine Settings")
         implicitWidth: 860
         implicitHeight: 600
         color: Theme.base
@@ -592,59 +599,64 @@ ShellRoot {
                         Layout.bottomMargin: 10
                         glyph: Theme.glyph(0xf0493) // 󰒓
                         accent: Theme.lavender
-                        title: "Settings"
+                        title: I18n.tr("Settings")
                     }
 
                     Repeater {
                         model: [
                             {
                                 id: "displays",
-                                text: "Displays",
+                                text: I18n.tr("Displays"),
                                 glyph: 0xf0379
                             },
                             {
                                 id: "env",
-                                text: "Environment",
+                                text: I18n.tr("Environment"),
                                 glyph: 0xf0169
                             },
                             {
                                 id: "autostart",
-                                text: "Autostart",
+                                text: I18n.tr("Autostart"),
                                 glyph: 0xf040a
                             },
                             {
                                 id: "modes",
-                                text: "Laptop & touch",
+                                text: I18n.tr("Laptop & touch"),
                                 glyph: 0xf0322
                             },
                             {
                                 id: "location",
-                                text: "Location",
+                                text: I18n.tr("Location"),
                                 glyph: 0xf034e
                             },
                             {
                                 id: "night",
-                                text: "Night light",
+                                text: I18n.tr("Night light"),
                                 glyph: 0xf0594
                             },
                             {
                                 id: "bar",
-                                text: "Bar",
+                                text: I18n.tr("Bar"),
                                 glyph: 0xf10a9
                             },
                             {
                                 id: "warnings",
-                                text: "Warnings",
+                                text: I18n.tr("Warnings"),
                                 glyph: 0xf0026
                             },
                             {
                                 id: "notifications",
-                                text: "Notifications",
+                                text: I18n.tr("Notifications"),
                                 glyph: 0xf009b
                             },
                             {
+                                id: "language",
+                                text: I18n.tr("Language"),
+                                glyph: 0xf05ca
+                            },
+                            {
                                 id: "profile",
-                                text: "Profile picture",
+                                text: I18n.tr("Profile picture"),
                                 glyph: 0xf0004
                             }
                         ]
@@ -704,7 +716,7 @@ ShellRoot {
                         elide: Text.ElideNone
                         text: {
                             const file = root.page === "profile" ? "~/.face" : "config/hypr/local.lua";
-                            return `Stored in ${file}, which stays out of git.`;
+                            return I18n.tr("Stored in %1, which stays out of git.", file);
                         }
                         font.pixelSize: 10
                         color: Theme.overlay0
@@ -714,13 +726,13 @@ ShellRoot {
                     IconButton {
                         Layout.fillWidth: true
                         glyph: Theme.glyph(0xf024b) // 󰉋
-                        text: "Hyprland folder"
+                        text: I18n.tr("Hyprland folder")
                         onClicked: Quickshell.execDetached(["gio", "open", root.path.replace(/\/[^/]*$/, "")])
                     }
                     IconButton {
                         Layout.fillWidth: true
                         glyph: Theme.glyph(0xf03eb) // 󰏫
-                        text: "Edit local.lua"
+                        text: I18n.tr("Edit local.lua")
                         onClicked: Quickshell.execDetached(["gio", "open", root.path])
                     }
                 }
@@ -742,7 +754,7 @@ ShellRoot {
                     spacing: 14
 
                     SectionTitle {
-                        text: "Arrangement — drag to move"
+                        text: I18n.tr("Arrangement — drag to move")
                     }
 
                     DisplayLayout {
@@ -770,7 +782,7 @@ ShellRoot {
                                 required property int index
 
                                 glyph: Theme.glyph(0xf0379)
-                                text: modelData.connected ? modelData.name : `${modelData.name} (not connected)`
+                                text: modelData.connected ? modelData.name : I18n.tr("%1 (not connected)", modelData.name)
                                 active: root.selected === index
                                 onClicked: root.selected = index
                             }
@@ -795,7 +807,7 @@ ShellRoot {
                         }
 
                         Label {
-                            text: "On"
+                            text: I18n.tr("On")
                         }
                         Switch {
                             checked: parent.m?.enabled ?? false
@@ -804,7 +816,7 @@ ShellRoot {
                             })
                         }
                         Label {
-                            text: "Rotation"
+                            text: I18n.tr("Rotation")
                         }
                         Dropdown {
                             Layout.fillWidth: true
@@ -817,7 +829,7 @@ ShellRoot {
                         }
 
                         Label {
-                            text: "Mode"
+                            text: I18n.tr("Mode")
                         }
                         Dropdown {
                             Layout.fillWidth: true
@@ -829,7 +841,7 @@ ShellRoot {
                                 })
                         }
                         Label {
-                            text: "Scale"
+                            text: I18n.tr("Scale")
                         }
                         Dropdown {
                             Layout.fillWidth: true
@@ -845,7 +857,7 @@ ShellRoot {
                         }
 
                         Label {
-                            text: "Workspaces"
+                            text: I18n.tr("Workspaces")
                         }
                         InputField {
                             Layout.fillWidth: true
@@ -859,7 +871,7 @@ ShellRoot {
                             }
                         }
                         Label {
-                            text: "Main monitor"
+                            text: I18n.tr("Main monitor")
                         }
                         Switch {
                             checked: parent.m?.main ?? false
@@ -874,7 +886,7 @@ ShellRoot {
                         }
 
                         Label {
-                            text: "Variable refresh"
+                            text: I18n.tr("Variable refresh")
                         }
                         // Off and locked where the monitor can't; one that's
                         // on can still be switched off
@@ -886,7 +898,7 @@ ShellRoot {
                             })
                         }
                         Label {
-                            text: "Wide colour / HDR"
+                            text: I18n.tr("Wide colour / HDR")
                         }
                         Row {
                             spacing: 10
@@ -913,8 +925,8 @@ ShellRoot {
                             id: unsupported
 
                             readonly property var featureNames: ({
-                                    "vrr": "variable refresh",
-                                    "wideColor": "wide colour",
+                                    "vrr": I18n.tr("variable refresh"),
+                                    "wideColor": I18n.tr("wide colour"),
                                     "hdr": "HDR"
                                 })
                             readonly property var missing: {
@@ -938,7 +950,7 @@ ShellRoot {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
-                                text: `This monitor doesn't support ${unsupported.list(unsupported.missing, "or")}.`
+                                text: I18n.tr("This monitor doesn't support %1.", unsupported.list(unsupported.missing, I18n.tr("or")))
                                 font.pixelSize: 11
                                 color: Theme.subtext0
                             }
@@ -970,12 +982,10 @@ ShellRoot {
                                         wrapMode: Text.WordWrap
                                         elide: Text.ElideNone
                                         text: {
-                                            const on = unsupported.list(unsupported.stillOn, "and") ?? "";
+                                            const on = unsupported.list(unsupported.stillOn, I18n.tr("and")) ?? "";
                                             const many = unsupported.stillOn.length > 1;
                                             const subject = on.charAt(0).toUpperCase() + on.slice(1);
-                                            const verb = many ? "are" : "is";
-                                            const pronoun = many ? "them" : "it";
-                                            return `${subject} ${verb} on, but won't work here. Switch ${pronoun} off.`;
+                                            return I18n.tr(many ? "%1 are on, but won't work here. Switch them off." : "%1 is on, but won't work here. Switch it off.", subject);
                                         }
                                         color: Theme.yellow
                                     }
@@ -997,7 +1007,7 @@ ShellRoot {
                     spacing: 8
 
                     SectionTitle {
-                        text: "Environment variables — e.g. for graphics drivers"
+                        text: I18n.tr("Environment variables — e.g. for graphics drivers")
                     }
 
                     Repeater {
@@ -1040,7 +1050,7 @@ ShellRoot {
 
                     IconButton {
                         glyph: Theme.glyph(0xf0415) // 󰐕
-                        text: "Add variable"
+                        text: I18n.tr("Add variable")
                         onClicked: root.env = [...root.env, ["", ""]]
                     }
 
@@ -1057,7 +1067,7 @@ ShellRoot {
                     spacing: 8
 
                     SectionTitle {
-                        text: "Programs started on this machine once you've unlocked — $HOME works"
+                        text: I18n.tr("Programs started on this machine once you've unlocked — $HOME works")
                     }
 
                     Repeater {
@@ -1091,7 +1101,7 @@ ShellRoot {
 
                     IconButton {
                         glyph: Theme.glyph(0xf0415) // 󰐕
-                        text: "Add program"
+                        text: I18n.tr("Add program")
                         onClicked: root.autostart = [...root.autostart, ""]
                     }
 
@@ -1108,20 +1118,20 @@ ShellRoot {
                     spacing: 10
 
                     SectionTitle {
-                        text: "Modes — on by themselves where the hardware is there"
+                        text: I18n.tr("Modes — on by themselves where the hardware is there")
                     }
 
                     Repeater {
                         model: [
                             {
                                 id: "laptop",
-                                text: "Laptop",
-                                about: "Tap to click, swipe with three fingers between workspaces, keyboard backlight keys, the screen off with the lid closed while another monitor is connected, dimming when idle and suspending after 15 minutes on battery, the battery menu with power profiles and low battery warnings"
+                                text: I18n.tr("Laptop"),
+                                about: I18n.tr("Tap to click, swipe with three fingers between workspaces, keyboard backlight keys, the screen off with the lid closed while another monitor is connected, dimming when idle and suspending after 15 minutes on battery, the battery menu with power profiles and low battery warnings")
                             },
                             {
                                 id: "touch",
-                                text: "Touch",
-                                about: "A taller bar with bigger buttons, buttons for the launcher, the overview of the workspaces and the on-screen keyboard (which also shows by itself for text fields), swiping from the screen's edge between workspaces"
+                                text: I18n.tr("Touch"),
+                                about: I18n.tr("A taller bar with bigger buttons, buttons for the launcher, the overview of the workspaces and the on-screen keyboard (which also shows by itself for text fields), swiping from the screen's edge between workspaces")
                             }
                         ]
 
@@ -1156,15 +1166,15 @@ ShellRoot {
                                 Layout.alignment: Qt.AlignTop
                                 model: [
                                     {
-                                        text: `Auto (${modeRow.detected ? "on" : "off"} here)`,
+                                        text: I18n.tr(modeRow.detected ? "Auto (on here)" : "Auto (off here)"),
                                         value: "auto"
                                     },
                                     {
-                                        text: "On",
+                                        text: I18n.tr("On"),
                                         value: true
                                     },
                                     {
-                                        text: "Off",
+                                        text: I18n.tr("Off"),
                                         value: false
                                     }
                                 ]
@@ -1189,17 +1199,17 @@ ShellRoot {
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
                         text: {
-                            const laptop = Modes.laptop ? "on" : "off";
-                            const touch = Modes.touch ? "on" : "off";
-                            const after = "Saving applies them right away; the on-screen keyboard starts at the next login, or with its button in the bar.";
-                            return `In effect now: laptop ${laptop}, touch ${touch}. ${after}`;
+                            const laptop = Modes.laptop ? I18n.tr("on") : I18n.tr("off");
+                            const touch = Modes.touch ? I18n.tr("on") : I18n.tr("off");
+                            const after = I18n.tr("Saving applies them right away; the on-screen keyboard starts at the next login, or with its button in the bar.");
+                            return I18n.tr("In effect now: laptop %1, touch %2. %3", laptop, touch, after);
                         }
                         color: Theme.subtext0
                     }
 
                     SectionTitle {
                         Layout.topMargin: 10
-                        text: "Touchpad — every touchpad on this machine"
+                        text: I18n.tr("Touchpad — every touchpad on this machine")
                     }
 
                     Repeater {
@@ -1209,35 +1219,35 @@ ShellRoot {
                         model: [
                             {
                                 id: "clickfinger_behavior",
-                                text: "Right click",
-                                about: "Pressing down in the bottom right corner (the middle: middle click), or anywhere with two fingers (three: middle click)",
+                                text: I18n.tr("Right click"),
+                                about: I18n.tr("Pressing down in the bottom right corner (the middle: middle click), or anywhere with two fingers (three: middle click)"),
                                 def: Modes.laptop,
-                                on: "With two fingers",
-                                off: "In the corner"
+                                on: I18n.tr("With two fingers"),
+                                off: I18n.tr("In the corner")
                             },
                             {
                                 id: "tap_to_click",
-                                text: "Tap to click",
-                                about: "Two fingers right-click, three middle-click",
+                                text: I18n.tr("Tap to click"),
+                                about: I18n.tr("Two fingers right-click, three middle-click"),
                                 def: true,
-                                on: "On",
-                                off: "Off"
+                                on: I18n.tr("On"),
+                                off: I18n.tr("Off")
                             },
                             {
                                 id: "natural_scroll",
-                                text: "Natural scrolling",
-                                about: "The content follows the fingers, like on a phone",
+                                text: I18n.tr("Natural scrolling"),
+                                about: I18n.tr("The content follows the fingers, like on a phone"),
                                 def: true,
-                                on: "On",
-                                off: "Off"
+                                on: I18n.tr("On"),
+                                off: I18n.tr("Off")
                             },
                             {
                                 id: "disable_while_typing",
-                                text: "Off while typing",
-                                about: "For a moment after a key press, against touches with the palm",
+                                text: I18n.tr("Off while typing"),
+                                about: I18n.tr("For a moment after a key press, against touches with the palm"),
                                 def: true,
-                                on: "On",
-                                off: "Off"
+                                on: I18n.tr("On"),
+                                off: I18n.tr("Off")
                             }
                         ]
 
@@ -1248,7 +1258,8 @@ ShellRoot {
                             // What the option is when it's left at its default
                             readonly property string defaultState: {
                                 const state = modelData.def ? modelData.on : modelData.off;
-                                return state.toLowerCase();
+                                // Lower case inside the sentence in English; German keeps its nouns' capitals
+                                return I18n.language === "en" ? state.toLowerCase() : state;
                             }
 
                             Layout.fillWidth: true
@@ -1276,7 +1287,7 @@ ShellRoot {
                                 Layout.alignment: Qt.AlignTop
                                 model: [
                                     {
-                                        text: `Default (${touchpadRow.defaultState})`,
+                                        text: I18n.tr("Default (%1)", touchpadRow.defaultState),
                                         value: "default"
                                     },
                                     {
@@ -1319,14 +1330,14 @@ ShellRoot {
                             spacing: 2
 
                             Label {
-                                text: "Scrolling speed"
+                                text: I18n.tr("Scrolling speed")
                                 font.bold: true
                             }
                             Label {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
-                                text: "How far pages move with two fingers; works while you drag"
+                                text: I18n.tr("How far pages move with two fingers; works while you drag")
                                 font.pixelSize: 11
                                 color: Theme.subtext0
                             }
@@ -1362,7 +1373,7 @@ ShellRoot {
                     spacing: 10
 
                     SectionTitle {
-                        text: "Location — for the weather and the night light's sunset and sunrise"
+                        text: I18n.tr("Location — for the weather and the night light's sunset and sunrise")
                     }
 
                     RowLayout {
@@ -1372,13 +1383,13 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             // 󰍎
-                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set"
+                            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : I18n.tr("No location set")
                             color: root.location ? Theme.text : Theme.overlay0
                         }
                         IconButton {
                             visible: !!root.location
                             glyph: Theme.glyph(0xf0156) // 󰅖
-                            text: "Clear"
+                            text: I18n.tr("Clear")
                             onClicked: {
                                 root.location = null;
                                 root.dirty = true;
@@ -1393,14 +1404,14 @@ ShellRoot {
                         InputField {
                             id: city
                             Layout.fillWidth: true
-                            placeholder: "Search a city"
+                            placeholder: I18n.tr("Search a city")
                             onAccepted: if (text) {
                                 root.searchLocation(text);
                             }
                         }
                         IconButton {
                             glyph: Theme.glyph(0xf0349) // 󰍉
-                            text: "Search"
+                            text: I18n.tr("Search")
                             onClicked: if (city.text) {
                                 root.searchLocation(city.text);
                             }
@@ -1461,7 +1472,7 @@ ShellRoot {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: "The calendar's weather follows it unless it's set to its own place there. Without one, both use the calendar's place, and the night light runs from 19:00 to 07:00 if there is none either."
+                        text: I18n.tr("The calendar's weather follows it unless it's set to its own place there. Without one, both use the calendar's place, and the night light runs from 19:00 to 07:00 if there is none either.")
                         color: Theme.subtext0
                     }
 
@@ -1478,7 +1489,7 @@ ShellRoot {
                     spacing: 10
 
                     SectionTitle {
-                        text: "Night light — warmer colours at night"
+                        text: I18n.tr("Night light — warmer colours at night")
                     }
 
                     RowLayout {
@@ -1487,10 +1498,10 @@ ShellRoot {
 
                         Label {
                             Layout.rightMargin: 4
-                            text: "Turn on"
+                            text: I18n.tr("Turn on")
                         }
                         Repeater {
-                            model: [["sun", "Sunset to sunrise"], ["times", "At set times"], ["off", "Only by hand"]]
+                            model: [["sun", I18n.tr("Sunset to sunrise")], ["times", I18n.tr("At set times")], ["off", I18n.tr("Only by hand")]]
 
                             delegate: IconButton {
                                 required property var modelData
@@ -1510,7 +1521,7 @@ ShellRoot {
                         spacing: 8
 
                         Label {
-                            text: "From"
+                            text: I18n.tr("From")
                         }
                         InputField {
                             Layout.preferredWidth: 64
@@ -1579,13 +1590,13 @@ ShellRoot {
                             text: {
                                 const where = parent.place;
                                 if (!where) {
-                                    return "No location is set, so it can't work out the sunset and sunrise: it turns on at 19:00 and off at 07:00. Set a location to follow the sun.";
+                                    return I18n.tr("No location is set, so it can't work out the sunset and sunrise: it turns on at 19:00 and off at 07:00. Set a location to follow the sun.");
                                 }
-                                let whose = "the calendar's weather location, as this computer has none (the Location page)";
+                                let whose = I18n.tr("the calendar's weather location, as this computer has none (the Location page)");
                                 if (root.location) {
-                                    whose = "this computer's location (the Location page)";
+                                    whose = I18n.tr("this computer's location (the Location page)");
                                 }
-                                return `It turns on at sunset and off at sunrise in ${where}, ${whose}. They're worked out every day from the place's coordinates, so they move with the seasons.`;
+                                return I18n.tr("It turns on at sunset and off at sunrise in %1, %2. They're worked out every day from the place's coordinates, so they move with the seasons.", where, whose);
                             }
                             color: Theme.subtext0
                         }
@@ -1595,20 +1606,20 @@ ShellRoot {
                             text: {
                                 if (parent.current) {
                                     if (parent.t.from) {
-                                        return `Today: on from ${parent.t.from} (sunset) until ${parent.t.until} (sunrise)`;
+                                        return I18n.tr("Today: on from %1 (sunset) until %2 (sunrise)", parent.t.from, parent.t.until);
                                     }
                                     if (parent.t.night) {
-                                        return "Today: on all day, the sun doesn't rise";
+                                        return I18n.tr("Today: on all day, the sun doesn't rise");
                                     }
-                                    return "Today: off all day, the sun doesn't set";
+                                    return I18n.tr("Today: off all day, the sun doesn't set");
                                 }
-                                return "Today's times show here once it's saved.";
+                                return I18n.tr("Today's times show here once it's saved.");
                             }
                             color: parent.current ? Theme.text : Theme.overlay1
                         }
                         IconButton {
                             glyph: Theme.glyph(0xf034e) // 󰍎
-                            text: root.location ? "Change location" : "Set a location"
+                            text: root.location ? I18n.tr("Change location") : I18n.tr("Set a location")
                             onClicked: root.page = "location"
                         }
                     }
@@ -1618,7 +1629,7 @@ ShellRoot {
                         spacing: 8
 
                         Label {
-                            text: "Colour temperature"
+                            text: I18n.tr("Colour temperature")
                         }
                         NumberField {
                             Layout.preferredWidth: 64
@@ -1633,7 +1644,7 @@ ShellRoot {
                         }
                         Label {
                             Layout.fillWidth: true
-                            text: "K — lower is warmer, 1000 to 6000"
+                            text: I18n.tr("K — lower is warmer, 1000 to 6000")
                             color: Theme.subtext0
                         }
                     }
@@ -1642,7 +1653,7 @@ ShellRoot {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: "The switch in the system menu turns it on or off by hand until the next sunset or sunrise (or set time). Only by hand: it never turns on by itself."
+                        text: I18n.tr("The switch in the system menu turns it on or off by hand until the next sunset or sunrise (or set time). Only by hand: it never turns on by itself.")
                         color: Theme.subtext0
                     }
 
@@ -1659,7 +1670,7 @@ ShellRoot {
                     spacing: 10
 
                     SectionTitle {
-                        text: "Bar"
+                        text: I18n.tr("Bar")
                     }
 
                     RowLayout {
@@ -1677,8 +1688,65 @@ ShellRoot {
                         }
                         Label {
                             Layout.fillWidth: true
-                            text: "Show the focused window's title next to the workspaces"
+                            text: I18n.tr("Show the focused window's title next to the workspaces")
                         }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Language -------------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "language"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 10
+
+                    SectionTitle {
+                        text: I18n.tr("Language — of the bar, the menus and their notifications")
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: I18n.tr("Language")
+                        }
+                        // Each language under its own name, so it's found in any of them
+                        Dropdown {
+                            Layout.preferredWidth: 190
+                            model: [
+                                {
+                                    text: I18n.tr("System (%1)", root.languageNames[I18n.systemLanguage]),
+                                    value: "system"
+                                },
+                                {
+                                    text: root.languageNames.en,
+                                    value: "en"
+                                },
+                                {
+                                    text: root.languageNames.de,
+                                    value: "de"
+                                }
+                            ]
+                            current: root.language
+                            onPicked: value => {
+                                root.language = value;
+                                root.dirty = true;
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: I18n.tr("System follows the system's locale (LANG). Saving applies it right away.")
+                        color: Theme.subtext0
                     }
 
                     Item {
@@ -1694,7 +1762,7 @@ ShellRoot {
                     spacing: 10
 
                     SectionTitle {
-                        text: "Notifications when the system runs out of something — again after every unlock"
+                        text: I18n.tr("Notifications when the system runs out of something — again after every unlock")
                     }
 
                     RowLayout {
@@ -1708,7 +1776,7 @@ ShellRoot {
                             })
                         }
                         Label {
-                            text: "Memory: when less than"
+                            text: I18n.tr("Memory: when less than")
                         }
                         NumberField {
                             value: root.warnings.memory.percent
@@ -1718,7 +1786,7 @@ ShellRoot {
                         }
                         Label {
                             Layout.fillWidth: true
-                            text: "% is free, or the system stalls reclaiming it"
+                            text: I18n.tr("% is free, or the system stalls reclaiming it")
                         }
                     }
 
@@ -1733,7 +1801,7 @@ ShellRoot {
                             })
                         }
                         Label {
-                            text: "CPU: when programs wait for it more than"
+                            text: I18n.tr("CPU: when programs wait for it more than")
                         }
                         NumberField {
                             value: root.warnings.cpu.percent
@@ -1742,7 +1810,7 @@ ShellRoot {
                                 })
                         }
                         Label {
-                            text: "% of the time, for"
+                            text: I18n.tr("% of the time, for")
                         }
                         NumberField {
                             value: root.warnings.cpu.minutes
@@ -1768,7 +1836,7 @@ ShellRoot {
                         }
                         Label {
                             Layout.fillWidth: true
-                            text: "Disks (/ and the home folder's): when less is free than (the smaller of the two)"
+                            text: I18n.tr("Disks (/ and the home folder's): when less is free than (the smaller of the two)")
                         }
                     }
 
@@ -1785,7 +1853,7 @@ ShellRoot {
 
                             Label {
                                 Layout.preferredWidth: 110
-                                text: ["Warning", "Second warning", "Critical"][index] ?? ""
+                                text: [I18n.tr("Warning"), I18n.tr("Second warning"), I18n.tr("Critical")][index] ?? ""
                                 color: index === root.warnings.disk.levels.length - 1 ? Theme.red : Theme.text
                             }
                             NumberField {
@@ -1795,7 +1863,7 @@ ShellRoot {
                                     })
                             }
                             Label {
-                                text: "% or"
+                                text: I18n.tr("% or")
                             }
                             NumberField {
                                 value: modelData.gb
@@ -1815,13 +1883,13 @@ ShellRoot {
                         Layout.topMargin: 6
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: "Each warns once and again when it was fine for a while, or after the screen is unlocked. Saving applies right away."
+                        text: I18n.tr("Each warns once and again when it was fine for a while, or after the screen is unlocked. Saving applies right away.")
                         color: Theme.subtext0
                     }
 
                     IconButton {
                         glyph: Theme.glyph(0xf0450) // 󰑐
-                        text: "Defaults"
+                        text: I18n.tr("Defaults")
                         onClicked: {
                             root.warnings = LocalSettings.withDefaults({});
                             root.dirty = true;
@@ -1841,7 +1909,7 @@ ShellRoot {
                     spacing: 8
 
                     SectionTitle {
-                        text: "Notifications to hide — the first rule that matches decides"
+                        text: I18n.tr("Notifications to hide — the first rule that matches decides")
                     }
 
                     Repeater {
@@ -1857,7 +1925,7 @@ ShellRoot {
                             InputField {
                                 Layout.preferredWidth: 160
                                 text: modelData.app
-                                placeholder: "App (any)"
+                                placeholder: I18n.tr("App (any)")
                                 onTextChanged: if (text !== root.rules[index].app) {
                                     root.rules[index].app = text;
                                     root.dirty = true;
@@ -1866,7 +1934,7 @@ ShellRoot {
                             InputField {
                                 Layout.fillWidth: true
                                 text: modelData.text
-                                placeholder: "Text contains (anything)"
+                                placeholder: I18n.tr("Text contains (anything)")
                                 onTextChanged: if (text !== root.rules[index].text) {
                                     root.rules[index].text = text;
                                     root.dirty = true;
@@ -1876,15 +1944,15 @@ ShellRoot {
                                 Layout.preferredWidth: 190
                                 model: [
                                     {
-                                        text: "Hide completely",
+                                        text: I18n.tr("Hide completely"),
                                         value: "hide"
                                     },
                                     {
-                                        text: "Only in the center",
+                                        text: I18n.tr("Only in the center"),
                                         value: "center"
                                     },
                                     {
-                                        text: "Only as a popup",
+                                        text: I18n.tr("Only as a popup"),
                                         value: "popup"
                                     }
                                 ]
@@ -1905,7 +1973,7 @@ ShellRoot {
 
                     IconButton {
                         glyph: Theme.glyph(0xf0415) // 󰐕
-                        text: "Add rule"
+                        text: I18n.tr("Add rule")
                         onClicked: root.rules = [...root.rules,
                             {
                                 app: "",
@@ -1926,14 +1994,14 @@ ShellRoot {
                             spacing: 2
 
                             Label {
-                                text: "Track announcements of media players"
+                                text: I18n.tr("Track announcements of media players")
                                 font.bold: true
                             }
                             Label {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
-                                text: "What a music player (e.g. YouTube Music) sends about the track it starts: from the player's process and naming its current track. Unless a rule above matches."
+                                text: I18n.tr("What a music player (e.g. YouTube Music) sends about the track it starts: from the player's process and naming its current track. Unless a rule above matches.")
                                 font.pixelSize: 11
                                 color: Theme.subtext0
                             }
@@ -1943,19 +2011,19 @@ ShellRoot {
                             Layout.alignment: Qt.AlignTop
                             model: [
                                 {
-                                    text: "Like any other",
+                                    text: I18n.tr("Like any other"),
                                     value: ""
                                 },
                                 {
-                                    text: "Hide completely",
+                                    text: I18n.tr("Hide completely"),
                                     value: "hide"
                                 },
                                 {
-                                    text: "Only in the center",
+                                    text: I18n.tr("Only in the center"),
                                     value: "center"
                                 },
                                 {
-                                    text: "Only as a popup",
+                                    text: I18n.tr("Only as a popup"),
                                     value: "popup"
                                 }
                             ]
@@ -1971,7 +2039,7 @@ ShellRoot {
                     Label {
                         visible: root.recentApps.length > 0
                         Layout.topMargin: 6
-                        text: "From the notification history:"
+                        text: I18n.tr("From the notification history:")
                         color: Theme.subtext0
                     }
                     Flow {
@@ -2006,7 +2074,7 @@ ShellRoot {
                         Layout.topMargin: 6
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: "App and text are parts of the app's name and of the title or body, case doesn't matter; an empty field matches every notification. \"Only in the center\" doesn't pop up, \"Only as a popup\" isn't kept in the center. Saving applies right away, to new notifications."
+                        text: I18n.tr("App and text are parts of the app's name and of the title or body, case doesn't matter; an empty field matches every notification. \"Only in the center\" doesn't pop up, \"Only as a popup\" isn't kept in the center. Saving applies right away, to new notifications.")
                         color: Theme.subtext0
                     }
 
@@ -2023,7 +2091,7 @@ ShellRoot {
                     spacing: 10
 
                     SectionTitle {
-                        text: "Profile picture — on the lock screen"
+                        text: I18n.tr("Profile picture — on the lock screen")
                     }
 
                     RowLayout {
@@ -2067,12 +2135,12 @@ ShellRoot {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
-                                text: "Any image: cropped to a square from its middle and made 512 pixels wide. The lock screen shows it round."
+                                text: I18n.tr("Any image: cropped to a square from its middle and made 512 pixels wide. The lock screen shows it round.")
                                 color: Theme.subtext0
                             }
                             IconButton {
                                 glyph: Theme.glyph(0xf02e9) // 󰋩
-                                text: face.running ? "Choosing…" : "Choose picture…"
+                                text: face.running ? I18n.tr("Choosing…") : I18n.tr("Choose picture…")
                                 onClicked: if (!face.running) {
                                     root.status = "";
                                     face.running = true;
@@ -2095,36 +2163,36 @@ ShellRoot {
                         Layout.fillWidth: true
                         text: {
                             if (root.countdown > 0) {
-                                return `Keep these display settings? Going back in ${root.countdown} s`;
+                                return I18n.tr("Keep these display settings? Going back in %1 s", root.countdown);
                             }
-                            const unsaved = root.dirty ? "Unsaved changes" : "";
+                            const unsaved = root.dirty ? I18n.tr("Unsaved changes") : "";
                             return root.status || unsaved;
                         }
                         color: root.countdown > 0 ? Theme.peach : Theme.subtext0
                     }
                     IconButton {
                         visible: root.countdown > 0
-                        text: "Keep"
+                        text: I18n.tr("Keep")
                         accent: Theme.green
                         active: true
                         onClicked: root.keep()
                     }
                     IconButton {
                         visible: root.countdown > 0
-                        text: "Go back"
+                        text: I18n.tr("Go back")
                         onClicked: root.revert()
                     }
                     IconButton {
                         visible: root.countdown === 0 && root.page === "displays"
                         glyph: Theme.glyph(0xf0379)
-                        text: "Apply"
+                        text: I18n.tr("Apply")
                         onClicked: root.apply()
                     }
                     IconButton {
                         // The profile picture is changed right away
                         visible: root.countdown === 0 && root.page !== "profile"
                         glyph: Theme.glyph(0xf0193) // 󰆓
-                        text: "Save"
+                        text: I18n.tr("Save")
                         accent: Theme.blue
                         active: root.dirty
                         onClicked: root.save()

@@ -17,35 +17,35 @@ Popup {
     readonly property var actions: [
         {
             action: "ring",
-            text: "Ring",
+            text: I18n.tr("Ring"),
             glyph: 0xf009e,
             accent: Theme.peach
         // 󰂞
         },
         {
             action: "send",
-            text: "Send files",
+            text: I18n.tr("Send files"),
             glyph: 0xf0552,
             accent: Theme.blue
         // 󰕒
         },
         {
             action: "clipboard",
-            text: "Send clipboard",
+            text: I18n.tr("Send clipboard"),
             glyph: 0xf014c,
             accent: Theme.mauve
         // 󰅌
         },
         {
             action: "browse",
-            text: "Browse files",
+            text: I18n.tr("Browse files"),
             glyph: 0xf024b,
             accent: Theme.teal
         // 󰉋
         },
         {
             action: "ping",
-            text: "Ping",
+            text: I18n.tr("Ping"),
             glyph: 0xf0437,
             accent: Theme.lavender
         } // 󰐷
@@ -58,7 +58,7 @@ Popup {
     Header {
         glyph: Theme.glyph(0xf011c) // 󰄜
         accent: Theme.teal
-        title: "Phone"
+        title: I18n.tr("Phone")
 
         IconButton {
             glyph: Theme.glyph(0xf0493) // 󰒓
@@ -73,7 +73,7 @@ Popup {
         visible: phones.devices.length === 0
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
-        text: "No paired phone. Pair one in the KDE Connect app (the gear) and on the phone."
+        text: I18n.tr("No paired phone. Pair one in the KDE Connect app (the gear) and on the phone.")
         color: Theme.subtext0
     }
 
@@ -101,7 +101,7 @@ Popup {
                 }
                 Label {
                     visible: !device.modelData.reachable
-                    text: "Not connected"
+                    text: I18n.tr("Not connected")
                     color: Theme.overlay1
                 }
                 Label {

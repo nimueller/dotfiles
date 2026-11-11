@@ -7,20 +7,19 @@ import Quickshell
 Singleton {
     readonly property var presets: [0, 5, 15, 30, 60, 1440]
 
-    // 15 -> "15 min", 60 -> "1 h", 1440 -> "1 day", 0 -> "At start"
+    // 15 -> "15 min", 60 -> "1 h", 1440 -> "1 day", 0 -> I18n.tr("At start")
     function describe(m) {
         if (m === 0) {
-            return "At start";
+            return I18n.tr("At start");
         }
-        const after = m < 0 ? " after" : "";
         const n = Math.abs(m);
+        let amount = I18n.tr("%1 min", n);
         if (n % 1440 === 0) {
-            return `${n / 1440} day${n === 1440 ? "" : "s"}${after}`;
+            amount = I18n.tr(n === 1440 ? "%1 day" : "%1 days", n / 1440);
+        } else if (n % 60 === 0) {
+            amount = I18n.tr("%1 h", n / 60);
         }
-        if (n % 60 === 0) {
-            return `${n / 60} h${after}`;
-        }
-        return `${n} min${after}`;
+        return m < 0 ? I18n.tr("%1 after", amount) : amount;
     }
 
     // "45m", "2h", "3d", "1w" or plain minutes -> minutes, or null

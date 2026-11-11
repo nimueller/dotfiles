@@ -26,7 +26,7 @@ Rectangle {
 
     readonly property string when: {
         if (event.allDay) {
-            return "All day";
+            return I18n.tr("All day");
         }
         const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
         const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
@@ -83,9 +83,9 @@ Rectangle {
                 Layout.fillWidth: true
                 visible: root.event.days > 1
                 text: {
-                    const first = Qt.formatDate(root.event.firstDay, "d MMM");
-                    const last = Qt.formatDate(root.event.lastDay, "d MMM");
-                    return `${first} – ${last} · ${root.event.days} days`;
+                    const first = I18n.formatDate(root.event.firstDay, I18n.tr("d MMM"));
+                    const last = I18n.formatDate(root.event.lastDay, I18n.tr("d MMM"));
+                    return I18n.tr("%1 – %2 · %3 days", first, last, root.event.days);
                 }
                 font.pixelSize: 10
                 color: Theme.subtext0
@@ -126,9 +126,9 @@ Rectangle {
                     return "";
                 }
                 if (root.event.days > 1) {
-                    return `Delete ${root.event.days} days?`;
+                    return I18n.tr("Delete %1 days?", root.event.days);
                 }
-                return "Delete?";
+                return I18n.tr("Delete?");
             }
             accent: Theme.red
             active: root.confirming

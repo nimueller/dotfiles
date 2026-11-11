@@ -46,14 +46,14 @@ RowLayout {
         spacing: 10
 
         SectionTitle {
-            text: "Weather location"
+            text: I18n.tr("Weather location")
         }
         RowLayout {
             Layout.fillWidth: true
 
             Label {
                 Layout.fillWidth: true
-                text: "Same as the machine's (Machine Settings)"
+                text: I18n.tr("Same as the machine's (Machine Settings)")
                 color: Theme.subtext1
             }
             Switch {
@@ -64,13 +64,13 @@ RowLayout {
         }
         Label {
             Layout.fillWidth: true
-            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : "No location set" // 󰍎
+            text: root.location ? `${Theme.glyph(0xf034e)}  ${root.location.name}` : I18n.tr("No location set") // 󰍎
             color: root.location ? Theme.text : Theme.overlay0
         }
         Label {
             Layout.fillWidth: true
             visible: !root.ownLocation && !root.machineLocation
-            text: "Machine Settings has no location yet, so this one is used until it has. Picking a city here makes it the calendar's own."
+            text: I18n.tr("Machine Settings has no location yet, so this one is used until it has. Picking a city here makes it the calendar's own.")
             font.pixelSize: 10
             color: Theme.overlay1
             wrapMode: Text.Wrap
@@ -78,7 +78,7 @@ RowLayout {
         IconButton {
             visible: !root.ownLocation
             glyph: Theme.glyph(0xf0493) // 󰒓
-            text: root.machineLocation ? "Change in Machine Settings" : "Set in Machine Settings"
+            text: root.machineLocation ? I18n.tr("Change in Machine Settings") : I18n.tr("Set in Machine Settings")
             onClicked: root.openMachineSettings()
         }
         // The calendar's own place; following the machine's, it's changed in Machine Settings
@@ -90,7 +90,7 @@ RowLayout {
             InputField {
                 id: city
                 Layout.fillWidth: true
-                placeholder: "Search a city"
+                placeholder: I18n.tr("Search a city")
                 accent: Theme.lavender
                 onAccepted: if (text) {
                     root.searchLocation(text);
@@ -98,7 +98,7 @@ RowLayout {
             }
             IconButton {
                 glyph: Theme.glyph(0xf0349) // 󰍉
-                text: "Search"
+                text: I18n.tr("Search")
                 onClicked: if (city.text) {
                     root.searchLocation(city.text);
                 }
@@ -141,7 +141,7 @@ RowLayout {
 
         SectionTitle {
             Layout.topMargin: 8
-            text: "Weeks"
+            text: I18n.tr("Weeks")
         }
         RowLayout {
             Layout.fillWidth: true
@@ -149,11 +149,11 @@ RowLayout {
 
             Label {
                 Layout.fillWidth: true
-                text: "Start on"
+                text: I18n.tr("Start on")
                 color: Theme.subtext1
             }
             Repeater {
-                model: [[1, "Monday"], [0, "Sunday"], [6, "Saturday"]]
+                model: [[1, I18n.tr("Monday")], [0, I18n.tr("Sunday")], [6, I18n.tr("Saturday")]]
 
                 delegate: IconButton {
                     required property var modelData
@@ -170,7 +170,7 @@ RowLayout {
 
             Label {
                 Layout.fillWidth: true
-                text: "Show week numbers"
+                text: I18n.tr("Show week numbers")
                 color: Theme.subtext1
             }
             Switch {
@@ -182,14 +182,14 @@ RowLayout {
 
         SectionTitle {
             Layout.topMargin: 8
-            text: "Reminders"
+            text: I18n.tr("Reminders")
         }
         RowLayout {
             Layout.fillWidth: true
 
             Label {
                 Layout.fillWidth: true
-                text: "Desktop notifications"
+                text: I18n.tr("Desktop notifications")
                 color: Theme.subtext1
             }
             Switch {
@@ -220,7 +220,7 @@ RowLayout {
         spacing: 10
 
         SectionTitle {
-            text: "Nextcloud"
+            text: I18n.tr("Nextcloud")
         }
 
         // Signed out: sign-in form
@@ -232,28 +232,28 @@ RowLayout {
             InputField {
                 id: url
                 Layout.fillWidth: true
-                placeholder: "Server, e.g. https://cloud.example.com"
+                placeholder: I18n.tr("Server, e.g. https://cloud.example.com")
                 accent: Theme.blue
                 text: root.prefill.url ?? ""
             }
             InputField {
                 id: user
                 Layout.fillWidth: true
-                placeholder: "Username"
+                placeholder: I18n.tr("Username")
                 accent: Theme.blue
                 text: root.prefill.user ?? ""
             }
             InputField {
                 id: password
                 Layout.fillWidth: true
-                placeholder: "App password"
+                placeholder: I18n.tr("App password")
                 masked: true
                 accent: Theme.blue
                 onAccepted: signInButton.clicked()
             }
             Label {
                 Layout.fillWidth: true
-                text: "Create an app password in Nextcloud under Personal settings → Security. It is kept in your keyring."
+                text: I18n.tr("Create an app password in Nextcloud under Personal settings → Security. It is kept in your keyring.")
                 font.pixelSize: 10
                 color: Theme.overlay1
                 wrapMode: Text.Wrap
@@ -261,7 +261,7 @@ RowLayout {
             IconButton {
                 id: signInButton
                 glyph: Theme.glyph(0xf0342) // 󰍂
-                text: root.busy ? "Signing in…" : "Sign in"
+                text: root.busy ? I18n.tr("Signing in…") : I18n.tr("Sign in")
                 accent: Theme.blue
                 active: true
                 onClicked: {
@@ -289,20 +289,20 @@ RowLayout {
                             return "";
                         }
                         const host = root.nextcloud.url.replace(/^https?:\/\//, "");
-                        return `${root.nextcloud.user} on ${host}`;
+                        return I18n.tr("%1 on %2", root.nextcloud.user, host);
                     }
                     color: Theme.subtext1
                 }
                 IconButton {
                     glyph: Theme.glyph(0xf0450) // 󰑐
-                    text: root.busy ? "Loading…" : "Reload"
+                    text: root.busy ? I18n.tr("Loading…") : I18n.tr("Reload")
                     onClicked: if (!root.busy) {
                         root.refreshCalendars();
                     }
                 }
                 IconButton {
                     glyph: Theme.glyph(0xf0343) // 󰍃
-                    text: root.confirmSignOut ? "Really sign out?" : "Sign out"
+                    text: root.confirmSignOut ? I18n.tr("Really sign out?") : I18n.tr("Sign out")
                     accent: Theme.red
                     active: root.confirmSignOut
                     onClicked: {
@@ -332,7 +332,7 @@ RowLayout {
 
         SectionTitle {
             Layout.topMargin: 8
-            text: "Subscriptions (read-only ICS)"
+            text: I18n.tr("Subscriptions (read-only ICS)")
         }
 
         Repeater {
@@ -359,25 +359,25 @@ RowLayout {
             InputField {
                 id: subName
                 Layout.preferredWidth: 130
-                placeholder: "Name"
+                placeholder: I18n.tr("Name")
                 accent: Theme.teal
             }
             InputField {
                 id: subUrl
                 Layout.fillWidth: true
-                placeholder: "https:// or webcal:// address of an .ics"
+                placeholder: I18n.tr("https:// or webcal:// address of an .ics")
                 accent: Theme.teal
                 onAccepted: addButton.clicked()
             }
             IconButton {
                 id: addButton
                 glyph: Theme.glyph(0xf0415) // 󰐕
-                text: "Add"
+                text: I18n.tr("Add")
                 onClicked: {
                     if (!subUrl.text.trim()) {
                         return;
                     }
-                    root.addSubscription(subName.text.trim() || "Subscription", subUrl.text.trim());
+                    root.addSubscription(subName.text.trim() || I18n.tr("Subscription"), subUrl.text.trim());
                     subName.text = "";
                     subUrl.text = "";
                 }
@@ -385,7 +385,7 @@ RowLayout {
         }
         Label {
             Layout.fillWidth: true
-            text: "For example, public holidays: most calendar sites offer an ICS link."
+            text: I18n.tr("For example, public holidays: most calendar sites offer an ICS link.")
             font.pixelSize: 10
             color: Theme.overlay1
             wrapMode: Text.Wrap

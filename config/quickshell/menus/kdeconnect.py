@@ -22,6 +22,7 @@ import gi
 
 gi.require_version("Gio", "2.0")
 from gi.repository import Gio, GLib  # noqa: E402
+from i18n import tr  # noqa: E402
 from notifications import notify  # noqa: E402
 from portal import choose_files  # noqa: E402
 
@@ -368,18 +369,18 @@ def browse(device_id: str, name: str) -> None:
     path, interface = plugin(device_id, "sftp")
     (error,) = call(path, interface, "getMountError")
     # Without folders the phone hasn't allowed access, whatever the error says
-    message = (error or "The phone didn't share any folders.") + PERMISSION_HINT
-    notify(bus, APP, f"Couldn't open {name}", message, "dialog-error")
+    message = (error or tr("The phone didn't share any folders.")) + tr(PERMISSION_HINT)
+    notify(bus, APP, tr("Couldn't open %1", name), message, "dialog-error")
 
 
 def send_files(device_id: str, name: str) -> None:
-    uris = choose_files(bus, f"Select files to send to {name}", "_Send", multiple=True)
+    uris = choose_files(bus, tr("Select files to send to %1", name), tr("_Send"), multiple=True)
     if uris:
         call(*plugin(device_id, "share"), "shareUrls", GLib.Variant("(as)", (uris,)))
 
 
 def run_action(action: str, device_id: str) -> None:
-    name = properties(device_path(device_id), DEVICE).get("name", "the phone")
+    name = properties(device_path(device_id), DEVICE).get("name", tr("the phone"))
     if action == "ring":
         call(*plugin(device_id, "findmyphone"), "ring")
     elif action == "ping":

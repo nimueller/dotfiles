@@ -20,7 +20,7 @@ Item {
     signal windowClicked(var toplevel)
     signal closeWindows(var toplevels)
 
-    property bool closing: false // the first press on "Close workspace"
+    property bool closing: false // the first press on I18n.tr("Close workspace")
     property bool closed: false // the second
 
     onToplevelsChanged: if (closed && active && toplevels.length === 0) {
@@ -159,10 +159,10 @@ Item {
         glyph: Theme.glyph(0xf0156) // 󰅖
         text: {
             if (!tile.closing) {
-                return "Close workspace";
+                return I18n.tr("Close workspace");
             }
             const count = tile.toplevels.length;
-            return `Close ${count === 1 ? "1 window" : `${count} windows`}?`;
+            return I18n.tr(count === 1 ? "Close 1 window?" : "Close %1 windows?", count);
         }
         accent: Theme.red
         active: tile.closing

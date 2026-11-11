@@ -646,7 +646,7 @@ PanelWindow {
         Label {
             id: hint
             anchors.centerIn: parent
-            text: "Drag to select  ·  click a window, or the desktop for the whole screen  ·  F whole screen  ·  Esc cancel"
+            text: I18n.tr("Drag to select  ·  click a window, or the desktop for the whole screen  ·  F whole screen  ·  Esc cancel")
             color: Theme.subtext1
         }
     }

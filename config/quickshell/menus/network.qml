@@ -37,10 +37,10 @@ Popup {
     onExpandedChanged: shared = null
 
     readonly property var connectivityInfo: ({
-            full: ["Online", Theme.green],
-            limited: ["Limited", Theme.yellow],
-            portal: ["Sign-in needed", Theme.yellow],
-            none: ["Offline", Theme.red]
+            full: [I18n.tr("Online"), Theme.green],
+            limited: [I18n.tr("Limited"), Theme.yellow],
+            portal: [I18n.tr("Sign-in needed"), Theme.yellow],
+            none: [I18n.tr("Offline"), Theme.red]
         })[connectivity] ?? ["", Theme.overlay1]
 
     function refresh() {
@@ -256,7 +256,7 @@ Popup {
             password = wep;
         }
         if (type !== "nopass" && !password) {
-            error = "NetworkManager doesn't keep this password itself, so it can't be shared";
+            error = I18n.tr("NetworkManager doesn't keep this password itself, so it can't be shared");
             return;
         }
         const esc = s => s.replace(/([\\;,:"])/g, "\\$1");
@@ -288,7 +288,7 @@ Popup {
         }
         onExited: code => {
             if (code !== 0) {
-                popup.error = secretsErr.text.replace(/^Error:\s*/, "").trim() || "Couldn't read the password";
+                popup.error = secretsErr.text.replace(/^Error:\s*/, "").trim() || I18n.tr("Couldn't read the password");
             }
         }
     }
@@ -339,7 +339,7 @@ Popup {
         onExited: code => {
             input = "";
             if (code !== 0) {
-                popup.error = actionErr.text.replace(/^Error:\s*/, "").trim() || "Something went wrong";
+                popup.error = actionErr.text.replace(/^Error:\s*/, "").trim() || I18n.tr("Something went wrong");
                 if (popup.busy) {
                     popup.expanded = popup.busy;
                 }
@@ -374,7 +374,7 @@ Popup {
     Header {
         glyph: Theme.glyph(0xf06f3) // 󰛳
         accent: Theme.sapphire
-        title: "Network"
+        title: I18n.tr("Network")
         badge: popup.connectivityInfo[0]
         badgeColor: popup.connectivityInfo[1]
 
@@ -394,7 +394,7 @@ Popup {
         spacing: 8
 
         SectionTitle {
-            text: "Wired"
+            text: I18n.tr("Wired")
         }
 
         Repeater {
@@ -448,7 +448,7 @@ Popup {
                             text: {
                                 const d = wiredRow.modelData;
                                 if (wiredRow.unplugged) {
-                                    return `${d.device} · cable unplugged`;
+                                    return I18n.tr("%1 · cable unplugged", d.device);
                                 }
                                 if (!wiredRow.connected) {
                                     return `${d.device} · ${d.state}`;
@@ -489,7 +489,7 @@ Popup {
 
             SectionTitle {
                 Layout.fillWidth: true
-                text: "Wi-Fi"
+                text: I18n.tr("Wi-Fi")
             }
             Switch {
                 checked: popup.wifiEnabled && popup.wifiHardware
@@ -501,19 +501,19 @@ Popup {
 
         Label {
             visible: !popup.wifiHardware
-            text: "Switched off by a key or switch (airplane mode)"
+            text: I18n.tr("Switched off by a key or switch (airplane mode)")
             color: Theme.overlay0
             font.italic: true
         }
         Label {
             visible: popup.wifiHardware && !popup.wifiEnabled
-            text: "Wi-Fi is off"
+            text: I18n.tr("Wi-Fi is off")
             color: Theme.overlay0
             font.italic: true
         }
         Label {
             visible: popup.wifiEnabled && popup.wifiHardware && popup.networks.length === 0
-            text: "Looking for networks…"
+            text: I18n.tr("Looking for networks…")
             color: Theme.overlay0
             font.italic: true
         }
@@ -601,11 +601,17 @@ Popup {
             // that reports back with a notification.
             IconButton {
                 glyph: Theme.glyph(0xf0220) // 󰈠
-                text: "Import"
+                text: I18n.tr("Import")
                 onClicked: {
+                    // The texts go in as $1 to $5, so a translation can't break the script
+                    const title = I18n.tr("Import VPN configuration");
+                    const vpnFiles = I18n.tr("VPN configuration");
+                    const allFiles = I18n.tr("All files");
+                    const imported = I18n.tr("VPN imported");
+                    const failed = I18n.tr("VPN import failed");
                     Quickshell.execDetached(["sh", "-c", `
-                        f=$(zenity --file-selection --title="Import VPN configuration" \\
-                            --file-filter="VPN configuration | *.ovpn *.conf" --file-filter="All files | *") || exit 0
+                        f=$(zenity --file-selection --title="$1" \\
+                            --file-filter="$2 | *.ovpn *.conf" --file-filter="$3 | *") || exit 0
                         case $f in
                             *.conf)
                                 # WireGuard names the interface after the file, at most
@@ -626,17 +632,17 @@ Popup {
                             if [ "$type" = wireguard ] && [ -n "$uuid" ] && [ "$name" != "$ifname" ]; then
                                 nmcli connection modify "$uuid" connection.id "$name"
                             fi
-                            notify-send -a Network "VPN imported" "$out"
+                            notify-send -a Network "$4" "$out"
                         else
-                            notify-send -u critical -a Network "VPN import failed" "$out"
+                            notify-send -u critical -a Network "$5" "$out"
                         fi
-                    `]);
+                    `, "sh", title, vpnFiles, allFiles, imported, failed]);
                     popup.close();
                 }
             }
             IconButton {
                 glyph: Theme.glyph(0xf0415) // 󰐕
-                text: "New"
+                text: I18n.tr("New")
                 onClicked: {
                     Quickshell.execDetached(["nm-connection-editor", "--create"]);
                     popup.close();
@@ -646,7 +652,7 @@ Popup {
 
         Label {
             visible: popup.loaded && popup.vpns.length === 0
-            text: "No VPN connections yet"
+            text: I18n.tr("No VPN connections yet")
             color: Theme.overlay0
             font.italic: true
         }

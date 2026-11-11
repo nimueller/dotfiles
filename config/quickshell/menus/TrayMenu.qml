@@ -6,7 +6,7 @@ import Quickshell.Widgets
 
 // The menu of a tray icon, drawn in the theme (Qt's native menus would need
 // QApplication and look out of place). Opens above the icon; submenus open
-// in place with a "Back" row. Closes on a click outside or Escape.
+// in place with a I18n.tr("Back") row. Closes on a click outside or Escape.
 PopupWindow {
     id: root
 
@@ -98,7 +98,7 @@ PopupWindow {
             MenuRow {
                 visible: root.stack.length > 0
                 glyph: Theme.glyph(0xf0141) // 󰅁
-                text: "Back"
+                text: I18n.tr("Back")
                 onTriggered: root.stack = root.stack.slice(0, -1)
             }
 

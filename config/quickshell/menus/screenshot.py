@@ -36,6 +36,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from i18n import tr
+
 HERE = Path(__file__).resolve().parent
 RUNTIME = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / "qs-screenshot"
 SAVED = Path.home() / "Pictures/Screenshots"
@@ -77,7 +79,7 @@ def open_path(target: str | Path) -> None:
 def read_text(image: Path) -> None:
     zbar = subprocess.run(["zbarimg", "--raw", "-q", str(image)], capture_output=True, text=True, check=False)
     if zbar.returncode == 0:
-        what, text = "QR code", zbar.stdout.rstrip("\n")
+        copied, text = tr("QR code copied"), zbar.stdout.rstrip("\n")
     else:
         # Twice the size: Tesseract misses small letters at 1x
         gray = subprocess.run(
@@ -89,18 +91,18 @@ def read_text(image: Path) -> None:
             capture_output=True,
             check=False,
         )
-        what, text = "Text", ocr.stdout.decode(errors="replace").rstrip("\n")
+        copied, text = tr("Text copied"), ocr.stdout.decode(errors="replace").rstrip("\n")
     if not text.strip():
-        notify("-i", "dialog-information", "No text found", "Neither a QR code nor text in the selection")
+        notify("-i", "dialog-information", tr("No text found"), tr("Neither a QR code nor text in the selection"))
         sys.exit(1)
     subprocess.run(["wl-copy", "--type", "text/plain"], input=text.encode(), check=False)
 
     body = markup(preview(text))
     if is_url(text):
-        if notify("-i", "edit-paste", "-A", "open=Open", f"{what} copied", body, transient=True) == "open":
+        if notify("-i", "edit-paste", "-A", f"open={tr('Open')}", copied, body, transient=True) == "open":
             open_path(text)
     else:
-        notify("-i", "edit-paste", f"{what} copied", body, transient=True)
+        notify("-i", "edit-paste", copied, body, transient=True)
 
 
 def save_copy(image: Path) -> Path:
@@ -126,7 +128,8 @@ def export(shot: Path, source: str, layer: str, geometry: str, percent: str, act
     written = subprocess.run(["magick", *magick_args(source, layer, geometry, percent, action), str(out)], check=False)
     shutil.rmtree(shot, ignore_errors=True)
     if written.returncode != 0:
-        notify("-u", "critical", "-i", "dialog-error", "Screenshot failed", "ImageMagick couldn't write the image")
+        unwritten = tr("ImageMagick couldn't write the image")
+        notify("-u", "critical", "-i", "dialog-error", tr("Screenshot failed"), unwritten)
         sys.exit(1)
     if action == "text":
         read_text(out)
@@ -139,17 +142,16 @@ def export(shot: Path, source: str, layer: str, geometry: str, percent: str, act
     ).stdout
     if action == "save":
         file = save_copy(out)
-        actions = ["-A", "open=Open", "-A", "folder=Show in folder"]
-        clicked = notify(
-            "-i", str(file), *actions, "Screenshot saved", f"{file.name} · {size}, also copied", transient=True
-        )
+        actions = ["-A", f"open={tr('Open')}", "-A", f"folder={tr('Show in folder')}"]
+        body = tr("%1 · %2, also copied", file.name, size)
+        clicked = notify("-i", str(file), *actions, tr("Screenshot saved"), body, transient=True)
         if clicked == "open":
             open_path(file)
         elif clicked == "folder":
             open_path(SAVED)
-    elif notify("-i", str(out), "-A", "save=Save", "Screenshot copied", size, transient=True) == "save":
+    elif notify("-i", str(out), "-A", f"save={tr('Save')}", tr("Screenshot copied"), size, transient=True) == "save":
         file = save_copy(out)
-        notify("-i", str(file), "Screenshot saved", file.name, transient=True)
+        notify("-i", str(file), tr("Screenshot saved"), file.name, transient=True)
 
 
 def recorder_args(output: str, geometry: str, percent: str, sound: bool, file: Path) -> list[str]:
@@ -195,7 +197,7 @@ def record(shot: Path, output: str, geometry: str, percent: str, sound: bool) ->
                 recorder_args(output, geometry, percent, sound, file), stdout=subprocess.DEVNULL, stderr=errors
             )
         except FileNotFoundError:
-            notify("-u", "critical", "-i", "dialog-error", "Recording failed", "wf-recorder isn't installed")
+            notify("-u", "critical", "-i", "dialog-error", tr("Recording failed"), tr("wf-recorder isn't installed"))
             sys.exit(1)
         RECORDING.write_text(json.dumps({"pid": recorder.pid, "file": str(file), "started": time.time()}))
         try:
@@ -204,13 +206,14 @@ def record(shot: Path, output: str, geometry: str, percent: str, sound: bool) ->
             RECORDING.unlink(missing_ok=True)
 
     if not file.exists() or file.stat().st_size == 0:
-        last = log.read_text(errors="replace").strip().splitlines()[-1:] or ["no video was written"]
-        notify("-u", "critical", "-i", "dialog-error", "Recording failed", markup(last[0]))
+        last = log.read_text(errors="replace").strip().splitlines()[-1:] or [tr("no video was written")]
+        notify("-u", "critical", "-i", "dialog-error", tr("Recording failed"), markup(last[0]))
         sys.exit(1)
     # As a file to paste into chats and file managers
     subprocess.run(["wl-copy", "--type", "text/uri-list"], input=file.as_uri().encode(), check=False)
-    actions = ["-A", "open=Open", "-A", "folder=Show in folder"]
-    clicked = notify("-i", "video-x-generic", *actions, "Recording saved", f"{file.name}, also copied", transient=True)
+    actions = ["-A", f"open={tr('Open')}", "-A", f"folder={tr('Show in folder')}"]
+    body = tr("%1, also copied", file.name)
+    clicked = notify("-i", "video-x-generic", *actions, tr("Recording saved"), body, transient=True)
     if clicked == "open":
         open_path(file)
     elif clicked == "folder":

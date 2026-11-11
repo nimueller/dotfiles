@@ -59,6 +59,7 @@ import icalendar
 
 # No type information, used in occurrences() only
 import recurring_ical_events  # pyright: ignore[reportMissingTypeStubs]
+from i18n import long_date, tr
 
 NS = {"d": "DAV:", "c": "urn:ietf:params:xml:ns:caldav", "a": "http://apple.com/ns/ical/"}
 CACHE = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "quickshell-calendar"
@@ -222,7 +223,7 @@ def stored_password(url: str, user: str) -> str:
         check=False,
     )
     if lookup.returncode != 0 or not lookup.stdout:
-        raise Fail("No app password stored. Sign in again in the settings.")
+        raise Fail(tr("No app password stored. Sign in again in the settings."))
     return lookup.stdout.rstrip("\n")
 
 
@@ -254,10 +255,10 @@ def basic_auth(auth: Auth) -> str:
 
 def http_error_message(code: int, reason: str) -> str:
     if code == 401:
-        return "Wrong username or app password"
+        return tr("Wrong username or app password")
     if code == 412:
-        return "The event changed on the server. Reload and try again."
-    return f"Server answered {code} {reason}"
+        return tr("The event changed on the server. Reload and try again.")
+    return tr("Server answered %1 %2", code, reason)
 
 
 def http(
@@ -280,9 +281,9 @@ def http(
     except urllib.error.HTTPError as error:
         raise Fail(http_error_message(error.code, error.reason)) from None
     except urllib.error.URLError as error:
-        raise Fail(f"Can't reach the server ({error.reason})") from None
+        raise Fail(tr("Can't reach the server (%1)", error.reason)) from None
     except TimeoutError:
-        raise Fail("The server took too long to answer") from None
+        raise Fail(tr("The server took too long to answer")) from None
 
 
 def dav(method: str, url: str, auth: Auth, body: str, depth: int) -> ET.Element:
@@ -291,7 +292,7 @@ def dav(method: str, url: str, auth: Auth, body: str, depth: int) -> ET.Element:
     try:
         return ET.fromstring(data)
     except ET.ParseError:
-        raise Fail("The server's answer isn't CalDAV. Check the address.") from None
+        raise Fail(tr("The server's answer isn't CalDAV. Check the address.")) from None
 
 
 def is_success(propstat: ET.Element) -> bool:
@@ -326,21 +327,23 @@ def propfind(url: str, auth: Auth, properties: str, depth: int = 0) -> ET.Elemen
     return dav("PROPFIND", url, auth, body, depth)
 
 
-def follow(base: str, tree: ET.Element, path: str, what: str) -> str:
-    """The first href at `path` in the responses, as an absolute URL."""
+def follow(base: str, tree: ET.Element, path: str, missing: str) -> str:
+    """The first href at `path` in the responses, as an absolute URL; fails with `missing` without one."""
     for response in tree.findall("d:response", NS):
         href = found_text(response, path)
         if href:
             return urllib.parse.urljoin(base, href.strip())
-    raise Fail(f"The server didn't tell the {what}, check the address")
+    raise Fail(missing)
 
 
 def calendars(url: str, auth: Auth) -> list[Calendar]:
     root = dav_root(url)
     principal_answer = propfind(root, auth, "<d:current-user-principal/>")
-    principal = follow(root, principal_answer, "d:current-user-principal/d:href", "user")
+    no_user = tr("The server didn't tell the user, check the address")
+    principal = follow(root, principal_answer, "d:current-user-principal/d:href", no_user)
     home_answer = propfind(principal, auth, "<c:calendar-home-set/>")
-    home = follow(root, home_answer, "c:calendar-home-set/d:href", "calendar home")
+    no_home = tr("The server didn't tell the calendar home, check the address")
+    home = follow(root, home_answer, "c:calendar-home-set/d:href", no_home)
     properties = (
         "<d:resourcetype/><d:displayname/><a:calendar-color/>"
         "<c:supported-calendar-component-set/><d:current-user-privilege-set/>"
@@ -481,17 +484,17 @@ def set_alarms(event: Component, minutes: list[int], title: str) -> None:
         event.add_component(alarm)
 
 
-def check_account(url: str, href: str, what: str) -> None:
+def check_account(url: str, href: str, foreign: str) -> None:
     if not href.startswith(dav_root(url)):
-        raise Fail(f"That {what} doesn't belong to this account")
+        raise Fail(foreign)
 
 
 def create(url: str, auth: Auth, form: EventForm) -> dict[str, str]:
     """PUT a new event into a Nextcloud calendar."""
     calendar_href = form.get("calendar")
     if calendar_href is None:
-        raise Fail("The new event has no calendar")
-    check_account(url, calendar_href, "calendar")
+        raise Fail(tr("The new event has no calendar"))
+    check_account(url, calendar_href, tr("That calendar doesn't belong to this account"))
     calendar = new_component(icalendar.Calendar)
     calendar.add("prodid", PRODID)
     calendar.add("version", "2.0")
@@ -515,10 +518,10 @@ def read_single_event(data: bytes) -> tuple[Component, Component]:
     try:
         calendar = parse_calendar(data)
     except ValueError as error:
-        raise Fail(f"Couldn't read the event ({error})") from None
+        raise Fail(tr("Couldn't read the event (%1)", error)) from None
     events = calendar.walk("VEVENT")
     if len(events) != 1 or events[0].get("rrule") is not None:
-        raise Fail("Recurring events can only be changed in Nextcloud")
+        raise Fail(tr("Recurring events can only be changed in Nextcloud"))
     return calendar, events[0]
 
 
@@ -538,14 +541,14 @@ def update(url: str, auth: Auth, form: EventForm) -> dict[str, str]:
     the server refuse if it was changed elsewhere meanwhile."""
     href = form.get("href")
     if href is None:
-        raise Fail("The event to change has no href")
-    check_account(url, href, "event")
+        raise Fail(tr("The event to change has no href"))
+    check_account(url, href, tr("That event doesn't belong to this account"))
     _status, headers, data = http("GET", href, auth)
     calendar, event = read_single_event(data)
     server_etag = headers.get("ETag", "")
     etag = form.get("etag") or server_etag
     if server_etag and etag and server_etag != etag:
-        raise Fail("The event changed on the server. Reload and try again.")
+        raise Fail(tr("The event changed on the server. Reload and try again."))
     apply_fields(event, form)
     mark_modified(event)
     calendar.add_missing_timezones()
@@ -558,7 +561,7 @@ def update(url: str, auth: Auth, form: EventForm) -> dict[str, str]:
 
 def delete(url: str, auth: Auth, form: DeleteForm) -> dict[str, str]:
     href = form["href"]
-    check_account(url, href, "event")
+    check_account(url, href, tr("That event doesn't belong to this account"))
     etag = form.get("etag")
     headers = {"If-Match": etag} if etag else {}
     http("DELETE", href, auth, headers=headers)
@@ -594,7 +597,7 @@ def ics_text(url: str) -> str:
         raise
     text = data.decode("utf-8", errors="replace")
     if "BEGIN:VCALENDAR" not in text:
-        raise Fail("That address isn't an ICS calendar")
+        raise Fail(tr("That address isn't an ICS calendar"))
     cached.write_text(text)
     return text
 
@@ -647,7 +650,7 @@ def event_entry(event: Component, source: Source, recurring: set[str]) -> Event:
     return {
         **source,
         "uid": uid,
-        "title": str(event.get("summary", "")) or NO_TITLE,
+        "title": str(event.get("summary", "")) or tr(NO_TITLE),
         "location": str(event.get("location", "")),
         "allDay": all_day,
         "start": as_local(begin, all_day),
@@ -664,7 +667,7 @@ def expand(text: str, start: dt.date, end: dt.date, source: Source) -> list[Even
     try:
         calendar = parse_calendar(text)
     except ValueError as error:
-        raise Fail(f"Couldn't read the calendar data ({error})") from None
+        raise Fail(tr("Couldn't read the calendar data (%1)", error)) from None
     recurring = recurring_uids(calendar)
     entries: list[Event] = []
     for event in occurrences(calendar, start, end):
@@ -824,16 +827,16 @@ def remind() -> dict[str, Any]:
 
 def time_until(start: dt.datetime, minutes: int) -> str:
     if minutes <= 0:
-        return "now"
+        return tr("now")
     if minutes < 60:
-        return f"in {minutes} min"
-    return f"at {start:%H:%M}"
+        return tr("in %1 min", minutes)
+    return tr("at %1", f"{start:%H:%M}")
 
 
 def reminder_text(event: Event, start: dt.datetime, minutes: int) -> str:
     """The notification's body: when, and where."""
     if event["allDay"]:
-        when = "today" if start.date() == dt.date.today() else start.strftime("%A, %-d %B")
+        when = tr("today") if start.date() == dt.date.today() else long_date(start)
     else:
         end = dt.datetime.fromisoformat(event["end"])
         when = f"{time_until(start, minutes)} · {start:%H:%M}–{end:%H:%M}"
@@ -863,7 +866,7 @@ def login(url: str, user: str) -> dict[str, Any]:
     store = ["secret-tool", "store", f"--label={KEYRING_LABEL}", *keyring_attributes(url, user)]
     stored = subprocess.run(store, input=password, text=True, check=False)
     if stored.returncode != 0:
-        raise Fail("Signed in, but the keyring refused to store the password")
+        raise Fail(tr("Signed in, but the keyring refused to store the password"))
     return result
 
 

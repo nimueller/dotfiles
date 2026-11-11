@@ -41,13 +41,13 @@ Scope {
 
     readonly property string reason: {
         if (sunshine) {
-            return "Sunshine is streaming";
+            return I18n.tr("Sunshine is streaming");
         }
         if (Awake.manual) {
-            return "Until you turn it off";
+            return I18n.tr("Until you turn it off");
         }
         if (game) {
-            return game.title || "A game is running";
+            return game.title || I18n.tr("A game is running");
         }
         if (video) {
             return [video.identity, video.trackTitle].filter(s => s).join(": ");
@@ -76,7 +76,7 @@ Scope {
             root.active = root.wanted;
             root.shownReason = root.reason;
             if (root.started && changed) {
-                root.osd.awake(root.active, root.active ? root.reason : "The screen locks when idle again");
+                root.osd.awake(root.active, root.active ? root.reason : I18n.tr("The screen locks when idle again"));
             }
         }
     }

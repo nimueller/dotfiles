@@ -33,6 +33,8 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
+from i18n import tr
+
 HOME = Path.home()
 TRASH = HOME / ".local/share/Trash"
 FLATPAK_REMOVED = HOME / ".local/share/flatpak/.removed"
@@ -78,7 +80,7 @@ def privileged(*command: str) -> str:
     """Through polkit's password prompt: the error, "" if it worked"""
     result = run("pkexec", *command)
     if result.returncode in (126, 127):
-        return "Cancelled"
+        return tr("Cancelled")
     return result.stderr.strip() if result.returncode else ""
 
 
@@ -92,7 +94,7 @@ def running_flatpaks() -> set[str]:
 
 
 def scan_trash() -> tuple[int, str, str]:
-    return disk_usage([TRASH]), "Deleted for good", ""
+    return disk_usage([TRASH]), tr("Deleted for good"), ""
 
 
 def clean_trash() -> str:
@@ -127,10 +129,10 @@ def app_caches() -> list[Path]:
 
 def scan_app_caches() -> tuple[int, str, str]:
     free, busy = split_running(app_caches(), lambda cache: cache.parent.name)
-    detail = "Apps fill them again as needed"
-    blocked = f"Close {', '.join(busy)}" if busy and not free else ""
+    detail = tr("Apps fill them again as needed")
+    blocked = tr("Close %1", ", ".join(busy)) if busy and not free else ""
     if busy and free:
-        detail = f"Skips {', '.join(busy)}: running"
+        detail = tr("Skips %1: running", ", ".join(busy))
     size = disk_usage(free) or disk_usage(app_caches())
     return size, detail, blocked
 
@@ -147,9 +149,9 @@ def removed_flatpaks() -> list[Path]:
 
 def scan_flatpak() -> tuple[int, str, str]:
     free, busy = split_running(removed_flatpaks(), lambda path: removed_app(path.name))
-    blocked = f"Close {', '.join(busy)}" if busy and not free else ""
+    blocked = tr("Close %1", ", ".join(busy)) if busy and not free else ""
     size = disk_usage(free) or disk_usage(removed_flatpaks())
-    return size, "Old versions, and runtimes nothing uses", blocked
+    return size, tr("Old versions, and runtimes nothing uses"), blocked
 
 
 def clean_flatpak() -> str:
@@ -164,8 +166,8 @@ def clean_flatpak() -> str:
 
 
 def scan_gradle() -> tuple[int, str, str]:
-    blocked = "A build is running" if run("pgrep", "-f", "GradleDaemon").returncode == 0 else ""
-    return disk_usage(GRADLE), "Downloaded again by the next build", blocked
+    blocked = tr("A build is running") if run("pgrep", "-f", "GradleDaemon").returncode == 0 else ""
+    return disk_usage(GRADLE), tr("Downloaded again by the next build"), blocked
 
 
 def clean_gradle() -> str:
@@ -189,7 +191,7 @@ def parse_paccache(output: str) -> int:
 
 def scan_pacman() -> tuple[int, str, str]:
     output = run("paccache", "-d", *paccache_args()).stdout
-    return parse_paccache(output), "Keeps the newest of each, and every kernel", ""
+    return parse_paccache(output), tr("Keeps the newest of each, and every kernel"), ""
 
 
 def clean_pacman() -> str:
@@ -206,7 +208,7 @@ def parse_journal(output: str) -> int:
 
 def scan_journal() -> tuple[int, str, str]:
     used = parse_journal(run("journalctl", "--disk-usage").stdout)
-    return max(0, used - JOURNAL_KEEP), f"Keeps the newest {JOURNAL_KEEP // 1024**2} MB", ""
+    return max(0, used - JOURNAL_KEEP), tr("Keeps the newest %1 MB", JOURNAL_KEEP // 1024**2), ""
 
 
 def clean_journal() -> str:
@@ -241,7 +243,7 @@ def scan_nix() -> tuple[int, str, str]:
     dead = set(lines(run("nix-store", "--gc", "--print-dead").stdout))
     keep = set(lines(run("nix-store", "--query", "--requisites", *current).stdout)) if current else set[str]()
     stale = set(lines(run("nix-store", "--query", "--requisites", *old).stdout)) if old else set[str]()
-    detail = f"{len(old)} old, no rollback to them afterwards" if old else "Nothing uses it any more"
+    detail = tr("%1 old, no rollback to them afterwards", len(old)) if old else tr("Nothing uses it any more")
     return nix_sizes(sorted((dead | stale) - keep)), detail, ""
 
 
@@ -262,13 +264,13 @@ class Place:
 
 
 PLACES = {
-    "trash": Place("Trash", "gio", scan_trash, clean_trash),
-    "nix": Place("Unused Nix packages", "nix-collect-garbage", scan_nix, clean_nix),
-    "pacman": Place("Package cache", "paccache", scan_pacman, clean_pacman),
-    "app-cache": Place("App caches", "du", scan_app_caches, clean_app_caches),
-    "flatpak": Place("Flatpak leftovers", "flatpak", scan_flatpak, clean_flatpak),
-    "gradle": Place("Gradle caches", "du", scan_gradle, clean_gradle),
-    "journal": Place("System logs", "journalctl", scan_journal, clean_journal),
+    "trash": Place(tr("Trash"), "gio", scan_trash, clean_trash),
+    "nix": Place(tr("Unused Nix packages"), "nix-collect-garbage", scan_nix, clean_nix),
+    "pacman": Place(tr("Package cache"), "paccache", scan_pacman, clean_pacman),
+    "app-cache": Place(tr("App caches"), "du", scan_app_caches, clean_app_caches),
+    "flatpak": Place(tr("Flatpak leftovers"), "flatpak", scan_flatpak, clean_flatpak),
+    "gradle": Place(tr("Gradle caches"), "du", scan_gradle, clean_gradle),
+    "journal": Place(tr("System logs"), "journalctl", scan_journal, clean_journal),
 }
 
 

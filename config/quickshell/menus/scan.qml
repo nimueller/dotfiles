@@ -12,7 +12,7 @@ import Quickshell.Io
 // order afterwards). The pages collect in the strip
 // below, where they can be turned, moved and removed, then go into one PDF
 // (searchable with OCR if asked) or one image each, in Documents/Scans.
-// Opened with `toggle.sh scan` or as "Scanner" from the launcher. Escape stops a scan or closes the window
+// Opened with `toggle.sh scan` or as I18n.tr("Scanner") from the launcher. Escape stops a scan or closes the window
 // (asking first while pages aren't saved), Ctrl+S saves, Delete removes the
 // page shown, the arrow keys go through the pages.
 ShellRoot {
@@ -70,13 +70,13 @@ ShellRoot {
     // What a resolution is good for, after it in the list
     function resolutionUse(dpi) {
         if (dpi === 150 || dpi === 200) {
-            return " · documents";
+            return I18n.tr(" · documents");
         }
         if (dpi === 300) {
-            return " · documents, text";
+            return I18n.tr(" · documents, text");
         }
         if (dpi >= 600) {
-            return " · photos";
+            return I18n.tr(" · photos");
         }
         return "";
     }
@@ -92,23 +92,23 @@ ShellRoot {
     function sourceLabel(s) {
         // Epson's "Auto": the feeder if there are pages in it, else the glass
         if (/adf|feeder/i.test(s)) {
-            return "Feeder";
+            return I18n.tr("Feeder");
         }
         if (/auto/i.test(s)) {
-            return "Feeder (auto)";
+            return I18n.tr("Feeder (auto)");
         }
         if (/flatbed/i.test(s)) {
-            return "Glass";
+            return I18n.tr("Glass");
         }
         return s;
     }
     function modeLabel(m) {
         return ({
-                Color: "Colour",
-                Gray: "Grey",
-                Grayscale: "Grey",
-                Lineart: "Black & white",
-                Monochrome: "Black & white"
+                Color: I18n.tr("Colour"),
+                Gray: I18n.tr("Grey"),
+                Grayscale: I18n.tr("Grey"),
+                Lineart: I18n.tr("Black & white"),
+                Monochrome: I18n.tr("Black & white")
             })[m] ?? m;
     }
     function pick(list, wanted, fallback) {
@@ -240,9 +240,9 @@ ShellRoot {
         pages = [...pages.slice(0, b.start), ...merged];
         current = b.start;
         if (fronts.length === backs.length) {
-            status = `${fronts.length} sheets, both sides, put in order`;
+            status = I18n.tr("%1 sheets, both sides, put in order", fronts.length);
         } else {
-            status = `${fronts.length} fronts but ${backs.length} backs: check the order`;
+            status = I18n.tr("%1 fronts but %2 backs: check the order", fronts.length, backs.length);
         }
     }
 
@@ -402,7 +402,7 @@ ShellRoot {
                     o = JSON.parse(text);
                 } catch (e) {}
                 if (!o || o.error) {
-                    root.error = o?.error ?? "The scanner doesn't answer";
+                    root.error = o?.error ?? I18n.tr("The scanner doesn't answer");
                     return;
                 }
                 root.source = root.pick(o.sources, root.source, o.source);
@@ -458,12 +458,12 @@ ShellRoot {
             // The feeder running out ends every scan from it
             const errors = scanProc.errors.filter(e => !(root.scannedNow && /feeder is empty/.test(e)));
             if (!root.scannedNow) {
-                root.error = errors[errors.length - 1] ?? (root.scanning ? "Stopped" : "");
+                root.error = errors[errors.length - 1] ?? (root.scanning ? I18n.tr("Stopped") : "");
             } else if (errors.length) {
                 root.error = errors[errors.length - 1];
             }
             if (root.scanning === "pages" && root.scannedNow && !root.batch) {
-                root.status = root.scannedNow === 1 ? "1 page scanned" : `${root.scannedNow} pages scanned`;
+                root.status = root.scannedNow === 1 ? I18n.tr("1 page scanned") : I18n.tr("%1 pages scanned", root.scannedNow);
             }
             const kind = root.scanning;
             root.scanning = "";
@@ -508,10 +508,10 @@ ShellRoot {
             if (code === 0 && files.length) {
                 root.unsaved = false;
                 root.confirmClose = false;
-                const more = files.length > 1 ? ` and ${files.length - 1} more` : "";
-                root.status = `Saved as ${files[0].split("/").pop()}${more}`;
+                const more = files.length > 1 ? I18n.tr(" and %1 more", files.length - 1) : "";
+                root.status = I18n.tr("Saved as %1%2", files[0].split("/").pop(), more);
             } else {
-                root.error = "Couldn't save the scan";
+                root.error = I18n.tr("Couldn't save the scan");
             }
         }
     }
@@ -553,7 +553,7 @@ ShellRoot {
     FloatingWindow {
         id: window
 
-        title: "Scanner"
+        title: I18n.tr("Scanner")
         implicitWidth: 1040
         implicitHeight: 740
         color: Theme.base
@@ -616,7 +616,7 @@ ShellRoot {
                     Header {
                         glyph: Theme.glyph(0xf06ab) // 󰚫
                         accent: Theme.sapphire
-                        title: "Scanner"
+                        title: I18n.tr("Scanner")
 
                         IconButton {
                             glyph: Theme.glyph(0xf0450) // 󰑐
@@ -636,7 +636,7 @@ ShellRoot {
                                     value: d.device
                                 })) : [
                             {
-                                text: root.searching ? "Looking for scanners…" : "No scanner found",
+                                text: root.searching ? I18n.tr("Looking for scanners…") : I18n.tr("No scanner found"),
                                 value: ""
                             }
                         ]
@@ -652,7 +652,7 @@ ShellRoot {
                     Label {
                         Layout.fillWidth: true
                         visible: !root.searching && !root.devices.length
-                        text: "Is it on and in this network? Only network scanners (eSCL/AirScan, WSD) are looked for."
+                        text: I18n.tr("Is it on and in this network? Only network scanners (eSCL/AirScan, WSD) are looked for.")
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
                         color: Theme.subtext0
@@ -668,7 +668,7 @@ ShellRoot {
 
                         SectionTitle {
                             Layout.topMargin: 6
-                            text: "Source"
+                            text: I18n.tr("Source")
                         }
                         RowLayout {
                             spacing: 6
@@ -685,7 +685,7 @@ ShellRoot {
                         }
 
                         SectionTitle {
-                            text: "Colour"
+                            text: I18n.tr("Colour")
                         }
                         RowLayout {
                             spacing: 6
@@ -702,7 +702,7 @@ ShellRoot {
                         }
 
                         SectionTitle {
-                            text: "Resolution"
+                            text: I18n.tr("Resolution")
                         }
                         Dropdown {
                             Layout.fillWidth: true
@@ -718,16 +718,16 @@ ShellRoot {
                         Repeater {
                             model: root.feeder ? [
                                 {
-                                    text: "One page at a time",
+                                    text: I18n.tr("One page at a time"),
                                     on: root.oneByOne,
                                     flip: () => root.oneByOne = !root.oneByOne,
-                                    hint: "For scanners that pull in every page but hand over only the first, as some do over AirScan. Put in one page; the next scan starts once the next one is in."
+                                    hint: I18n.tr("For scanners that pull in every page but hand over only the first, as some do over AirScan. Put in one page; the next scan starts once the next one is in.")
                                 },
                                 {
-                                    text: "Both sides",
+                                    text: I18n.tr("Both sides"),
                                     on: root.bothSides,
                                     flip: () => root.bothSides = !root.bothSides,
-                                    hint: "The fronts first, then the stack turned over for the backs; the pages are put in order afterwards."
+                                    hint: I18n.tr("The fronts first, then the stack turned over for the backs; the pages are put in order afterwards.")
                                 }
                             ] : []
 
@@ -768,14 +768,14 @@ ShellRoot {
                             visible: !root.feeder || !root.oneByOne
                             text: {
                                 if (root.feeder) {
-                                    return "All pages in the feeder are scanned.";
+                                    return I18n.tr("All pages in the feeder are scanned.");
                                 }
                                 if (root.area) {
                                     const widthCm = (root.area.w / 10).toFixed(1);
                                     const heightCm = (root.area.h / 10).toFixed(1);
-                                    return `Area ${widthCm} × ${heightCm} cm, from the preview`;
+                                    return I18n.tr("Area %1 × %2 cm, from the preview", widthCm, heightCm);
                                 }
-                                return "The whole glass. Drag over the preview to scan only a part of it.";
+                                return I18n.tr("The whole glass. Drag over the preview to scan only a part of it.");
                             }
                             wrapMode: Text.WordWrap
                             elide: Text.ElideNone
@@ -792,7 +792,7 @@ ShellRoot {
                         IconButton {
                             visible: !root.feeder
                             glyph: Theme.glyph(0xf0349) // 󰍉
-                            text: "Preview"
+                            text: I18n.tr("Preview")
                             enabled: !root.busy
                             opacity: enabled ? 1 : 0.5
                             onClicked: root.startScan("preview")
@@ -802,12 +802,12 @@ ShellRoot {
                             glyph: Theme.glyph(root.scanning ? 0xf04db : 0xf06ab) // 󰓛 / 󰚫
                             text: {
                                 if (root.scanning) {
-                                    return "Stop";
+                                    return I18n.tr("Stop");
                                 }
                                 if (root.pages.length) {
-                                    return "Scan another page";
+                                    return I18n.tr("Scan another page");
                                 }
-                                return "Scan";
+                                return I18n.tr("Scan");
                             }
                             accent: root.scanning ? Theme.red : Theme.sapphire
                             active: true
@@ -852,15 +852,20 @@ ShellRoot {
                                 Layout.fillWidth: true
                                 text: {
                                     if (!root.oneByOne) {
-                                        return `${root.batch?.fronts ?? 0} fronts scanned. Turn the stack over like a book page and put it in again.`;
+                                        return I18n.tr("%1 fronts scanned. Turn the stack over like a book page and put it in again.", root.batch?.fronts ?? 0);
                                     }
                                     if (between.done === 0 && root.batch?.pass === 2) {
-                                        return `${root.batch.fronts} fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.`;
+                                        return I18n.tr("%1 fronts scanned. Turn the stack over like a book page, then put in the sheets one at a time for the backs.", root.batch.fronts);
                                     }
                                     const n = between.done;
-                                    const count = n === 1 ? `1 ${between.side}` : `${n} ${between.side}s`;
-                                    const automatic = root.ip ? ", it starts by itself" : "";
-                                    return `${count} scanned. Put in the next one${automatic}.`;
+                                    const counts = {
+                                        front: [I18n.tr("1 front"), I18n.tr("%1 fronts", n)],
+                                        back: [I18n.tr("1 back"), I18n.tr("%1 backs", n)],
+                                        page: [I18n.tr("1 page"), I18n.tr("%1 pages", n)]
+                                    };
+                                    const count = counts[between.side][n === 1 ? 0 : 1];
+                                    const automatic = root.ip ? I18n.tr(", it starts by itself") : "";
+                                    return I18n.tr("%1 scanned. Put in the next one%2.", count, automatic);
                                 }
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
@@ -871,18 +876,18 @@ ShellRoot {
 
                                 IconButton {
                                     glyph: Theme.glyph(0xf06ab) // 󰚫
-                                    text: !root.oneByOne ? "Scan the backs" : "Scan now"
+                                    text: !root.oneByOne ? I18n.tr("Scan the backs") : I18n.tr("Scan now")
                                     accent: Theme.sapphire
                                     active: true
                                     onClicked: root.startScan("pages")
                                 }
                                 IconButton {
                                     visible: root.oneByOne && root.bothSides && root.batch?.pass === 1
-                                    text: "On to the backs"
+                                    text: I18n.tr("On to the backs")
                                     onClicked: root.startBacks()
                                 }
                                 IconButton {
-                                    text: "Done"
+                                    text: I18n.tr("Done")
                                     onClicked: root.finishBatch()
                                 }
                             }
@@ -899,15 +904,15 @@ ShellRoot {
                             Layout.fillWidth: true
                             text: {
                                 if (root.asking) {
-                                    return "Asking the scanner…";
+                                    return I18n.tr("Asking the scanner…");
                                 }
                                 if (root.scanning === "preview") {
-                                    return "Preview…";
+                                    return I18n.tr("Preview…");
                                 }
                                 if (root.feeder) {
-                                    return `Page ${root.scannedNow + 1}…`;
+                                    return I18n.tr("Page %1…", root.scannedNow + 1);
                                 }
-                                return "Scanning…";
+                                return I18n.tr("Scanning…");
                             }
                             color: Theme.subtext0
                             font.pixelSize: 11
@@ -954,12 +959,12 @@ ShellRoot {
                         spacing: 10
 
                         SectionTitle {
-                            text: root.pages.length === 1 ? "Save 1 page" : `Save ${root.pages.length} pages`
+                            text: root.pages.length === 1 ? I18n.tr("Save 1 page") : I18n.tr("Save %1 pages", root.pages.length)
                         }
                         InputField {
                             id: nameField
                             Layout.fillWidth: true
-                            placeholder: "Name (else Scan_<date>)"
+                            placeholder: I18n.tr("Name (else Scan_<date>)")
                             onAccepted: root.save()
                             onKeyPressed: event => {
                                 if (event.key === Qt.Key_Escape) {
@@ -1001,7 +1006,7 @@ ShellRoot {
 
                             Label {
                                 Layout.fillWidth: true
-                                text: "Searchable text (OCR)"
+                                text: I18n.tr("Searchable text (OCR)")
                                 color: Theme.subtext1
                             }
                             Switch {
@@ -1013,7 +1018,7 @@ ShellRoot {
                         Label {
                             Layout.fillWidth: true
                             visible: root.format !== "pdf" && root.pages.length > 1
-                            text: "One image per page."
+                            text: I18n.tr("One image per page.")
                             color: Theme.subtext0
                             font.pixelSize: 11
                         }
@@ -1023,11 +1028,11 @@ ShellRoot {
                             text: {
                                 if (root.saving) {
                                     if (root.format === "pdf" && root.ocr) {
-                                        return "Reading the text…";
+                                        return I18n.tr("Reading the text…");
                                     }
-                                    return "Saving…";
+                                    return I18n.tr("Saving…");
                                 }
-                                return `Save to ${root.folder.replace(root.home, "~")}`;
+                                return I18n.tr("Save to %1", root.folder.replace(root.home, "~"));
                             }
                             accent: Theme.green
                             active: true
@@ -1063,20 +1068,20 @@ ShellRoot {
 
                             Label {
                                 Layout.fillWidth: true
-                                text: "The pages aren't saved. Close anyway?"
+                                text: I18n.tr("The pages aren't saved. Close anyway?")
                                 wrapMode: Text.WordWrap
                                 elide: Text.ElideNone
                             }
                             RowLayout {
                                 spacing: 6
                                 IconButton {
-                                    text: "Discard and close"
+                                    text: I18n.tr("Discard and close")
                                     accent: Theme.red
                                     active: true
                                     onClicked: root.close(true)
                                 }
                                 IconButton {
-                                    text: "Keep"
+                                    text: I18n.tr("Keep")
                                     onClicked: root.confirmClose = false
                                 }
                             }
@@ -1186,9 +1191,9 @@ ShellRoot {
                                     return "";
                                 }
                                 if (root.feeder) {
-                                    return "Put the pages in the feeder and scan.";
+                                    return I18n.tr("Put the pages in the feeder and scan.");
                                 }
-                                return "Put the page on the glass. A preview shows it, to scan only a part of it.";
+                                return I18n.tr("Put the page on the glass. A preview shows it, to scan only a part of it.");
                             }
                             wrapMode: Text.WordWrap
                             elide: Text.ElideNone
@@ -1201,7 +1206,7 @@ ShellRoot {
                         anchors.topMargin: -26
                         anchors.horizontalCenter: parent.horizontalCenter
                         visible: big.visible
-                        text: stage.showingPreview ? "Preview" : `Page ${root.current + 1} of ${root.pages.length}`
+                        text: stage.showingPreview ? I18n.tr("Preview") : I18n.tr("Page %1 of %2", root.current + 1, root.pages.length)
                         color: Theme.overlay1
                         font.pixelSize: 11
                     }
@@ -1281,7 +1286,7 @@ ShellRoot {
                                 anchors.bottomMargin: 6
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 visible: !(thumb.hovered && thumb.page >= 0)
-                                text: thumb.page < 0 ? "Preview" : String(thumb.page + 1)
+                                text: thumb.page < 0 ? I18n.tr("Preview") : String(thumb.page + 1)
                                 color: thumb.shown ? Theme.sapphire : Theme.subtext0
                                 font.pixelSize: 11
                             }

@@ -30,15 +30,15 @@ Rectangle {
     function age(ms) {
         const s = Math.max(0, Math.floor(ms / 1000));
         if (s < 60) {
-            return "now";
+            return I18n.tr("now");
         }
         if (s < 3600) {
-            return `${Math.floor(s / 60)}m`;
+            return I18n.tr("%1m", Math.floor(s / 60));
         }
         if (s < 86400) {
-            return `${Math.floor(s / 3600)}h`;
+            return I18n.tr("%1h", Math.floor(s / 3600));
         }
-        return `${Math.floor(s / 86400)}d`;
+        return I18n.tr("%1d", Math.floor(s / 86400));
     }
 
     MouseArea {

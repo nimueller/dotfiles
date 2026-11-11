@@ -97,11 +97,11 @@ Rectangle {
                     font.pixelSize: 10
                     color: Theme.overlay1
                     text: {
-                        let state = "off";
+                        let state = I18n.tr("off");
                         if (root.activating) {
-                            state = "connecting…";
+                            state = I18n.tr("connecting…");
                         } else if (root.active) {
-                            state = "connected";
+                            state = I18n.tr("connected");
                         }
                         return [root.vpn.kind, state, root.active ? root.vpn.address : ""].filter(x => x).join(" · ");
                     }
@@ -121,7 +121,7 @@ Rectangle {
             masked: true
             Layout.fillWidth: true
             visible: root.askPassword
-            placeholder: "Password"
+            placeholder: I18n.tr("Password")
             accent: Theme.green
             onAccepted: root.connectWithFields()
         }
@@ -130,7 +130,7 @@ Rectangle {
             masked: true
             Layout.fillWidth: true
             visible: root.askPassword && root.vpn.hasChallenge
-            placeholder: "One-time code (if required)"
+            placeholder: I18n.tr("One-time code (if required)")
             accent: Theme.green
             onAccepted: root.connectWithFields()
         }
@@ -143,12 +143,12 @@ Rectangle {
 
             IconButton {
                 glyph: Theme.glyph(0xf03eb) // 󰏫
-                text: "Edit"
+                text: I18n.tr("Edit")
                 onClicked: root.editRequested()
             }
             IconButton {
                 glyph: Theme.glyph(0xf01b4) // 󰆴
-                text: root.confirmRemove ? "Really remove?" : "Remove"
+                text: root.confirmRemove ? I18n.tr("Really remove?") : I18n.tr("Remove")
                 accent: Theme.red
                 active: root.confirmRemove
                 onClicked: {
@@ -164,7 +164,7 @@ Rectangle {
             IconButton {
                 visible: root.askPassword
                 glyph: Theme.glyph(0xf0317) // 󰌗
-                text: "Connect"
+                text: I18n.tr("Connect")
                 accent: Theme.green
                 active: true
                 onClicked: root.connectWithFields()

@@ -9,7 +9,7 @@ import Quickshell.Io
 // Details of the focused window (SUPER+I, keybinds.lua): title, class, PID
 // and command, workspace, monitor, geometry and state, as Hyprland reports
 // them, and whether the app runs as a Flatpak. Click a row to copy its
-// value; "Copy all" copies Hyprland's JSON.
+// value; I18n.tr("Copy all") copies Hyprland's JSON.
 Popup {
     id: root
 
@@ -33,27 +33,27 @@ Popup {
 
     function layoutState(w) {
         if (w.fullscreen === 2) {
-            return "Fullscreen";
+            return I18n.tr("Fullscreen");
         }
         if (w.fullscreen === 1) {
-            return "Maximized";
+            return I18n.tr("Maximized");
         }
         if (w.floating) {
-            return "Floating";
+            return I18n.tr("Floating");
         }
-        return "Tiled";
+        return I18n.tr("Tiled");
     }
 
     function state(w) {
         const s = [layoutState(w)];
         if (w.pinned) {
-            s.push("pinned");
+            s.push(I18n.tr("pinned"));
         }
         if (w.grouped?.length) {
-            s.push(`grouped (${w.grouped.length})`);
+            s.push(I18n.tr("grouped (%1)", w.grouped.length));
         }
         if (w.inhibitingIdle) {
-            s.push("keeps the screen awake");
+            s.push(I18n.tr("keeps the screen awake"));
         }
         return s.join(", ");
     }
@@ -63,12 +63,12 @@ Popup {
             return "";
         }
         if (!info.name) {
-            return "No";
+            return I18n.tr("No");
         }
         const appPath = info["app-path"];
         let installation = "";
         if (appPath) {
-            installation = appPath.startsWith("/var/lib/") ? "system" : "user";
+            installation = appPath.startsWith("/var/lib/") ? I18n.tr("system") : I18n.tr("user");
         }
         const details = [info.branch, installation].filter(d => d);
         return details.length ? `${info.name} (${details.join(", ")})` : info.name;
@@ -81,23 +81,23 @@ Popup {
         }
         const monitor = Hyprland.monitors.values.find(m => m.id === win.monitor)?.name ?? String(win.monitor);
         const list = [];
-        list.push(["Title", win.title]);
-        list.push(["Class", win.class]);
-        list.push(["Initial class", win.initialClass !== win.class ? win.initialClass : ""]);
-        list.push(["Initial title", win.initialTitle !== win.title ? win.initialTitle : ""]);
-        list.push(["App", entry ? `${entry.name} (${entry.id}.desktop)` : ""]);
+        list.push([I18n.tr("Title"), win.title]);
+        list.push([I18n.tr("Class"), win.class]);
+        list.push([I18n.tr("Initial class"), win.initialClass !== win.class ? win.initialClass : ""]);
+        list.push([I18n.tr("Initial title"), win.initialTitle !== win.title ? win.initialTitle : ""]);
+        list.push([I18n.tr("App"), entry ? `${entry.name} (${entry.id}.desktop)` : ""]);
         list.push(["PID", String(win.pid)]);
-        list.push(["Command", command]);
+        list.push([I18n.tr("Command"), command]);
         list.push(["Flatpak", flatpakText(flatpak)]);
-        list.push(["Workspace", win.workspace.name]);
-        list.push(["Monitor", monitor]);
-        list.push(["Position", `${win.at[0]}, ${win.at[1]}`]);
-        list.push(["Size", `${win.size[0]} × ${win.size[1]}`]);
-        list.push(["State", state(win)]);
-        list.push(["Protocol", win.xwayland ? "XWayland" : "Wayland"]);
-        list.push(["Content", win.contentType !== "none" ? win.contentType : ""]);
-        list.push(["Tags", win.tags.join(", ")]);
-        list.push(["Address", win.address]);
+        list.push([I18n.tr("Workspace"), win.workspace.name]);
+        list.push([I18n.tr("Monitor"), monitor]);
+        list.push([I18n.tr("Position"), `${win.at[0]}, ${win.at[1]}`]);
+        list.push([I18n.tr("Size"), `${win.size[0]} × ${win.size[1]}`]);
+        list.push([I18n.tr("State"), state(win)]);
+        list.push([I18n.tr("Protocol"), win.xwayland ? "XWayland" : "Wayland"]);
+        list.push([I18n.tr("Content"), win.contentType !== "none" ? win.contentType : ""]);
+        list.push([I18n.tr("Tags"), win.tags.join(", ")]);
+        list.push([I18n.tr("Address"), win.address]);
         return list.filter(r => r[1]);
     }
 
@@ -165,10 +165,10 @@ Popup {
         // Long titles shortened to leave room for the button; the Title row has all of it
         title: {
             if (root.win === null) {
-                return "Window";
+                return I18n.tr("Window");
             }
             if (!root.win.address) {
-                return "No focused window";
+                return I18n.tr("No focused window");
             }
             const t = root.win.title || root.win.class;
             return t.length > 48 ? `${t.slice(0, 47)}…` : t;
@@ -177,7 +177,7 @@ Popup {
         IconButton {
             visible: !!root.win?.address
             glyph: Theme.glyph(root.copied === "all" ? 0xf012c : 0xf018f) // 󰄬 / 󰆏
-            text: root.copied === "all" ? "Copied" : "Copy all"
+            text: root.copied === "all" ? I18n.tr("Copied") : I18n.tr("Copy all")
             active: root.copied === "all"
             onClicked: root.copy("all", root.json)
         }
@@ -239,7 +239,7 @@ Popup {
                     anchors.rightMargin: 8
                     anchors.verticalCenter: parent.verticalCenter
                     visible: row.isCopied || mouse.containsMouse
-                    text: row.isCopied ? `${Theme.glyph(0xf012c)} Copied` : Theme.glyph(0xf018f) // 󰄬 / 󰆏
+                    text: row.isCopied ? `${Theme.glyph(0xf012c)} ${I18n.tr("Copied")}` : Theme.glyph(0xf018f) // 󰄬 / 󰆏
                     color: row.isCopied ? Theme.green : Theme.overlay1
                     font.pixelSize: 11
                 }
@@ -259,7 +259,7 @@ Popup {
     Label {
         visible: root.win !== null && !root.win.address
         Layout.fillWidth: true
-        text: "The focused workspace has no window."
+        text: I18n.tr("The focused workspace has no window.")
         color: Theme.subtext0
     }
 }

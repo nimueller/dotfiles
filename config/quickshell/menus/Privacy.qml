@@ -122,6 +122,32 @@ Item {
         })
     property bool started: false
 
+    // "Camera is in use", "Camera and microphone are in use"; the devices in
+    // the order they're listed in, the first one capitalised
+    function message(devices) {
+        if (devices.length === 1) {
+            const single = {
+                camera: I18n.tr("Camera is in use"),
+                microphone: I18n.tr("Microphone is in use"),
+                screen: I18n.tr("Screen is shared")
+            };
+            return single[devices[0]];
+        }
+        const first = {
+            camera: I18n.tr("Camera"),
+            microphone: I18n.tr("Microphone"),
+            screen: I18n.tr("Screen")
+        };
+        const later = {
+            camera: I18n.tr("camera"),
+            microphone: I18n.tr("microphone"),
+            screen: I18n.tr("screen")
+        };
+        const names = devices.map((device, i) => i === 0 ? first[device] : later[device]);
+        const listed = I18n.tr("%1 and %2", names.slice(0, -1).join(", "), names[names.length - 1]);
+        return I18n.tr("%1 are in use", listed);
+    }
+
     onCameraChanged: settle.restart()
     onMicrophoneChanged: settle.restart()
     onScreenChanged: settle.restart()
@@ -140,21 +166,13 @@ Item {
             if (!root.started || started.length === 0) {
                 return;
             }
-            const names = {
-                camera: "Camera",
-                microphone: "Microphone",
-                screen: "Screen"
-            };
             const users = {
                 camera: root.cameraUsers,
                 microphone: root.microphoneUsers,
                 screen: root.screenUsers
             };
-            const nouns = started.map((k, i) => i === 0 ? names[k] : names[k].toLowerCase()).join(" and ");
-            const verb = started.length > 1 ? " are" : " is";
-            const state = started.length === 1 && started[0] === "screen" ? " shared" : " in use";
             const userNames = [].concat(...started.map(k => users[k].map(u => u.name)));
-            root.osd.privacy(started[0], nouns + verb + state, [...new Set(userNames)].join(", "));
+            root.osd.privacy(started[0], message(started), [...new Set(userNames)].join(", "));
         }
     }
 

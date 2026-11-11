@@ -23,21 +23,21 @@ Popup {
         {
             active: privacy.camera,
             glyph: Theme.glyph(0xf05a0),
-            title: "Camera",
+            title: I18n.tr("Camera"),
             apps: privacy.cameraUsers
         // 󰖠
         },
         {
             active: privacy.microphone,
             glyph: Theme.glyph(0xf036c),
-            title: "Microphone",
+            title: I18n.tr("Microphone"),
             apps: privacy.microphoneUsers
         // 󰍬
         },
         {
             active: privacy.screen,
             glyph: Theme.glyph(0xf0379),
-            title: "Screen sharing",
+            title: I18n.tr("Screen sharing"),
             apps: privacy.screenUsers
         } // 󰍹
     ]
@@ -61,7 +61,7 @@ Popup {
     Header {
         glyph: Theme.glyph(0xf0565) // 󰕥
         accent: Theme.peach
-        title: "Privacy"
+        title: I18n.tr("Privacy")
     }
 
     Repeater {
@@ -88,7 +88,7 @@ Popup {
 
             Label {
                 visible: modelData.apps.length === 0
-                text: "Unknown app"
+                text: I18n.tr("Unknown app")
                 color: Theme.overlay0
                 font.italic: true
             }

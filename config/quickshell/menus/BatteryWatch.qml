@@ -45,12 +45,12 @@ Scope {
             warned = 0;
         } else if (level > warned) {
             warned = level;
-            const left = battery.timeToEmpty > 0 ? `, about ${Math.round(battery.timeToEmpty / 60)} min left` : "";
+            const left = battery.timeToEmpty > 0 ? I18n.tr(", about %1 min left", Math.round(battery.timeToEmpty / 60)) : "";
             const isCritical = level === 2;
             const urgency = isCritical ? "critical" : "normal";
             const icon = isCritical ? "battery-empty" : "battery-caution";
-            const summary = isCritical ? "Battery almost empty" : "Battery low";
-            const body = `${Math.round(percent)} %${left}. Plug in the charger.`;
+            const summary = isCritical ? I18n.tr("Battery almost empty") : I18n.tr("Battery low");
+            const body = I18n.tr("%1 %%2. Plug in the charger.", Math.round(percent), left);
             const replace = ["-p", "-r", String(nid)];
             notify.command = ["notify-send", ...replace, "-a", "Battery", "-u", urgency, "-i", icon, summary, body];
             notify.running = true;

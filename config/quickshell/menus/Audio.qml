@@ -34,7 +34,7 @@ Singleton {
     // "Some Headset ... Receiver Analog Stereo" -> "Some Headset ... Receiver"
     function deviceName(node) {
         if (!node) {
-            return "No device";
+            return I18n.tr("No device");
         }
         const desc = (node.description || node.nickname || node.name).replace(/[\x00-\x1f]/g, "");
         const bracket = desc.match(/\[(.+)\]\s*$/);
@@ -165,7 +165,7 @@ Singleton {
         }
         const serial = n => Number(n.properties["object.serial"]);
         siblings.sort((a, b) => serial(a) - serial(b));
-        return `Stream ${siblings.indexOf(node) + 1}`;
+        return I18n.tr("Stream %1", siblings.indexOf(node) + 1);
     }
 
     // The app's icon, or else that of the program that started it

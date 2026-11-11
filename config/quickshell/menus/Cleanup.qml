@@ -76,7 +76,7 @@ Singleton {
                     root.free = r.free;
                     root.scanned = true;
                 } catch (e) {
-                    root.error = "Couldn't look at the disk";
+                    root.error = I18n.tr("Couldn't look at the disk");
                 }
             }
         }
@@ -92,7 +92,7 @@ Singleton {
                         root.error = JSON.parse(text).error;
                     }
                 } catch (e) {
-                    root.error = "The cleanup failed";
+                    root.error = I18n.tr("The cleanup failed");
                 }
             }
         }

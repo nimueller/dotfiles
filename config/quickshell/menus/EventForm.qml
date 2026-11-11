@@ -130,13 +130,13 @@ ColumnLayout {
         const from = parseDate(startDate.text), to = parseDate(endDate.text || startDate.text);
         const t1 = parseTime(startTime.text), t2 = parseTime(endTime.text);
         if (!title.text.trim()) {
-            problem = "Give it a title";
+            problem = I18n.tr("Give it a title");
         } else if (!from || !to) {
-            problem = "Write dates as 2026-10-11 or 11.10.2026";
+            problem = I18n.tr("Write dates as 2026-10-11 or 11.10.2026");
         } else if (!allDay && (!t1 || !t2)) {
-            problem = "Write times as 9:00 or 14:30";
+            problem = I18n.tr("Write times as 9:00 or 14:30");
         } else if (!calendar) {
-            problem = "No writable Nextcloud calendar";
+            problem = I18n.tr("No writable Nextcloud calendar");
         } else {
             // Midnight for a whole day, else the time given
             const at = (day, time) => {
@@ -146,7 +146,7 @@ ColumnLayout {
             const start = at(from, t1);
             const end = at(to, t2);
             if (end < start) {
-                problem = "It ends before it starts";
+                problem = I18n.tr("It ends before it starts");
                 return;
             }
             problem = "";
@@ -202,20 +202,20 @@ ColumnLayout {
     spacing: 6
 
     SectionTitle {
-        text: root.target ? "Edit appointment" : "New appointment"
+        text: root.target ? I18n.tr("Edit appointment") : I18n.tr("New appointment")
     }
 
     InputField {
         id: title
         Layout.fillWidth: true
-        placeholder: "Title"
+        placeholder: I18n.tr("Title")
         accent: Theme.mauve
         onAccepted: root.submit()
     }
     InputField {
         id: place
         Layout.fillWidth: true
-        placeholder: "Place (optional)"
+        placeholder: I18n.tr("Place (optional)")
         accent: Theme.mauve
         onAccepted: root.highlighted >= 0 ? root.pickSuggestion(root.highlighted) : root.submit()
         onTyped: placeTimer.restart()
@@ -283,7 +283,7 @@ ColumnLayout {
 
         Label {
             Layout.fillWidth: true
-            text: "All day"
+            text: I18n.tr("All day")
             color: Theme.subtext1
         }
         Switch {
@@ -300,7 +300,7 @@ ColumnLayout {
         rowSpacing: 6
 
         Label {
-            text: "From"
+            text: I18n.tr("From")
             color: Theme.overlay1
             font.pixelSize: 11
         }
@@ -320,7 +320,7 @@ ColumnLayout {
             onAccepted: root.submit()
         }
         Label {
-            text: "To"
+            text: I18n.tr("To")
             color: Theme.overlay1
             font.pixelSize: 11
         }
@@ -347,7 +347,7 @@ ColumnLayout {
 
     // Reminders: presets, plus any other value typed in
     Label {
-        text: allDay ? "Reminders (before midnight at the start)" : "Reminders"
+        text: allDay ? I18n.tr("Reminders (before midnight at the start)") : I18n.tr("Reminders")
         font.pixelSize: 11
         color: Theme.overlay1
     }
@@ -403,18 +403,18 @@ ColumnLayout {
         InputField {
             id: customAlarm
             Layout.fillWidth: true
-            placeholder: "Other: 45m, 2h, 3d …"
+            placeholder: I18n.tr("Other: 45m, 2h, 3d …")
             accent: Theme.mauve
             onAccepted: addAlarm.clicked()
         }
         IconButton {
             id: addAlarm
             glyph: Theme.glyph(0xf0415) // 󰐕
-            text: "Add"
+            text: I18n.tr("Add")
             onClicked: {
                 const m = Reminders.parse(customAlarm.text);
                 if (m === null) {
-                    root.problem = "Write reminders like 45m, 2h or 3d";
+                    root.problem = I18n.tr("Write reminders like 45m, 2h or 3d");
                     return;
                 }
                 root.problem = "";
@@ -502,12 +502,12 @@ ColumnLayout {
             Layout.fillWidth: true
         }
         IconButton {
-            text: "Cancel"
+            text: I18n.tr("Cancel")
             onClicked: root.cancelled()
         }
         IconButton {
             glyph: Theme.glyph(0xf012c) // 󰄬
-            text: root.busy ? "Saving…" : "Save"
+            text: root.busy ? I18n.tr("Saving…") : I18n.tr("Save")
             accent: Theme.mauve
             active: true
             onClicked: if (!root.busy) {

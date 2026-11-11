@@ -102,12 +102,12 @@ Rectangle {
                 visible: root.busy || root.network.active || root.network.known
                 text: {
                     if (root.busy) {
-                        return "Connecting…";
+                        return I18n.tr("Connecting…");
                     }
                     if (root.network.active) {
-                        return "Connected";
+                        return I18n.tr("Connected");
                     }
-                    return "Saved";
+                    return I18n.tr("Saved");
                 }
                 font.pixelSize: 10
                 color: root.network.active ? Theme.green : Theme.overlay1
@@ -133,7 +133,7 @@ Rectangle {
                 Layout.fillWidth: true
                 visible: root.needsPassword
                 masked: true
-                placeholder: "Password"
+                placeholder: I18n.tr("Password")
                 onAccepted: if (text) {
                     root.connectRequested(text);
                 }
@@ -145,20 +145,20 @@ Rectangle {
             IconButton {
                 visible: root.network.active
                 glyph: Theme.glyph(0xf0318) // 󰌘
-                text: "Disconnect"
+                text: I18n.tr("Disconnect")
                 onClicked: root.disconnectRequested()
             }
             Label {
                 Layout.fillWidth: true
                 visible: root.setup
-                text: "Needs a user name and password"
+                text: I18n.tr("Needs a user name and password")
                 font.pixelSize: 10
                 color: Theme.overlay1
             }
             IconButton {
                 visible: root.setup
                 glyph: Theme.glyph(0xf0493) // 󰒓
-                text: "Set up"
+                text: I18n.tr("Set up")
                 accent: Theme.sapphire
                 active: true
                 onClicked: root.setupRequested()
@@ -166,7 +166,7 @@ Rectangle {
             IconButton {
                 visible: !root.network.active && !root.setup
                 glyph: Theme.glyph(0xf0317) // 󰌗
-                text: "Connect"
+                text: I18n.tr("Connect")
                 accent: Theme.sapphire
                 active: true
                 onClicked: {
@@ -178,7 +178,7 @@ Rectangle {
             IconButton {
                 visible: root.network.known && !root.network.enterprise
                 glyph: Theme.glyph(0xf0432) // 󰐲
-                text: "Share"
+                text: I18n.tr("Share")
                 active: !!root.qr
                 accent: Theme.sapphire
                 onClicked: root.shareRequested()
@@ -186,7 +186,7 @@ Rectangle {
             IconButton {
                 visible: root.network.known
                 glyph: Theme.glyph(0xf01b4) // 󰆴
-                text: "Forget"
+                text: I18n.tr("Forget")
                 onClicked: root.forgetRequested()
             }
         }
@@ -215,7 +215,7 @@ Rectangle {
             Label {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
-                text: root.password ? `Password: ${root.password}` : "No password"
+                text: root.password ? I18n.tr("Password: %1", root.password) : I18n.tr("No password")
                 font.pixelSize: 10
                 color: Theme.subtext0
                 wrapMode: Text.WrapAnywhere

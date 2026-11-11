@@ -101,91 +101,91 @@ Popup {
     // Waiting updates (Updates.qml): fresh ones while the menu is open
     Component.onCompleted: Updates.refresh()
 
-    function dayWord(days) {
-        return days === 1 ? "day" : "days";
+    function daysAgo(days) {
+        return I18n.tr(days === 1 ? "%1 day ago" : "%1 days ago", days);
     }
 
     // "1920 × 1080 · 60 Hz · scale 1.25", with the model first
     function monitorText(m) {
-        const scale = m.scale !== 1 ? `scale ${m.scale}` : "";
+        const scale = m.scale !== 1 ? I18n.tr("scale %1", m.scale) : "";
         const parts = [m.model, `${m.width} × ${m.height}`, `${Math.round(m.refreshRate)} Hz`, scale];
         return parts.filter(s => s).join(" · ");
     }
 
     function lastUpgradeText() {
         if (Updates.lastUpgrade === 0) {
-            return "Today";
+            return I18n.tr("Today");
         }
-        return `${Updates.lastUpgrade} ${dayWord(Updates.lastUpgrade)} ago`;
+        return daysAgo(Updates.lastUpgrade);
     }
 
     function newsText() {
         if (Updates.news.length === 1) {
             return Updates.news[0].title;
         }
-        return `${Updates.news.length} since the last upgrade`;
+        return I18n.tr("%1 since the last upgrade", Updates.news.length);
     }
 
     function flakeText() {
         if (Updates.flakeAge === 0) {
-            return "Updated today";
+            return I18n.tr("Updated today");
         }
-        const hint = Updates.flakeStale ? " · git pull, then switch" : "";
-        return `${Updates.flakeAge} ${dayWord(Updates.flakeAge)} old${hint}`;
+        const hint = Updates.flakeStale ? I18n.tr(" · git pull, then switch") : "";
+        return I18n.tr(Updates.flakeAge === 1 ? "%1 day old" : "%1 days old", Updates.flakeAge) + hint;
     }
 
-    // The rows of the info list, [label, value]; an empty value hides its row
+    // The rows of the info list, [id, label, value]; an empty value hides its row
     function infoRows() {
         const rows = [];
-        rows.push(["Host", root.info.host ?? ""]);
-        rows.push(["Kernel", root.info.kernel ?? ""]);
+        rows.push(["host", I18n.tr("Host"), root.info.host ?? ""]);
+        rows.push(["kernel", I18n.tr("Kernel"), root.info.kernel ?? ""]);
         for (const m of root.monitors) {
-            rows.push([m.name, monitorText(m)]);
+            rows.push(["monitor", m.name, monitorText(m)]);
         }
-        rows.push(["Uptime", root.info.uptime ? root.uptime(Number(root.info.uptime)) : ""]);
-        rows.push(["Packages", root.info.packages ? `${root.info.packages} from pacman` : ""]);
-        rows.push(["Updates", updatesText()]);
+        rows.push(["uptime", I18n.tr("Uptime"), root.info.uptime ? root.uptime(Number(root.info.uptime)) : ""]);
+        rows.push(["packages", I18n.tr("Packages"), root.info.packages ? I18n.tr("%1 from pacman", root.info.packages) : ""]);
+        rows.push(["updates", I18n.tr("Updates"), updatesText()]);
         if (Updates.lastUpgrade !== null) {
-            rows.push(["Last upgrade", lastUpgradeText()]);
+            rows.push(["upgrade", I18n.tr("Last upgrade"), lastUpgradeText()]);
         }
         if (Updates.security.length) {
-            rows.push(["Security", Updates.security.map(s => s.package).join(", ")]);
+            rows.push(["security", I18n.tr("Security"), Updates.security.map(s => s.package).join(", ")]);
         }
         if (Updates.news.length) {
-            rows.push(["Arch news", newsText()]);
+            rows.push(["news", I18n.tr("Arch news"), newsText()]);
         }
         if (Updates.flakeAge !== null) {
-            rows.push(["flake.lock", flakeText()]);
+            rows.push(["flake", "flake.lock", flakeText()]);
         }
         return rows;
     }
 
     // Rows to look at: updates waiting, security fixes, an old upgrade or
     // flake.lock
-    function needsAttention(label) {
-        if (label === "Updates") {
+    function needsAttention(id) {
+        if (id === "updates") {
             return Updates.total > 0;
         }
-        if (label === "Security") {
+        if (id === "security") {
             return true;
         }
-        if (label === "Last upgrade") {
+        if (id === "upgrade") {
             return Updates.upgradeStale;
         }
-        if (label === "flake.lock") {
+        if (id === "flake") {
             return Updates.flakeStale;
         }
         return false;
     }
 
-    // "12 from pacman · 2 from the AUR", "Up to date"
+    // "12 from pacman · 2 from the AUR", I18n.tr("Up to date")
     function updatesText() {
         if (!Updates.checked) {
-            return "Checking…";
+            return I18n.tr("Checking…");
         }
-        const sources = [[Updates.pacman, "pacman"], [Updates.aur, "the AUR"], [Updates.flatpak, "Flatpak"]];
-        const parts = sources.filter(([n]) => n > 0).map(([n, from]) => `${n} from ${from}`);
-        return parts.length ? parts.join(" · ") : "Up to date";
+        const sources = [[Updates.pacman, I18n.tr("%1 from pacman")], [Updates.aur, I18n.tr("%1 from the AUR")], [Updates.flatpak, I18n.tr("%1 from Flatpak")]];
+        const parts = sources.filter(([n]) => n > 0).map(([n, text]) => text.replace("%1", n));
+        return parts.length ? parts.join(" · ") : I18n.tr("Up to date");
     }
 
     // Every 2 seconds: CPU, memory, swap, disks, temperatures, GPU
@@ -260,7 +260,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
     Header {
         glyph: Theme.glyph(0xf303) //
         accent: Theme.blue
-        title: root.info.os ?? "System"
+        title: root.info.os ?? I18n.tr("System")
 
         IconButton {
             glyph: Theme.glyph(0xf0493) // 󰒓
@@ -293,15 +293,15 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
 
                 Label {
                     width: 90
-                    text: parent.modelData[0]
+                    text: parent.modelData[1]
                     color: Theme.overlay1
                 }
                 Label {
                     x: 90
                     width: parent.width - 90
-                    text: parent.modelData[1]
+                    text: parent.modelData[2]
                     color: {
-                        if (parent.modelData[0] === "Arch news") {
+                        if (parent.modelData[0] === "news") {
                             return Theme.red;
                         }
                         if (root.needsAttention(parent.modelData[0])) {
@@ -376,13 +376,13 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
                     elide: Text.ElideRight
                     text: {
                         if (!bluetooth.on) {
-                            return "Off";
+                            return I18n.tr("Off");
                         }
                         const d = bluetooth.device;
                         if (d) {
                             return `${d.name}${d.batteryAvailable ? ` · ${Math.round(d.battery * 100)} %` : ""}`;
                         }
-                        return bluetooth.connected.length ? `${bluetooth.connected.length} connected` : "On";
+                        return bluetooth.connected.length ? I18n.tr("%1 connected", bluetooth.connected.length) : I18n.tr("On");
                     }
                     color: Theme.subtext0
                 }
@@ -401,7 +401,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
         }
         IconButton {
             glyph: Theme.glyph(0xf030c) // 󰌌
-            text: "Keyboard"
+            text: I18n.tr("Keyboard")
             onClicked: {
                 Quickshell.execDetached([Quickshell.shellPath("osk.sh")]);
                 root.close();
@@ -418,30 +418,30 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
 
         Toggle {
             glyph: Awake.manual ? 0xf0176 : 0xf04b2 // 󰅶 / 󰒲
-            title: "Stay awake"
-            detail: Awake.manual ? "No lock" : "Off"
+            title: I18n.tr("Stay awake")
+            detail: Awake.manual ? I18n.tr("No lock") : I18n.tr("Off")
             checked: Awake.manual
             accent: Theme.lavender
             onToggled: Awake.manual = !Awake.manual
         }
         Toggle {
             glyph: 0xf0594 // 󰖔
-            title: "Night light"
+            title: I18n.tr("Night light")
             detail: {
                 if (!root.nightLight) {
-                    return "Unavailable";
+                    return I18n.tr("Unavailable");
                 }
                 const t = root.nightTimes;
                 if (!t?.from) {
-                    return root.nightLight.on ? "On" : "Off";
+                    return root.nightLight.on ? I18n.tr("On") : I18n.tr("Off");
                 }
                 if (root.nightLight.on) {
-                    return `Until ${t.until}`;
+                    return I18n.tr("Until %1", t.until);
                 }
                 if (t.night) {
-                    return "Off tonight";
+                    return I18n.tr("Off tonight");
                 }
-                return `From ${t.from}`;
+                return I18n.tr("From %1", t.from);
             }
             checked: root.nightLight?.on ?? false
             enabled: !!root.nightLight
@@ -488,18 +488,18 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
                 text: {
                     const t = nightColumn.t;
                     if (!t) {
-                        return "No schedule: night-light.py isn't running";
+                        return I18n.tr("No schedule: night-light.py isn't running");
                     }
                     if (t.schedule === "off") {
-                        return "Only by hand";
+                        return I18n.tr("Only by hand");
                     }
                     if (!t.from) {
-                        return t.night ? "On all day: the sun doesn't rise today" : "Off all day: the sun doesn't set today";
+                        return t.night ? I18n.tr("On all day: the sun doesn't rise today") : I18n.tr("Off all day: the sun doesn't set today");
                     }
                     if (t.place) {
-                        return `On from ${t.from} (sunset) until ${t.until} (sunrise)`;
+                        return I18n.tr("On from %1 (sunset) until %2 (sunrise)", t.from, t.until);
                     }
-                    return `On from ${t.from} until ${t.until}`;
+                    return I18n.tr("On from %1 until %2", t.from, t.until);
                 }
             }
             // Where the times come from, and where to change that
@@ -515,17 +515,17 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
                     }
                     let why;
                     if (t.schedule === "times") {
-                        why = "The times set in Machine Settings.";
+                        why = I18n.tr("The times set in Machine Settings.");
                     } else if (t.schedule === "off") {
-                        why = "It doesn't turn on by itself: set so in Machine Settings.";
+                        why = I18n.tr("It doesn't turn on by itself: set so in Machine Settings.");
                     } else if (t.placeFrom === "machine") {
-                        why = `Today's sunset and sunrise in ${t.place}, this computer's location in Machine Settings.`;
+                        why = I18n.tr("Today's sunset and sunrise in %1, this computer's location in Machine Settings.", t.place);
                     } else if (t.placeFrom === "calendar") {
-                        why = `Today's sunset and sunrise in ${t.place}, the calendar's weather location: Machine Settings has no location.`;
+                        why = I18n.tr("Today's sunset and sunrise in %1, the calendar's weather location: Machine Settings has no location.", t.place);
                     } else {
-                        why = "Fixed times, as no location is set to work out the sunset and sunrise.";
+                        why = I18n.tr("Fixed times, as no location is set to work out the sunset and sunrise.");
                     }
-                    return `${why} Warmer colours at ${t.temperature ?? root.nightTemperature} K.`;
+                    return I18n.tr("%1 Warmer colours at %2 K.", why, t.temperature ?? root.nightTemperature);
                 }
             }
             RowLayout {
@@ -535,12 +535,12 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
                 IconButton {
                     visible: nightColumn.t?.schedule === "sun"
                     glyph: Theme.glyph(0xf034e) // 󰍎
-                    text: "Location"
+                    text: I18n.tr("Location")
                     onClicked: root.openSettings("location")
                 }
                 IconButton {
                     glyph: Theme.glyph(0xf0493) // 󰒓
-                    text: "Night light settings"
+                    text: I18n.tr("Night light settings")
                     onClicked: root.openSettings("night")
                 }
             }
@@ -589,11 +589,11 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
     SectionTitle {
         visible: !!root.backlight || ddc.names.length > 0 || ddc.loading
         Layout.topMargin: 6
-        text: "Brightness"
+        text: I18n.tr("Brightness")
     }
     Brightness {
         visible: !!root.backlight
-        title: "Built-in screen"
+        title: I18n.tr("Built-in screen")
         value: root.backlight ? root.backlight.percent / 100 : 0
         onMoved: v => {
             // backlight.py keeps it above dark, like the keys
@@ -653,7 +653,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
         }
         Label {
             Layout.fillWidth: true
-            text: "Looking for monitors…"
+            text: I18n.tr("Looking for monitors…")
             color: Theme.subtext0
         }
     }
@@ -680,7 +680,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
 
     SectionTitle {
         Layout.topMargin: 6
-        text: "Usage"
+        text: I18n.tr("Usage")
     }
 
     Usage {
@@ -692,8 +692,8 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
     }
     Usage {
         glyph: 0xf061a // 󰘚
-        title: "Memory"
-        detail: `${root.gib(root.mem.used)} of ${root.gib(root.mem.total)}`
+        title: I18n.tr("Memory")
+        detail: I18n.tr("%1 of %2", root.gib(root.mem.used), root.gib(root.mem.total))
         value: root.mem.used / root.mem.total
         accent: Theme.mauve
     }
@@ -701,7 +701,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
         visible: root.swap.total > 0
         glyph: 0xf04e1 // 󰓡
         title: "Swap"
-        detail: `${root.gib(root.swap.used)} of ${root.gib(root.swap.total)}`
+        detail: I18n.tr("%1 of %2", root.gib(root.swap.used), root.gib(root.swap.total))
         value: root.swap.total ? root.swap.used / root.swap.total : 0
         accent: Theme.lavender
     }
@@ -712,8 +712,8 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
             required property var modelData
 
             glyph: 0xf02ca // 󰋊
-            title: `Disk ${modelData.target}`
-            detail: `${root.gib(modelData.used)} of ${root.gib(modelData.total)}`
+            title: I18n.tr("Disk %1", modelData.target)
+            detail: I18n.tr("%1 of %2", root.gib(modelData.used), root.gib(modelData.total))
             value: modelData.used / modelData.total
             accent: Theme.teal
         }
@@ -727,7 +727,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
             if (!gpu) {
                 return "";
             }
-            const memory = `${root.gib(gpu.memUsed)} of ${root.gib(gpu.memTotal)}`;
+            const memory = I18n.tr("%1 of %2", root.gib(gpu.memUsed), root.gib(gpu.memTotal));
             return `${Math.round(gpu.load * 100)} % · ${memory} · ${gpu.temp} °C`;
         }
         value: root.gpu?.load ?? 0
@@ -745,7 +745,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
         IconButton {
             visible: Updates.total > 0
             glyph: Theme.glyph(0xf06b0) // 󰚰
-            text: "Update"
+            text: I18n.tr("Update")
             accent: Theme.peach
             active: true
             // With Arch news: those first (updates.qml)
@@ -760,7 +760,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
         }
         IconButton {
             glyph: Theme.glyph(0xf00e2) // 󰃢
-            text: "Clean up"
+            text: I18n.tr("Clean up")
             onClicked: {
                 Menus.toggle("cleanup");
                 root.close();
@@ -768,7 +768,7 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
         }
         IconButton {
             glyph: Theme.glyph(0xf0128) // 󰄨
-            text: "System monitor"
+            text: I18n.tr("System monitor")
             onClicked: {
                 Quickshell.execDetached(["kitty", "btop"]);
                 root.close();
