@@ -317,6 +317,23 @@ ColumnLayout {
                 }
             }
         }
+
+        // Scroll to change the month (or the picker's year). A MouseArea on
+        // top that takes no buttons, so clicks and hover still reach the
+        // days: a WheelHandler here got no wheel events from a real mouse in
+        // the Quickshell window, only from synthetic ones in tests.
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            onWheel: event => {
+                const step = event.angleDelta.y > 0 ? -1 : 1;
+                if (root.picking) {
+                    root.pickerYear += step;
+                } else {
+                    root.shift(step);
+                }
+            }
+        }
     }
 
     Component {
@@ -530,18 +547,6 @@ ColumnLayout {
                 Item {
                     Layout.fillHeight: true
                 }
-            }
-        }
-    }
-
-    WheelHandler {
-        target: null
-        onWheel: event => {
-            const step = event.angleDelta.y > 0 ? -1 : 1;
-            if (root.picking) {
-                root.pickerYear += step;
-            } else {
-                root.shift(step);
             }
         }
     }
