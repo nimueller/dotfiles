@@ -115,7 +115,9 @@ jobs:
           scan() {
             local code=0
             nix build "./$1#homeConfigurations.$CONFIG.activationPackage" -o "$1-result"
-            nix run --inputs-from ./new nixpkgs#vulnix -- -C --json "$1-result" >"$1.json" || code=$?
+            # A path: vulnix hands it to `nix path-info`, which takes a bare
+            # name for a flake from the registry
+            nix run --inputs-from ./new nixpkgs#vulnix -- -C --json "./$1-result" >"$1.json" || code=$?
             # vulnix exits with 2 when it finds something
             if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
               return "$code"
