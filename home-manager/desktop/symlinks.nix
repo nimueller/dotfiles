@@ -7,7 +7,10 @@
     # Only the configuration: credentials, pairing state and logs stay out of git
     "sunshine/sunshine.conf".source = dotfilesLink "config/sunshine/sunshine.conf";
     "sunshine/apps.json".source = dotfilesLink "config/sunshine/apps.json";
-    "wireplumber".source = dotfilesLink "config/wireplumber";
+    # Only the file: machine-specific rules (the Surface's speaker protection)
+    # live next to it in ~/.config/wireplumber and must stay
+    "wireplumber/wireplumber.conf.d/disable-headset-stand.conf".source =
+      dotfilesLink "config/wireplumber/wireplumber.conf.d/disable-headset-stand.conf";
     "xdg-desktop-portal/hyprland-portals.conf".source =
       dotfilesLink "config/xdg-desktop-portal/hyprland-portals.conf";
   };
