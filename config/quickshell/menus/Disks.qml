@@ -36,6 +36,9 @@ Singleton {
     property real progress: -1 // of the running step, -1 without
 
     property bool choosingImage: false
+    // From Files' "Open with Drives" on an image: { path, size }, written to
+    // the drive picked next with writeOffered()
+    property var offered: null
 
     // From Files (disk-utility.py): show this device, maybe with the format form
     property string wanted: ""
@@ -334,6 +337,32 @@ Singleton {
             root.choosingImage = false;
             root.error = message;
         });
+    }
+
+    // Files' "Open with Drives" on an image (daemon.qml): the window, with the
+    // image waiting for a drive. Still only a step of the plan once written.
+    function offerImage(path) {
+        offered = null;
+        error = "";
+        chooser.run(["image", "open", path], "", result => {
+            if (result.path) {
+                root.offered = result;
+            }
+        }, message => root.error = message);
+        refresh();
+        Menus.open("disks");
+    }
+
+    function writeOffered() {
+        if (!offered || !shown?.actions.includes("restore")) {
+            return;
+        }
+        add({
+            op: "restore",
+            image: offered.path,
+            image_size: offered.size
+        });
+        offered = null;
     }
 
     HelperCall {

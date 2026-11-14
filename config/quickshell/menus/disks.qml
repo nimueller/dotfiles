@@ -6,8 +6,9 @@ import Quickshell
 import Quickshell.Io
 
 // The partition editor, a window of its own: from the system menu, with
-// `toggle.sh disks`, and from Files' "Open with Disks" and "Format…"
-// (disk-utility.py). The drives on the left, the picked one's partitions and
+// `toggle.sh disks`, from Files' "Open with Disks" and "Format…"
+// (disk-utility.py), and from "Open with Drives" on a disk image, to write it
+// to a USB stick. The drives on the left, the picked one's partitions and
 // free space with what can be done with each in the middle, the plan on the
 // right (Disks.qml, disks.py). Like fdisk, every change is only planned, with
 // the drive shown as it will be; "Apply" writes the plan, after asking once
@@ -54,6 +55,7 @@ ShellRoot {
     }
 
     function close() {
+        Disks.offered = null;
         Menus.close("disks");
     }
 
@@ -293,6 +295,10 @@ ShellRoot {
                     width: parent.width - 40
                     spacing: 12
 
+                    ImageOffer {
+                        visible: !!Disks.offered
+                    }
+
                     Label {
                         Layout.fillWidth: true
                         visible: !!Disks.shown
@@ -479,6 +485,62 @@ ShellRoot {
                             onClicked: root.applyClicked()
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // An image from Files waiting for a drive: written to the picked one, as
+    // a step of the plan like "Write image"
+    component ImageOffer: Rectangle {
+        id: offer
+
+        readonly property string fileName: Disks.offered?.path.split("/").pop() ?? ""
+        readonly property bool canWrite: !!Disks.shown?.actions.includes("restore") && !Disks.busy
+
+        Layout.fillWidth: true
+        implicitHeight: offerContent.implicitHeight + 20
+        radius: 10
+        color: Theme.surface0
+
+        ColumnLayout {
+            id: offerContent
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.margins: 12
+            spacing: 8
+
+            Label {
+                Layout.fillWidth: true
+                text: I18n.tr("Write %1 to a drive", offer.fileName)
+                font.bold: true
+            }
+            Label {
+                Layout.fillWidth: true
+                text: offer.canWrite ? I18n.tr("Everything on %1 (%2) will be overwritten.", Disks.shown?.name ?? "", Disks.sizeText(Disks.shown?.size ?? 0)) : I18n.tr("Pick a drive on the left, e.g. a USB stick.")
+                color: Theme.subtext0
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Item {
+                    Layout.fillWidth: true
+                }
+                IconButton {
+                    text: I18n.tr("Cancel")
+                    onClicked: Disks.offered = null
+                }
+                IconButton {
+                    text: I18n.tr("Write to this drive")
+                    accent: Theme.red
+                    active: offer.canWrite
+                    opacity: offer.canWrite ? 1 : 0.5
+                    onClicked: Disks.writeOffered()
                 }
             }
         }

@@ -7,6 +7,8 @@
 #   ipc.sh updates refresh             (after an update, Updates.qml)
 #   ipc.sh disks open <device> true|false  (the partition editor, from Files:
 #                                      disk-utility.py; true opens its format form)
+#   ipc.sh disks image <path>          (the partition editor with that image to
+#                                      write, Files' "Open with Drives")
 daemon=$(dirname "$(readlink -f "$0")")/daemon.qml
 # A new daemon takes a moment before it answers: up to two seconds
 start_tries=20

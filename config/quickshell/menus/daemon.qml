@@ -206,12 +206,17 @@ ShellRoot {
         }
     }
 
-    // From Files' "Open with Disks" and "Format…" (disk-utility.py)
+    // From Files' "Open with Disks" and "Format…" (disk-utility.py), and
+    // "Open with Drives" on a disk image (the desktop entry in
+    // home-manager/desktop/default.nix)
     IpcHandler {
         target: "disks"
 
         function open(device: string, format: bool): void {
             Disks.open(device, format);
+        }
+        function image(path: string): void {
+            Disks.offerImage(path);
         }
     }
 

@@ -10,6 +10,8 @@ it can, is worked out in disk_layout.py; nothing here is written before
   disks.py apply < request    one JSON line per event, see below
   disks.py watch              prints "changed" whenever udisks' drives change
   disks.py image open|save    the file chooser: {"path": "…", "size": n}, {} if cancelled
+  disks.py image open <path>  the same for that file, without the chooser (Files'
+                              "Open with Drives" on an image)
 
 A request is {"drive": id, "revision": "…", "steps": [step, …]}, the steps
 as disk_layout.py describes them. plan takes "add": [step, …], too: the
@@ -93,7 +95,12 @@ CHUNK = 4 * 1024**2
 PROGRESS_STEP = 0.01
 # Changes come in bursts (a partition table brings a dozen): one line for them
 WATCH_DELAY_MS = 300
-IMAGE_TYPES = ["application/x-raw-disk-image", "application/x-cd-image", "application/octet-stream"]
+IMAGE_TYPES = [
+    "application/x-raw-disk-image",
+    "application/x-raw-disk-image-xz-compressed",
+    "application/x-cd-image",
+    "application/octet-stream",
+]
 COMPRESSED: dict[str, Callable[..., Any]] = {
     ".xz": lzma.open,
     ".gz": gzip.open,
@@ -517,8 +524,14 @@ def watch() -> None:
     GLib.MainLoop().run()  # pyright: ignore[reportUnknownMemberType]
 
 
-def choose_image(mode: str) -> None:
+def image_info(image: Path, mode: str) -> dict[str, Any]:
     """A compressed image's size isn't known before unpacking it: 0"""
+    compressed = image.suffix in COMPRESSED
+    size = image.stat().st_size if mode == "open" and not compressed else 0
+    return {"path": str(image.resolve()), "size": size}
+
+
+def choose_image(mode: str) -> None:
     bus = Gio.bus_get_sync(Gio.BusType.SESSION)
     if mode == "open":
         uris = choose_files(bus, tr("Select a disk image"), tr("_Open"), mime_types=IMAGE_TYPES)
@@ -529,10 +542,15 @@ def choose_image(mode: str) -> None:
     if path is None:
         output({})
         return
+    output(image_info(Path(path), mode))
+
+
+def given_image(path: str) -> None:
     image = Path(path)
-    compressed = image.suffix in COMPRESSED
-    size = image.stat().st_size if mode == "open" and not compressed else 0
-    output({"path": str(image), "size": size})
+    if not image.is_file():
+        output({"error": tr("%1 isn't a file", path)})
+        return
+    output(image_info(image, "open"))
 
 
 def read_request() -> dict[str, Any]:
@@ -549,10 +567,13 @@ def main() -> None:
         "watch": watch,
     }
     is_image = len(arguments) == 2 and arguments[0] == "image" and arguments[1] in ("open", "save")
+    is_given_image = len(arguments) == 3 and arguments[:2] == ["image", "open"]
     if len(arguments) == 1 and arguments[0] in commands:
         command = commands[arguments[0]]
     elif is_image:
         command = lambda: choose_image(arguments[1])  # noqa: E731
+    elif is_given_image:
+        command = lambda: given_image(arguments[2])  # noqa: E731
     else:
         print(__doc__, file=sys.stderr)
         sys.exit(2)
