@@ -162,6 +162,17 @@ in
         ];
       };
 
+      # The partition editor (config/quickshell/menus/disks.qml); the
+      # keywords find it by the German and GNOME names, too
+      drives = {
+        name = "Drives";
+        comment = "Partition, format and image drives";
+        exec = "${menus}/toggle.sh disks";
+        icon = "drive-harddisk";
+        categories = [ "System" ];
+        settings.Keywords = "disks;partition;format;usb;image;Laufwerke;Datenträger;formatieren;";
+      };
+
       # Epson's scanner driver (epsonscan2, AUR) comes with its own scan app:
       # out of the launcher, the scanner window only uses the driver. Same id
       # as the package's entry; ~/.nix-profile comes before /usr in
