@@ -56,7 +56,8 @@ hl.window_rule({
 
 -- The windows of the shell, floating and centred at their size:
 -- Machine Settings (config/quickshell/menus/settings.qml), Battery History
--- (battery-history.qml) and the Scanner (scan.qml)
+-- (battery-history.qml), the Scanner (scan.qml) and Drives (disks.qml, by
+-- its English and German title)
 local function centredWindow(title, size)
     hl.window_rule({
         match = { title = "^" .. title .. "$" },
@@ -68,6 +69,7 @@ end
 centredWindow("Machine Settings", "860 600")
 centredWindow("Battery History", "760 720")
 centredWindow("Scanner", "1040 740")
+centredWindow("(Drives|Laufwerke)", "1000 660")
 
 -- File chooser (Nautilus, config/xdg-desktop-portal): floating and centred,
 -- also for apps that don't name their window to the portal (Hyprland floats

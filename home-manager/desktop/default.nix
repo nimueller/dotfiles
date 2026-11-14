@@ -162,6 +162,34 @@ in
         ];
       };
 
+      # The partition editor (config/quickshell/menus/disks.qml); the
+      # keywords find it by the German and GNOME names, too
+      drives = {
+        name = "Drives";
+        comment = "Partition, format and image drives";
+        exec = "${menus}/toggle.sh disks";
+        icon = "drive-harddisk";
+        categories = [ "System" ];
+        settings.Keywords = "disks;partition;format;usb;image;Laufwerke;Datenträger;formatieren;";
+      };
+
+      # Files' "Open with Drives" on an ISO or disk image: the partition
+      # editor, with the image waiting to be written to a drive (a USB stick).
+      # Nothing else claims these types, so it's what opening one does, too;
+      # that only offers the step, it doesn't write. Not in the launcher.
+      drives-image-writer = {
+        name = "Drives";
+        comment = "Write a disk image to a drive";
+        exec = "${menus}/ipc.sh disks image %f";
+        icon = "drive-harddisk";
+        noDisplay = true;
+        mimeType = [
+          "application/x-cd-image"
+          "application/x-raw-disk-image"
+          "application/x-raw-disk-image-xz-compressed"
+        ];
+      };
+
       # Epson's scanner driver (epsonscan2, AUR) comes with its own scan app:
       # out of the launcher, the scanner window only uses the driver. Same id
       # as the package's entry; ~/.nix-profile comes before /usr in
