@@ -44,7 +44,14 @@ ShellRoot {
             poweroff: I18n.tr("Power off")
         })
 
-    Component.onCompleted: Disks.refresh()
+    // Each time only removable drives first; Files asking for an internal one
+    // switches Advanced on by itself (Disks.showWanted)
+    Component.onCompleted: {
+        if (!Disks.wanted) {
+            Disks.setAdvanced(false);
+        }
+        Disks.refresh();
+    }
 
     function close() {
         Menus.close("disks");

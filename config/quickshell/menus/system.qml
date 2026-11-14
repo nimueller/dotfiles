@@ -734,13 +734,38 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
         accent: Theme.green
     }
 
-    RowLayout {
+    // Right-aligned, wrapping when the buttons don't fit on one line (in
+    // German, with an update, they don't); right to left, so the last button
+    // comes first
+    Flow {
         Layout.fillWidth: true
         Layout.topMargin: 4
         spacing: 6
+        layoutDirection: Qt.RightToLeft
 
-        Item {
-            Layout.fillWidth: true
+        IconButton {
+            glyph: Theme.glyph(0xf0128) // 󰄨
+            text: I18n.tr("System monitor")
+            onClicked: {
+                Quickshell.execDetached(["kitty", "btop"]);
+                root.close();
+            }
+        }
+        IconButton {
+            glyph: Theme.glyph(0xf02ca) // 󰋊
+            text: I18n.tr("Drives")
+            onClicked: {
+                Menus.toggle("disks");
+                root.close();
+            }
+        }
+        IconButton {
+            glyph: Theme.glyph(0xf00e2) // 󰃢
+            text: I18n.tr("Clean up")
+            onClicked: {
+                Menus.toggle("cleanup");
+                root.close();
+            }
         }
         IconButton {
             visible: Updates.total > 0
@@ -755,30 +780,6 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
                 } else {
                     Updates.update();
                 }
-                root.close();
-            }
-        }
-        IconButton {
-            glyph: Theme.glyph(0xf00e2) // 󰃢
-            text: I18n.tr("Clean up")
-            onClicked: {
-                Menus.toggle("cleanup");
-                root.close();
-            }
-        }
-        IconButton {
-            glyph: Theme.glyph(0xf02ca) // 󰋊
-            text: I18n.tr("Drives")
-            onClicked: {
-                Menus.toggle("disks");
-                root.close();
-            }
-        }
-        IconButton {
-            glyph: Theme.glyph(0xf0128) // 󰄨
-            text: I18n.tr("System monitor")
-            onClicked: {
-                Quickshell.execDetached(["kitty", "btop"]);
                 root.close();
             }
         }

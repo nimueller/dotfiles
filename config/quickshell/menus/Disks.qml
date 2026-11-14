@@ -18,7 +18,7 @@ Singleton {
     property bool loaded: false
     property string error: ""
 
-    // Internal drives too, not only removable ones
+    // Internal drives too, not only removable ones; off whenever the window opens
     property bool advanced: false
     property string driveId: ""
     property string selected: "" // the segment (partition, free space) picked
