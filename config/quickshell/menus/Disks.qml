@@ -83,10 +83,13 @@ Singleton {
         return Math.round(number * Math.pow(base, exponent));
     }
 
-    // A segment's colour, by its filesystem
+    // A segment's colour, by its filesystem; encrypted ones all alike
     function color(segment) {
         if (segment.kind === "free") {
             return Theme.surface0;
+        }
+        if (segment.encrypted) {
+            return Theme.lavender;
         }
         const colors = {
             ext2: Theme.blue,

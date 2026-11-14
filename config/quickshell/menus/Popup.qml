@@ -18,8 +18,6 @@ PanelWindow {
     property bool centered: false
     property bool atLeft: false
     property bool resident: false
-    // Stays open while another window has the focus, e.g. polkit's password dialog
-    property bool keepOpen: false
     property bool shown: !resident
     property real closedAt: 0
     default property alias content: body.data
@@ -90,7 +88,7 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
     HyprlandFocusGrab {
-        active: root.shown && !root.keepOpen
+        active: root.shown
         windows: [root]
         onCleared: root.close()
     }

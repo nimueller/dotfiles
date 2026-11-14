@@ -360,6 +360,7 @@ ColumnLayout {
             color: Theme.subtext0
         }
         RowLayout {
+            Layout.fillWidth: true
             visible: root.hasFilesystem
             spacing: 8
 
@@ -368,9 +369,12 @@ ColumnLayout {
                 onToggled: checked = !checked
             }
             Label {
+                Layout.fillWidth: true
                 text: I18n.tr("Slow; the old data can't be recovered then")
                 color: Theme.overlay1
                 font.pixelSize: 11
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
             }
         }
     }
