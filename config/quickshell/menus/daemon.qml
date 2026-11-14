@@ -206,6 +206,15 @@ ShellRoot {
         }
     }
 
+    // From Files' "Open with Disks" and "Format…" (disk-utility.py)
+    IpcHandler {
+        target: "disks"
+
+        function open(device: string, format: bool): void {
+            Disks.open(device, format);
+        }
+    }
+
     IpcHandler {
         target: "notifications"
 

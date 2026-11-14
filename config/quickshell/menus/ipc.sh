@@ -5,6 +5,8 @@
 #   ipc.sh launcher|clipboard toggle
 #   ipc.sh menus toggle <menu>         (toggle.sh <menu>)
 #   ipc.sh updates refresh             (after an update, Updates.qml)
+#   ipc.sh disks open <device> true|false  (the partition editor, from Files:
+#                                      disk-utility.py; true opens its format form)
 daemon=$(dirname "$(readlink -f "$0")")/daemon.qml
 # A new daemon takes a moment before it answers: up to two seconds
 start_tries=20

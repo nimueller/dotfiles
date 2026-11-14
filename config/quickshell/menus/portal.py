@@ -1,6 +1,6 @@
 # pyright: strict
 """The file chooser portal for the shell's Python helpers (kdeconnect.py,
-face.py): Nautilus' file chooser (config/xdg-desktop-portal)."""
+face.py, disks.py): Nautilus' file chooser (config/xdg-desktop-portal)."""
 
 import os
 
@@ -54,6 +54,30 @@ def choose_files(
     """URIs of the files picked, [] if cancelled. A title that starts with
     "Select" floats the window (config/hypr/windowrules.lua)."""
     token = f"dotfiles{os.getpid()}"
+    options = chooser_options(token, title, accept, multiple, mime_types)
+    return ask_portal(bus, "OpenFile", token, title, options)
+
+
+def choose_save_file(bus: Gio.DBusConnection, title: str, accept: str, name: str) -> str:
+    """The URI to save to, suggesting `name`; "" if cancelled"""
+    token = f"dotfiles{os.getpid()}"
+    options = {
+        "handle_token": GLib.Variant("s", token),
+        "accept_label": GLib.Variant("s", accept),
+        "current_name": GLib.Variant("s", name),
+    }
+    uris = ask_portal(bus, "SaveFile", token, title, options)
+    return uris[0] if uris else ""
+
+
+def ask_portal(
+    bus: Gio.DBusConnection,
+    method: str,
+    token: str,
+    title: str,
+    options: dict[str, GLib.Variant],
+) -> list[str]:
+    """Shows the file chooser and waits for its answer: the URIs picked"""
     loop = GLib.MainLoop()
     uris: list[str] = []
 
@@ -80,12 +104,11 @@ def choose_files(
         Gio.DBusSignalFlags.NONE,
         on_response,
     )
-    options = chooser_options(token, title, accept, multiple, mime_types)
     bus.call_sync(
         PORTAL,
         PORTAL_PATH,
         "org.freedesktop.portal.FileChooser",
-        "OpenFile",
+        method,
         GLib.Variant("(ssa{sv})", ("", title, options)),
         None,
         Gio.DBusCallFlags.NONE,

@@ -767,6 +767,14 @@ command -v nvidia-smi >/dev/null && echo "gpu $(nvidia-smi --query-gpu=$gpu --fo
             }
         }
         IconButton {
+            glyph: Theme.glyph(0xf02ca) // 󰋊
+            text: I18n.tr("Drives")
+            onClicked: {
+                Menus.toggle("disks");
+                root.close();
+            }
+        }
+        IconButton {
             glyph: Theme.glyph(0xf0128) // 󰄨
             text: I18n.tr("System monitor")
             onClicked: {
