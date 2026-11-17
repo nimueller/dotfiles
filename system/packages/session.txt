@@ -29,8 +29,10 @@ gnome-keyring
 # extensions: KDE Connect's "Send to"), calculator key,
 # the network menu's editor and VPN file picker, the system menu's update
 # count, xdg-open, and the drive notifications (quickshell/menus/drives.py:
-# GVfs for drives and phones, used from the system's Python), XWayland's
-# primary monitor (quickshell/menus/xwayland-primary.py)
+# GVfs for drives and phones, used from the system's Python), the partition
+# editor (quickshell/menus/disks.py: udisks2, and the tools it formats exFAT,
+# FAT and NTFS with), XWayland's primary monitor
+# (quickshell/menus/xwayland-primary.py)
 kitty
 nautilus
 nautilus-python
@@ -41,5 +43,8 @@ pacman-contrib
 xdg-utils
 xorg-xrandr
 udisks2
+exfatprogs
+dosfstools
+ntfs-3g
 gvfs-mtp
 python-gobject

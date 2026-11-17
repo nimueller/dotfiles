@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Open a menu, or close it if it's already open.
 #   toggle.sh <menu>
-#       audio, battery, battery-history, bluetooth, calendar, kdeconnect,
-#       network, notifications, overview, power, scan, settings, system,
-#       window, launcher or clipboard
+#       audio, battery, battery-history, bluetooth, calendar, cleanup, disks,
+#       kdeconnect, network, notifications, overview, power, scan, settings,
+#       system, window, launcher or clipboard
 #   toggle.sh daemon|overview --start|--restart
 #       start a resident process (Hyprland), or restart it to apply changes
 # All of them are part of the resident daemon.qml, so they open without

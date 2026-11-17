@@ -23,6 +23,7 @@ Singleton {
         "bluetooth",
         "calendar",
         "cleanup",
+        "disks",
         "kdeconnect",
         "network",
         "power",
@@ -67,6 +68,18 @@ Singleton {
         } else if (Date.now() - (closedAt[name] ?? 0) > 400) {
             // A click on the bar icon of an open menu first closes it through
             // the focus grab, then toggles: that one mustn't reopen it
+            loader.active = true;
+        }
+    }
+
+    // Opens it, or leaves it open
+    function open(name) {
+        if (!hosted) {
+            Quickshell.execDetached([Quickshell.shellPath("toggle.sh"), name]);
+            return;
+        }
+        const loader = loaders[name];
+        if (loader && !loader.active) {
             loader.active = true;
         }
     }

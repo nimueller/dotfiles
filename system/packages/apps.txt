@@ -23,13 +23,11 @@ docker
 docker-buildx
 docker-compose
 dolphin-emu
-dosfstools
 dotnet-sdk
 drawing
 edk2-ovmf
 efibootmgr
 electron
-exfatprogs
 fastfetch
 firefox
 firewalld
@@ -101,7 +99,6 @@ nftables
 nix
 nmap
 nss-mdns
-ntfs-3g
 ntfsprogs
 nvidia-open-dkms
 nvtop
