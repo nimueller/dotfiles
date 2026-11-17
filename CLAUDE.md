@@ -37,8 +37,9 @@ New scripts and rewrites follow these rules:
   - `install.sh` bootstraps a fresh machine (`curl … | bash`) and
     `system/setup.sh` runs before the session packages, which bring Python, are
     installed.
-  - `system/bluetooth-address.sh` and `system/power-saver-cpu.sh` run as root
-    from `/usr/local/lib` at boot, outside of Nix.
+  - `system/bluetooth-address.sh`, `system/power-saver-cpu.sh` and
+    `system/download-updates.sh` run as root from `/usr/local/lib`, outside
+    of Nix.
     The exception is `system/touchpad-edge-motion.py`: it has to read binary
     input events, and its step in `setup.sh` runs after the session packages.
   - `pkgs/scripts/lock-screen.sh` is the lock screen: it stays as it is unless

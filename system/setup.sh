@@ -22,6 +22,8 @@
 # 9. touch screen: iptsd (touch and pen of Surfaces) for the touch screens
 #    it handles at every boot, where it's installed
 # 10. touchpad: a drag goes on at the edge of the touchpad, on machines with one
+# 11. updates: the waiting pacman updates are downloaded in the background,
+#     so an update only installs them
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -568,6 +570,54 @@ setup_touchpad() {
     fi
 }
 
+install_update_downloads() {
+    install_root_script download-updates.sh download-updates
+    install_unit download-updates.service <<UNIT
+[Unit]
+Description=Download the waiting pacman updates
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=$root_scripts/download-updates
+Nice=19
+IOSchedulingClass=idle
+PrivateTmp=yes
+UNIT
+    install_unit download-updates.timer <<UNIT
+[Unit]
+Description=Download the waiting pacman updates every few hours
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=4h
+
+[Install]
+WantedBy=timers.target
+UNIT
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now download-updates.timer
+}
+
+# An update then only installs: the bar's update chip (Updates.qml) runs
+# it unattended, the download was the long part (download-updates.sh)
+setup_update_downloads() {
+    echo "== Updates"
+    if ! has_command checkupdates; then
+        echo "checkupdates (pacman-contrib) isn't installed, skipping"
+        return
+    fi
+    if is_enabled download-updates.timer; then
+        install_update_downloads
+        echo "The pacman updates are already downloaded in the background"
+        return
+    fi
+    if ask "Download the waiting pacman updates in the background, every 4 hours?"; then
+        install_update_downloads
+    fi
+}
+
 main() {
     if ! has_command pacman; then
         echo "Not on Arch Linux. Install the equivalents of packages/session.txt yourself."
@@ -585,7 +635,8 @@ main() {
         setup_bluetooth \
         setup_power_profiles \
         setup_touch_screen \
-        setup_touchpad; do
+        setup_touchpad \
+        setup_update_downloads; do
         echo ''
         "$step"
     done

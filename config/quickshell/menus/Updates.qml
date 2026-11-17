@@ -38,10 +38,15 @@ Singleton {
     // terminal that stays open to read, ending with whether to reboot
     // (reboot-check). It checks again when the update is
     // through (ipc.sh, the chip goes away at once) and once it's closed.
+    // Unattended after the sudo password: no menus or questions, which take
+    // their default answer (a conflict aborts, then `upgrade` asks), and
+    // sudo kept alive (--sudoloop) so installing the AUR builds doesn't ask
+    // again. Most packages are already in the cache (download-updates.sh).
     function update() {
-        const system = aurHelper ? `${aurHelper} -Syu` : "sudo pacman -Syu";
+        const system = aurHelper ? `${aurHelper} -Syu --noconfirm --sudoloop --removemake` : "sudo pacman -Syu --noconfirm";
+        const flatpak = "flatpak update -y --noninteractive";
         const done = `'${Quickshell.shellPath("ipc.sh")}' updates refresh`;
-        updater.command = ["kitty", "--hold", "sh", "-c", `${system}; flatpak update; reboot-check; ${done}`];
+        updater.command = ["kitty", "--hold", "sh", "-c", `${system}; ${flatpak}; reboot-check; ${done}`];
         updater.running = true;
     }
 
