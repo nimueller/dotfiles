@@ -50,10 +50,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("after-unlock pear-desktop")
     hl.exec_cmd("after-unlock thunderbird")
     hl.exec_cmd("after-unlock nextcloud")
-    -- Websites reach the eID client at http://127.0.0.1:24727 and can't start
-    -- it themselves: without it running, Brave only gets "connection refused".
-    -- Starts into the tray (no --show)
-    hl.exec_cmd("after-unlock 'flatpak run --command=AusweisApp de.bund.ausweisapp.ausweisapp2'")
 end)
 
 return M
