@@ -44,6 +44,57 @@ class CleanSamples(unittest.TestCase):
             self.assertEqual(samples.read_text(), f"{line(now - 120)}\n{line(now - 60)}\n")
 
 
+class ReadBattery(unittest.TestCase):
+    def read(self, files: dict[str, str]) -> Any:
+        with tempfile.TemporaryDirectory() as folder:
+            for name, value in files.items():
+                (Path(folder) / name).write_text(f"{value}\n")
+            return battery_log.read_battery(Path(folder))
+
+    def test_full_capacity_from_energy_full(self) -> None:
+        sample = self.read(
+            {
+                "energy_now": "18470000",
+                "power_now": "29870000",
+                "energy_full": "26760000",
+                "capacity": "69",
+                "status": "Charging",
+            }
+        )
+        self.assertEqual(sample.full, 26.76)
+
+    def test_full_capacity_from_charge_full(self) -> None:
+        sample = self.read(
+            {
+                "charge_now": "2000000",
+                "current_now": "1000000",
+                "charge_full": "4000000",
+                "voltage_now": "7500000",
+                "capacity": "50",
+                "status": "Discharging",
+            }
+        )
+        self.assertEqual(sample.full, 30.0)
+
+    def test_no_full_capacity(self) -> None:
+        sample = self.read({"energy_now": "18470000", "power_now": "0", "capacity": "69", "status": "Full"})
+        self.assertIsNone(sample.full)
+
+
+class SampleLine(unittest.TestCase):
+    def test_full_capacity_is_the_sixth_field(self) -> None:
+        sample = battery_log.Battery(percent=69, energy=18.47, power=29.87, state="c", full=26.76)
+        self.assertEqual(battery_log.sample_line(1795454280, sample), "1795454280,69,18.470,29.87,c,26.760\n")
+
+    def test_full_capacity_empty_when_unknown(self) -> None:
+        sample = battery_log.Battery(percent=69, energy=18.47, power=29.87, state="c", full=None)
+        self.assertEqual(battery_log.sample_line(1795454280, sample), "1795454280,69,18.470,29.87,c,\n")
+
+    def test_old_and_new_lines_keep_their_order(self) -> None:
+        lines = [line(60), f"{line(120)},26.760"]
+        self.assertEqual(battery_log.in_order(lines), lines)
+
+
 class CountCpu(unittest.TestCase):
     def log_with_last_sample(self, sample_time: float) -> Any:
         # Without __init__: that takes the lock and reads the real files

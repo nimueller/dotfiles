@@ -1,7 +1,7 @@
 # pyright: strict
 """Battery log for the battery history (battery-history.qml), run by
 daemon.qml in laptop mode. Once a minute it appends the charge, energy,
-power draw and state to samples.csv, and while on battery it adds up the
+power draw, state and full capacity to samples.csv, and while on battery it adds up the
 CPU time of every app since the last sample in apps.json, by hour (written
 every 10 minutes, on exit and on SIGUSR1, which the history sends when it
 opens). Both in ~/.local/state/battery-history,
@@ -72,6 +72,7 @@ class Battery:
     energy: float  # Wh
     power: float  # W
     state: str  # a letter of STATES
+    full: float | None  # Wh, the capacity the battery reports when full
 
 
 class ProcessTime(NamedTuple):
@@ -103,17 +104,21 @@ def read_number(folder: Path, name: str) -> int | None:
 def read_battery(folder: Path) -> Battery:
     energy = read_number(folder, "energy_now")  # µWh
     power = read_number(folder, "power_now")  # µW
+    full = read_number(folder, "energy_full")  # µWh
     if energy is None:
         # Some batteries report charge (µAh) and current (µA) instead
         volts = read_number(folder, "voltage_now") or 0
         energy = (read_number(folder, "charge_now") or 0) * volts // MICRO
         power = (read_number(folder, "current_now") or 0) * volts // MICRO
+        charge_full = read_number(folder, "charge_full")
+        full = None if charge_full is None else charge_full * volts // MICRO
     status = (folder / "status").read_text().strip()
     return Battery(
         percent=read_number(folder, "capacity"),
         energy=energy / MICRO,
         power=abs(power or 0) / MICRO,
         state=STATES.get(status, UNKNOWN_STATE),
+        full=None if full is None else full / MICRO,
     )
 
 
@@ -288,7 +293,10 @@ def save(path: Path, text: str) -> None:
 
 
 def sample_line(now: float, sample: Battery) -> str:
-    return f"{int(now)},{sample.percent},{sample.energy:.3f},{sample.power:.2f},{sample.state}\n"
+    """One CSV line; the full capacity is empty when the battery has none
+    (lines from before it was logged have only five fields)."""
+    full = "" if sample.full is None else f"{sample.full:.3f}"
+    return f"{int(now)},{sample.percent},{sample.energy:.3f},{sample.power:.2f},{sample.state},{full}\n"
 
 
 def sample_time(line: str) -> float:
