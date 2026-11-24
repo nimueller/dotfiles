@@ -61,3 +61,18 @@ commit, push and `gh pr create`/`gh pr edit`, check the diff, the commit
 messages and the description for it. If something has already been pushed or
 published, tell me instead of rewriting history or force-pushing yourself;
 an edited PR description keeps the old version in its edit history.
+
+# Commands that need root
+
+Never run `sudo`, `pkexec` or anything else that gains root yourself. When a
+command needs root, give it to me to run with the `!` prefix.
+
+Commands typed with `!` have no terminal, so `sudo` can't ask for my password
+and fails ("a terminal is required to read the password"). Write them with
+`pkexec` instead: my session runs a polkit agent, which asks for the password
+in a graphical dialog.
+
+- Put several commands into one `! pkexec sh -c '…'`, so I'm asked only once.
+- Prompts can't be answered without a terminal: add the non-interactive
+  flags, e.g. `pacman -S --needed --noconfirm`, and say what they skip.
+- Say what the command changes.
