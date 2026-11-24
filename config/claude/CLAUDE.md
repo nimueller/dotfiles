@@ -64,14 +64,15 @@ an edited PR description keeps the old version in its edit history.
 
 # Commands that need root
 
-Commands run from Claude Code have no terminal, so `sudo` can't ask for my
-password and fails ("a terminal is required to read the password"). Don't
-tell me to open another terminal for it. Use `pkexec` instead: my session
-runs a polkit agent, which asks for the password in a graphical dialog.
+Never run `sudo`, `pkexec` or anything else that gains root yourself. When a
+command needs root, give it to me to run with the `!` prefix.
 
-- Run the command yourself with `pkexec`, or give it to me as
-  `! pkexec …` to type here; either way I confirm it in the dialog.
-- Several commands go into one `pkexec sh -c '…'`, so I'm asked only once.
-- Without a terminal, prompts can't be answered: pass the non-interactive
+Commands typed with `!` have no terminal, so `sudo` can't ask for my password
+and fails ("a terminal is required to read the password"). Write them with
+`pkexec` instead: my session runs a polkit agent, which asks for the password
+in a graphical dialog.
+
+- Put several commands into one `! pkexec sh -c '…'`, so I'm asked only once.
+- Prompts can't be answered without a terminal: add the non-interactive
   flags, e.g. `pacman -S --needed --noconfirm`, and say what they skip.
-- Say what the command changes before running it.
+- Say what the command changes.
