@@ -10,6 +10,8 @@
   ...
 }:
 let
+  my-pkgs = import ../../pkgs { inherit pkgs; };
+
   # The sandboxes can't see the Nix store, so they get read access to these
   # files in the dotfiles themselves, linked directly (activation below)
   dotfiles = "~/${lib.removePrefix "${config.home.homeDirectory}/" config.dotfiles}";
@@ -140,6 +142,29 @@ in
   # browser starts, which is usually before KeePassXC: created at login.
   # KeePassXC uses it as it is and never removes it
   systemd.user.tmpfiles.rules = [ "d %t/app/org.keepassxc.KeePassXC 0700 - - -" ];
+
+  # After an NVIDIA driver update the update's `flatpak update` still sees
+  # the old kernel module; this installs the matching GL extension once the
+  # new one is loaded, instead of at the next daily update
+  # (pkgs/scripts/flatpak-nvidia-gl.py). Tried again while the network isn't
+  # up yet after login.
+  systemd.user.services.flatpak-nvidia-gl = {
+    Unit = {
+      Description = "Flatpak GL extension for the loaded NVIDIA driver";
+      After = [ "graphical-session.target" ];
+      StartLimitIntervalSec = "1h";
+      StartLimitBurst = 5;
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = lib.getExe my-pkgs.flatpak-nvidia-gl;
+      Restart = "on-failure";
+      RestartSec = "2min";
+      # flatpak from the system (pacman), notify-send from Nix
+      Environment = "PATH=${lib.makeBinPath [ pkgs.libnotify ]}:/usr/bin";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
 
   # Brave's flags file and the browsers' KeePassXC entries, inside their
   # sandboxes: a direct link to the dotfiles (the sandbox can't follow one

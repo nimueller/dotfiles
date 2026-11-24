@@ -66,6 +66,9 @@ in
   # Installed software against system/packages/*.txt and the Flatpaks in
   # home-manager/desktop/flatpak.nix
   pkg-sync = pythonScript "pkg-sync";
+  # The Flatpak GL extension for the loaded NVIDIA driver, at login
+  # (home-manager/desktop/flatpak.nix)
+  flatpak-nvidia-gl = pythonScript "flatpak-nvidia-gl";
   # After an update: reboot now, later or not at all (Updates.qml, the
   # `upgrade` alias); pacman comes from the system
   reboot-check = pythonScript "reboot-check";
