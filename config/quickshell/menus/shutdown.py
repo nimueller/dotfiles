@@ -8,7 +8,8 @@ then run the command.
 
 hyprshutdown ends every program of the session at once, the shell, the
 wallpaper and the idle lock too, and has no way to leave some running. On
-Cancel, start them again (autostart.lua: daemons).
+Cancel, start them again (autostart.lua: daemons). If hyprshutdown crashes
+before it asks, run the command anyway.
 """
 
 import json
@@ -97,8 +98,20 @@ def main(label: str, command: str) -> None:
     hyprshutdown.wait()
     watchdog.join()
     time.sleep(0.5)
-    if not CLOSED.exists():
-        subprocess.run(["hyprctl", "eval", 'require("autostart").daemons()'], capture_output=True, check=False)
+    if CLOSED.exists():
+        return
+    if crashed(hyprshutdown.returncode):
+        # It never got to ask, e.g. when it can't start on the GPU after a
+        # driver update before the reboot: the user still wants the command
+        subprocess.run(["sh", "-c", command], check=False)
+        return
+    subprocess.run(["hyprctl", "eval", 'require("autostart").daemons()'], capture_output=True, check=False)
+
+
+def crashed(returncode: int) -> bool:
+    """Cancel exits normally. Killed by a signal is a crash: the watchdog
+    only terminates it after touching CLOSED."""
+    return returncode < 0
 
 
 if __name__ == "__main__":
