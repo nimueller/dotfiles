@@ -20,7 +20,7 @@ import Quickshell.Io
 // of Brave's audio streams (audio-tabs.py), the
 // night light's schedule, the Bluetooth pairing agent, the fixed folders in Files' sidebar and the
 // warnings about a full memory, an overloaded CPU, a full disk or a low
-// battery. The bar menus and the
+// battery (the laptop's or a wireless device's). The bar menus and the
 // windows opened from them live here too, created only while open
 // (Menus.qml).
 //
@@ -138,6 +138,10 @@ ShellRoot {
 
     // Laptops: notifications when the battery runs low
     BatteryWatch {}
+
+    // Notifications when a wireless device's battery runs low (keyboard,
+    // mouse, ...), also on a desktop
+    DeviceBatteryWatch {}
 
     // Laptops: the charge, power draw and the apps' CPU time on battery,
     // once a minute for the battery history (battery-log.py)
