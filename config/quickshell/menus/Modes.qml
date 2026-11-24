@@ -8,9 +8,9 @@ import Quickshell.Io
 // which writes this file at every config load): detected from the
 // hardware or forced in Machine Settings. Touch makes the bar and the
 // buttons bigger and adds the launcher, close and keyboard buttons to the
-// bar; laptop adds the battery menu and its warnings. Tablet mode (the
-// switch of a convertible, also from modes.lua) makes the menus bigger
-// (Popup.qml).
+// bar; laptop adds its battery to the battery menu and its warnings. Tablet
+// mode (the switch of a convertible, also from modes.lua) makes the menus
+// bigger (Popup.qml).
 Singleton {
     id: root
 

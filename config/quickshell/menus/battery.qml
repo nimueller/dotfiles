@@ -6,13 +6,14 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.UPower
 
-// Battery menu for the bar's battery module (laptops): the charge, how long
-// it lasts or until it's full (and at what time), the power it draws and
-// its health, how long it has run since unplugged with an estimate at that
-// pace or since plugged in with the pace of charging, the
-// power profile (power-profiles-daemon, which system/setup.sh starts) and
-// the batteries of other devices (mouse, headset, ...). The button in the
-// title opens the history (battery-history.qml).
+// Battery menu for the bar's battery module. On a laptop: the charge, how
+// long it lasts or until it's full (and at what time), the power it draws
+// and its health, how long it has run since unplugged with an estimate at
+// that pace or since plugged in with the pace of charging, and a button in
+// the title for the history (battery-history.qml). Everywhere: the power
+// profile (power-profiles-daemon, which system/setup.sh starts) and the
+// batteries of wireless devices (keyboard, mouse, headset, ...;
+// Batteries.qml), which are all a desktop shows.
 Popup {
     id: popup
 
@@ -20,22 +21,14 @@ Popup {
     cardWidth: 340
 
     readonly property var battery: UPower.displayDevice
-    readonly property real percent: {
-        if (battery) {
-            if (battery.percentage <= 1) {
-                return battery.percentage * 100;
-            }
-            return battery.percentage;
-        }
-        return 0;
-    }
+    readonly property bool hasOwnBattery: battery?.isLaptopBattery ?? false
+    readonly property real percent: Batteries.percent(battery)
     readonly property int batteryState: battery?.state ?? UPowerDeviceState.Unknown
     readonly property bool charging: batteryState === UPowerDeviceState.Charging
     readonly property bool full: {
         const isHeldFull = batteryState === UPowerDeviceState.PendingCharge && percent >= 95;
         return batteryState === UPowerDeviceState.FullyCharged || isHeldFull;
     }
-    readonly property var others: UPower.devices.values.filter(isOtherDevice)
     property bool profiles: false // power-profiles-daemon runs
 
     readonly property var profileList: [
@@ -60,16 +53,6 @@ Popup {
             accent: Theme.peach
         } // 󰓅
     ]
-
-    // A device with a battery of its own, not the laptop's battery or a
-    // power supply
-    function isOtherDevice(d) {
-        if (d.isLaptopBattery || !d.isPresent) {
-            return false;
-        }
-        const isPowerSupply = d.type === UPowerDeviceType.LinePower || d.type === UPowerDeviceType.Battery;
-        return !isPowerSupply && d.percentage > 0;
-    }
 
     // Performance only where the machine has it
     function isProfileAvailable(p) {
@@ -140,7 +123,7 @@ Popup {
         if (batteryState === UPowerDeviceState.Discharging) {
             return battery.timeToEmpty > 0 ? I18n.tr("%1 left", duration(battery.timeToEmpty)) : I18n.tr("On battery");
         }
-        return UPower.onBattery ? "On battery" : I18n.tr("Plugged in, not charging");
+        return UPower.onBattery ? I18n.tr("On battery") : I18n.tr("Plugged in, not charging");
     }
 
     // Since unplugged or plugged in: UPower's charge history (one entry per
@@ -268,17 +251,23 @@ Popup {
             if (popup.charging || popup.full) {
                 return Theme.teal;
             }
-            if (popup.percent <= 15) {
-                return Theme.red;
+            if (popup.hasOwnBattery) {
+                return Batteries.chargeColor(popup.percent);
             }
-            return Theme.green;
+            return Batteries.chargeColor(Batteries.lowestPercent);
         }
-        title: I18n.tr("Battery")
-        badge: UPower.onBattery ? "On battery" : I18n.tr("Plugged in")
+        title: popup.hasOwnBattery ? I18n.tr("Battery") : I18n.tr("Batteries")
+        badge: {
+            if (!popup.hasOwnBattery) {
+                return "";
+            }
+            return UPower.onBattery ? I18n.tr("On battery") : I18n.tr("Plugged in");
+        }
         badgeColor: UPower.onBattery ? Theme.yellow : Theme.teal
 
         // The history: charge, draw, times on battery, busiest apps
         IconButton {
+            visible: popup.hasOwnBattery
             glyph: Theme.glyph(0xf0128) // 󰄨
             onClicked: {
                 Menus.toggle("battery-history");
@@ -290,6 +279,7 @@ Popup {
     // Charge
     ColumnLayout {
         Layout.fillWidth: true
+        visible: popup.hasOwnBattery
         spacing: 8
 
         RowLayout {
@@ -334,13 +324,7 @@ Popup {
                     if (popup.charging || popup.full) {
                         return Theme.teal;
                     }
-                    if (popup.percent <= 15) {
-                        return Theme.red;
-                    }
-                    if (popup.percent <= 30) {
-                        return Theme.yellow;
-                    }
-                    return Theme.green;
+                    return Batteries.chargeColor(popup.percent);
                 }
 
                 Behavior on width {
@@ -367,7 +351,7 @@ Popup {
     // Since unplugged / plugged in
     ColumnLayout {
         Layout.fillWidth: true
-        visible: !!popup.stats
+        visible: popup.hasOwnBattery && !!popup.stats
         spacing: 6
 
         SectionTitle {
@@ -484,10 +468,10 @@ Popup {
         }
     }
 
-    // Other devices' batteries
+    // Wireless devices' batteries
     ColumnLayout {
         Layout.fillWidth: true
-        visible: popup.others.length > 0
+        visible: Batteries.devices.length > 0
         spacing: 6
 
         SectionTitle {
@@ -495,36 +479,32 @@ Popup {
         }
 
         Repeater {
-            model: popup.others
+            model: Batteries.devices
 
             delegate: RowLayout {
-                id: other
+                id: device
 
                 required property var modelData
-                readonly property real charge: {
-                    const p = modelData.percentage;
-                    return p <= 1 ? p * 100 : p;
-                }
+                readonly property real charge: Batteries.percent(modelData)
+                readonly property bool charging: Batteries.isCharging(modelData)
 
                 Layout.fillWidth: true
                 spacing: 8
 
                 Label {
                     Layout.fillWidth: true
-                    text: modelData.model || UPowerDeviceType.toString(modelData.type)
+                    text: Batteries.name(device.modelData)
                     color: Theme.subtext1
                 }
                 Label {
-                    text: `${Math.round(other.charge)}%`
-                    color: {
-                        if (other.charge <= 15) {
-                            return Theme.red;
+                    text: {
+                        const percentText = `${Math.round(device.charge)}%`;
+                        if (device.charging) {
+                            return `${percentText} ${Theme.glyph(0xf0e7)}`;
                         }
-                        if (other.charge <= 30) {
-                            return Theme.yellow;
-                        }
-                        return Theme.green;
+                        return percentText;
                     }
+                    color: device.charging ? Theme.teal : Batteries.chargeColor(device.charge)
                 }
             }
         }

@@ -288,41 +288,32 @@ PanelWindow {
             }
         }
 
-        // Battery (laptops): click for the battery menu (battery.qml) with
-        // the power profiles
+        // Battery: on a laptop its charge; without one, only an icon while
+        // wireless devices report batteries (Batteries.qml), colored by the
+        // lowest of them. Click for the battery menu (battery.qml) with the
+        // power profiles and the devices.
         BarChip {
             readonly property var battery: UPower.displayDevice
-            readonly property real percent: {
-                if (battery) {
-                    if (battery.percentage <= 1) {
-                        return battery.percentage * 100;
-                    }
-                    return battery.percentage;
-                }
-                return 0;
-            }
+            readonly property bool hasOwnBattery: !!battery && battery.isLaptopBattery
+            readonly property bool hasDeviceBatteries: Batteries.devices.length > 0
+            readonly property real percent: hasOwnBattery ? Batteries.percent(battery) : Batteries.lowestPercent
             readonly property bool charging: {
+                if (!hasOwnBattery) {
+                    return false;
+                }
                 const s = UPowerDeviceState;
-                return [s.Charging, s.FullyCharged, s.PendingCharge].includes(battery?.state);
+                return [s.Charging, s.FullyCharged, s.PendingCharge].includes(battery.state);
             }
 
-            visible: !!battery && battery.isLaptopBattery
-            accent: {
-                if (charging) {
-                    return Theme.teal;
-                }
-                if (percent <= 15) {
-                    return Theme.red;
-                }
-                if (percent <= 30) {
-                    return Theme.yellow;
-                }
-                return Theme.green;
-            }
+            visible: hasOwnBattery || hasDeviceBatteries
+            accent: charging ? Theme.teal : Batteries.chargeColor(percent)
             //
             text: {
                 const level = Math.min(4, Math.round(percent / 25));
                 const glyph = Theme.glyph([0xf244, 0xf243, 0xf242, 0xf241, 0xf240][level]);
+                if (!hasOwnBattery) {
+                    return glyph;
+                }
                 const bolt = charging ? ` ${Theme.glyph(0xf0e7)}` : "";
                 return `${glyph}  ${Math.round(percent)}%${bolt}`;
             }
