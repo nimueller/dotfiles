@@ -16,6 +16,10 @@ Singleton {
     // system's
     readonly property string language: settings.language ?? "system"
 
+    // Names for wireless devices in the battery menu and its warnings, by
+    // the device's key (Batteries.qml): { "Corsair mouse": "..." }
+    readonly property var deviceNames: settings.deviceNames ?? ({})
+
     // The focused window's title in the bar
     readonly property bool windowTitle: settings.bar?.windowTitle ?? false
 

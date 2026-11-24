@@ -485,15 +485,22 @@ Popup {
                 id: device
 
                 required property var modelData
-                readonly property real charge: Batteries.percent(modelData)
-                readonly property bool charging: Batteries.isCharging(modelData)
+                readonly property real charge: modelData.percent
+                readonly property bool charging: modelData.isCharging
 
                 Layout.fillWidth: true
                 spacing: 8
 
                 Label {
+                    Layout.preferredWidth: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Batteries.glyph(device.modelData.kind)
+                    font.pixelSize: 15
+                    color: Theme.overlay2
+                }
+                Label {
                     Layout.fillWidth: true
-                    text: Batteries.name(device.modelData)
+                    text: device.modelData.name
                     color: Theme.subtext1
                 }
                 Label {
