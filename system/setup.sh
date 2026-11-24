@@ -24,6 +24,8 @@
 # 10. touchpad: a drag goes on at the edge of the touchpad, on machines with one
 # 11. updates: the waiting pacman updates are downloaded in the background,
 #     so an update only installs them
+# 12. Corsair: the logged-in user may talk to Corsair's wireless receivers,
+#     so the battery menu shows their headsets' and mice's batteries
 # shellcheck disable=SC2024 # the redirects only give pacman's questions the terminal
 dir=$(dirname "$(readlink -f "$0")")
 
@@ -618,6 +620,35 @@ setup_update_downloads() {
     fi
 }
 
+corsair_rule='KERNEL=="hidraw*", ATTRS{idVendor}=="1b1c", TAG+="uaccess"'
+
+# Whether a Corsair USB device is plugged in
+has_corsair_device() {
+    grep -q -x -i 1b1c /sys/bus/usb/devices/*/idVendor
+}
+
+# UPower doesn't know the batteries of Corsair's wireless headsets and mice:
+# corsair-battery.py asks the receivers on their /dev/hidraw*, which only root
+# may open. uaccess gives them to the logged-in user, as for the Logitech
+# receivers; the rule has to sort before systemd's 73-seat-late.rules.
+setup_corsair() {
+    echo "== Corsair"
+    local rules=$rules_dir/70-corsair-hidraw.rules
+    if [ "$(read_file "$rules")" = "$corsair_rule" ]; then
+        echo "The battery menu can already read Corsair's headsets and mice"
+        return
+    fi
+    if ! has_corsair_device; then
+        echo "No Corsair device, skipping"
+        return
+    fi
+    if ask "Show the batteries of Corsair's wireless headsets and mice in the battery menu?"; then
+        echo "$corsair_rule" | sudo tee "$rules" >/dev/null
+        sudo udevadm control --reload
+        sudo udevadm trigger --action=change --subsystem-match=hidraw
+    fi
+}
+
 main() {
     if ! has_command pacman; then
         echo "Not on Arch Linux. Install the equivalents of packages/session.txt yourself."
@@ -636,7 +667,8 @@ main() {
         setup_power_profiles \
         setup_touch_screen \
         setup_touchpad \
-        setup_update_downloads; do
+        setup_update_downloads \
+        setup_corsair; do
         echo ''
         "$step"
     done

@@ -1,6 +1,5 @@
 import QtQuick
 import Quickshell
-import Quickshell.Services.UPower
 
 // Low batteries of wireless devices (Batteries.qml), part of daemon.qml: the
 // warnings of LowBattery.qml for each of them, also on a desktop.
@@ -9,7 +8,7 @@ Scope {
 
     // The level each device was last warned about, by name. A device that
     // comes back (a KVM switch or the receiver plugged in again) is a new
-    // UPower device and would otherwise warn again about the same charge.
+    // device and would otherwise warn again about the same charge.
     property var warnedByDevice: ({})
 
     function remember(deviceName, level) {
@@ -18,16 +17,29 @@ Scope {
         warnedByDevice = updated;
     }
 
+    // The device of a name, or one that has just gone
+    function find(deviceName) {
+        const device = Batteries.devices.find(candidate => candidate.name === deviceName);
+        return device ?? {
+            percent: 100,
+            isCharging: false,
+            isDraining: false
+        };
+    }
+
+    // By name: Batteries.devices are new objects at every change, which
+    // would make each warning anew and lose the notification it replaces
     Variants {
-        model: Batteries.devices
+        model: Batteries.devices.map(device => device.name)
 
         delegate: LowBattery {
-            required property var modelData
-            readonly property string deviceName: Batteries.name(modelData)
+            required property string modelData
+            readonly property string deviceName: modelData
+            readonly property var device: root.find(deviceName)
 
-            percent: Batteries.percent(modelData)
-            isDraining: modelData.state === UPowerDeviceState.Discharging
-            isCharging: Batteries.isCharging(modelData)
+            percent: device.percent
+            isDraining: device.isDraining
+            isCharging: device.isCharging
             lowSummary: I18n.tr("%1: battery low", deviceName)
             criticalSummary: I18n.tr("%1: battery almost empty", deviceName)
             body: I18n.tr("%1% left. Charge it soon.", Math.round(percent))
