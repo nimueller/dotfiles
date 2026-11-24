@@ -1813,7 +1813,7 @@ ShellRoot {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         elide: Text.ElideNone
-                        text: I18n.tr("Devices show up here while they report a battery. Empty keeps the device's own name.")
+                        text: I18n.tr("Devices show up here while they report a battery. Without an entry, a device keeps its own name.")
                         color: Theme.subtext0
                     }
 

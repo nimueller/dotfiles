@@ -278,7 +278,7 @@
   "Desktop notifications": "Desktop-Benachrichtigungen",
   "Device names — in the battery menu and its warnings": "Gerätenamen – im Akku-Menü und in seinen Warnungen",
   "Devices": "Geräte",
-  "Devices show up here while they report a battery. Empty keeps the device's own name.": "Geräte erscheinen hier, solange sie einen Akku melden. Leer lässt den eigenen Namen des Geräts.",
+  "Devices show up here while they report a battery. Without an entry, a device keeps its own name.": "Geräte erscheinen hier, solange sie einen Akku melden. Ohne Eintrag behält ein Gerät seinen eigenen Namen.",
   "Dew point %1°": "Taupunkt %1°",
   "Discard": "Verwerfen",
   "Discard and close": "Verwerfen und schließen",
