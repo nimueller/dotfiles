@@ -11,7 +11,11 @@ import Quickshell.Services.UPower
 // and mice. Shared by the battery menu (battery.qml), its chip in the bar
 // (Bar.qml) and the warnings (DeviceBatteryWatch.qml).
 //
-// Each entry of `devices` is { name, percent, isCharging, isDraining }.
+// Each entry of `devices` is { key, name, ownName, kind, percent,
+// isCharging, isDraining }: `key` names the device the same in every
+// language, for the name given to it in Machine Settings
+// (LocalSettings.deviceNames), else `name` is its `ownName`; `kind` picks
+// its glyph ("mouse", "keyboard", ..., "device").
 Singleton {
     id: root
 
@@ -19,6 +23,27 @@ Singleton {
     readonly property int lowPercent: 15
     readonly property int criticalPercent: 5
     readonly property int fadingPercent: 30
+
+    // Nerd Font glyphs by kind
+    readonly property var kindGlyphs: ({
+            mouse: 0xf037d // 󰍽
+            ,
+            keyboard: 0xf030c // 󰌌
+            ,
+            headset: 0xf02ce // 󰋎
+            ,
+            headphones: 0xf02cb // 󰋋
+            ,
+            speaker: 0xf04c3 // 󰓃
+            ,
+            gamepad: 0xf02b4 // 󰊴
+            ,
+            phone: 0xf03f2 // 󰏲
+            ,
+            tablet: 0xf04f6 // 󰓶
+            ,
+            device: 0xf00af // 󰂯
+        })
 
     // Corsair's batteries change slowly, and each look asks the devices
     readonly property int corsairInterval: 120000 // ms
@@ -73,8 +98,12 @@ Singleton {
     function fromUPower(device) {
         const state = device.state;
         const isCharging = state === UPowerDeviceState.Charging || state === UPowerDeviceState.FullyCharged;
+        const key = upowerKey(device);
         return {
-            name: upowerName(device),
+            key: key,
+            name: givenName(key, key),
+            ownName: key,
+            kind: upowerKind(device.type),
             percent: percent(device),
             isCharging: isCharging,
             isDraining: state === UPowerDeviceState.Discharging
@@ -82,20 +111,65 @@ Singleton {
     }
 
     function fromCorsair(device) {
+        const key = corsairKey(device);
+        const ownName = corsairName(device);
         return {
-            name: corsairName(device),
+            key: key,
+            name: givenName(key, ownName),
+            ownName: ownName,
+            kind: device.kind,
             percent: device.percent,
             isCharging: device.state === "charging",
             isDraining: device.state === "discharging"
         };
     }
 
-    // The name to show: the model, else the kind of device ("Keyboard")
-    function upowerName(device) {
+    // The name given in Machine Settings, else the device's own
+    function givenName(key, ownName) {
+        const given = LocalSettings.deviceNames[key] ?? "";
+        if (given !== "") {
+            return given;
+        }
+        return ownName;
+    }
+
+    // The model, else the kind of device ("Keyboard")
+    function upowerKey(device) {
         if (device.model !== "") {
             return device.model;
         }
         return UPowerDeviceType.toString(device.type);
+    }
+
+    function upowerKind(type) {
+        switch (type) {
+        case UPowerDeviceType.Mouse:
+            return "mouse";
+        case UPowerDeviceType.Keyboard:
+            return "keyboard";
+        case UPowerDeviceType.Headset:
+            return "headset";
+        case UPowerDeviceType.Headphones:
+            return "headphones";
+        case UPowerDeviceType.Speakers:
+            return "speaker";
+        case UPowerDeviceType.GamingInput:
+            return "gamepad";
+        case UPowerDeviceType.Phone:
+            return "phone";
+        case UPowerDeviceType.Tablet:
+            return "tablet";
+        }
+        return "device";
+    }
+
+    // A receiver that doesn't name its device has only its kind:
+    // "Corsair mouse", the same in every language
+    function corsairKey(device) {
+        if (device.model !== "") {
+            return device.model;
+        }
+        return `Corsair ${device.kind}`;
     }
 
     function corsairName(device) {
@@ -106,6 +180,11 @@ Singleton {
             return I18n.tr("Headset");
         }
         return I18n.tr("Mouse");
+    }
+
+    function glyph(kind) {
+        const codePoint = kindGlyphs[kind] ?? kindGlyphs.device;
+        return Theme.glyph(codePoint);
     }
 
     // Red when low, yellow when fading, green otherwise

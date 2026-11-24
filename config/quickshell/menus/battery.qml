@@ -492,6 +492,13 @@ Popup {
                 spacing: 8
 
                 Label {
+                    Layout.preferredWidth: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    text: Batteries.glyph(device.modelData.kind)
+                    font.pixelSize: 15
+                    color: Theme.overlay2
+                }
+                Label {
                     Layout.fillWidth: true
                     text: device.modelData.name
                     color: Theme.subtext1

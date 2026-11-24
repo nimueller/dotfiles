@@ -53,6 +53,11 @@ ShellRoot {
     // Hyprland's input:touchpad options set here, e.g. clickfinger_behavior: false; missing ones as by default
     property var touchpad: ({})
     property var warnings: LocalSettings.withDefaults({}) // see LocalSettings.qml
+    property var deviceNames: ({}) // { key: name }, see LocalSettings.qml
+    // The devices on the Devices page: those reporting a battery now
+    // (Batteries.qml) and those named before, by key. Only set when the list
+    // changes, so the fields aren't made anew while typing.
+    property var deviceKeys: []
     property var rules: [] // notification rules: { app, text, action }, see LocalSettings.qml
     property string trackAction: "popup" // the rule for track announcements, "" for none
     property var recentApps: [] // apps in the notification history, newest first
@@ -162,6 +167,7 @@ ShellRoot {
             location: location,
             nightLight: nightLight,
             warnings: warnings,
+            deviceNames: givenDeviceNames(),
             notifications: {
                 rules: rules.filter(r => r.app.trim() || r.text.trim()),
                 tracks: trackAction
@@ -275,6 +281,8 @@ ShellRoot {
         modes = s.modes ?? {};
         touchpad = s.touchpad ?? {};
         warnings = LocalSettings.withDefaults(s.warnings);
+        deviceNames = s.deviceNames ?? {};
+        updateDeviceKeys();
         autostart = s.autostart;
         trackAction = s.notifications?.tracks ?? "popup";
         language = s.language ?? "system";
@@ -284,6 +292,60 @@ ShellRoot {
                     action: r.action ?? "hide"
                 }));
         selected = Math.max(0, list.findIndex(m => m.connected));
+    }
+
+    // The names typed in, without the empty ones
+    function givenDeviceNames() {
+        const given = {};
+        for (const [key, name] of Object.entries(deviceNames)) {
+            if (name.trim() !== "") {
+                given[key] = name.trim();
+            }
+        }
+        return given;
+    }
+
+    function updateDeviceKeys() {
+        const keys = Batteries.devices.map(device => device.key);
+        for (const key of Object.keys(deviceNames)) {
+            if (!keys.includes(key)) {
+                keys.push(key);
+            }
+        }
+        if (JSON.stringify(keys) !== JSON.stringify(deviceKeys)) {
+            deviceKeys = keys;
+        }
+    }
+
+    // The device of a key, null while it doesn't report a battery
+    function deviceOf(key) {
+        return Batteries.devices.find(device => device.key === key) ?? null;
+    }
+
+    function nameDevice(key, name) {
+        if (name === (deviceNames[key] ?? "")) {
+            return;
+        }
+        deviceNames = Object.assign({}, deviceNames, {
+            [key]: name
+        });
+        dirty = true;
+    }
+
+    function forgetDevice(key) {
+        const remaining = Object.assign({}, deviceNames);
+        delete remaining[key];
+        deviceNames = remaining;
+        updateDeviceKeys();
+        dirty = true;
+    }
+
+    Connections {
+        target: Batteries
+
+        function onDevicesChanged() {
+            root.updateDeviceKeys();
+        }
     }
 
     // warn("cpu", { percent: 90 }); a disk level by its index
@@ -643,6 +705,11 @@ ShellRoot {
                                 id: "warnings",
                                 text: I18n.tr("Warnings"),
                                 glyph: 0xf0026
+                            },
+                            {
+                                id: "devices",
+                                text: I18n.tr("Devices"),
+                                glyph: 0xf037d
                             },
                             {
                                 id: "notifications",
@@ -1690,6 +1757,64 @@ ShellRoot {
                             Layout.fillWidth: true
                             text: I18n.tr("Show the focused window's title next to the workspaces")
                         }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Devices --------------------------------------------------------
+                ColumnLayout {
+                    visible: root.page === "devices"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 8
+
+                    SectionTitle {
+                        text: I18n.tr("Device names — in the battery menu and its warnings")
+                    }
+
+                    Repeater {
+                        model: root.deviceKeys
+
+                        delegate: RowLayout {
+                            id: deviceRow
+
+                            required property string modelData
+                            readonly property var device: root.deviceOf(modelData)
+                            readonly property bool isPresent: device !== null
+
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Label {
+                                Layout.preferredWidth: 18
+                                horizontalAlignment: Text.AlignHCenter
+                                text: Batteries.glyph(deviceRow.device?.kind ?? "device")
+                                font.pixelSize: 15
+                                color: deviceRow.isPresent ? Theme.overlay2 : Theme.surface2
+                            }
+                            InputField {
+                                Layout.fillWidth: true
+                                text: root.deviceNames[deviceRow.modelData] ?? ""
+                                placeholder: deviceRow.device?.ownName ?? deviceRow.modelData
+                                onTextChanged: root.nameDevice(deviceRow.modelData, text)
+                            }
+                            IconButton {
+                                visible: !deviceRow.isPresent
+                                glyph: Theme.glyph(0xf0156) // 󰅖
+                                onClicked: root.forgetDevice(deviceRow.modelData)
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: I18n.tr("Devices show up here while they report a battery. Empty keeps the device's own name.")
+                        color: Theme.subtext0
                     }
 
                     Item {
