@@ -61,3 +61,17 @@ commit, push and `gh pr create`/`gh pr edit`, check the diff, the commit
 messages and the description for it. If something has already been pushed or
 published, tell me instead of rewriting history or force-pushing yourself;
 an edited PR description keeps the old version in its edit history.
+
+# Commands that need root
+
+Commands run from Claude Code have no terminal, so `sudo` can't ask for my
+password and fails ("a terminal is required to read the password"). Don't
+tell me to open another terminal for it. Use `pkexec` instead: my session
+runs a polkit agent, which asks for the password in a graphical dialog.
+
+- Run the command yourself with `pkexec`, or give it to me as
+  `! pkexec …` to type here; either way I confirm it in the dialog.
+- Several commands go into one `pkexec sh -c '…'`, so I'm asked only once.
+- Without a terminal, prompts can't be answered: pass the non-interactive
+  flags, e.g. `pacman -S --needed --noconfirm`, and say what they skip.
+- Say what the command changes before running it.
