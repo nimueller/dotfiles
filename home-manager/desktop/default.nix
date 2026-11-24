@@ -12,21 +12,6 @@ let
   nautilus = "/usr/bin/nautilus";
   calendarPython = lib.getExe my-pkgs.quickshell-calendar-python;
   nautilusExtensions = "share/nautilus-python/extensions";
-  # nixpkgs' mvnHash no longer matches the Maven dependencies it downloads
-  # (same hash on x86_64 and aarch64). It's unfree, so cache.nixos.org has no
-  # build to fall back on. Remove once nixpkgs updates the hash.
-  tinymediamanager = pkgs.tinymediamanager.override {
-    maven = pkgs.maven // {
-      buildMavenPackage =
-        args:
-        pkgs.maven.buildMavenPackage (
-          args
-          // {
-            mvnHash = "sha256-cBO3y/GIoPVzPErMQlhdkz82IWCtbL29KfdX+EmYomA=";
-          }
-        );
-    };
-  };
 in
 {
   targets.genericLinux.enable = true;
