@@ -10,7 +10,12 @@ push directly to the main branch (`main`/`master`). Instead:
 2. Commit there and push the branch.
 3. Open a pull request against the main branch with `gh pr create` and
    output the link to it.
-4. Don't merge it yourself unless I explicitly say so.
+4. Let me test it before I merge: check out the branch where the running
+   setup reads its files from (for the dotfiles that's `~/dotfiles`; remove
+   the branch's worktree first, as a branch can only be checked out once),
+   reload or restart what the change affects, and tell me what to try.
+   After the merge, switch back to the main branch, pull and reload again.
+5. Don't merge it yourself unless I explicitly say so.
 
 Exceptions:
 
