@@ -182,6 +182,13 @@ ShellRoot {
         if (s.monitors.length) {
             lines.push("", "-- Displays", ...s.monitors.map(monitorLua));
         }
+        // Without it, the cursor and the first windows start on whichever
+        // monitor came up first, even one that is switched off
+        const main = s.monitors.find(m => m.main && m.enabled);
+        if (main) {
+            const monitor = luaString("desc:" + main.desc);
+            lines.push(`hl.config({ cursor = { default_monitor = ${monitor} } })`);
+        }
         // Workspaces on their monitor; the first opens there by default
         const rules = [];
         for (const m of s.monitors.filter(m => m.enabled)) {
