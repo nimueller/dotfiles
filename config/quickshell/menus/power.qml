@@ -64,9 +64,13 @@ PanelWindow {
     property bool streaming: false
 
     // Close the apps and Hyprland with hyprshutdown first, which shows the
-    // apps that hold it up, then `command` (shutdown.py)
+    // apps that hold it up, then `command` (shutdown.py). In a scope of its
+    // own: when D-Bus activation started this daemon as
+    // quickshell-daemon.service, hyprshutdown closing the daemon stops the
+    // service, and systemd kills everything in its cgroup, shutdown.py and
+    // hyprshutdown too.
     function gracefully(label, command) {
-        return `"${Quickshell.shellPath("shutdown.py")}" '${label}' '${command}'`;
+        return `systemd-run --user --scope --collect --quiet "${Quickshell.shellPath("shutdown.py")}" '${label}' '${command}'`;
     }
     property int selected: 0
     property string uptime: ""
