@@ -26,6 +26,7 @@ CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
 MACHINE = CONFIG / "hypr/local.lua"  # Machine Settings' "-- settings:" line (settings.qml)
 ATTEMPTS = 40
 DELAY = 0.25  # s; XWayland gets a new monitor a moment after Hyprland
+XRANDR_TIMEOUT = 2  # s
 
 
 def main_description(lua: str) -> str | None:
@@ -59,11 +60,26 @@ def monitors() -> list[dict[str, Any]]:
         return []
 
 
+def xrandr(*arguments: str) -> str:
+    """Its output, empty when XWayland doesn't answer: a dead XWayland's socket
+    stays open, and connecting to it waits forever (xwayland-restart.py)"""
+    try:
+        result = subprocess.run(
+            ["xrandr", *arguments],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=XRANDR_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return ""
+    return result.stdout
+
+
 def set_primary(name: str) -> bool:
     """True once XWayland has it as primary"""
-    subprocess.run(["xrandr", "--output", name, "--primary"], capture_output=True, check=False)
-    listing = subprocess.run(["xrandr", "--query"], capture_output=True, text=True, check=False)
-    return is_primary(listing.stdout, name)
+    xrandr("--output", name, "--primary")
+    return is_primary(xrandr("--query"), name)
 
 
 def main() -> int:
