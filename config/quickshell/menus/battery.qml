@@ -14,7 +14,8 @@ import Quickshell.Services.UPower
 // profile (power-profiles-daemon, which system/setup.sh starts) and the
 // batteries of wireless devices (keyboard, mouse, headset, ...;
 // Batteries.qml) with how long each lasts at its pace since it was last
-// charged, which are all a desktop shows.
+// charged and, for one asleep, how old its charge is, which are all a
+// desktop shows. While it's open, Corsair's devices are asked more often.
 Popup {
     id: popup
 
@@ -31,6 +32,8 @@ Popup {
         return batteryState === UPowerDeviceState.FullyCharged || isHeldFull;
     }
     property bool profiles: false // power-profiles-daemon runs
+    // For how old a device's charge is; ticks while open
+    property real now: Date.now()
 
     readonly property var profileList: [
         {
@@ -115,6 +118,31 @@ Popup {
         }
         const lasts = Batteries.duration(100 / estimate.pace);
         return I18n.tr("%1 · full lasts %2", left, lasts);
+    }
+
+    // How old a charge read from the device is, "" while it's current
+    function age(updated) {
+        const minutes = Math.floor((popup.now - updated) / 60000);
+        if (!updated || minutes < 1) {
+            return "";
+        }
+        if (minutes < 60) {
+            return I18n.tr("%1 min ago", minutes);
+        }
+        return I18n.tr("%1 h %2 min ago", Math.floor(minutes / 60), minutes % 60);
+    }
+
+    // The line under a device's name: how long it lasts, how old the charge is
+    function deviceDetails(device) {
+        const details = [];
+        if (device.isDraining) {
+            details.push(deviceEstimate(device.key));
+        }
+        const old = age(device.updated);
+        if (old !== "") {
+            details.push(old);
+        }
+        return details.join(" · ");
     }
 
     function duration(seconds) {
@@ -241,7 +269,18 @@ Popup {
 
     onCellChanged: loadHistory()
     onPercentChanged: loadHistory()
-    Component.onCompleted: loadHistory()
+    Component.onCompleted: {
+        loadHistory();
+        Batteries.watching = true;
+    }
+    Component.onDestruction: Batteries.watching = false
+
+    Timer {
+        interval: 30000 // ms
+        repeat: true
+        running: true
+        onTriggered: popup.now = Date.now()
+    }
 
     Process {
         id: historyProc
@@ -526,8 +565,8 @@ Popup {
                     }
                     Label {
                         Layout.fillWidth: true
-                        visible: device.modelData.isDraining
-                        text: popup.deviceEstimate(device.modelData.key)
+                        visible: text !== ""
+                        text: popup.deviceDetails(device.modelData)
                         font.pixelSize: 10
                         color: Theme.overlay1
                     }

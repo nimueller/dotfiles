@@ -13,10 +13,11 @@ import Quickshell.Services.UPower
 // them and fills in `estimates` (device-battery-log.py).
 //
 // Each entry of `devices` is { key, name, ownName, kind, percent,
-// isCharging, isDraining }: `key` names the device the same in every
-// language, for the name given to it in Machine Settings
+// isCharging, isDraining, updated }: `key` names the device the same in
+// every language, for the name given to it in Machine Settings
 // (LocalSettings.deviceNames), else `name` is its `ownName`; `kind` picks
-// its glyph ("mouse", "keyboard", ..., "device").
+// its glyph ("mouse", "keyboard", ..., "device"); `updated` is when the
+// charge was last read (ms since the epoch), 0 where it's always current.
 Singleton {
     id: root
 
@@ -46,14 +47,22 @@ Singleton {
             device: 0xf00af // 󰂯
         })
 
-    // Corsair's batteries change slowly, and each look asks the devices
+    // Corsair's batteries change slowly, and each look asks the devices;
+    // more often while the battery menu is open (`watching`)
     readonly property int corsairInterval: 120000 // ms
+    readonly property int corsairWatchingInterval: 15000 // ms
+    // A Corsair mouse asleep doesn't answer until it's moved: one that
+    // doesn't answer stays listed with its last charge for this long
+    readonly property int corsairKeep: 30 * 60 * 1000 // ms
+    // Set by the battery menu while it's open
+    property bool watching: false
     // Only reads sysfs; short, so a device unplugged from its cable doesn't
     // stay listed twice for long
     readonly property int chargingInterval: 30000 // ms
 
     readonly property var upowerDevices: UPower.devices.values.filter(isDeviceBattery)
-    // As corsair-battery.py prints them
+    // As corsair-battery.py prints them, each with `seen`: when it last
+    // answered (ms since the epoch)
     property var corsairDevices: []
     // As charging-batteries.py prints them
     property var chargingDevices: []
@@ -123,7 +132,8 @@ Singleton {
             kind: upowerKind(device.type),
             percent: percent(device),
             isCharging: isCharging,
-            isDraining: state === UPowerDeviceState.Discharging
+            isDraining: state === UPowerDeviceState.Discharging,
+            updated: 0
         };
     }
 
@@ -137,7 +147,8 @@ Singleton {
             kind: device.kind,
             percent: device.percent,
             isCharging: device.state === "charging",
-            isDraining: device.state === "discharging"
+            isDraining: device.state === "discharging",
+            updated: device.seen
         };
     }
 
@@ -151,7 +162,8 @@ Singleton {
             kind: device.kind,
             percent: device.percent,
             isCharging: true,
-            isDraining: false
+            isDraining: false,
+            updated: 0
         };
     }
 
@@ -246,6 +258,23 @@ Singleton {
         return I18n.tr("%1 min", minutes);
     }
 
+    // The devices that answered, and those that didn't but did within
+    // corsairKeep
+    function mergeCorsair(answered, now) {
+        const merged = answered.map(device => Object.assign({}, device, {
+                seen: now
+            }));
+        const answeredKeys = merged.map(corsairKey);
+        for (const device of corsairDevices) {
+            const hasAnswered = answeredKeys.includes(corsairKey(device));
+            const isRecent = now - device.seen < corsairKeep;
+            if (!hasAnswered && isRecent) {
+                merged.push(device);
+            }
+        }
+        return merged;
+    }
+
     function glyph(kind) {
         const codePoint = kindGlyphs[kind] ?? kindGlyphs.device;
         return Theme.glyph(codePoint);
@@ -269,7 +298,7 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    root.corsairDevices = JSON.parse(text).devices;
+                    root.corsairDevices = root.mergeCorsair(JSON.parse(text).devices, Date.now());
                 } catch (error) {
                     // It printed why on stderr; keep the last answer
                     console.warn(`corsair-battery.py: ${error}`);
@@ -278,8 +307,15 @@ Singleton {
         }
     }
 
+    // A look right away when the menu opens
+    onWatchingChanged: {
+        if (watching && !corsairProbe.running) {
+            corsairProbe.running = true;
+        }
+    }
+
     Timer {
-        interval: root.corsairInterval
+        interval: root.watching ? root.corsairWatchingInterval : root.corsairInterval
         repeat: true
         running: true
         triggeredOnStart: true
