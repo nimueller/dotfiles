@@ -4,6 +4,7 @@
 Batteries.qml.
 
   charging-batteries.py
+  charging-batteries.py --upower-fixed
 
 Prints {"devices": [{"model": ..., "kind": ..., "percent": ..., "state": ...}]}:
   model    the name UPower gives the device: the battery's model_name, else
@@ -18,15 +19,21 @@ UPower reads `online` of a device's battery as its wireless link, so it takes
 the device for disconnected and leaves it out until the cable is unplugged.
 A battery that is really out of reach also has `online` 0, but its status is
 "Unknown": only those still reporting "Charging" are listed here.
+
+UPower fixed this after 1.91.5. With --upower-fixed, the exit code says
+whether the installed UPower is newer (0) or not (1), so Batteries.qml can
+remind to remove this script (README, TODO).
 """
 
 import json
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 POWER_SUPPLY = Path("/sys/class/power_supply")
+LAST_UNFIXED_UPOWER = (1, 91, 5)
 
 # UPower's order (up-device-supply.c): the first kind any of the device's
 # input nodes has wins
@@ -130,7 +137,25 @@ def batteries() -> list[Battery]:
     return found
 
 
+def parse_upower_version(text: str) -> tuple[int, ...] | None:
+    """The daemon's version from `upower --version`, None if it isn't there"""
+    match = re.search(r"^UPower daemon version (\d+(?:\.\d+)*)", text, re.MULTILINE)
+    if not match:
+        return None
+    return tuple(int(part) for part in match[1].split("."))
+
+
+def is_upower_fixed() -> bool:
+    result = subprocess.run(["upower", "--version"], capture_output=True, text=True, check=False)
+    version = parse_upower_version(result.stdout)
+    if version is None:
+        return False
+    return version > LAST_UNFIXED_UPOWER
+
+
 def main(args: list[str]) -> int:
+    if args == ["--upower-fixed"]:
+        return 0 if is_upower_fixed() else 1
     if args != []:
         print(__doc__, file=sys.stderr)
         return 2

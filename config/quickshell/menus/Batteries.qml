@@ -279,4 +279,36 @@ Singleton {
         triggeredOnStart: true
         onTriggered: chargingProbe.running = true
     }
+
+    // Once a UPower that shows charging devices itself is installed, a
+    // reminder that charging-batteries.py can go (README, TODO); once a
+    // session, as the shell restarts at each login
+    property bool upowerFixedReminded: false
+
+    Process {
+        id: upowerFixedProbe
+
+        command: [Quickshell.shellPath("charging-batteries.py"), "--upower-fixed"]
+        onExited: code => {
+            if (code !== 0 || root.upowerFixedReminded) {
+                return;
+            }
+            root.upowerFixedReminded = true;
+            upowerFixedReminder.running = true;
+        }
+    }
+
+    Process {
+        id: upowerFixedReminder
+
+        command: ["notify-send", "-a", "Dotfiles", "UPower was updated", "charging-batteries.py can be removed (README, TODO)."]
+    }
+
+    Timer {
+        interval: 6 * 60 * 60 * 1000 // ms; updates come rarely
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: upowerFixedProbe.running = true
+    }
 }

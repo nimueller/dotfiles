@@ -49,8 +49,8 @@ class HiddenWhileCharging(unittest.TestCase):
         self.assertFalse(charging.is_hidden_while_charging(supply))
 
     def test_model_name_first(self) -> None:
-        supply = write_supply(self.root, model_name="Keyboard K1")
-        self.assertEqual(charging.model_of(supply, []), "Keyboard K1")
+        supply = write_supply(self.root, model_name="Device D1")
+        self.assertEqual(charging.model_of(supply, []), "Device D1")
 
     def test_input_name_without_model_name(self) -> None:
         supply = write_supply(self.root)
@@ -71,6 +71,20 @@ class Kind(unittest.TestCase):
     def test_unknown(self) -> None:
         self.assertEqual(charging.kind_of([{"ID_INPUT": "1"}]), "device")
         self.assertEqual(charging.kind_of([]), "device")
+
+
+class UPowerVersion(unittest.TestCase):
+    def test_daemon_version(self) -> None:
+        text = "UPower client version 1.91.6\nUPower daemon version 1.91.5\n"
+        self.assertEqual(charging.parse_upower_version(text), (1, 91, 5))
+
+    def test_fixed_after_last_unfixed(self) -> None:
+        self.assertGreater((1, 91, 6), charging.LAST_UNFIXED_UPOWER)
+        self.assertGreater((1, 92), charging.LAST_UNFIXED_UPOWER)
+        self.assertFalse((1, 91, 5) > charging.LAST_UNFIXED_UPOWER)
+
+    def test_daemon_not_running(self) -> None:
+        self.assertIsNone(charging.parse_upower_version("UPower client version 1.91.5\n"))
 
 
 class Properties(unittest.TestCase):
