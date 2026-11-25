@@ -7,8 +7,8 @@ import Quickshell.Services.UPower
 
 // The batteries of wireless devices besides the laptop's own: keyboards,
 // mice, headsets and the like. UPower knows those their kernel drivers
-// report (e.g. hid-logitech-hidpp), corsair-battery.py Corsair's headsets
-// and mice. Shared by the battery menu (battery.qml), its chip in the bar
+// report (e.g. hid-logitech-hidpp), except while they charge
+// (charging-batteries.py), corsair-battery.py Corsair's headsets and mice. Shared by the battery menu (battery.qml), its chip in the bar
 // (Bar.qml) and the warnings (DeviceBatteryWatch.qml).
 //
 // Each entry of `devices` is { key, name, ownName, kind, percent,
@@ -47,10 +47,15 @@ Singleton {
 
     // Corsair's batteries change slowly, and each look asks the devices
     readonly property int corsairInterval: 120000 // ms
+    // Only reads sysfs; short, so a device unplugged from its cable doesn't
+    // stay listed twice for long
+    readonly property int chargingInterval: 30000 // ms
 
     readonly property var upowerDevices: UPower.devices.values.filter(isDeviceBattery)
     // As corsair-battery.py prints them
     property var corsairDevices: []
+    // As charging-batteries.py prints them
+    property var chargingDevices: []
 
     readonly property var devices: {
         const all = [];
@@ -59,6 +64,14 @@ Singleton {
         }
         for (const device of corsairDevices) {
             all.push(fromCorsair(device));
+        }
+        // Once unplugged, UPower lists it again before the next look here
+        const listedKeys = all.map(device => device.key);
+        for (const device of chargingDevices) {
+            const entry = fromCharging(device);
+            if (!listedKeys.includes(entry.key)) {
+                all.push(entry);
+            }
         }
         return all;
     }
@@ -122,6 +135,28 @@ Singleton {
             isCharging: device.state === "charging",
             isDraining: device.state === "discharging"
         };
+    }
+
+    // Named as UPower names it, so its name stays the same once unplugged
+    function fromCharging(device) {
+        const key = chargingKey(device);
+        return {
+            key: key,
+            name: givenName(key, key),
+            ownName: key,
+            kind: device.kind,
+            percent: device.percent,
+            isCharging: true,
+            isDraining: false
+        };
+    }
+
+    // The model, else the kind of device, as upowerKey() has it
+    function chargingKey(device) {
+        if (device.model !== "") {
+            return device.model;
+        }
+        return device.kind.charAt(0).toUpperCase() + device.kind.slice(1);
     }
 
     // The name given in Machine Settings, else the device's own
@@ -220,5 +255,60 @@ Singleton {
         running: true
         triggeredOnStart: true
         onTriggered: corsairProbe.running = true
+    }
+
+    Process {
+        id: chargingProbe
+
+        command: [Quickshell.shellPath("charging-batteries.py")]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.chargingDevices = JSON.parse(text).devices;
+                } catch (error) {
+                    console.warn(`charging-batteries.py: ${error}`);
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: root.chargingInterval
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: chargingProbe.running = true
+    }
+
+    // Once a UPower that shows charging devices itself is installed, a
+    // reminder that charging-batteries.py can go (README, TODO); once a
+    // session, as the shell restarts at each login
+    property bool upowerFixedReminded: false
+
+    Process {
+        id: upowerFixedProbe
+
+        command: [Quickshell.shellPath("charging-batteries.py"), "--upower-fixed"]
+        onExited: code => {
+            if (code !== 0 || root.upowerFixedReminded) {
+                return;
+            }
+            root.upowerFixedReminded = true;
+            upowerFixedReminder.running = true;
+        }
+    }
+
+    Process {
+        id: upowerFixedReminder
+
+        command: ["notify-send", "-a", "Dotfiles", "UPower was updated", "charging-batteries.py can be removed (README, TODO)."]
+    }
+
+    Timer {
+        interval: 6 * 60 * 60 * 1000 // ms; updates come rarely
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: upowerFixedProbe.running = true
     }
 }

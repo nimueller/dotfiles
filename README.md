@@ -111,6 +111,8 @@ curl -L https://raw.githubusercontent.com/nimueller/dotfiles/main/install.sh | b
 
 - [ ] Drop `--disable-gpu-memory-buffer-video-frames` from `config/brave-flags.conf` once Brave no longer needs it
 - [ ] Laptop and touch mode on real hardware (lid switch, squeekboard in Brave, Wi-Fi)
+- [ ] Remove `charging-batteries.py` (and its part in `Batteries.qml`) once UPower is newer than 1.91.5; a notification
+  says when
 
 Ideas:
 
