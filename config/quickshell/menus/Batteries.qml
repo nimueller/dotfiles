@@ -9,7 +9,8 @@ import Quickshell.Services.UPower
 // mice, headsets and the like. UPower knows those their kernel drivers
 // report (e.g. hid-logitech-hidpp), except while they charge
 // (charging-batteries.py), corsair-battery.py Corsair's headsets and mice. Shared by the battery menu (battery.qml), its chip in the bar
-// (Bar.qml) and the warnings (DeviceBatteryWatch.qml).
+// (Bar.qml) and the warnings (DeviceBatteryWatch.qml), which also logs
+// them and fills in `estimates` (device-battery-log.py).
 //
 // Each entry of `devices` is { key, name, ownName, kind, percent,
 // isCharging, isDraining }: `key` names the device the same in every
@@ -56,6 +57,9 @@ Singleton {
     property var corsairDevices: []
     // As charging-batteries.py prints them
     property var chargingDevices: []
+    // How long each draining device lasts, by key, as device-battery-log.py
+    // prints them: { left, pace, measured }
+    property var estimates: ({})
 
     readonly property var devices: {
         const all = [];
@@ -215,6 +219,31 @@ Singleton {
             return I18n.tr("Headset");
         }
         return I18n.tr("Mouse");
+    }
+
+    // For device-battery-log.py: "charging", "draining" or "unknown"
+    function logState(device) {
+        if (device.isCharging) {
+            return "charging";
+        }
+        if (device.isDraining) {
+            return "draining";
+        }
+        return "unknown";
+    }
+
+    // Days and hours, or hours and minutes under a day
+    function duration(seconds) {
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor(seconds % 86400 / 3600);
+        if (days > 0) {
+            return I18n.tr("%1 d %2 h", days, hours);
+        }
+        const minutes = Math.round(seconds % 3600 / 60);
+        if (hours > 0) {
+            return `${hours} h ${minutes} min`;
+        }
+        return I18n.tr("%1 min", minutes);
     }
 
     function glyph(kind) {
