@@ -18,6 +18,22 @@ local function daemon(program, command)
     hl.exec_cmd(string.format("pgrep -u \"$USER\" -f '^%s' >/dev/null || %s", program, command))
 end
 
+-- Brave's first window after login opens on workspace 1, wherever the cursor
+-- is. A window rule instead of an exec rule, so it doesn't depend on Hyprland
+-- following the PID through after-unlock and Flatpak. It ends with that
+-- window: later ones (SUPER + B, links) open where the cursor is.
+local function firstBraveOnWorkspaceOne()
+    local rule = hl.window_rule({ match = { class = "^brave-browser$" }, workspace = "1 silent" })
+    local subscription
+    subscription = hl.on("window.open", function(window)
+        if window.class ~= "brave-browser" then
+            return
+        end
+        rule:set_enabled(false)
+        subscription:remove()
+    end)
+end
+
 -- System programs. Also run again after the shutdown was cancelled
 -- (quickshell/menus/shutdown.py): hyprshutdown ends them right away.
 function M.daemons()
@@ -45,7 +61,8 @@ hl.on("hyprland.start", function()
     -- User programs, once unlocked: most keep secrets in the keyring and would
     -- otherwise wait for its own password prompt (Brave doesn't load any page).
     -- after-unlock runs only its first argument: quote commands with arguments
-    hl.exec_cmd("after-unlock 'flatpak run com.brave.Browser'", { workspace = "1 silent" })
+    firstBraveOnWorkspaceOne()
+    hl.exec_cmd("after-unlock 'flatpak run com.brave.Browser'")
     hl.exec_cmd("after-unlock kitty", { workspace = "2 silent" })
     hl.exec_cmd("after-unlock pear-desktop")
     hl.exec_cmd("after-unlock thunderbird")
