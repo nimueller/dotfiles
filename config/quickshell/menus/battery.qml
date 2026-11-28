@@ -13,7 +13,9 @@ import Quickshell.Services.UPower
 // the title for the history (battery-history.qml). Everywhere: the power
 // profile (power-profiles-daemon, which system/setup.sh starts) and the
 // batteries of wireless devices (keyboard, mouse, headset, ...;
-// Batteries.qml), which are all a desktop shows.
+// Batteries.qml) with how long each lasts at its pace since it was last
+// charged and, for one asleep, how old its charge is, which are all a
+// desktop shows. While it's open, Corsair's devices are asked more often.
 Popup {
     id: popup
 
@@ -30,6 +32,8 @@ Popup {
         return batteryState === UPowerDeviceState.FullyCharged || isHeldFull;
     }
     property bool profiles: false // power-profiles-daemon runs
+    // For how old a device's charge is; ticks while open
+    property real now: Date.now()
 
     readonly property var profileList: [
         {
@@ -98,6 +102,47 @@ Popup {
             return dischargingRows(s);
         }
         return chargingRows(s);
+    }
+
+    // How long a wireless device lasts at the pace since it was last
+    // charged, or at the charge before's while there's too little of this
+    // one (device-battery-log.py)
+    function deviceEstimate(key) {
+        const estimate = Batteries.estimates[key];
+        if (!estimate) {
+            return I18n.tr("Not enough data yet");
+        }
+        const left = I18n.tr("about %1 left", Batteries.duration(estimate.left));
+        if (estimate.measured === "before") {
+            return I18n.tr("%1 (at the last charge's pace)", left);
+        }
+        const lasts = Batteries.duration(100 / estimate.pace);
+        return I18n.tr("%1 · full lasts %2", left, lasts);
+    }
+
+    // How old a charge read from the device is, "" while it's current
+    function age(updated) {
+        const minutes = Math.floor((popup.now - updated) / 60000);
+        if (!updated || minutes < 1) {
+            return "";
+        }
+        if (minutes < 60) {
+            return I18n.tr("%1 min ago", minutes);
+        }
+        return I18n.tr("%1 h %2 min ago", Math.floor(minutes / 60), minutes % 60);
+    }
+
+    // The line under a device's name: how long it lasts, how old the charge is
+    function deviceDetails(device) {
+        const details = [];
+        if (device.isDraining) {
+            details.push(deviceEstimate(device.key));
+        }
+        const old = age(device.updated);
+        if (old !== "") {
+            details.push(old);
+        }
+        return details.join(" · ");
     }
 
     function duration(seconds) {
@@ -224,7 +269,18 @@ Popup {
 
     onCellChanged: loadHistory()
     onPercentChanged: loadHistory()
-    Component.onCompleted: loadHistory()
+    Component.onCompleted: {
+        loadHistory();
+        Batteries.watching = true;
+    }
+    Component.onDestruction: Batteries.watching = false
+
+    Timer {
+        interval: 30000 // ms
+        repeat: true
+        running: true
+        onTriggered: popup.now = Date.now()
+    }
 
     Process {
         id: historyProc
@@ -498,10 +554,22 @@ Popup {
                     font.pixelSize: 15
                     color: Theme.overlay2
                 }
-                Label {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    text: device.modelData.name
-                    color: Theme.subtext1
+                    spacing: 1
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: device.modelData.name
+                        color: Theme.subtext1
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        visible: text !== ""
+                        text: popup.deviceDetails(device.modelData)
+                        font.pixelSize: 10
+                        color: Theme.overlay1
+                    }
                 }
                 Label {
                     text: {
