@@ -85,7 +85,6 @@ in
         enable = true;
         plugins = [
           "colored-man-pages"
-          "command-not-found"
           "docker"
           "fzf"
           "git"
@@ -104,8 +103,19 @@ in
           src = pkgs.zsh-powerlevel10k;
           file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
         }
+        # Tab completes through fzf, with a preview (zstyles in
+        # init-content.zsh). Plugins load after oh-my-zsh's compinit, which
+        # fzf-tab needs.
+        {
+          name = "fzf-tab";
+          src = pkgs.zsh-fzf-tab;
+          file = "share/fzf-tab/fzf-tab.plugin.zsh";
+        }
       ];
-      initContent = builtins.readFile ../../config/zsh/init-content.zsh;
+      # After the integrations at the default 1000 (nix-index, direnv): an
+      # alias like `cat` would otherwise be expanded inside the functions they
+      # define, e.g. bat printing command-not-found's message with a frame
+      initContent = lib.mkOrder 1050 (builtins.readFile ../../config/zsh/init-content.zsh);
     };
 
     # `j <part of a path>` jumps to the best match of the visited directories
@@ -117,6 +127,12 @@ in
         "j"
       ];
     };
+
+    # An unknown command names the Nix packages that have it (oh-my-zsh's
+    # command-not-found needs pkgfile, which isn't installed); `, <command>`
+    # runs one of them without installing it
+    nix-index.enable = true;
+    nix-index-database.comma.enable = true;
 
     # .envrc per project, e.g. `use flake` for its toolchain
     direnv = {

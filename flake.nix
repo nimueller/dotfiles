@@ -16,6 +16,12 @@
     };
     # Declared Flatpaks (home-manager/desktop/flatpak.nix)
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
+    # nix-index's database, built weekly upstream: the shell's
+    # command-not-found and `comma` without indexing nixpkgs here
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -23,6 +29,7 @@
       nixpkgs,
       home-manager,
       nix-flatpak,
+      nix-index-database,
       ...
     }:
     let
@@ -50,7 +57,11 @@
         home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor system;
           extraSpecialArgs = { inherit username; };
-          modules = [ ./options ] ++ modules;
+          modules = [
+            ./options
+            nix-index-database.homeModules.nix-index
+          ]
+          ++ modules;
         };
       desktopModules = [
         ./home-manager/headless

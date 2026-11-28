@@ -15,20 +15,14 @@ function fzd() {
     fi
 }
 
-# A desktop notification through kitty, unless kitty has the focus anyway
-function notify-command-finished() {
-    if ! hyprctl activewindow | grep kitty >/dev/null; then
-        printf '\x1b]99;;Command finished\x1b\\'
-    fi
-}
-
-alias install="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S ; notify-command-finished"
-alias uninstall="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns ; notify-command-finished"
+# kitty notifies when a long command finishes (notify_on_cmd_finish)
+alias install="yay -Slq | fzf --multi --preview 'yay -Si {1}' | xargs -ro yay -S"
+alias uninstall="yay -Qq | fzf --multi --preview 'yay -Qi {1}' | xargs -ro yay -Rns"
 alias cat='bat'
 alias ls='lsd'
 alias la='lsd -lah'
 alias fzf='fzf --reverse'
-alias upgrade="yay -Syu ; reboot-check ; notify-command-finished"
+alias upgrade="yay -Syu ; reboot-check"
 alias cleanup="sudo pacman -Qdtq | sudo pacman -Rns -"
 
 if command -v kitten >/dev/null 2>&1 && [ "$TERM" = "xterm-kitty" ]; then
@@ -37,6 +31,25 @@ fi
 
 zle -N fzd
 bindkey '^F' fzd
+
+# fzf-tab: Tab shows the completions in fzf. Its own menu instead of zsh's
+# (oh-my-zsh sets `menu select` with this pattern, which a plain
+# ':completion:*' wouldn't override), groups named in brackets so the
+# previews below can tell them apart, < and > switch between groups.
+zstyle ':completion:*:*:*:*:*' menu no
+zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*:git-checkout:*' sort false
+zstyle ':fzf-tab:*' switch-group '<' '>'
+
+# Previews: a directory's content, a changed file's diff, a process's command
+zstyle ':fzf-tab:complete:(cd|j|ls|lsd):*' fzf-preview 'lsd -1 --color=always $realpath'
+zstyle ':fzf-tab:complete:git-(add|diff|restore):*' fzf-preview \
+    'git diff $word | delta --width=$FZF_PREVIEW_COLUMNS'
+zstyle ':completion:*:*:*:*:processes' command 'ps -u $USER -o pid,user,comm -w -w'
+zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-preview \
+    '[[ $group == "[process ID]" ]] && ps --pid=$word -o cmd --no-headers -w -w'
+zstyle ':fzf-tab:complete:(kill|ps):argument-rest' fzf-flags --preview-window=down:3:wrap
 
 autoload -Uz edit-command-line
 zle -N edit-command-line

@@ -120,5 +120,5 @@ Ideas:
 - [ ] Backups of the data the dotfiles don't cover (SSH keys, password database, documents, projects), e.g. restic
   with a systemd timer and the last backup in the system menu
 - [ ] KeePassXC's settings from Home Manager, without the database paths
-- [ ] `nix-index` with `comma` (run a program without installing it), `nh` for switches with a diff of the packages
+- [ ] `nh` for switches with a diff of the packages
 - [ ] lazygit in Catppuccin, atuin for a shell history synced across machines
